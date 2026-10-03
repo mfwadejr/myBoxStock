@@ -1,0 +1,77 @@
+// DATABASE / schema — portable DDL for SQLite, PostgreSQL and MariaDB/MySQL.
+// Rules: string primary keys, VARCHAR(n) for anything indexed, TEXT otherwise, BIGINT epoch-ms timestamps,
+// INTEGER 0/1 booleans, no vendor-specific upsert/returning/autoincrement, no reserved-word column names.
+import { areaLogger } from '../logging/logger.mjs';
+
+const L = areaLogger('database');
+const id = 'VARCHAR(40)';
+const s = (n = 255) => `VARCHAR(${n})`;
+
+export const TABLES = [
+  // ---- platform realm (host administrator) ----
+  ['settings', `CREATE TABLE settings (k ${s(100)} PRIMARY KEY, v TEXT, updated_at BIGINT NOT NULL)`],
+  ['host_admins', `CREATE TABLE host_admins (
+    id ${id} PRIMARY KEY, username ${s(100)} NOT NULL UNIQUE, email ${s()},
+    pw_hash ${s()} NOT NULL, must_change INTEGER NOT NULL DEFAULT 0,
+    totp_secret TEXT, totp_enabled INTEGER NOT NULL DEFAULT 0, recovery_hashes TEXT,
+    created_at BIGINT NOT NULL, last_login BIGINT)`],
+  ['event_log', `CREATE TABLE event_log (
+    id ${id} PRIMARY KEY, ts BIGINT NOT NULL, level ${s(10)} NOT NULL, area ${s(20)} NOT NULL, event ${s(80)} NOT NULL,
+    actor ${s()}, account_id ${s(40)}, ip ${s(64)}, message TEXT, raw TEXT)`],
+  ['mail_queue', `CREATE TABLE mail_queue (
+    id ${id} PRIMARY KEY, to_addr ${s()} NOT NULL, subject ${s()} NOT NULL, body_text TEXT, body_html TEXT,
+    status ${s(20)} NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, last_error TEXT, created_at BIGINT NOT NULL, sent_at BIGINT)`],
+  ['firewall_rules', `CREATE TABLE firewall_rules (
+    id ${id} PRIMARY KEY, kind ${s(20)} NOT NULL, cidr ${s(64)} NOT NULL, port INTEGER, note ${s()},
+    enabled INTEGER NOT NULL DEFAULT 1, created_at BIGINT NOT NULL)`],
+
+  // ---- tenant realm: every row carries account_id; the host console never queries these ----
+  ['accounts', `CREATE TABLE accounts (
+    id ${id} PRIMARY KEY, account_code ${s(20)} NOT NULL UNIQUE, business_name ${s()} NOT NULL,
+    owner_email ${s()} NOT NULL, status ${s(20)} NOT NULL, plan ${s(40)}, created_at BIGINT NOT NULL, last_activity BIGINT)`],
+  ['account_users', `CREATE TABLE account_users (
+    id ${id} PRIMARY KEY, account_id ${id} NOT NULL, login ${s(160)} NOT NULL UNIQUE,
+    username ${s(100)} NOT NULL, email ${s()}, role ${s(40)} NOT NULL,
+    pw_hash ${s()} NOT NULL, must_change INTEGER NOT NULL DEFAULT 0, disabled INTEGER NOT NULL DEFAULT 0,
+    totp_secret TEXT, totp_enabled INTEGER NOT NULL DEFAULT 0, recovery_hashes TEXT,
+    created_at BIGINT NOT NULL, last_login BIGINT, FOREIGN KEY (account_id) REFERENCES accounts(id))`],
+  ['account_roles', `CREATE TABLE account_roles (
+    id ${id} PRIMARY KEY, account_id ${id} NOT NULL, name ${s(60)} NOT NULL, perms TEXT NOT NULL,
+    builtin INTEGER NOT NULL DEFAULT 0, FOREIGN KEY (account_id) REFERENCES accounts(id))`],
+  ['inventory_items', `CREATE TABLE inventory_items (
+    id ${id} PRIMARY KEY, account_id ${id} NOT NULL, uid ${s(80)}, serial ${s(80)}, mac ${s(40)},
+    model ${s(80)}, cond ${s(20)}, cost BIGINT, status ${s(20)} NOT NULL, notes TEXT, created_at BIGINT NOT NULL,
+    FOREIGN KEY (account_id) REFERENCES accounts(id))`],
+
+  // ---- sessions & resets (both realms) ----
+  ['password_resets', `CREATE TABLE password_resets (
+    token_hash ${s(64)} PRIMARY KEY, realm ${s(10)} NOT NULL, subject_id ${id} NOT NULL, expires_at BIGINT NOT NULL, used INTEGER NOT NULL DEFAULT 0)`],
+  ['sessions', `CREATE TABLE sessions (
+    token_hash ${s(64)} PRIMARY KEY, realm ${s(10)} NOT NULL, subject_id ${id} NOT NULL,
+    account_id ${s(40)}, mfa_ok INTEGER NOT NULL DEFAULT 0, mfa_pending INTEGER NOT NULL DEFAULT 0,
+    csrf ${s(64)} NOT NULL, ip ${s(64)}, ua ${s(200)}, created_at BIGINT NOT NULL, expires_at BIGINT NOT NULL)`],
+];
+
+export const INDEXES = [
+  'CREATE INDEX idx_event_ts ON event_log (ts)',
+  'CREATE INDEX idx_event_area ON event_log (area, ts)',
+  'CREATE INDEX idx_event_account ON event_log (account_id, ts)',
+  'CREATE INDEX idx_users_account ON account_users (account_id)',
+  'CREATE INDEX idx_inv_account ON inventory_items (account_id, status)',
+  'CREATE INDEX idx_sessions_exp ON sessions (expires_at)',
+  'CREATE INDEX idx_mail_status ON mail_queue (status)',
+];
+
+// Order matters when copying between databases (parents before children).
+export const COPY_ORDER = ['settings', 'host_admins', 'accounts', 'account_users', 'account_roles', 'inventory_items',
+  'firewall_rules', 'mail_queue', 'event_log', 'password_resets', 'sessions'];
+
+export async function migrate(db) {
+  await db.exec(`CREATE TABLE IF NOT EXISTS schema_migrations (id INTEGER PRIMARY KEY, applied_at BIGINT NOT NULL)`);
+  if (await db.get('SELECT id FROM schema_migrations WHERE id = 1')) return false;
+  for (const [name, ddl] of TABLES) { await db.exec(ddl); L.info('table.created', `Created table ${name}`); }
+  for (const ddl of INDEXES) await db.exec(ddl);
+  await db.run('INSERT INTO schema_migrations (id, applied_at) VALUES (1, ?)', [Date.now()]);
+  L.info('migrate.done', `Database schema v1 applied (${TABLES.length} tables, ${INDEXES.length} indexes)`);
+  return true;
+}

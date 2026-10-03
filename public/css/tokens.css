@@ -1,0 +1,209 @@
+/* ==========================================================================
+   TOKENS — the ONLY file allowed to contain raw colors, sizes, fonts, radii,
+   border widths, shadows, durations and z-indexes.
+   Every other stylesheet (and every script) must reference these variables.
+   To restyle the whole product, change values here and nothing else.
+   Enforced by test/css-standard.test.mjs.
+   ========================================================================== */
+:root {
+  /* ---- color: surfaces & text ---- */
+  --color-bg: #f5f5f7;
+  --color-surface: #ffffff;
+  --color-surface-alt: #fbfbfd;
+  --color-text: #1d1d1f;
+  --color-text-muted: #6e6e73;
+  --color-text-faint: #86868b;
+  --color-line: rgba(0, 0, 0, 0.08);
+  --color-line-strong: rgba(0, 0, 0, 0.14);
+  --color-code-bg: #f5f5f7;
+
+  /* ---- color: brand & status ---- */
+  --color-primary: #0071e3;
+  --color-primary-hover: #0077ed;
+  --color-primary-soft: rgba(0, 113, 227, 0.1);
+  --color-primary-text: #00479b;
+  --color-primary-on: #ffffff;
+  --color-success: #1d9d4a;
+  --color-success-soft: rgba(29, 157, 74, 0.12);
+  --color-success-switch: #34c759;
+  --color-danger: #d70015;
+  --color-danger-soft: rgba(215, 0, 21, 0.09);
+  --color-danger-soft-hover: rgba(215, 0, 21, 0.16);
+  --color-warning: #b25e00;
+  --color-warning-soft: rgba(255, 159, 10, 0.15);
+  --color-warning-text: #7a4300;
+  --color-warning-bar: #ff9f0a;
+  --color-accent: #8e5af7;
+
+  /* ---- color: neutral washes, controls, overlays ---- */
+  --color-neutral-soft: rgba(0, 0, 0, 0.06);
+  --color-neutral-soft-hover: rgba(0, 0, 0, 0.1);
+  --color-wash: rgba(0, 0, 0, 0.05);
+  --color-wash-faint: rgba(0, 0, 0, 0.02);
+  --color-track: rgba(0, 0, 0, 0.07);
+  --color-switch-off: rgba(120, 120, 128, 0.32);
+  --color-segment: rgba(120, 120, 128, 0.14);
+  --color-knob: #ffffff;
+  --color-scrim: rgba(0, 0, 0, 0.32);
+  --color-nav: rgba(251, 251, 253, 0.78);
+  --color-nav-mobile: rgba(251, 251, 253, 0.86);
+  --color-toast: rgba(29, 29, 31, 0.92);
+  --color-toast-text: #ffffff;
+  --color-toast-danger: rgba(215, 0, 21, 0.94);
+  --color-logo-on: #ffffff;
+  --gradient-logo: linear-gradient(145deg, #2997ff, #0058d0);
+  --color-qr-dark: #000000;
+  --color-qr-light: #ffffff;
+  --color-shadow-1: rgba(0, 0, 0, 0.04);
+  --color-shadow-2: rgba(0, 0, 0, 0.05);
+  --color-shadow-3: rgba(0, 0, 0, 0.14);
+  --color-shadow-knob: rgba(0, 0, 0, 0.25);
+  --color-shadow-logo: rgba(0, 88, 208, 0.3);
+
+  /* ---- typography ---- */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --text-micro: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-body: 15px;
+  --text-lead: 16px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-h2: 22px;
+  --text-h1-sm: 26px;
+  --text-stat-sm: 24px;
+  --text-stat: 28px;
+  --text-h1: 32px;
+  --text-code-input: 26px;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --leading-body: 1.47;
+  --leading-tight: 1.12;
+  --leading-code: 1.6;
+  --tracking-body: -0.01em;
+  --tracking-heading: -0.022em;
+  --tracking-brand: -0.02em;
+  --tracking-stat: -0.03em;
+  --tracking-code: 0.35em;
+  --tracking-none: 0;
+
+  /* ---- spacing scale ---- */
+  --space-0: 0;
+  --space-3xs: 2px;
+  --space-2xs: 4px;
+  --space-xs: 6px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+  --space-3xl: 32px;
+  --space-4xl: 40px;
+  --space-5xl: 56px;
+  --space-6xl: 80px;
+
+  /* ---- radii ---- */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-2xl: 26px;
+  --radius-pill: 999px;
+  --radius-round: 50%;
+
+  /* ---- borders & focus ---- */
+  --border-width: 1px;
+  --border-default: var(--border-width) solid var(--color-line);
+  --border-strong: var(--border-width) solid var(--color-line-strong);
+  --border-primary: var(--border-width) solid var(--color-primary);
+  --ring-width: 4px;
+  --focus-ring: 0 0 0 var(--ring-width) var(--color-primary-soft);
+
+  /* ---- shadows ---- */
+  --shadow-card: 0 1px 2px var(--color-shadow-1), 0 4px 16px var(--color-shadow-2);
+  --shadow-overlay: 0 10px 40px var(--color-shadow-3);
+  --shadow-knob: 0 2px 6px var(--color-shadow-knob);
+  --shadow-segment: 0 1px 4px var(--color-shadow-3);
+  --shadow-logo: 0 8px 20px var(--color-shadow-logo);
+
+  /* ---- component sizes ---- */
+  --control-h-sm: 32px;
+  --control-h-md: 40px;
+  --control-h: 44px;
+  --control-h-lg: 46px;
+  --control-h-xl: 56px;
+  --topbar-h: 52px;
+  --sidebar-w: 232px;
+  --content-max: 1240px;
+  --sticky-offset: 76px;
+  --auth-card-w: 420px;
+  --sheet-w: 480px;
+  --sheet-max-h: 90vh;
+  --switch-w: 51px;
+  --switch-h: 31px;
+  --switch-knob: 27px;
+  --switch-travel: 20px;
+  --icon-size: 18px;
+  --stroke-icon: 1.8;
+  --stroke-spark: 2;
+  --stat-pad-y: 18px;
+  --chip-h: 22px;
+  --meter-h: 8px;
+  --spark-h: 64px;
+  --qr-w: 190px;
+  --logo-sm: 24px;
+  --logo-lg: 56px;
+  --card-padding: var(--space-2xl);
+  --sheet-padding: var(--space-3xl);
+  --auth-padding-y: var(--space-4xl);
+  --field-padding-x: var(--space-md);
+  --btn-padding-x: var(--space-xl);
+  --btn-padding-x-sm: var(--space-lg);
+  --width-xs: 110px;
+  --width-sm: 240px;
+  --width-md: 320px;
+  --width-lg: 360px;
+  --pct-unit: 1%;
+  --viewport-full: 100vh;
+  --log-raw-max-h: 240px;
+
+  /* ---- glass & overlay effects ---- */
+  --blur-md: 20px;
+  --blur-sm: 6px;
+  --saturate: 180%;
+  --opacity-disabled: 0.5;
+  --opacity-icon: 0.85;
+  --opacity-spark: 0.25;
+  --opacity-none: 0;
+
+  /* ---- stacking ---- */
+  --z-raised: 2;
+  --z-nav: 20;
+  --z-side: 30;
+  --z-modal: 50;
+  --z-toast: 60;
+
+  /* ---- motion ---- */
+  --dur-fast: 0.15s;
+  --dur-base: 0.2s;
+  --dur-med: 0.3s;
+  --dur-slow: 0.45s;
+  --dur-meter: 0.6s;
+  --dur-view: 0.28s;
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --lift-sm: 8px;
+  --lift-md: 14px;
+  --lift-lg: 12px;
+  --scale-press: 0.97;
+  --scale-pop: 0.97;
+  --scale-small-switch: 0.8;
+
+  /* ---- embedded icons (data URIs cannot read variables, so their colors live here) ---- */
+  --icon-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%2386868b' stroke-width='2'%3E%3Cpath d='m1 1 5 5 5-5'/%3E%3C/svg%3E");
+
+  /* ---- breakpoints (documentation only: custom properties cannot be used inside @media) ----
+     --bp-phone: 640px   --bp-tablet: 820px   --bp-laptop: 980px                              */
+}

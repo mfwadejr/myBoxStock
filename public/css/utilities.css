@@ -1,0 +1,35 @@
+/* UTILITIES — single-purpose helpers so no markup or script ever needs an inline style. */
+.hide { display: none !important; }
+.row { display: flex; align-items: center; gap: var(--space-md); }
+.wrap { flex-wrap: wrap; }
+.stack { display: flex; flex-direction: column; gap: var(--space-md); }
+.spread { justify-content: space-between; }
+.grow { flex: 1; }
+.items-end { align-items: flex-end; }
+.inline { display: inline-block; }
+.muted { color: var(--color-text-muted); }
+.faint { color: var(--color-text-faint); }
+.danger-text { color: var(--color-danger); }
+.success-text { color: var(--color-success); }
+.mono { font-family: var(--font-mono); font-size: var(--text-sm); }
+.center { text-align: center; }
+.right { text-align: right; }
+.nowrap { white-space: nowrap; }
+.strong { font-weight: var(--weight-semibold); }
+.text-xs { font-size: var(--text-xs); }
+.text-sm { font-size: var(--text-sm); }
+.text-lg { font-size: var(--text-lg); }
+.text-stat { font-size: var(--text-stat); font-weight: var(--weight-semibold); }
+.text-plain { font-weight: var(--weight-regular); }
+.mt-0 { margin-top: var(--space-0); } .mt-xs { margin-top: var(--space-xs); } .mt-sm { margin-top: var(--space-sm); } .mt-md { margin-top: var(--space-md); }
+.mt-lg { margin-top: var(--space-lg); } .mt-xl { margin-top: var(--space-xl); } .mt-2xl { margin-top: var(--space-2xl); }
+.mb-0 { margin-bottom: var(--space-0); } .mb-sm { margin-bottom: var(--space-sm); } .mb-md { margin-bottom: var(--space-md); } .mb-lg { margin-bottom: var(--space-lg); } .mb-2xl { margin-bottom: var(--space-2xl); }
+.my-md { margin-top: var(--space-md); margin-bottom: var(--space-md); }
+.my-lg { margin-top: var(--space-lg); margin-bottom: var(--space-lg); }
+.pt-sm { padding-top: var(--space-sm); }
+.w-xs { width: var(--width-xs); }
+.maxw-sm { max-width: var(--width-sm); } .maxw-md { max-width: var(--width-md); } .maxw-lg { max-width: var(--width-lg); }
+.justify-between { justify-content: space-between; }
+.qr-center { margin: var(--space-xl) auto; width: var(--qr-w); }
+.switch-sm { transform: scale(var(--scale-small-switch)); display: inline-block; }
+.pad-y-sm { padding: var(--space-sm) var(--space-0); }

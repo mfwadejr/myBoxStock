@@ -1,0 +1,32 @@
+// ROUTES / app / users — the account's own team members.
+import express from 'express';
+import { need, tenantLog } from './context.mjs';
+import { hashPassword, passwordProblem } from '../../auth/password.mjs';
+import { destroyAllFor } from '../../auth/session.mjs';
+import { newId } from '../../core/ids.mjs';
+
+export function usersRoutes(db) {
+  const r = express.Router();
+  r.get('/', need('users.manage'), async (req, res) => res.json(await db.all('SELECT id, username, login, email, role, disabled, totp_enabled, last_login FROM account_users WHERE account_id = ? ORDER BY created_at', [req.subject.account_id])));
+  r.post('/', need('users.manage'), async (req, res) => {
+    const { username, email, role, password } = req.body;
+    if (!/^[a-z0-9._-]{3,30}$/i.test(username || '')) return res.status(400).json({ error: 'Username: 3–30 letters, numbers, . _ -' });
+    const bad = passwordProblem(password); if (bad) return res.status(400).json({ error: bad });
+    if (!await db.get('SELECT id FROM account_roles WHERE account_id = ? AND name = ?', [req.subject.account_id, role])) return res.status(400).json({ error: 'Unknown role.' });
+    const login = `${username.toLowerCase()}@${req.subject.account_code.toLowerCase()}`;
+    if (await db.get('SELECT id FROM account_users WHERE login = ?', [login])) return res.status(400).json({ error: 'That username is taken in your account.' });
+    const id = newId();
+    await db.run('INSERT INTO account_users (id, account_id, login, username, email, role, pw_hash, must_change, created_at) VALUES (?,?,?,?,?,?,?,1,?)', [id, req.subject.account_id, login, username.toLowerCase(), email || null, role, hashPassword(password), Date.now()]);
+    tenantLog(req, 'user.created', `${req.subject.login} added ${login} as ${role}`, { userId: id, role });
+    res.json({ ok: true, login });
+  });
+  r.post('/:uid/disabled', need('users.manage'), async (req, res) => {
+    if (req.params.uid === req.subject.id) return res.status(400).json({ error: 'You cannot disable yourself.' });
+    const off = !!req.body.disabled;
+    const n = await db.run('UPDATE account_users SET disabled = ? WHERE id = ? AND account_id = ?', [off ? 1 : 0, req.params.uid, req.subject.account_id]);
+    if (n.changes && off) await destroyAllFor(db, 'app', req.params.uid, 'disabled by account administrator');
+    if (n.changes) tenantLog(req, off ? 'user.disabled' : 'user.enabled', `${req.subject.login} ${off ? 'disabled' : 'enabled'} user ${req.params.uid}`, { userId: req.params.uid });
+    res.json({ ok: n.changes > 0 });
+  });
+  return r;
+}

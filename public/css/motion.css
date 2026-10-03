@@ -1,0 +1,9 @@
+/* MOTION — keyframes, view transitions, reduced-motion. Durations/easing from tokens. */
+@keyframes fade-in { from { opacity: var(--opacity-none); } }
+@keyframes pop-in { from { opacity: var(--opacity-none); transform: translateY(var(--lift-md)) scale(var(--scale-pop)); } }
+@keyframes rise-in { from { opacity: var(--opacity-none); transform: translateY(var(--lift-lg)); } }
+@keyframes view-in { from { opacity: var(--opacity-none); transform: translateY(var(--lift-sm)); } }
+.view { animation: view-in var(--dur-slow) var(--ease); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

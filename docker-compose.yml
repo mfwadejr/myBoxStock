@@ -1,0 +1,23 @@
+# Start here: embedded SQLite, one container.
+services:
+  myboxstock:
+    build: .
+    restart: unless-stopped        # required: restoring a backup restarts the app
+    ports: ["8080:8080"]
+    environment:
+      TRUST_PROXY: "1"             # set when behind Caddy / nginx / Traefik
+      SECURE_COOKIES: "1"          # set when served over HTTPS
+      PUBLIC_URL: "https://boxes.example.com"
+      # APP_SECRET: "long-random-string"   # optional; otherwise a key is generated in /data/secret.key
+    volumes: ["./data:/data"]
+
+# Scale-out option: PostgreSQL. Uncomment, then run `migrate-db` once (see README).
+#  myboxstock:
+#    environment:
+#      DB_CLIENT: postgres
+#      DATABASE_URL: postgres://mbs:change-me@db:5432/myboxstock
+#  db:
+#    image: postgres:17-alpine
+#    restart: unless-stopped
+#    environment: { POSTGRES_USER: mbs, POSTGRES_PASSWORD: change-me, POSTGRES_DB: myboxstock }
+#    volumes: ["./pgdata:/var/lib/postgresql/data"]
