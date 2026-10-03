@@ -1,33 +1,43 @@
 // APP / views / inventory — devices: search, filters, add/edit, archive, CSV import/export, stock levels. All data is decrypted in the browser.
 (() => {
   const { esc, toast, sheet, swap } = UI, A = AccountApp, C = A.commerce, F = A.fmt, S = A.store;
-  const COND = [['New', 'New'], ['Refurbished', 'Refurbished'], ['Used', 'Used']];
   const STATUSES = ['available', 'reserved', 'sold', 'returned', 'damaged', 'archived'].map(s => [s, C.STATUS[s][1]]);
   const FILTERS = [['active', 'Available'], ['all', 'All (not archived)'], ...STATUSES.filter(s => s[0] !== 'available')];
   const view = { q: '', status: 'active', model: '' };
   const LIMIT = 200;
 
-  const matches = (it, q) => !q || [it.uid, it.serial, it.mac, it.model, it.supplier, it.notes].some(v => String(v || '').toLowerCase().includes(q));
+  const valuesOf = (d) => [d.model, d.notes, ...C.fields().map(f => C.showVal(f, C.getVal(d, f)))];
+  const matches = (d, q) => !q || valuesOf(d).some(v => String(v || '').toLowerCase().includes(q));
   const modelsOf = () => [...new Set(S.all('item').map(e => (e.data.model || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   const reorderOf = (name) => S.all('model').find(m => m.data.name === name);
   const lowModels = () => modelsOf().map(name => { const r = reorderOf(name)?.data.reorder || 0, n = S.all('item').filter(e => e.data.model === name && e.data.status === 'available').length; return { name, n, r }; }).filter(m => m.r > 0 && m.n <= m.r);
 
+  // Fields marked "must be unique" cannot repeat across devices.
   function duplicate(data, selfId) {
-    for (const e of S.all('item')) { if (e.id === selfId || e.data.status === 'archived') continue;
-      for (const k of ['uid', 'serial', 'mac']) if (data[k] && e.data[k] && e.data[k].toLowerCase() === data[k].toLowerCase()) return `Another device already has that ${k === 'uid' ? 'UID' : k === 'mac' ? 'MAC address' : 'serial number'}.`; }
+    for (const f of C.fields().filter(x => x.unique)) { const v = String(C.getVal(data, f)).toLowerCase(); if (!v) continue;
+      for (const e of S.all('item')) if (e.id !== selfId && e.data.status !== 'archived' && String(C.getVal(e.data, f)).toLowerCase() === v) return `Another device already has that ${f.label}.`; }
     return null;
   }
-  const fields = (d = {}) => `<div class="grid g2 mt-md"><div class="field"><label>UID</label><input type="text" id="uid" value="${esc(d.uid || '')}" autocomplete="off"></div><div class="field"><label>Serial number</label><input type="text" id="serial" value="${esc(d.serial || '')}" autocomplete="off"></div>
-    <div class="field"><label>MAC address</label><input type="text" id="mac" value="${esc(d.mac || '')}" autocomplete="off"></div><div class="field"><label>Model</label><input type="text" id="model" value="${esc(d.model || '')}" autocomplete="off"></div>
-    <div class="field"><label>Condition</label>${UI.select.html({ id: 'cond', options: COND, value: d.cond || 'New' })}</div><div class="field"><label>Status</label>${UI.select.html({ id: 'status', options: STATUSES, value: d.status || 'available' })}</div>
-    <div class="field"><label>Cost</label><input type="number" id="cost" min="0" step="0.01" value="${esc(F.dollars(d.cost))}"></div><div class="field"><label>Selling price</label><input type="number" id="price" min="0" step="0.01" value="${esc(F.dollars(d.price))}"></div></div>
-    <div class="field"><label>Supplier</label><input type="text" id="supplier" value="${esc(d.supplier || '')}" autocomplete="off"></div><div class="field"><label>Notes</label><textarea id="notes">${esc(d.notes || '')}</textarea></div>`;
-  const read = (el, old = {}) => { const v = (id) => el.querySelector('#' + id).value.trim();
-    return { ...old, uid: v('uid'), serial: v('serial'), mac: v('mac'), model: v('model'), cond: UI.select.value(el.querySelector('#cond')), status: UI.select.value(el.querySelector('#status')), cost: F.cents(v('cost')), price: F.cents(v('price')), supplier: v('supplier'), notes: v('notes'), addedAt: old.addedAt || Date.now() }; };
-  const check = (d, selfId) => (!d.uid && !d.serial && !d.mac) ? 'Enter a UID, serial number or MAC address.' : duplicate(d, selfId);
+  const testBlock = (d = {}) => { const steps = C.steps(); if (!steps.length) return '';
+    return `<div class="tests"><div class="row spread"><h3>Test record</h3><button type="button" class="btn secondary small" id="allt">Mark all done</button></div>${steps.map(st => { const c = d.checks?.[st.key]; return `<label class="check"><input type="checkbox" data-step="${esc(st.key)}" ${c ? 'checked' : ''}><span>${esc(st.label)}${st.required ? ' <span class="faint">(required before sale)</span>' : ''}${c ? ` <span class="faint text-sm">— ${esc(F.day(c.at))}${c.by ? ', ' + esc(c.by) : ''}</span>` : ''}</span></label>`; }).join('')}<div class="field mt-md mb-0"><label>Test notes</label><textarea id="tnotes">${esc(d.testNotes || '')}</textarea></div></div>`; };
+  const fields = (d = {}) => `<div class="grid g2 mt-md"><div class="field"><label>Model</label><input type="text" id="model" value="${esc(d.model || '')}" autocomplete="off"></div>${C.fields().map(f => `<div class="field"><label>${esc(f.label)}</label>${C.fieldInput(f, C.getVal(d, f))}</div>`).join('')}
+    <div class="field"><label>Status</label>${UI.select.html({ id: 'status', options: STATUSES, value: d.status || 'available' })}</div><div class="field"><label>Cost</label><input type="number" id="cost" min="0" step="0.01" value="${esc(F.dollars(d.cost))}"></div><div class="field"><label>Selling price</label><input type="number" id="price" min="0" step="0.01" value="${esc(F.dollars(d.price))}"></div></div>
+    <div class="field"><label>Notes</label><textarea id="notes">${esc(d.notes || '')}</textarea></div>${testBlock(d)}`;
+  const read = (el, old = {}) => {
+    const v = (id) => el.querySelector('#' + id).value.trim(), d = { ...old, model: v('model'), status: UI.select.value(el.querySelector('#status')), cost: F.cents(v('cost')), price: F.cents(v('price')), notes: v('notes'), addedAt: old.addedAt || Date.now() };
+    for (const f of C.fields()) C.setVal(d, f, C.readInput(el, f));
+    if (el.querySelector('[data-step]')) {
+      const checks = {}; el.querySelectorAll('[data-step]').forEach(c => { if (c.checked) checks[c.dataset.step] = old.checks?.[c.dataset.step] || { by: A.me.username, at: Date.now() }; });
+      d.checks = checks; d.testNotes = el.querySelector('#tnotes').value.trim();
+    }
+    return d;
+  };
+  const check = (d, selfId) => { const look = C.lookupFields(); if (look.length && !look.some(f => C.getVal(d, f))) return `Enter at least one of: ${look.map(f => f.label).join(', ')}.`; return duplicate(d, selfId); };
+  const wireTests = (el) => el.querySelector('#allt')?.addEventListener('click', () => el.querySelectorAll('[data-step]').forEach(c => { c.checked = true; }));
 
   function addSheet(again) {
-    return sheet(`<h2>Add device</h2>${fields()}<div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn secondary" id="more">Save and add another</button><button class="btn" id="go">Save</button></div>`, { onMount: (el, close) => {
+    return sheet(`<h2>Add device</h2>${fields()}<div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn secondary" id="more">Save and add another</button><button class="btn" id="go">Save</button></div>`, { wide: true, onMount: (el, close) => {
+      wireTests(el);
       const save = async (more) => { try { const d = read(el); const bad = check(d); if (bad) return toast(bad, true); await S.commit({ puts: [{ type: 'item', data: d }] }); toast('Device added'); close(more ? 'more' : true); } catch (e) { toast(e.message, true); } };
       el.querySelector('#go').addEventListener('click', () => save(false)); el.querySelector('#more').addEventListener('click', () => save(true));
     } }).then(r => r === 'more' ? addSheet() : r);
@@ -35,8 +45,9 @@
   function editSheet(e) {
     const d = e.data, sold = d.status === 'sold', can = A.can('inventory.write');
     return sheet(`<h2>${esc(C.itemLabel(d))}</h2>${sold ? `<p class="sub">Sold ${esc(F.when(d.soldAt))}${S.get('sale', d.saleId) ? ` · receipt ${esc(S.get('sale', d.saleId).data.no)}` : ''}</p>` : ''}${fields(d)}
-      <div class="actions split"><div class="row">${can ? `<button class="btn danger small" id="del">Delete</button><button class="btn secondary small" id="arch">${d.status === 'archived' ? 'Restore' : 'Archive'}</button>` : ''}</div><div class="row"><button class="btn secondary" data-cancel>${can ? 'Cancel' : 'Close'}</button>${can ? '<button class="btn" id="go">Save</button>' : ''}</div></div>`, { onMount: (el, close) => {
-      if (!can) { el.querySelectorAll('input,textarea').forEach(i => { i.disabled = true; }); return; }
+      <div class="actions split"><div class="row">${can ? `<button class="btn danger small" id="del">Delete</button><button class="btn secondary small" id="arch">${d.status === 'archived' ? 'Restore' : 'Archive'}</button>` : ''}</div><div class="row"><button class="btn secondary" data-cancel>${can ? 'Cancel' : 'Close'}</button>${can ? '<button class="btn" id="go">Save</button>' : ''}</div></div>`, { wide: true, onMount: (el, close) => {
+      if (!can) { el.querySelectorAll('input,textarea,button.select-btn').forEach(i => { i.disabled = true; }); el.querySelector('#allt')?.remove(); return; }
+      wireTests(el);
       const run = async (fn) => { try { await fn(); close(true); } catch (er) { toast(er.message, true); } };
       el.querySelector('#go').addEventListener('click', () => run(async () => { const n = read(el, d); const bad = check(n, e.id); if (bad) throw new Error(bad); await S.commit({ puts: [{ type: 'item', id: e.id, data: n }] }); toast('Saved'); }));
       el.querySelector('#arch').addEventListener('click', () => run(async () => { await S.commit({ puts: [{ type: 'item', id: e.id, data: { ...d, status: d.status === 'archived' ? 'available' : 'archived' } }] }); }));
@@ -44,22 +55,27 @@
     } });
   }
 
-  const HEAD = ['uid', 'serial', 'mac', 'model', 'condition', 'cost', 'price', 'status', 'supplier', 'notes'];
+  const csvFields = () => [...C.fields().map(f => ({ key: f.key, label: f.label, f })), { key: 'model', label: 'Model' }, { key: 'cost', label: 'Cost' }, { key: 'price', label: 'Price' }, { key: 'status', label: 'Status' }, { key: 'notes', label: 'Notes' }];
   function exportCsv() {
-    const rows = S.all('item').map(e => { const d = e.data; return [d.uid, d.serial, d.mac, d.model, d.cond, F.dollars(d.cost), F.dollars(d.price), d.status, d.supplier, d.notes]; });
-    C.download(`inventory-${F.ymd(Date.now())}.csv`, C.toCsv(HEAD, rows)); toast(`Exported ${rows.length} devices`);
+    const cols = csvFields(), steps = C.steps();
+    const rows = S.all('item').map(e => { const d = e.data; return [...cols.map(c => c.f ? C.showVal(c.f, C.getVal(d, c.f)) : c.key === 'cost' || c.key === 'price' ? F.dollars(d[c.key]) : d[c.key]), ...steps.map(st => d.checks?.[st.key] ? 'yes' : ''), d.testNotes || '']; });
+    C.download(`inventory-${F.ymd(Date.now())}.csv`, C.toCsv([...cols.map(c => c.label), ...steps.map(st => st.label), 'Test notes'], rows)); toast(`Exported ${rows.length} devices`);
   }
   async function importCsv(file) {
-    const rows = C.parseCsv((await file.text()).replace(/^﻿/, '')); if (rows.length < 2) return toast('That file has no rows to import.', true);
-    const head = rows[0].map(h => h.trim().toLowerCase()), col = (n) => head.indexOf(n);
-    if (!['uid', 'serial', 'mac'].some(n => col(n) >= 0)) return toast('The first row must have column names such as uid, serial, mac, model, cost, price.', true);
-    const have = new Set(S.all('item').flatMap(e => [e.data.uid, e.data.serial, e.data.mac].filter(Boolean).map(x => x.toLowerCase()))), good = [], skipped = [];
-    const seenNow = new Set();
+    const rows = C.parseCsv((await file.text()).replace(/^\uFEFF/, '')); if (rows.length < 2) return toast('That file has no rows to import.', true);
+    const head = rows[0].map(h => h.trim().toLowerCase()), cols = csvFields(), colOf = (c) => { const names = [c.key, c.label.toLowerCase()]; if (c.key === 'cond') names.push('condition'); return head.findIndex(h => names.includes(h)); };
+    const look = C.lookupFields(); if (!look.some(f => colOf({ key: f.key, label: f.label }) >= 0)) return toast(`The first row must have column names, including at least one of: ${look.map(f => f.label).join(', ')}.`, true);
+    const have = new Map(); for (const f of C.fields().filter(x => x.unique)) have.set(f.key, new Set(S.all('item').map(e => String(C.getVal(e.data, f)).toLowerCase()).filter(Boolean)));
+    const good = [], skipped = [];
     for (const r of rows.slice(1)) {
-      const g = (n) => (col(n) >= 0 ? (r[col(n)] || '').trim() : ''), d = { uid: g('uid'), serial: g('serial'), mac: g('mac'), model: g('model'), cond: COND.some(c => c[0].toLowerCase() === g('condition').toLowerCase()) ? COND.find(c => c[0].toLowerCase() === g('condition').toLowerCase())[0] : 'New', cost: F.cents(g('cost')), price: F.cents(g('price')), status: STATUSES.some(s => s[0] === g('status').toLowerCase()) ? g('status').toLowerCase() : 'available', supplier: g('supplier'), notes: g('notes'), addedAt: Date.now() };
-      const keys = [d.uid, d.serial, d.mac].filter(Boolean).map(x => x.toLowerCase());
-      if (!keys.length || keys.some(k => have.has(k) || seenNow.has(k))) { skipped.push(r); continue; }
-      keys.forEach(k => seenNow.add(k)); good.push(d);
+      const d = { status: 'available', cost: 0, price: 0, addedAt: Date.now() };
+      for (const c of cols) { const i = colOf(c); if (i < 0) continue; const raw = (r[i] || '').trim(); if (c.f) { let v = raw; if (c.f.type === 'choice') v = (c.f.options || []).find(o => o.toLowerCase() === raw.toLowerCase()) || ''; if (c.f.type === 'bool') v = /^(y|yes|true|1)$/i.test(raw) ? true : /^(n|no|false|0)$/i.test(raw) ? false : ''; C.setVal(d, c.f, v); } else if (c.key === 'cost' || c.key === 'price') d[c.key] = F.cents(raw); else if (c.key === 'status') d.status = STATUSES.some(s => s[0] === raw.toLowerCase()) ? raw.toLowerCase() : 'available'; else d[c.key] = raw; }
+      if (!d.cond && C.fields().some(f => f.key === 'cond')) d.cond = C.fields().find(f => f.key === 'cond').options?.[0] || '';
+      const steps = C.steps(); steps.forEach(st => { const i = head.indexOf(st.label.toLowerCase()); if (i >= 0 && /^(y|yes|true|1|x)$/i.test((r[i] || '').trim())) (d.checks ||= {})[st.key] = { by: A.me.username, at: Date.now() }; });
+      const ti = head.indexOf('test notes'); if (ti >= 0 && r[ti]) d.testNotes = r[ti].trim();
+      const keys = C.fields().filter(f => f.unique).map(f => [f.key, String(C.getVal(d, f)).toLowerCase()]).filter(k => k[1]);
+      if (!look.some(f => C.getVal(d, f)) || keys.some(([k, v]) => have.get(k).has(v))) { skipped.push(r); continue; }
+      keys.forEach(([k, v]) => have.get(k).add(v)); good.push(d);
     }
     const ok = await sheet(`<h2>Import devices</h2><p class="sub">${good.length} device${good.length === 1 ? '' : 's'} will be added.${skipped.length ? ` ${skipped.length} row${skipped.length === 1 ? '' : 's'} will be skipped because they have no identifier or one that already exists.` : ''}</p><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go" ${good.length ? '' : 'disabled'}>Import ${good.length}</button></div>`, { onMount: (el, close) => el.querySelector('#go').addEventListener('click', async () => {
       try { for (let i = 0; i < good.length; i += 200) await S.commit({ puts: good.slice(i, i + 200).map(data => ({ type: 'item', data })) }); close(true); } catch (e) { toast(e.message, true); } }) });
@@ -68,13 +84,13 @@
 
   A.views.inventory = async (main) => {
     if (!A.can('inventory.read')) return swap(main, '<div class="page-head"><h1>Inventory</h1></div><div class="card"><div class="empty">Your user type does not include inventory.</div></div>');
-    const can = A.can('inventory.write'), items = S.all('item'), models = modelsOf(), low = lowModels();
+    const can = A.can('inventory.write'), items = S.all('item'), models = modelsOf(), low = lowModels(), look = C.lookupFields().slice(0, 3);
     const shown = items.filter(e => (view.status === 'active' ? e.data.status === 'available' : view.status === 'all' ? e.data.status !== 'archived' : e.data.status === view.status) && (!view.model || e.data.model === view.model) && matches(e.data, view.q.toLowerCase())).sort((a, b) => (b.data.addedAt || 0) - (a.data.addedAt || 0));
     swap(main, `<div class="page-head row spread wrap"><div><h1>Inventory</h1><p>${items.filter(e => e.data.status === 'available').length} available · ${items.length} total. Only your team can read this.</p></div>
       ${can ? '<div class="row"><button class="btn secondary" id="imp">Import CSV</button><button class="btn secondary" id="exp">Export CSV</button><button class="btn" id="add">Add device</button></div><input type="file" id="file" accept=".csv,text/csv">' : '<div class="row"><button class="btn secondary" id="exp">Export CSV</button></div>'}</div>
       ${low.length ? `<div class="banner mb-lg">${low.map(m => `${esc(m.name)}: ${m.n} left (reorder at ${m.r})`).join(' · ')}</div>` : ''}
-      <div class="toolbar"><input type="search" class="search" id="q" placeholder="Search UID, serial, MAC, model, notes" value="${esc(view.q)}" autocomplete="off">${UI.select.html({ id: 'st', options: FILTERS, value: view.status })}${UI.select.html({ id: 'md', options: [['', 'All models'], ...models.map(m => [m, m])], value: view.model })}</div>
-      <div class="card"><div class="tablewrap">${shown.length ? `<table><thead><tr><th>UID</th><th>Serial</th><th>MAC</th><th>Model</th><th>Condition</th><th class="right">Cost</th><th class="right">Price</th><th>Status</th></tr></thead><tbody>${shown.slice(0, LIMIT).map(e => { const d = e.data; return `<tr class="click" data-id="${esc(e.id)}"><td class="mono">${esc(d.uid || '—')}</td><td class="mono">${esc(d.serial || '—')}</td><td class="mono">${esc(d.mac || '—')}</td><td>${esc(d.model || '—')}</td><td>${esc(d.cond || '')}</td><td class="right">${esc(F.money(d.cost))}</td><td class="right">${esc(F.money(d.price))}</td><td>${C.statusChip(d.status)}</td></tr>`; }).join('')}</tbody></table>${shown.length > LIMIT ? `<p class="hint center my-md">Showing the first ${LIMIT} of ${shown.length}. Narrow the search to see the rest.</p>` : ''}` : `<div class="empty">${items.length ? 'No devices match.' : 'No devices yet.'}</div>`}</div></div>
+      <div class="toolbar"><input type="search" class="search" id="q" placeholder="Search ${esc(look.map(f => f.label).join(', ') || 'devices')}, model, notes" value="${esc(view.q)}" autocomplete="off">${UI.select.html({ id: 'st', options: FILTERS, value: view.status })}${UI.select.html({ id: 'md', options: [['', 'All models'], ...models.map(m => [m, m])], value: view.model })}</div>
+      <div class="card"><div class="tablewrap">${shown.length ? `<table><thead><tr>${look.map(f => `<th>${esc(f.label)}</th>`).join('')}<th>Model</th><th class="right">Cost</th><th class="right">Price</th><th>Tests</th><th>Status</th></tr></thead><tbody>${shown.slice(0, LIMIT).map(e => { const d = e.data; return `<tr class="click" data-id="${esc(e.id)}">${look.map(f => `<td class="mono">${esc(C.showVal(f, C.getVal(d, f)) || '—')}</td>`).join('')}<td>${esc(d.model || '—')}</td><td class="right">${esc(F.money(d.cost))}</td><td class="right">${esc(F.money(d.price))}</td><td>${C.testChip(d)}</td><td>${C.statusChip(d.status)}</td></tr>`; }).join('')}</tbody></table>${shown.length > LIMIT ? `<p class="hint center my-md">Showing the first ${LIMIT} of ${shown.length}. Narrow the search to see the rest.</p>` : ''}` : `<div class="empty">${items.length ? 'No devices match.' : 'No devices yet.'}</div>`}</div></div>
       ${models.length ? `<div class="card mt-lg"><h3>Stock levels</h3><div class="sub">Get a warning on this page when a model's available count drops to its reorder level (0 turns it off).</div><div class="tablewrap mt-sm"><table><thead><tr><th>Model</th><th class="right">Available</th><th>Reorder at</th><th></th></tr></thead><tbody>${models.map(m => { const n = items.filter(e => e.data.model === m && e.data.status === 'available').length, r = reorderOf(m)?.data.reorder || 0; return `<tr><td>${esc(m)}</td><td class="right">${n}</td><td><input type="number" min="0" step="1" class="w-xs" data-model="${esc(m)}" value="${r}" ${can ? '' : 'disabled'}></td><td>${r > 0 && n <= r ? '<span class="chip red">Low</span>' : ''}</td></tr>`; }).join('')}</tbody></table></div></div>` : ''}`);
     const again = () => A.views.inventory(main);
     main.querySelector('#q').addEventListener('input', (e) => { view.q = e.target.value; clearTimeout(again.t); again.t = setTimeout(async () => { const pos = e.target.selectionStart; await again(); const q = main.querySelector('#q'); q.focus(); q.setSelectionRange(pos, pos); }, 180); });

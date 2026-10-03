@@ -3,9 +3,9 @@
   const { esc } = UI;
 
   // Resolves with the value passed to close(), or null if dismissed (Esc, click outside, Cancel).
-  UI.sheet = (html, { onMount } = {}) => new Promise((resolve) => {
+  UI.sheet = (html, { onMount, wide = false } = {}) => new Promise((resolve) => {
     const scrim = document.createElement('div'); scrim.className = 'scrim';
-    scrim.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">${html}</div>`;
+    scrim.innerHTML = `<div class="sheet${wide ? ' wide' : ''}" role="dialog" aria-modal="true">${html}</div>`;
     const onKey = (e) => { if (e.key === 'Escape') close(null); };
     const close = (v = null) => { scrim.classList.add('closing'); setTimeout(() => scrim.remove(), 200); document.removeEventListener('keydown', onKey); resolve(v); };
     document.addEventListener('keydown', onKey);

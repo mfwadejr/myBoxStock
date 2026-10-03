@@ -1,6 +1,6 @@
 // APP / store — the account's records, decrypted in memory. Everything here happens in the browser; the server only holds ciphertext.
 (() => {
-  const TYPES = ['item', 'model', 'customer', 'sale'];
+  const TYPES = ['item', 'model', 'customer', 'sale', 'config'];
   const maps = () => Object.fromEntries(TYPES.map(t => [t, new Map()]));
   const S = AccountApp.store = { data: maps(), unreadable: 0 };
 
@@ -41,4 +41,29 @@
   };
   // Reads the latest changes before showing a page, so two people working at once see each other's updates.
   AccountApp.fresh = async () => { await S.load(); };
+})();
+
+// ---- the account's setup: which fields to track on a device, and the test checklist ----
+(() => {
+  const S = AccountApp.store, CONFIG_ID = 'config-inventory';
+  const DEFAULTS = {
+    fields: [
+      { key: 'uid', label: 'UID', type: 'text', core: true, enabled: true, lookup: true, unique: true, onSale: true },
+      { key: 'serial', label: 'Serial number', type: 'text', core: true, enabled: true, lookup: true, unique: true, onSale: true },
+      { key: 'mac', label: 'MAC address', type: 'text', core: true, enabled: true, lookup: true, unique: true, onSale: true },
+      { key: 'cond', label: 'Condition', type: 'choice', options: ['New', 'Refurbished', 'Used'], core: true, enabled: true, lookup: false, unique: false, onSale: false },
+      { key: 'supplier', label: 'Supplier', type: 'text', core: true, enabled: true, lookup: false, unique: false, onSale: false },
+    ],
+    steps: [
+      { key: 'inspected', label: 'Device inspected', required: false },
+      { key: 'batteries', label: 'Batteries installed in remote', required: false },
+      { key: 'remote', label: 'Remote tested', required: false },
+      { key: 'device', label: 'Device tested', required: false },
+      { key: 'upgrade', label: 'Code / firmware upgraded (if needed)', required: false },
+    ],
+  };
+  S.CONFIG_ID = CONFIG_ID;
+  S.defaults = () => JSON.parse(JSON.stringify(DEFAULTS));
+  S.config = () => { const c = S.get('config', CONFIG_ID)?.data; return c && Array.isArray(c.fields) && Array.isArray(c.steps) ? c : S.defaults(); };
+  S.saveConfig = (cfg) => S.commit({ puts: [{ type: 'config', id: CONFIG_ID, data: cfg }] });
 })();

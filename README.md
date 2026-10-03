@@ -41,7 +41,7 @@ Locked out of the host console: `node server.mjs reset-host-admin` (prints a tem
 - `docs/CSS-STANDARD.md` — the design-token rules and how they are enforced
 - `CHANGELOG.md` and `docs/RELEASING.md` — release notes for every version and the release process
 
-`npm test` runs 54 tests: sign-in/MFA/isolation/backups/firewall, logging behaviour, and the CSS + organization standards.
+`npm test` runs 55 tests: sign-in/MFA/isolation/backups/firewall, logging behaviour, and the CSS + organization standards.
 
 ## Status — phase 1
 Done: host console, auth + TOTP + recovery codes, account sign-up with unique IDs, user types, per-account isolation, backups & restore,

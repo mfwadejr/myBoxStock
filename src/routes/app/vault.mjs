@@ -5,9 +5,14 @@ import { can, need, tenantLog } from './context.mjs';
 import { fail } from '../../core/messages.mjs';
 import { validKeys, validWrapped, saveKeys, vaultEnabled } from '../../services/vault/keys.mjs';
 
-const TYPES = { item: 'inventory', model: 'inventory', customer: 'customers', sale: 'sales' };
+// config = the account's field and checklist setup. Anyone who can read business data can read it; only Administrators change it.
+const TYPES = { item: 'inventory', model: 'inventory', customer: 'customers', sale: 'sales', config: 'config' };
 const ID = /^[A-Za-z0-9_-]{8,64}$/, MAX_OPS = 500, MAX_BLOB = 64 * 1024;
-const allowed = (req, type, mode) => TYPES[type] && can(req.subject.perms, `${TYPES[type]}.${mode}`);
+const allowed = (req, type, mode) => {
+  if (!TYPES[type]) return false;
+  if (type === 'config') return mode === 'read' ? ['inventory.read', 'sales.read', 'customers.read'].some(p => can(req.subject.perms, p)) : can(req.subject.perms, 'users.manage');
+  return can(req.subject.perms, `${TYPES[type]}.${mode}`);
+};
 
 export function vaultRoutes(db) {
   const r = express.Router();

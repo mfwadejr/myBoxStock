@@ -7,7 +7,7 @@
   A.views.sales = async (main) => {
     if (!A.can('sales.read')) return swap(main, '<div class="page-head"><h1>Sales</h1></div><div class="card"><div class="empty">Your user type does not include sales.</div></div>');
     const from = day(f.from), to = day(f.to, true), q = f.q.toLowerCase();
-    const rows = S.all('sale').filter(e => (!from || e.data.ts >= from) && (!to || e.data.ts <= to) && (!q || [e.data.no, e.data.customerName, ...e.data.items.flatMap(i => [i.uid, i.serial, i.model])].some(v => String(v || '').toLowerCase().includes(q)))).sort((a, b) => b.data.ts - a.data.ts);
+    const rows = S.all('sale').filter(e => (!from || e.data.ts >= from) && (!to || e.data.ts <= to) && (!q || [e.data.no, e.data.customerName, ...e.data.items.flatMap(i => [i.uid, i.serial, i.mac, i.model, ...(i.fields || []).map(x => x.value)])].some(v => String(v || '').toLowerCase().includes(q)))).sort((a, b) => b.data.ts - a.data.ts);
     const live = rows.filter(e => !e.data.voided), revenue = live.reduce((t, e) => t + e.data.total, 0), profit = live.reduce((t, e) => t + e.data.total - (e.data.cost || 0), 0);
     swap(main, `<div class="page-head row spread wrap"><div><h1>Sales</h1><p>Receipts and totals. Only your team can read this.</p></div><div class="row"><button class="btn secondary" id="exp">Export CSV</button>${A.can('sales.write') ? '<a class="btn" href="#/sell">Quick sale</a>' : ''}</div></div>
       <div class="toolbar"><input type="search" class="search" id="q" placeholder="Search receipt number, customer, device" value="${esc(f.q)}" autocomplete="off"><input type="date" id="from" value="${esc(f.from)}" aria-label="From"><input type="date" id="to" value="${esc(f.to)}" aria-label="To"></div>

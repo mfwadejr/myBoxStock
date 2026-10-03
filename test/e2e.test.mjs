@@ -24,15 +24,21 @@ test('browser: setup, add, sell, sign out, unlock, recovery key, CSV import', { 
     await page.waitForSelector('.recovery-key'); const key = (await page.textContent('.recovery-key')).trim(); assert.equal(key.length, 52);
     assert.ok(await page.isDisabled('#go'), 'cannot continue before confirming the key is saved'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');
 
+    // Settings: track a custom detail and show it on the sale
+    await page.goto(srv.base + '/app/#/settings'); await page.waitForSelector('#addf'); await page.click('#addf'); await page.fill('#n', 'Firmware'); await page.click('.sheet #go'); await page.waitForSelector('[data-k=fs]');
+    await page.locator('[data-k=fs]').last().check(); await page.click('#save'); await page.waitForTimeout(600);
+
     await page.goto(srv.base + '/app/#/inventory'); await page.click('#add');
-    await page.fill('#uid', 'UID-1001'); await page.fill('#model', 'V6 Box'); await page.fill('#cost', '40'); await page.fill('#price', '75'); await page.click('#more'); await page.waitForTimeout(500);
-    await page.fill('#uid', 'UID-1002'); await page.fill('#model', 'V6 Box'); await page.fill('#cost', '40'); await page.fill('#price', '75'); await page.click('#go'); await page.waitForSelector('tr.click');
+    await page.fill('#f_uid', 'UID-1001'); await page.fill('#model', 'V6 Box'); await page.fill('#cost', '40'); await page.fill('#price', '75'); await page.fill('input[id^="f_c"]', 'FW 2.4'); await page.click('#allt'); await page.fill('#tnotes', 'Remote paired and tested'); await page.click('#more'); await page.waitForTimeout(500);
+    await page.fill('#f_uid', 'UID-1002'); await page.fill('#model', 'V6 Box'); await page.fill('#cost', '40'); await page.fill('#price', '75'); await page.click('#go'); await page.waitForSelector('tr.click');
     assert.equal(await page.locator('tr.click').count(), 2);
 
     await page.goto(srv.base + '/app/#/sell'); await page.waitForSelector('#scan');
     await page.fill('#scan', 'uid-1001'); await page.press('#scan', 'Enter'); await page.fill('#scan', 'UID-1002'); await page.press('#scan', 'Enter'); await page.fill('#scan', 'NOPE'); await page.press('#scan', 'Enter');
     assert.match(await page.textContent('#msg'), /Nothing in your inventory matches/); assert.equal(await page.locator('.cart-line').count(), 2); assert.match(await page.textContent('#tot'), /150\.00/);
-    await page.click('[data-mode=new]'); await page.fill('#nn', 'Zelda Fitz'); await page.click('#done'); await page.waitForSelector('.receipt'); assert.match(await page.textContent('.receipt'), /Zelda Fitz/); await page.click('[data-cancel]');
+    await page.click('[data-mode=new]'); await page.fill('#nn', 'Zelda Fitz'); await page.click('#done'); await page.waitForSelector('.receipt'); assert.match(await page.textContent('.receipt'), /Zelda Fitz/); assert.match(await page.textContent('.receipt'), /Firmware: FW 2\.4/);
+    assert.doesNotMatch(await page.textContent('.receipt'), /Remote tested/); await page.check('#wt'); assert.match(await page.textContent('.receipt'), /✓ Remote tested/); assert.match(await page.textContent('.receipt'), /Remote paired and tested/);
+    assert.match(await page.textContent('.receipt'), /— Device inspected/, 'the second device was never tested and the record says so'); await page.click('[data-cancel]');
     await page.goto(srv.base + '/app/#/inventory'); await page.waitForSelector('.empty'); // both devices are sold, so none show as available
 
     // what the server holds is unreadable

@@ -7,7 +7,7 @@
 
   function lookup(code) {
     const c = code.trim().toLowerCase(); if (!c) return null;
-    return S.all('item').find(e => [e.data.uid, e.data.serial, e.data.mac].some(v => v && v.toLowerCase() === c)) || null;
+    const look = C.lookupFields(); return S.all('item').find(e => look.some(f => String(C.getVal(e.data, f)).toLowerCase() === c)) || null;
   }
   function add(code) {
     const e = lookup(code);
@@ -27,7 +27,9 @@
       if (!A.can('customers.write')) return toast('Your user type cannot add customers.', true);
       const id = Vault.newId(); customer = { id, data: { name: st.newc.name.trim(), phone: st.newc.phone.trim(), email: st.newc.email.trim(), notes: '', createdAt: Date.now() } }; puts.push({ type: 'customer', id, data: customer.data });
     }
-    const now = Date.now(), saleId = Vault.newId(), items = st.cart.map(l => { const it = S.get('item', l.id).data; return { id: l.id, uid: it.uid, serial: it.serial, model: it.model, price: l.price, cost: it.cost || 0 }; });
+    const untested = st.cart.map(l => S.get('item', l.id).data).filter(d => C.testState(d).missingRequired.length);
+    if (untested.length && !await UI.confirmBox({ title: 'Required checks not done', body: `${untested.map(d => esc(C.itemLabel(d))).join(', ')} ${untested.length === 1 ? 'has' : 'have'} required test steps that are not ticked. Sell anyway? The sale record will show what was and was not done.`, confirmLabel: 'Sell anyway' })) return;
+    const now = Date.now(), saleId = Vault.newId(), items = st.cart.map(l => { const it = S.get('item', l.id).data; return { id: l.id, uid: it.uid, serial: it.serial, mac: it.mac, model: it.model, fields: C.fieldSnapshot(it), inspection: C.inspectionSnapshot(it), price: l.price, cost: it.cost || 0 }; });
     const sale = { no: C.newReceiptNo(), ts: now, customerId: customer?.id || null, customerName: customer?.data.name || '', customerEmail: customer?.data.email || '', items, total: total(), cost: items.reduce((t, i) => t + i.cost, 0), payment: st.payment, notes: st.notes.trim() };
     puts.push({ type: 'sale', id: saleId, data: sale });
     for (const l of st.cart) { const cur = S.get('item', l.id); puts.push({ type: 'item', id: l.id, data: { ...cur.data, status: 'sold', soldAt: now, saleId, price: cur.data.price || l.price } }); }
@@ -38,9 +40,9 @@
   function render(main) {
     if (!A.can('sales.write')) return swap(main, '<div class="page-head"><h1>Quick sale</h1></div><div class="card"><div class="empty">Your user type cannot record sales.</div></div>');
     const picked = st.cust && S.get('customer', st.cust);
-    swap(main, `<div class="page-head"><h1>Quick sale</h1><p>Scan or type a UID, serial or MAC, set the price, and finish.</p></div>
-      <div class="sell"><div><div class="card"><input type="text" id="scan" class="scan" placeholder="Scan or type a UID, serial or MAC and press Enter" autocomplete="off" autocapitalize="none"><div class="hint mt-sm ${st.msg ? 'danger-text' : ''}" id="msg">${esc(st.msg)}</div></div>
-        <div class="card"><h3>This sale</h3><div id="cart">${st.cart.length ? st.cart.map(l => { const it = S.get('item', l.id).data; return `<div class="cart-line"><div><div class="strong">${esc(it.model || 'Device')}</div><div class="mono muted">${esc(it.uid || it.serial || it.mac)}</div></div><input type="number" class="price" min="0" step="0.01" data-line="${esc(l.id)}" value="${esc(F.dollars(l.price) || '0.00')}" aria-label="Price"><button class="btn secondary small" data-rm="${esc(l.id)}" aria-label="Remove">✕</button></div>`; }).join('') : '<div class="empty">Nothing added yet.</div>'}</div></div></div>
+    swap(main, `<div class="page-head"><h1>Quick sale</h1><p>Scan or type a device identifier, set the price, and finish.</p></div>
+      <div class="sell"><div><div class="card"><input type="text" id="scan" class="scan" placeholder="Scan or type a ${esc(C.lookupFields().map(f => f.label).join(', ') || 'device identifier')} and press Enter" autocomplete="off" autocapitalize="none"><div class="hint mt-sm ${st.msg ? 'danger-text' : ''}" id="msg">${esc(st.msg)}</div></div>
+        <div class="card"><h3>This sale</h3><div id="cart">${st.cart.length ? st.cart.map(l => { const it = S.get('item', l.id).data; return `<div class="cart-line"><div><div class="strong">${esc(it.model || 'Device')}</div><div class="mono muted">${esc(C.lookupFields().map(f => C.getVal(it, f)).filter(Boolean).join(' · '))}</div><div class="mt-xs">${C.testChip(it)}${C.testState(it).missingRequired.length ? ' <span class="chip red">Required checks missing</span>' : ''}</div></div><input type="number" class="price" min="0" step="0.01" data-line="${esc(l.id)}" value="${esc(F.dollars(l.price) || '0.00')}" aria-label="Price"><button class="btn secondary small" data-rm="${esc(l.id)}" aria-label="Remove">✕</button></div>`; }).join('') : '<div class="empty">Nothing added yet.</div>'}</div></div></div>
         <div><div class="card"><h3>Customer</h3><div class="seg wide mt-sm" role="tablist"><button type="button" data-mode="walk" class="${st.mode === 'walk' ? 'on' : ''}">Walk-in</button><button type="button" data-mode="existing" class="${st.mode === 'existing' ? 'on' : ''}">Existing</button><button type="button" data-mode="new" class="${st.mode === 'new' ? 'on' : ''}">New</button></div>
           ${st.mode === 'existing' ? (picked ? `<div class="picked mt-md"><span>${esc(picked.data.name)}${picked.data.phone ? ' · ' + esc(picked.data.phone) : ''}</span><button class="btn secondary small" id="chg">Change</button></div>` : '<div class="mt-md"><input type="search" id="cs" placeholder="Search name, phone or email" autocomplete="off"><ul class="pick-list" id="cl" hidden></ul></div>') : ''}
           ${st.mode === 'new' ? `<div class="mt-md"><div class="field"><label>Name</label><input type="text" id="nn" value="${esc(st.newc.name)}"></div><div class="grid g2"><div class="field"><label>Phone</label><input type="text" id="np" value="${esc(st.newc.phone)}"></div><div class="field"><label>Email</label><input type="email" id="ne" value="${esc(st.newc.email)}"></div></div></div>` : ''}</div>

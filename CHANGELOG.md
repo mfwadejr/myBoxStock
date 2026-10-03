@@ -3,6 +3,18 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.5.0] - 2026-10-03
+
+### Added
+- Settings page for account Administrators. Choose which device details to track (UID, serial number, MAC address, condition, supplier, plus any you add yourself — text, number, date, yes/no or a choice list such as "State"). For each detail: track it, look it up in Quick sale, require it to be unique, and copy it onto the sale record.
+- Test checklist per device. Define the steps you perform (inspected, batteries in remote, remote tested, device tested, code upgraded — all editable, optionally required before sale). In Inventory, tick the steps and add test notes; who did it and when is recorded automatically. "Mark all done" is one click.
+- The sale keeps a permanent copy of the device details and the test record as they were at the time, so if a customer says a device did not work you can show what was checked. Receipts can include the test record (checkbox) for printing or email; Quick sale warns when required steps are not ticked.
+- Inventory list shows your chosen identifiers and a Tested chip; search, CSV import and export follow your fields and checklist.
+
+### Changed
+- Quick sale looks devices up by whichever details you marked for lookup, not just UID, serial and MAC.
+- The account's field and checklist setup is stored encrypted like the rest of the data; everyone in the account can read it, only Administrators can change it.
+
 ## [0.4.0] - 2026-10-03
 
 ### Added

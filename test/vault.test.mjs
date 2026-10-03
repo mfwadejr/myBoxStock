@@ -87,6 +87,17 @@ test('team hand-over: new person unlocks with the temporary password and keeps a
   assert.equal((await vc.req('POST', '/api/app/change-password', { current: temp, next, keys: own })).status, 200);
 });
 
+test('setup (field and checklist configuration): everyone can read it, only Administrators can change it', async () => {
+  const cfg = { fields: [{ key: 'uid', label: 'UID' }], steps: [] }, id = 'config-inventory';
+  assert.equal((await putRecord(admin, keys.adk, 'config', cfg, id)).status, 200);
+  const temp = 'Temp-pass-12345', c = mk(); let r = await admin.req('POST', '/api/app/users', { username: 'cora', email: 'c@example.com', role: 'Standard', password: temp, keys: await Vault.keysFor(temp, keys.adk) });
+  await c.req('POST', '/api/app/login', { login: r.data.login, password: temp }); const next = 'Brand-new-pass-678', adk = await unlockFrom(c, temp);
+  await c.req('POST', '/api/app/change-password', { current: temp, next, keys: await Vault.keysFor(next, adk) });
+  assert.ok((await readRecords(c, adk)).items.some(x => x.type === 'config'), 'a Standard user can read the setup');
+  assert.equal((await putRecord(c, adk, 'config', { ...cfg, steps: [{ key: 'x', label: 'x' }] }, id, 1)).status, 403, 'but cannot change it');
+  assert.equal((await putRecord(admin, keys.adk, 'config', { ...cfg, steps: [{ key: 'x', label: 'x' }] }, id, 1)).status, 200);
+});
+
 test('forgotten password: link reset removes the old key; the recovery key or an Administrator restores access', async () => {
   const temp = 'Temp-pass-12345';
   let r = await admin.req('POST', '/api/app/users', { username: 'lou', email: 'l@example.com', role: 'Standard', password: temp, keys: await Vault.keysFor(temp, keys.adk) });
