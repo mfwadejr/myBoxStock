@@ -102,7 +102,7 @@ test('log areas used in code exist, and routes do not import across realms', () 
     for (const m of s.matchAll(/hostLog\([^)]*area:\s*'(\w+)'/g)) if (!AREAS[m[1]]) unknown.push(`${rel(f)}: ${m[1]}`);
   }
   assert.deepEqual(unknown, []);
-  const crossed = walk(path.join(ROOT, 'src', 'routes', 'host'), p => p.endsWith('.mjs')).filter(f => /routes\/app|inventory_items/.test(read(f).split('\n').filter(l => !l.trim().startsWith('//')).join('\n').replace(/DELETE FROM inventory_items[^\n]*/g, ''))).map(rel);
+  const crossed = walk(path.join(ROOT, 'src', 'routes', 'host'), p => p.endsWith('.mjs')).filter(f => /routes\/app|inventory_items|(FROM|INTO|UPDATE) records/.test(read(f).split('\n').filter(l => !l.trim().startsWith('//')).join('\n').replace(/DELETE FROM inventory_items[^\n]*/g, '').replace(/COUNT\(\*\) AS n FROM records[^\n]*/g, ''))).map(rel);
   assert.deepEqual(crossed, [], 'host routes must not read tenant business tables');
 });
 

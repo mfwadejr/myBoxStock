@@ -12,6 +12,7 @@ test.before(async () => {
   code = r.data.accountCode;
   await alice.req('POST', '/api/app/login', { login: r.data.login, password: 'wrong-password-1' });
   await alice.req('POST', '/api/app/login', { login: r.data.login, password: 'Sup3rSecretPass!' });
+  await new Promise(r => setTimeout(r, 1500)); // log rows are written to the database in small batches
 });
 test.after(() => srv?.stop());
 const logs = async (qs) => (await host.req('GET', '/api/host/logs?' + qs)).data;

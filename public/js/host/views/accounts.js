@@ -29,6 +29,8 @@
     await sheet(`<div class="row spread"><h2>${esc(a.business_name)}</h2><span class="chip ${a.status === 'active' ? 'green' : 'red'}">${esc(a.status)}</span></div>
       <p class="muted"><span class="mono">${esc(a.account_code)}</span> · created ${fmt.date(a.created_at)}</p>
       <div class="banner blue my-md">You can help with sign-in and security. Business data is not visible to host administrators.</div>
+      <h3 class="mt-sm">Data</h3>
+      <div class="setting"><div><div class="setting-title">${d.data.encrypted ? '<span class="chip green">Encrypted</span>' : '<span class="chip amber">Not set up yet</span>'}</div><div class="setting-desc">${d.data.recordCount} stored record${d.data.recordCount === 1 ? '' : 's'}. Their contents are unreadable to you by design — only the account's own people can open them.</div></div></div>
       <h3 class="mt-sm">Plan</h3>
       <div class="setting"><div><div class="setting-title">${planChip(a.billing)} ${a.plan_note ? `<span class="muted text-sm">${esc(a.plan_note)}</span>` : ''}</div>
         <div class="setting-desc">${a.billing.endsAt ? `${a.billing.canWrite ? 'Ends' : 'Ended'} ${fmt.date(a.billing.endsAt)}` : a.plan === 'free' ? 'Free account — never expires' : 'No end date'}${a.billing.canWrite ? '' : ' · account is read-only'}</div></div>

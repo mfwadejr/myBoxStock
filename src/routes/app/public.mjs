@@ -9,6 +9,7 @@ import { getSetting } from '../../db/settings.mjs';
 import { config } from '../../core/config.mjs';
 import { DEFAULT_ROLES } from './context.mjs';
 import { trialDays, recordEvent } from '../../services/billing/index.mjs';
+import { dropKeys } from '../../services/vault/keys.mjs';
 import { DAY } from '../../services/billing/state.mjs';
 
 export function publicRoutes(db) {
@@ -59,6 +60,7 @@ export function publicRoutes(db) {
       await t.run('UPDATE password_resets SET used = 1 WHERE token_hash = ?', [row.token_hash]);
       await t.run('UPDATE account_users SET pw_hash = ?, must_change = 0 WHERE id = ?', [hashPassword(req.body.password), row.subject_id]);
       await t.run("DELETE FROM sessions WHERE realm = 'app' AND subject_id = ?", [row.subject_id]);
+      await dropKeys(t, row.subject_id); // the old key was wrapped under the old password; access comes back with the recovery key or an Administrator
     });
     log('auth', 'info', 'reset.completed', 'Password reset completed from an emailed link (all sessions ended)', { ip, data: { realm: 'app', subjectId: row.subject_id } });
     res.json({ ok: true });

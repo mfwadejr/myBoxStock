@@ -8,6 +8,8 @@
   let cfg = { siteName: 'myBoxStock', signupsEnabled: true, trialDays: 14 };
 
   const authShell = (inner) => { root.innerHTML = `<div class="authwrap"><div class="authcard"><div class="logo">▦</div>${inner}</div></div>`; };
+  AccountApp.root = root; AccountApp.authShell = authShell; AccountApp.pw = null; // the password typed at sign-in, held only until the data is unlocked
+  AccountApp.signOut = async () => { try { await AccountApp.api('POST', '/logout'); } catch {} AccountApp.me = null; AccountApp.pw = null; AccountApp.vault.clear(); loginScreen(); };
   const onSubmit = (sel, fn) => root.querySelector(sel).addEventListener('submit', (e) => { e.preventDefault(); busy(root.querySelector(sel + ' button.block'), async () => { try { await fn(); } catch (er) { toast(er.message, true); } }); });
   const val = (id) => root.querySelector(id).value;
 
@@ -18,7 +20,7 @@
   async function boot() {
     try { cfg = await AccountApp.api('GET', '/public-config'); } catch {}
     const m = location.hash.match(/^#\/reset\/(.+)$/); if (m) return resetScreen(m[1]);
-    try { const r = await AccountApp.api('GET', '/me'); UI.setCsrf(r.csrf); AccountApp.me = r.user; if (r.mfaPending) return mfaScreen(); if (r.mustChange) return changePwScreen(); return shell(); }
+    try { const r = await AccountApp.api('GET', '/me'); UI.setCsrf(r.csrf); AccountApp.me = r.user; AccountApp.vault.state = r.vault; if (r.mfaPending) return mfaScreen(); if (r.mustChange) return changePwScreen(); if (!await AccountApp.vault.gate(r, AccountApp.pw)) return; AccountApp.pw = null; await AccountApp.store.load(); return shell(); }
     catch { loginScreen(); }
   }
   function loginScreen() {
@@ -29,7 +31,7 @@
     wireSwitch();
     root.querySelector('#fg').addEventListener('click', (e) => { e.preventDefault(); forgotScreen(); });
     root.querySelector('#su')?.addEventListener('click', (e) => { e.preventDefault(); signupScreen(); });
-    onSubmit('#f', async () => { const r = await AccountApp.api('POST', '/login', { login: val('#l'), password: val('#p') }); UI.setCsrf(r.csrf); if (r.mfa) return mfaScreen(); await boot(); });
+    onSubmit('#f', async () => { AccountApp.pw = val('#p'); let r; try { r = await AccountApp.api('POST', '/login', { login: val('#l'), password: AccountApp.pw }); } catch (e) { AccountApp.pw = null; throw e; } UI.setCsrf(r.csrf); if (r.mfa) return mfaScreen(); await boot(); });
   }
   function mfaScreen() {
     authShell(`<h1>Two-factor code</h1><p class="lead">Enter the 6-digit code from your authenticator app, or a recovery code.</p>
@@ -39,7 +41,7 @@
   function changePwScreen() {
     authShell(`<h1>Choose a new password</h1><p class="lead">Replace your temporary password to continue.</p>
       <form id="f"><div class="field"><label>Current password</label><input type="password" id="a" autocomplete="current-password" required></div><div class="field"><label>New password</label><input type="password" id="b" autocomplete="new-password" required><div class="hint">At least 10 characters with letters and numbers.</div></div><button class="btn block">Update password</button></form>`);
-    onSubmit('#f', async () => { await AccountApp.api('POST', '/change-password', { current: val('#a'), next: val('#b') }); await boot(); });
+    onSubmit('#f', async () => { const keys = await AccountApp.vault.keysForNewPassword(val('#a'), val('#b')); await AccountApp.api('POST', '/change-password', { current: val('#a'), next: val('#b'), keys }); AccountApp.pw = val('#b'); await boot(); });
   }
   function signupScreen() {
     authShell(`${modeSwitch('signup')}<h1>Create your account</h1><p class="lead">Track inventory and sales for your business. Free for ${esc(cfg.trialDays)} days — no card needed.</p>
@@ -66,19 +68,21 @@
 
   const billingChip = (b) => b.state === 'trial' ? `<span class="chip blue">Free trial · ${b.daysLeft} day${b.daysLeft === 1 ? '' : 's'} left</span>`
     : !b.canWrite ? '<span class="chip red">Trial ended — read-only</span>' : '';
-  const NAV = [['inventory', 'Inventory'], ['team', 'Team'], ['activity', 'Activity'], ['security', 'Security']];
+  // [key, label, permission needed to see it]
+  const NAV = [['home', 'Home', null], ['sell', 'Quick sale', 'sales.write'], ['inventory', 'Inventory', 'inventory.read'], ['customers', 'Customers', 'customers.read'], ['sales', 'Sales', 'sales.read'], ['team', 'Team', 'users.manage'], ['activity', 'Activity', 'users.manage'], ['security', 'Security', null]];
+  AccountApp.showShell = () => shell();
   function shell() {
     const me = AccountApp.me;
     root.innerHTML = `<header class="topbar"><div class="brand"><span class="brand-mark">▦</span>${esc(me.businessName)}</div><div class="grow"></div>${billingChip(me.billing)}<span class="muted text-sm">${esc(me.username)} · ${esc(me.role)}</span><button class="btn secondary small" id="out">Sign out</button></header>
-      <div class="shell"><nav class="side">${NAV.filter(([k]) => (k !== 'team' && k !== 'activity') || AccountApp.can('users.manage')).map(([k, l]) => `<a href="#/${k}" data-k="${k}"><span>${l}</span></a>`).join('')}</nav><main class="main" id="main"></main></div>`;
-    root.querySelector('#out').addEventListener('click', async () => { await AccountApp.api('POST', '/logout'); AccountApp.me = null; loginScreen(); });
+      <div class="shell"><nav class="side">${NAV.filter(([, , p]) => !p || AccountApp.can(p)).map(([k, l]) => `<a href="#/${k}" data-k="${k}"><span>${l}</span></a>`).join('')}</nav><main class="main" id="main"></main></div>`;
+    root.querySelector('#out').addEventListener('click', () => AccountApp.signOut());
     window.removeEventListener('hashchange', AccountApp.route); window.addEventListener('hashchange', AccountApp.route); AccountApp.route();
   }
   AccountApp.route = async () => {
-    const k = (location.hash.replace(/^#\//, '') || 'inventory').split('/')[0], key = AccountApp.views[k] ? k : 'inventory';
+    const k = (location.hash.replace(/^#\//, '') || 'home').split('/')[0], key = AccountApp.views[k] ? k : 'home';
     root.querySelectorAll('.side a').forEach(a => a.classList.toggle('active', a.dataset.k === key));
     const main = root.querySelector('#main'); if (!main) return;
-    try { await AccountApp.views[key](main); } catch (e) { if (e.status === 401) return boot(); swap(main, `<div class="card"><p class="banner red">${esc(e.message)}</p></div>`); }
+    try { await AccountApp.fresh(); await AccountApp.views[key](main); } catch (e) { if (e.status === 401) return boot(); swap(main, `<div class="card"><p class="banner red">${esc(e.message)}</p></div>`); }
   };
   boot();
 })();

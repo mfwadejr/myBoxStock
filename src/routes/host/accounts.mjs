@@ -34,7 +34,10 @@ export function accountsRoutes(db) {
     const users = await db.all('SELECT id, username, login, email, role, disabled, totp_enabled, must_change, created_at, last_login FROM account_users WHERE account_id = ? ORDER BY created_at', [a.id]);
     const events = await db.all("SELECT ts, actor, event, message FROM event_log WHERE account_id = ? AND area IN ('auth','accounts') ORDER BY ts DESC LIMIT 25", [a.id]);
     const history = await db.all('SELECT ts, kind, from_plan, to_plan, actor, note FROM billing_events WHERE account_id = ? ORDER BY ts DESC LIMIT 25', [a.id]);
-    res.json({ account: { ...a, billing: billingState(a) }, users, events, history });
+    // What the Host can know about stored data: whether it is encrypted and how many opaque records exist. Never what they contain.
+    const enc = await db.get('SELECT confirmed_at FROM account_recovery WHERE account_id = ?', [a.id]);
+    const n = await db.get('SELECT COUNT(*) AS n FROM records WHERE account_id = ?', [a.id]);
+    res.json({ account: { ...a, billing: billingState(a) }, users, events, history, data: { encrypted: !!enc, recordCount: Number(n.n) } });
   });
 
   r.post('/:id/status', async (req, res) => {
@@ -52,7 +55,7 @@ export function accountsRoutes(db) {
     await db.tx(async (t) => { // write-only erase; nothing is read
       await t.run("DELETE FROM sessions WHERE realm = 'app' AND account_id = ?", [a.id]);
       await t.run('DELETE FROM password_resets WHERE realm = ? AND subject_id IN (SELECT id FROM account_users WHERE account_id = ?)', ['app', a.id]);
-      await t.run('DELETE FROM inventory_items WHERE account_id = ?', [a.id]); await t.run('DELETE FROM account_roles WHERE account_id = ?', [a.id]);
+      await t.run('DELETE FROM inventory_items WHERE account_id = ?', [a.id]); await t.run('DELETE FROM records WHERE account_id = ?', [a.id]); await t.run('DELETE FROM account_keys WHERE account_id = ?', [a.id]); await t.run('DELETE FROM account_recovery WHERE account_id = ?', [a.id]); await t.run('DELETE FROM account_roles WHERE account_id = ?', [a.id]);
       await t.run('DELETE FROM account_users WHERE account_id = ?', [a.id]); await t.run('DELETE FROM billing_events WHERE account_id = ?', [a.id]); await t.run('DELETE FROM sign_in_history WHERE account_id = ?', [a.id]); await t.run('DELETE FROM accounts WHERE id = ?', [a.id]);
     });
     A(req, 'warn', 'account.deleted', `Account ${a.account_code} (${a.business_name}) permanently deleted`, a, { code: a.account_code });
@@ -79,6 +82,7 @@ export function accountsRoutes(db) {
     await db.tx(async (t) => {
       await t.run("DELETE FROM sessions WHERE realm = 'app' AND subject_id = ?", [u.id]);
       await t.run("DELETE FROM password_resets WHERE realm = 'app' AND subject_id = ?", [u.id]);
+      await t.run('DELETE FROM account_keys WHERE user_id = ?', [u.id]);
       await t.run('DELETE FROM account_users WHERE id = ? AND account_id = ?', [u.id, u.account_id]);
     });
     A(req, 'warn', 'user.deleted', `Host administrator deleted user ${u.login} (${u.role})`, { id: u.account_id }, { login: u.login, role: u.role });

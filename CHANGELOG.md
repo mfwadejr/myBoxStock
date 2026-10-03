@@ -3,6 +3,22 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.4.0] - 2026-10-03
+
+### Added
+- Customer-data encryption. Inventory, customers and sales are encrypted in the browser before they reach the server, so the hosting service stores them but cannot read them. Each account has its own data key; each person's password and a one-time recovery key each protect it. Setup runs at first sign-in (existing accounts move their older items across automatically) and shows a recovery key that must be confirmed as saved.
+- Unlock screen after a page reload; recovery-key access if a password was reset by email; Administrators can reset a person's access from Team; changing your password re-protects the key; Security page can replace the recovery key.
+- Real inventory: search, status filters (available, reserved, sold, returned, damaged, archived), cost and selling price, supplier and notes, edit and archive, duplicate protection, CSV import and export, and per-model reorder levels with low-stock warnings.
+- Customers with purchase history; Sales list with date range, totals and CSV export; receipts you can print or email from your own mail app; void a sale (devices return to available).
+- Quick sale: scan or type a UID/serial/MAC, several devices per sale, existing, new or walk-in customer, payment method, finish and show the receipt. Works on a phone.
+- Home page: available stock, this month's sales, revenue and profit, low-stock warnings and recent sales.
+- Host Console shows only whether an account is encrypted and how many stored records it has — never contents.
+- An automated browser test walks the whole flow end to end (skipped where no browser is installed).
+
+### Changed
+- The old plaintext inventory API is gone. Existing plaintext items are moved into encrypted storage by an Administrator's first sign-in and then deleted from the server.
+- Without the password or the recovery key, an account's data cannot be recovered by anyone, including the Host. See `docs/ENCRYPTION-DESIGN.md`.
+
 ## [0.3.0] - 2026-10-03
 
 ### Added

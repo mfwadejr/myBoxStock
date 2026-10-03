@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { enableVault, putRecord } from './vault-helper.mjs';
 import { startServer, Client, sleep, allLogText, readJsonl, readHuman } from './helpers.mjs';
 import { AREAS } from '../src/logging/areas.mjs';
 
@@ -53,7 +54,7 @@ test('admin actions, backups, mail and http requests land in their own areas', a
   await host.req('POST', '/api/host/backups');
   const s = await alice.req('POST', '/api/app/signup', { businessName: 'Alice Boxes', email: 'alice@example.com', username: 'alice', password: PW });
   await alice.req('POST', '/api/app/login', { login: s.data.login, password: PW });
-  await alice.req('POST', '/api/app/inventory', { uid: SECRET_UID, model: 'V6' });
+  const { adk } = await enableVault(alice, PW); await putRecord(alice, adk, 'item', { uid: SECRET_UID, model: 'V6' });
   await sleep(900);
   assert.ok(readJsonl(srv.logDir, 'security').some(e => e.event === 'rule.added' && e.data.cidr === '10.1.2.3' && e.actor === 'admin'));
   assert.ok(readJsonl(srv.logDir, 'backup').some(e => e.event === 'create.done'));

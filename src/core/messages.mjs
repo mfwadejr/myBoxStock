@@ -18,6 +18,13 @@ export const MSG = {
   NOT_FOUND: 'That item could not be found.',
   BAD_ACCOUNT_STATUS: 'Choose Active or Suspended.',
   TOTP_SETUP_FIRST: 'Start two-factor setup first, then enter the code from your authenticator app.',
+  VAULT_NOT_READY: 'Encryption has not been set up for this account yet. An Administrator needs to sign in and finish setup.',
+  VAULT_ALREADY_ON: 'Encryption is already set up for this account.',
+  VAULT_ADMIN_ONLY: 'Only an Administrator can set up encryption for the account.',
+  VAULT_BAD_KEYS: 'The encryption details sent were not complete. Refresh the page and try again.',
+  RECORD_CONFLICT: 'Someone else changed this just now. Reload and try again.',
+  RECORD_BAD: 'That record could not be saved because it was not in the expected form.',
+  RECORD_TOO_BIG: 'That record is too large to save.',
   UNKNOWN_LOG_AREA: 'That log area does not exist.',
 };
 export const fail = (res, status, code, extra = {}) => res.status(status).json({ error: MSG[code], code, ...extra });

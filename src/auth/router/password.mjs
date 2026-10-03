@@ -8,6 +8,7 @@ export function passwordRoutes(r, c) {
     const { current, next } = req.body, user = req.subject;
     if (!verifyPassword(String(current || ''), user.pw_hash)) { c.log.warn('password.change_failed', `Wrong current password while changing password: ${c.who(user).actor}`, req, user, { realm }); return res.status(400).json({ error: 'Current password is incorrect.' }); }
     const bad = passwordProblem(next); if (bad) return res.status(400).json({ error: bad });
+    if (c.passwordKeys) { const bad2 = await c.passwordKeys(db, user, req.body.keys); if (bad2) return res.status(400).json({ error: bad2.error, code: bad2.code }); }
     await db.run(`UPDATE ${table} SET pw_hash = ?, must_change = 0 WHERE id = ?`, [hashPassword(next), user.id]);
     const gone = await db.run('DELETE FROM sessions WHERE realm = ? AND subject_id = ? AND token_hash <> ?', [realm, user.id, req.session.token_hash]);
     c.log.info('password.changed', `Password changed by ${c.who(user).actor} (${gone.changes} other session(s) signed out)`, req, user, { realm });

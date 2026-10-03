@@ -5,7 +5,20 @@
   AccountApp.views.security = async (main) => {
     const r = await AccountApp.api('GET', '/me'); AccountApp.me = r.user; const me = r.user;
     swap(main, `<div class="page-head"><h1>Security</h1><p>Your sign-in: <span class="mono">${esc(me.login)}</span></p></div>
-      <div class="card"><div class="row spread wrap"><div><h3>Two-factor authentication</h3><div class="sub mb-0">${me.totpEnabled ? 'On.' : 'Optional, and a good idea. Adds a code from your phone at sign-in.'}</div></div>${me.totpEnabled ? '<button class="btn danger" id="off">Turn off</button>' : '<button class="btn" id="on">Set up</button>'}</div></div><div id="act" class="mt-lg"></div>`);
+      <div class="card"><div class="row spread wrap"><div><h3>Two-factor authentication</h3><div class="sub mb-0">${me.totpEnabled ? 'On.' : 'Optional, and a good idea. Adds a code from your phone at sign-in.'}</div></div>${me.totpEnabled ? '<button class="btn danger" id="off">Turn off</button>' : '<button class="btn" id="on">Set up</button>'}</div></div>
+      <div class="card"><div class="row spread wrap"><div><h3>Password</h3><div class="sub mb-0">Changing it keeps your access to the encrypted data.</div></div><button class="btn secondary" id="pw">Change password</button></div></div>
+      ${me.role === 'Administrator' && AccountApp.vault.state?.enabled ? `<div class="card"><div class="row spread wrap"><div><h3>Recovery key</h3><div class="sub mb-0">${AccountApp.vault.state.recoveryConfirmed ? 'Saved. It is the only way to restore access if every password is forgotten.' : 'Not confirmed yet.'} Creating a new one makes the old one stop working.</div></div><button class="btn secondary" id="rk">Create new recovery key</button></div></div>` : ''}
+      <div class="card"><h3>Encryption</h3><div class="sub mb-0">${AccountApp.vault.state?.enabled ? 'Your inventory, customers and sales are encrypted in your browser. The hosting service stores them but cannot read them.' : 'Not turned on yet.'}</div></div>
+      <div id="act" class="mt-lg"></div>`);
+    main.querySelector('#pw')?.addEventListener('click', async () => {
+      const ok = await sheet(`<h2>Change password</h2><div class="field mt-md"><label>Current password</label><input type="password" id="a" autocomplete="current-password"></div><div class="field"><label>New password</label><input type="password" id="b" autocomplete="new-password"><div class="hint">At least 10 characters with letters and numbers.</div></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Change</button></div>`,
+        { onMount: (el, close) => el.querySelector('#go').addEventListener('click', async () => { try { const a = el.querySelector('#a').value, b = el.querySelector('#b').value; const keys = await AccountApp.vault.keysForNewPassword(a, b); await AccountApp.api('POST', '/change-password', { current: a, next: b, keys }); close(true); } catch (e) { toast(e.message, true); } }) });
+      if (ok) toast('Password changed');
+    });
+    main.querySelector('#rk')?.addEventListener('click', async () => {
+      if (!await UI.confirmBox({ title: 'Create a new recovery key?', body: 'The old key will stop working. You will need to save the new one.', confirmLabel: 'Create' })) return;
+      await AccountApp.vault.newRecovery(); AccountApp.vault.state.recoveryConfirmed = true; location.hash = '#/security'; AccountApp.showShell();
+    });
     AccountApp.activity.render(main.querySelector('#act'), '/activity/me', false).catch((e) => toast(e.message, true));
     main.querySelector('#on')?.addEventListener('click', async () => { if (await UI.totpSetup(AccountApp.api)) AccountApp.route(); });
     main.querySelector('#off')?.addEventListener('click', async () => {

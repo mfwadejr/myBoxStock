@@ -54,6 +54,6 @@ export function loginRoutes(r, c) {
     const s = await readSession(db, req, realm);
     const user = s && await c.loadSubject(db, s);
     if (!user) return fail(res, 401, 'NOT_SIGNED_IN');
-    res.json({ user: c.publicUser(user), csrf: s.csrf, mfaPending: !!s.mfa_pending, mustChange: !!user.must_change });
+    res.json({ user: c.publicUser(user), csrf: s.csrf, mfaPending: !!s.mfa_pending, mustChange: !!user.must_change, ...(c.meExtra ? { vault: await c.meExtra(db, user) } : {}) });
   });
 }

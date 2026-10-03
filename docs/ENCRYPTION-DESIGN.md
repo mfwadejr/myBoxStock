@@ -1,6 +1,8 @@
 # Customer-data encryption — design for review
 
-Status: **proposal only. No encryption code has been written.** Review this, change what you disagree with, and only then do we build it.
+Status: **implemented in 0.4.0** with these decisions: losing the password and recovery key means the data is gone; the data key is derived from the sign-in password (separate salt); no scheduled reports on business data; on before any paying customers.
+
+Implementation notes: PBKDF2-SHA-256 (600,000 iterations, stored per person so it can be raised later) is used because Web Crypto has no Argon2 and scripts are limited to this site. Records are AES-256-GCM with the record id and type bound in as authenticated data. The data key lives only in browser memory, so a page reload asks for the password again. Roles (Administrator/Standard/View) are enforced by the server per record type; anyone holding the account key can in principle decrypt every type, so role limits are access control, not cryptographic separation. Code: `public/js/shared/vault.js`, `src/routes/app/vault.mjs`, `src/services/vault/`.
 
 ## 1. Goal
 

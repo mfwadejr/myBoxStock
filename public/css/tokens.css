@@ -171,6 +171,11 @@
   --log-raw-max-h: 240px;
   --select-list-max-h: 280px;
   --select-list-gap: 4px;
+  --sheet-w-wide: 640px;
+  --width-receipt: 380px;
+  --textarea-min-h: 88px;
+  --pick-list-max-h: 220px;
+  --recovery-key-w: 28ch;
 
   /* ---- glass & overlay effects ---- */
   --blur-md: 20px;

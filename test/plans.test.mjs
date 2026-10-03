@@ -2,6 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { startServer, Client, readJsonl } from './helpers.mjs';
+import { enableVault, putRecord } from './vault-helper.mjs';
 
 let srv, host, alice, accId;
 test.before(async () => { srv = await startServer(); host = new Client(srv.base); alice = new Client(srv.base); });
@@ -31,14 +32,14 @@ test('sign-up starts a trial and the host can see the new account', async () => 
 });
 
 test('expired plan is read-only (view yes, change no) and the host can comp the account free', async () => {
-  assert.equal((await alice.req('POST', '/api/app/inventory', { uid: 'A1' })).status, 200);
+  const { adk } = await enableVault(alice, STRONG); assert.equal((await putRecord(alice, adk, 'item', { uid: 'A1' })).status, 200);
   let r = await host.req('POST', `/api/host/accounts/${accId}/plan`, { plan: 'paid', until: '2000-01-01', note: 'simulate lapse' });
   assert.equal(r.status, 200); assert.equal(r.data.billing.state, 'paid_expired');
-  r = await alice.req('POST', '/api/app/inventory', { uid: 'A2' }); assert.equal(r.status, 402);
-  r = await alice.req('GET', '/api/app/inventory'); assert.equal(r.status, 200); assert.equal(r.data.length, 1);
+  r = await putRecord(alice, adk, 'item', { uid: 'A2' }); assert.equal(r.status, 402);
+  r = await alice.req('GET', '/api/app/vault/records'); assert.equal(r.status, 200); assert.equal(r.data.records.length, 1);
   r = await host.req('GET', '/api/host/accounts?plan=expired'); assert.equal(r.data.length, 1);
   r = await host.req('POST', `/api/host/accounts/${accId}/plan`, { plan: 'free', note: 'launch partner' }); assert.equal(r.status, 200); assert.equal(r.data.billing.state, 'free');
-  assert.equal((await alice.req('POST', '/api/app/inventory', { uid: 'A2' })).status, 200);
+  assert.equal((await putRecord(alice, adk, 'item', { uid: 'A2' })).status, 200);
   r = await host.req('POST', `/api/host/accounts/${accId}/plan`, { plan: 'trial', days: 10 }); assert.equal(r.data.billing.daysLeft, 10);
   r = await host.req('POST', `/api/host/accounts/${accId}/plan`, { plan: 'trial', days: 5, extend: true }); assert.equal(r.data.billing.daysLeft, 15);
   for (const bad of [{ plan: 'gold' }, { plan: 'trial', days: 0 }, { plan: 'paid', until: 'tomorrow' }]) assert.equal((await host.req('POST', `/api/host/accounts/${accId}/plan`, bad)).status, 400);

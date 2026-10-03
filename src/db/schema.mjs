@@ -63,7 +63,7 @@ export const INDEXES = [
 ];
 
 // Order matters when copying between databases (parents before children).
-export const COPY_ORDER = ['settings', 'host_admins', 'accounts', 'billing_events', 'account_users', 'sign_in_history', 'account_roles', 'inventory_items',
+export const COPY_ORDER = ['settings', 'host_admins', 'accounts', 'billing_events', 'account_users', 'sign_in_history', 'account_keys', 'account_recovery', 'account_roles', 'inventory_items', 'records',
   'firewall_rules', 'mail_queue', 'event_log', 'password_resets', 'sessions'];
 
 // Versioned migrations. Each runs once, in order, and is recorded in schema_migrations.
@@ -92,6 +92,16 @@ const MIGRATIONS = [
     await db.exec('CREATE INDEX idx_signin_account ON sign_in_history (account_id, ts)');
     await db.exec('CREATE INDEX idx_signin_user ON sign_in_history (user_id, ts)');
     await db.exec('ALTER TABLE sessions ADD COLUMN last_seen BIGINT');
+  } },
+  { id: 4, name: 'encrypted account data (keys and records)', up: async (db) => {
+    // The server stores only ciphertext and wrapped keys here. It never holds a key that can read `records.blob`.
+    await db.exec(`CREATE TABLE account_keys (
+      user_id ${id} PRIMARY KEY, account_id ${id} NOT NULL, salt ${s(64)} NOT NULL, iters INTEGER NOT NULL, wrapped_adk TEXT NOT NULL, updated_at BIGINT NOT NULL)`);
+    await db.exec(`CREATE TABLE account_recovery (
+      account_id ${id} PRIMARY KEY, wrapped_adk TEXT NOT NULL, created_at BIGINT NOT NULL, confirmed_at BIGINT, rotated_at BIGINT)`);
+    await db.exec(`CREATE TABLE records (
+      id ${s(64)} PRIMARY KEY, account_id ${id} NOT NULL, type ${s(20)} NOT NULL, blob TEXT NOT NULL, rev INTEGER NOT NULL DEFAULT 1, created_at BIGINT NOT NULL, updated_at BIGINT NOT NULL)`);
+    await db.exec('CREATE INDEX idx_records_account ON records (account_id, type)');
   } },
 ];
 

@@ -26,3 +26,6 @@ input:focus, textarea:focus { outline: none; border-color: var(--color-primary);
 
 /* ---- hidden attribute always wins (used to show/hide form sections) ---- */
 [hidden] { display: none !important; }
+
+textarea { height: auto; min-height: var(--textarea-min-h); padding: var(--space-md) var(--field-padding-x); resize: vertical; }
+input[type=file] { display: none; }
