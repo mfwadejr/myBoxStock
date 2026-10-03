@@ -110,3 +110,6 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .log-message { margin-top: var(--space-2xs); }
 .log-raw { margin-top: var(--space-sm); max-height: var(--log-raw-max-h); overflow: auto; font-family: var(--font-mono); font-size: var(--text-xs); background: var(--color-code-bg); border-radius: var(--radius-sm); padding: var(--space-md); white-space: pre-wrap; word-break: break-all; }
 .linkish { background: none; border: 0; padding: 0; font: inherit; font-size: var(--text-xs); color: var(--color-primary); cursor: pointer; }
+
+/* ---- deployed version badge ---- */
+.version-badge { position: fixed; z-index: var(--z-raised); right: var(--space-md); bottom: var(--space-sm); font-size: var(--text-micro); color: var(--color-text-faint); font-family: var(--font-mono); opacity: var(--opacity-icon); pointer-events: none; user-select: none; }

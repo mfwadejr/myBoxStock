@@ -43,7 +43,7 @@ app.use(express.json({ limit: '100kb' }));
 app.use('/api', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 app.use('/api/host', hostRouter(db));
 app.use('/api/app', appRouter(db));
-app.get('/healthz', (req, res) => res.json({ ok: true }));
+app.get('/healthz', (req, res) => res.json({ ok: true, version: config.version, build: config.build || null }));
 app.use(express.static(path.join(here, 'public')));
 app.get('/', (req, res) => res.redirect('/app/'));
 app.use((err, req, res, next) => { // anything unhandled ends up here — logged with the stack in the error area

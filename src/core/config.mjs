@@ -1,11 +1,15 @@
 // CORE / config — every environment-driven setting in one place.
 import path from 'node:path';
+import fs from 'node:fs';
 
 const env = process.env;
+// Single source of truth for the deployed version is package.json (bump it on each release).
+const pkgVersion = JSON.parse(fs.readFileSync(new URL('../../package.json', import.meta.url), 'utf8')).version;
 const dataDir = env.DATA_DIR || path.resolve('data');
 
 export const config = {
-  version: '0.1.0',
+  version: pkgVersion,
+  build: env.BUILD_ID || '', // optional: set in CI/Docker (e.g. git short sha) to show beside the version
   port: Number(env.PORT || 8080),
   dataDir,
   // sqlite | postgres | mysql  (mariadb is an alias for mysql)

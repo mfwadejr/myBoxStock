@@ -1,4 +1,6 @@
 FROM node:22-alpine
+ARG BUILD_ID=""
+ENV BUILD_ID=$BUILD_ID
 # Optional: database client tools so the console can back up external databases
 RUN apk add --no-cache postgresql-client mariadb-client tini
 WORKDIR /app
