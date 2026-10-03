@@ -8,13 +8,13 @@ services:
     restart: unless-stopped            # required: restoring a backup restarts the app
     ports:
       - target: 8080
-        published: "8080"
+        published: "9080"
         protocol: tcp
     environment:
       PORT: "8080"
       SECURE_COOKIES: "0"              # set to "1" once served over HTTPS (reverse proxy)
       TRUST_PROXY: "0"                 # set to "1" when behind a reverse proxy
-      PUBLIC_URL: "http://zimaos.local:8080"   # change to the address people use (used in emails and links)
+      PUBLIC_URL: "http://zimaos.local:9080"   # change to the address people use (used in emails and links)
       # APP_SECRET: "long-random-string"       # optional; otherwise a key is generated in /data/secret.key
       LOG_LEVEL: "info"
       LOG_RETENTION_DAYS: "30"
@@ -69,6 +69,6 @@ x-casaos:
   thumbnail: ""
   screenshot_link: []
   index: /host/
-  port_map: "8080"
+  port_map: "9080"
   scheme: http
   project_url: https://github.com/mfwadejr/myBoxStock
