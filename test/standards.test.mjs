@@ -105,3 +105,9 @@ test('log areas used in code exist, and routes do not import across realms', () 
   const crossed = walk(path.join(ROOT, 'src', 'routes', 'host'), p => p.endsWith('.mjs')).filter(f => /routes\/app|inventory_items/.test(read(f).split('\n').filter(l => !l.trim().startsWith('//')).join('\n').replace(/DELETE FROM inventory_items[^\n]*/g, ''))).map(rel);
   assert.deepEqual(crossed, [], 'host routes must not read tenant business tables');
 });
+
+test('every version has release notes in CHANGELOG.md', () => {
+  const v = JSON.parse(read(path.join(ROOT, 'package.json'))).version;
+  const log = read(path.join(ROOT, 'CHANGELOG.md'));
+  assert.ok(new RegExp(`^## \\[${v.replace(/\./g, '\\.')}\\] - \\d{4}-\\d{2}-\\d{2}`, 'm').test(log), `CHANGELOG.md needs a "## [${v}] - YYYY-MM-DD" section (see docs/RELEASING.md)`);
+});
