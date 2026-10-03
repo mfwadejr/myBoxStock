@@ -3,7 +3,8 @@
   const { esc, fmt, toast, sheet, swap } = UI;
 
   // In an encrypted account the new person's temporary password also wraps the account key, so they can open the data at first sign-in.
-  const keysFor = async (pw) => AccountApp.vault.state?.enabled && pw ? Vault.keysFor(pw, AccountApp.vault.adk) : undefined;
+  // (the account key is only in memory once encryption is set up or unlocked, so having it means the account is encrypted)
+  const keysFor = async (pw) => AccountApp.vault.adk && pw ? Vault.keysFor(pw, AccountApp.vault.adk) : undefined;
 
   AccountApp.views.team = async (main) => {
     const me = AccountApp.me;

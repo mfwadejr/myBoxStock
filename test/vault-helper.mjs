@@ -28,3 +28,5 @@ export async function unlockFrom(c, password) {
   const me = await c.req('GET', '/api/app/me'); if (!me.data.vault?.keys) return null;
   try { return await Vault.unlock(password, me.data.vault.keys); } catch { return null; }
 }
+// Add a person the way the Team page does: their temporary password also wraps the account key.
+export async function addUser(c, adk, body) { return c.req('POST', '/api/app/users', { ...body, keys: await Vault.keysFor(body.password, adk) }); }

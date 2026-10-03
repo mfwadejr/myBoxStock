@@ -20,10 +20,12 @@ export function usersRoutes(db) {
     if (!await db.get('SELECT id FROM account_roles WHERE account_id = ? AND name = ?', [req.subject.account_id, role])) return res.status(400).json({ error: 'Unknown role.' });
     const login = `${username.toLowerCase()}@${req.subject.account_code.toLowerCase()}`;
     if (await db.get('SELECT id FROM account_users WHERE login = ?', [login])) return res.status(400).json({ error: 'That username is taken in your account.' });
+    // In an encrypted account a person without keys could sign in but never open the data, so refuse instead of creating a half-working login.
+    const encrypted = await vaultEnabled(db, req.subject.account_id); if (encrypted && !validKeys(req.body.keys)) return fail(res, 400, 'VAULT_BAD_KEYS');
     const id = newId();
     await db.run('INSERT INTO account_users (id, account_id, login, username, email, role, pw_hash, must_change, created_at) VALUES (?,?,?,?,?,?,?,1,?)', [id, req.subject.account_id, login, username.toLowerCase(), email || null, role, hashPassword(password), Date.now()]);
     // In an encrypted account the Administrator's browser wraps the account key under the new person's temporary password.
-    if (await vaultEnabled(db, req.subject.account_id) && validKeys(req.body.keys)) await saveKeys(db, { id, account_id: req.subject.account_id }, req.body.keys);
+    if (encrypted) await saveKeys(db, { id, account_id: req.subject.account_id }, req.body.keys);
     tenantLog(req, 'user.created', `${req.subject.login} added ${login} as ${role}`, { userId: id, role });
     res.json({ ok: true, login });
   });

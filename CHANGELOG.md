@@ -3,6 +3,12 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.5.1] - 2026-10-03
+
+### Fixed
+- A person added from Team right after the account's encryption was first set up could sign in but not open any data (they landed on a recovery-key screen). They now get their access when they are added. If you already added someone this way, use Team → Reset access for them once.
+- The server now refuses to add a person to an encrypted account without their key material, so a half-working login cannot be created.
+
 ## [0.5.0] - 2026-10-03
 
 ### Added

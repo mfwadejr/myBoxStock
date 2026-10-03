@@ -61,6 +61,11 @@ test('browser: setup, add, sell, sign out, unlock, recovery key, CSV import', { 
     await page.goto(srv.base + '/app/#/inventory'); await page.waitForSelector('#imp'); const csv = path.join(os.tmpdir(), `imp-${Date.now()}.csv`); fs.writeFileSync(csv, 'uid,model,cost,price,condition\nCSV-1,X5,30,60,Used\nCSV-2,X5,30,60,New\nCSV-1,X5,1,1,New\n');
     await page.setInputFiles('#file', csv); await page.waitForSelector('#go'); assert.match(await page.textContent('.sheet .sub'), /2 devices will be added\. 1 row will be skipped/); await page.click('#go'); await page.waitForSelector('tr.click');
     assert.equal(await page.locator('tr.click').count(), 2); fs.rmSync(csv, { force: true });
+    // a person added from the Team page (in the same browser session as setup) can sign in, choose a password and open the data
+    await page.goto(srv.base + '/app/#/team'); await page.waitForSelector('#add'); await page.click('#add'); await page.fill('#u', 'stan'); await page.fill('#p', 'Temp-pass-12345'); await page.click('.sheet #go'); await page.waitForTimeout(800);
+    const other = await (await br.newContext()).newPage(); await other.goto(srv.base + '/app/'); await other.fill('#l', 'stan@' + login.split('@')[1]); await other.fill('#p', 'Temp-pass-12345'); await other.click('button.block');
+    await other.waitForSelector('#a'); await other.fill('#a', 'Temp-pass-12345'); await other.fill('#b', 'Brand-new-pass-678'); await other.click('button.block'); await other.waitForSelector('.side');
+    await other.goto(srv.base + '/app/#/sales'); await other.waitForSelector('tr.click'); assert.equal(await other.locator('tr.click').count(), 1, 'the new person sees the account data');
     assert.deepEqual(errors, [], 'no script errors in the page');
   } finally { await br.close(); srv.stop(); }
 });

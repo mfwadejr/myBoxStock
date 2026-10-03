@@ -45,8 +45,8 @@
   async function setup(password) {
     const adk = await Vault.newAdk(), rec = Vault.newRecoveryKey();
     await api('POST', '/vault/enable', { keys: await Vault.keysFor(password, adk), recoveryWrappedAdk: await Vault.wrapWithRecovery(adk, rec.text) });
-    S.adk = adk; const moved = await migrateLegacy(); if (moved) toast(`${moved} existing item${moved === 1 ? '' : 's'} moved into encrypted storage`);
-    await showRecovery(rec.text);
+    S.adk = adk; S.state = { ...S.state, enabled: true, recoveryConfirmed: false, keys: null }; const moved = await migrateLegacy(); if (moved) toast(`${moved} existing item${moved === 1 ? '' : 's'} moved into encrypted storage`);
+    await showRecovery(rec.text); S.state.recoveryConfirmed = true;
   }
   S.newRecovery = async () => {
     const rec = Vault.newRecoveryKey();

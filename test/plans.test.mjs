@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { startServer, Client, readJsonl } from './helpers.mjs';
-import { enableVault, putRecord } from './vault-helper.mjs';
+import { enableVault, putRecord, addUser } from './vault-helper.mjs';
 
 let srv, host, alice, accId;
 test.before(async () => { srv = await startServer(); host = new Client(srv.base); alice = new Client(srv.base); });
@@ -32,7 +32,7 @@ test('sign-up starts a trial and the host can see the new account', async () => 
 });
 
 test('expired plan is read-only (view yes, change no) and the host can comp the account free', async () => {
-  const { adk } = await enableVault(alice, STRONG); assert.equal((await putRecord(alice, adk, 'item', { uid: 'A1' })).status, 200);
+  const { adk } = await enableVault(alice, STRONG); alice.adk = adk; assert.equal((await putRecord(alice, adk, 'item', { uid: 'A1' })).status, 200);
   let r = await host.req('POST', `/api/host/accounts/${accId}/plan`, { plan: 'paid', until: '2000-01-01', note: 'simulate lapse' });
   assert.equal(r.status, 200); assert.equal(r.data.billing.state, 'paid_expired');
   r = await putRecord(alice, adk, 'item', { uid: 'A2' }); assert.equal(r.status, 402);
@@ -54,15 +54,16 @@ test('plan changes are logged in the accounts area (raw)', async () => {
 
 test('deleting people: account admin, host on a user, host on another host admin', async () => {
   let r = await alice.req('GET', '/api/app/me'); const myId = r.data.user.id;
-  r = await alice.req('POST', '/api/app/users', { username: 'bob', role: 'Standard', password: STRONG }); assert.equal(r.status, 200);
-  r = await alice.req('POST', '/api/app/users', { username: 'carol', role: 'Standard', password: STRONG }); assert.equal(r.status, 200);
+  r = await alice.req('POST', '/api/app/users', { username: 'nokeys', role: 'Standard', password: STRONG }); assert.equal(r.status, 400); assert.equal(r.data.code, 'VAULT_BAD_KEYS', 'an encrypted account refuses a person without key material');
+  r = await addUser(alice, alice.adk, { username: 'bob', role: 'Standard', password: STRONG }); assert.equal(r.status, 200);
+  r = await addUser(alice, alice.adk, { username: 'carol', role: 'Standard', password: STRONG }); assert.equal(r.status, 200);
   const users = (await alice.req('GET', '/api/app/users')).data, bob = users.find(u => u.username === 'bob'), carol = users.find(u => u.username === 'carol');
   assert.equal((await alice.req('DELETE', `/api/app/users/${myId}`, { confirm: 'x' })).status, 400, 'cannot delete yourself');
   assert.equal((await alice.req('DELETE', `/api/app/users/${bob.id}`, {})).status, 400, 'needs typed confirmation');
   assert.equal((await alice.req('DELETE', `/api/app/users/${bob.id}`, { confirm: bob.login })).status, 200);
   assert.equal((await mk(srv.base).req('POST', '/api/app/login', { login: bob.login, password: STRONG })).status, 401, 'deleted user cannot sign in');
   // a disabled person with the right password is told why; the log records login.blocked
-  r = await alice.req('POST', '/api/app/users', { username: 'dave', role: 'Standard', password: STRONG }); assert.equal(r.status, 200);
+  r = await addUser(alice, alice.adk, { username: 'dave', role: 'Standard', password: STRONG }); assert.equal(r.status, 200);
   const dave = (await alice.req('GET', '/api/app/users')).data.find(u => u.username === 'dave');
   assert.equal((await alice.req('POST', `/api/app/users/${dave.id}/disabled`, { disabled: true })).status, 200);
   r = await mk(srv.base).req('POST', '/api/app/login', { login: dave.login, password: STRONG }); assert.equal(r.status, 403); assert.equal(r.data.code, 'USER_DISABLED');

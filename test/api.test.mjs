@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { totpCode } from '../src/auth/totp.mjs';
-import { enableVault, putRecord, readRecords } from './vault-helper.mjs';
+import { enableVault, putRecord, readRecords, addUser, Vault } from './vault-helper.mjs';
 import { startServer, Client, ROOT } from './helpers.mjs';
 
 let srv, dir, host, alice, bob;
@@ -63,9 +63,9 @@ test('tenant isolation: accounts cannot see each other, host cannot see data', a
 });
 
 test('standard/view roles are limited; optional user MFA; host support actions', async () => {
-  let r = await alice.req('POST', '/api/app/users', { username: 'viewer', role: 'View', password: 'Viewer-pass-123' }); assert.equal(r.status, 200);
+  let r = await addUser(alice, alice.adk, { username: 'viewer', role: 'View', password: 'Viewer-pass-123' }); assert.equal(r.status, 200);
   const v = mk(); r = await v.req('POST', '/api/app/login', { login: r.data.login, password: 'Viewer-pass-123' }); assert.equal(r.data.mustChange, true);
-  r = await v.req('POST', '/api/app/change-password', { current: 'Viewer-pass-123', next: 'Viewer-pass-456' }); assert.equal(r.status, 200);
+  r = await v.req('POST', '/api/app/change-password', { current: 'Viewer-pass-123', next: 'Viewer-pass-456', keys: await Vault.keysFor('Viewer-pass-456', alice.adk) }); assert.equal(r.status, 200);
   r = await v.req('POST', '/api/app/vault/batch', { puts: [{ id: 'abcdefgh1', type: 'item', rev: 0, blob: 'v1.AAAAAAAAAAAA.AAAAAAAAAAAAAAAAAAAAAAAA' }] }); assert.equal(r.status, 403);
   r = await v.req('GET', '/api/app/users'); assert.equal(r.status, 403);
   r = await v.req('GET', '/api/app/vault/records'); assert.equal(r.status, 200);
