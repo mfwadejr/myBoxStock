@@ -78,7 +78,8 @@ test('standard/view roles are limited; optional user MFA; host support actions',
   const v2 = mk(); r = await v2.req('POST', '/api/app/login', { login: vu.login, password: r.data.tempPassword }); assert.equal(r.data.mustChange, true); assert.equal(r.data.mfa, false);
   // suspending blocks sign-in
   await host.req('POST', `/api/host/accounts/${acct.id}/status`, { status: 'suspended' });
-  r = await mk().req('POST', '/api/app/login', { login: alice.login, password: STRONG }); assert.equal(r.status, 401);
+  r = await mk().req('POST', '/api/app/login', { login: alice.login, password: STRONG }); assert.equal(r.status, 403); assert.equal(r.data.code, 'ACCOUNT_SUSPENDED'); assert.match(r.data.error, /suspended/);
+  r = await mk().req('POST', '/api/app/login', { login: alice.login, password: 'Wrong-password-123' }); assert.equal(r.status, 401); assert.equal(r.data.code, 'LOGIN_INVALID'); // a wrong password never reveals the status
   await host.req('POST', `/api/host/accounts/${acct.id}/status`, { status: 'active' });
 });
 

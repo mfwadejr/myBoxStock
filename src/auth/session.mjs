@@ -5,6 +5,7 @@ import { token, sha256 } from '../core/ids.mjs';
 import { areaLogger } from '../logging/logger.mjs';
 import { normalizeIp } from '../security/firewall/ip.mjs';
 import { fullPath } from '../core/http.mjs';
+import { fail } from '../core/messages.mjs';
 
 const L = areaLogger('auth');
 const COOKIE = { host: 'mbs_host', app: 'mbs_app' };
@@ -56,14 +57,14 @@ export function requireSession(db, realm, loadSubject, { allowPending = false, a
     try {
       const ip = normalizeIp(req.ip);
       const s = await readSession(db, req, realm);
-      if (!s || (s.mfa_pending && !allowPending)) { L.info('access.unauthenticated', `No valid ${realm} session for ${req.method} ${fullPath(req)}`, { ip, data: { realm, path: fullPath(req), mfaPending: !!s?.mfa_pending } }); return res.status(401).json({ error: 'Not signed in' }); }
+      if (!s || (s.mfa_pending && !allowPending)) { L.info('access.unauthenticated', `No valid ${realm} session for ${req.method} ${fullPath(req)}`, { ip, data: { realm, path: fullPath(req), mfaPending: !!s?.mfa_pending } }); return fail(res, 401, 'NOT_SIGNED_IN'); }
       if (req.method !== 'GET' && req.method !== 'HEAD' && req.get('x-csrf-token') !== s.csrf) {
         L.warn('csrf.rejected', `Missing or wrong CSRF token on ${req.method} ${fullPath(req)}`, { ip, accountId: s.account_id, data: { realm, path: fullPath(req), subjectId: s.subject_id } });
-        return res.status(403).json({ error: 'Bad CSRF token' });
+        return fail(res, 403, 'CSRF_BAD');
       }
       const subject = await loadSubject(db, s);
-      if (!subject) { L.warn('access.subject_missing', `Session ${realm}/${s.subject_id} points at a missing, disabled or suspended user`, { ip, accountId: s.account_id }); return res.status(401).json({ error: 'Not signed in' }); }
-      if (subject.must_change && !allowMustChange) return res.status(403).json({ error: 'Password change required', mustChange: true });
+      if (!subject) { L.warn('access.subject_missing', `Session ${realm}/${s.subject_id} points at a missing, disabled or suspended user`, { ip, accountId: s.account_id }); return fail(res, 401, 'NOT_SIGNED_IN'); }
+      if (subject.must_change && !allowMustChange) return fail(res, 403, 'PASSWORD_CHANGE_REQUIRED', { mustChange: true });
       req.session = s; req.subject = subject; next();
     } catch (e) { next(e); }
   };

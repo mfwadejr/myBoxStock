@@ -11,9 +11,9 @@ const safeName = (n) => /^[\w.-]+$/.test(n) && !n.includes('..');
 
 export function listBackups() {
   fs.mkdirSync(backupDir(), { recursive: true });
-  return fs.readdirSync(backupDir()).filter(f => /\.(db|sql)$/.test(f)).map(f => {
+  return fs.readdirSync(backupDir()).filter(f => /\.(db|sql|mbsbak)$/.test(f)).map(f => {
     const st = fs.statSync(path.join(backupDir(), f));
-    return { name: f, size: st.size, created: st.mtimeMs, kind: f.endsWith('.db') ? 'sqlite' : 'sql-dump' };
+    return { name: f, size: st.size, created: st.mtimeMs, kind: f.endsWith('.mbsbak') ? 'fullsite' : f.endsWith('.db') ? 'sqlite' : 'sql-dump' };
   }).sort((a, b) => b.created - a.created);
 }
 export function backupPath(name) {

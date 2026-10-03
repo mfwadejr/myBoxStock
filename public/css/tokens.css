@@ -169,6 +169,8 @@
   --pct-unit: 1%;
   --viewport-full: 100vh;
   --log-raw-max-h: 240px;
+  --select-list-max-h: 280px;
+  --select-list-gap: 4px;
 
   /* ---- glass & overlay effects ---- */
   --blur-md: 20px;
@@ -182,6 +184,7 @@
   /* ---- stacking ---- */
   --z-raised: 2;
   --z-nav: 20;
+  --z-dropdown: 25;
   --z-side: 30;
   --z-modal: 50;
   --z-toast: 60;

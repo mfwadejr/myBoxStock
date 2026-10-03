@@ -66,11 +66,11 @@
 
   const billingChip = (b) => b.state === 'trial' ? `<span class="chip blue">Free trial · ${b.daysLeft} day${b.daysLeft === 1 ? '' : 's'} left</span>`
     : !b.canWrite ? '<span class="chip red">Trial ended — read-only</span>' : '';
-  const NAV = [['inventory', 'Inventory'], ['team', 'Team'], ['security', 'Security']];
+  const NAV = [['inventory', 'Inventory'], ['team', 'Team'], ['activity', 'Activity'], ['security', 'Security']];
   function shell() {
     const me = AccountApp.me;
     root.innerHTML = `<header class="topbar"><div class="brand"><span class="brand-mark">▦</span>${esc(me.businessName)}</div><div class="grow"></div>${billingChip(me.billing)}<span class="muted text-sm">${esc(me.username)} · ${esc(me.role)}</span><button class="btn secondary small" id="out">Sign out</button></header>
-      <div class="shell"><nav class="side">${NAV.map(([k, l]) => `<a href="#/${k}" data-k="${k}"><span>${l}</span></a>`).join('')}</nav><main class="main" id="main"></main></div>`;
+      <div class="shell"><nav class="side">${NAV.filter(([k]) => (k !== 'team' && k !== 'activity') || AccountApp.can('users.manage')).map(([k, l]) => `<a href="#/${k}" data-k="${k}"><span>${l}</span></a>`).join('')}</nav><main class="main" id="main"></main></div>`;
     root.querySelector('#out').addEventListener('click', async () => { await AccountApp.api('POST', '/logout'); AccountApp.me = null; loginScreen(); });
     window.removeEventListener('hashchange', AccountApp.route); window.addEventListener('hashchange', AccountApp.route); AccountApp.route();
   }

@@ -2,6 +2,7 @@
 import { initDb } from '../db/connection.mjs';
 import { copyDatabase } from '../db/copy.mjs';
 import { ensureHostAdmin } from './host-admin.mjs';
+import { restoreBundleToDisk } from '../services/backup/bundle.mjs';
 import { attachLogDb, closeLogs } from '../logging/logger.mjs';
 
 const arg = (name) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : undefined; };
@@ -12,6 +13,13 @@ export async function runCli(cmd) {
     const pw = await ensureHostAdmin(db, { reset: true });
     console.log(`\nHost admin reset. Username: admin\nTemporary password: ${pw}\nTwo-factor was cleared; you must change the password at next sign-in.\n`);
     await closeLogs(); await db.close(); return true;
+  }
+  if (cmd === 'restore-bundle') {
+    const file = arg('--file'), pass = process.env.BACKUP_PASSPHRASE;
+    if (!file || !pass) { console.error('Usage: BACKUP_PASSPHRASE=… node server.mjs restore-bundle --file <backup.mbsbak> [--force]'); process.exitCode = 1; return true; }
+    try { const m = restoreBundleToDisk(file, pass, { force: process.argv.includes('--force') }); console.log(`\nRestored a ${m.engine} backup made ${m.createdAt} (myBoxStock ${m.version}).\n${m.engine === 'sqlite' ? 'Start the server — everyone can sign in as before.' : 'The database dump is in your data folder as restored-dump.sql; load it with psql / mysql, then start the server.'}\n`); }
+    catch (e) { console.error(e.message); process.exitCode = 1; }
+    await closeLogs(); return true;
   }
   if (cmd === 'migrate-db') {
     const to = arg('--to');

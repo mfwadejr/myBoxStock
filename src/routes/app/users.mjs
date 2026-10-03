@@ -7,7 +7,10 @@ import { newId } from '../../core/ids.mjs';
 
 export function usersRoutes(db) {
   const r = express.Router();
-  r.get('/', need('users.manage'), async (req, res) => res.json(await db.all('SELECT id, username, login, email, role, disabled, totp_enabled, last_login FROM account_users WHERE account_id = ? ORDER BY created_at', [req.subject.account_id])));
+  r.get('/', need('users.manage'), async (req, res) => res.json(await db.all(`SELECT id, username, login, email, role, disabled, totp_enabled, last_login,
+    (SELECT s.ip FROM sign_in_history s WHERE s.user_id = account_users.id AND s.result = 'signed_in' ORDER BY s.ts DESC LIMIT 1) AS last_ip,
+    (SELECT COUNT(*) FROM sessions x WHERE x.realm = 'app' AND x.subject_id = account_users.id AND x.mfa_pending = 0 AND x.expires_at > ?) AS active_sessions
+    FROM account_users WHERE account_id = ? ORDER BY created_at`, [Date.now(), req.subject.account_id])));
   r.post('/', need('users.manage'), async (req, res) => {
     const { username, email, role, password } = req.body;
     if (!/^[a-z0-9._-]{3,30}$/i.test(username || '')) return res.status(400).json({ error: 'Username: 3–30 letters, numbers, . _ -' });
@@ -41,6 +44,7 @@ export function usersRoutes(db) {
     await db.tx(async (t) => {
       await t.run("DELETE FROM sessions WHERE realm = 'app' AND subject_id = ?", [u.id]);
       await t.run("DELETE FROM password_resets WHERE realm = 'app' AND subject_id = ?", [u.id]);
+      await t.run('DELETE FROM sign_in_history WHERE user_id = ? AND account_id = ?', [u.id, req.subject.account_id]);
       await t.run('DELETE FROM account_users WHERE id = ? AND account_id = ?', [u.id, req.subject.account_id]);
     });
     tenantLog(req, 'user.deleted', `${req.subject.login} deleted ${u.login} (${u.role})`, { userId: u.id, role: u.role });

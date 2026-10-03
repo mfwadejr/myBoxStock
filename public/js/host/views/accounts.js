@@ -15,9 +15,9 @@
     };
     swap(main, `${Host.head('Accounts', 'Support tools for signed-up businesses. Their inventory, sales and customers are private and never shown here.')}
       <div class="card"><div class="row wrap"><div class="field grow"><input type="search" id="q" placeholder="Search by business, account ID or email"></div>
-        <div class="field"><select id="pf"><option value="">All plans</option><option value="trial">On trial</option><option value="free">Free (comped)</option><option value="paid">Paid</option><option value="expired">Ended / read-only</option></select></div></div><div class="tablewrap" id="tbl"></div></div>`);
+        <div class="field">${UI.select.html({ id: 'pf', options: [['', 'All plans'], ['trial', 'On trial'], ['free', 'Free (comped)'], ['paid', 'Paid'], ['expired', 'Ended / read-only']] })}</div></div><div class="tablewrap" id="tbl"></div></div>`);
     let t; main.querySelector('#q').addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => { q = e.target.value; load(); }, 250); });
-    main.querySelector('#pf').addEventListener('change', (e) => { plan = e.target.value; load(); });
+    main.querySelector('#pf').addEventListener('change', (e) => { plan = UI.select.value(e.target); load(); });
     main.querySelector('#tbl').addEventListener('click', (e) => { const tr = e.target.closest('tr[data-id]'); if (tr) accountSheet(tr.dataset.id, load); });
     await load();
   };
@@ -77,16 +77,16 @@
   // Change plan: free (comped), trial (start / extend), paid. Everything is recorded in the account's plan history.
   async function planSheet(a, back) {
     await sheet(`<h2>Change plan</h2><p class="muted">${esc(a.business_name)} · <span class="mono">${esc(a.account_code)}</span></p>
-      <div class="field mt-md"><label>Plan</label><select id="pl"><option value="free">Free — comped, never expires</option><option value="trial">Free trial</option><option value="paid">Paid</option></select></div>
+      <div class="field mt-md"><label>Plan</label>${UI.select.html({ id: 'pl', value: ['free', 'trial', 'paid'].includes(a.plan) ? a.plan : 'free', options: [['free', 'Free — comped, never expires'], ['trial', 'Free trial'], ['paid', 'Paid']] })}</div>
       <div class="field" id="f-days"><label>Trial length (days)</label><input type="number" id="days" min="1" max="730" value="14"><label class="check mt-sm"><input type="checkbox" id="ext"> Add to the current end date instead of starting today</label></div>
       <div class="field" id="f-until"><label>Paid through (optional)</label><input type="date" id="until"><div class="hint">Leave empty for no end date.</div></div>
       <div class="field"><label>Note (only you see this)</label><input type="text" id="note" maxlength="255" placeholder="e.g. Comped for launch partner"></div>
       <div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Save plan</button></div>`, { onMount: (el, close) => {
-        const pl = el.querySelector('#pl'); pl.value = ['free', 'trial', 'paid'].includes(a.plan) ? a.plan : 'free';
-        const sync = () => { el.querySelector('#f-days').hidden = pl.value !== 'trial'; el.querySelector('#f-until').hidden = pl.value !== 'paid'; };
+        const pl = el.querySelector('#pl'), plan = () => UI.select.value(pl);
+        const sync = () => { el.querySelector('#f-days').hidden = plan() !== 'trial'; el.querySelector('#f-until').hidden = plan() !== 'paid'; };
         pl.addEventListener('change', sync); sync();
         el.querySelector('#go').addEventListener('click', (e) => busy(e.currentTarget, async () => {
-          try { await Host.api('POST', `/accounts/${a.id}/plan`, { plan: pl.value, days: Number(el.querySelector('#days').value), extend: el.querySelector('#ext').checked, until: el.querySelector('#until').value, note: el.querySelector('#note').value }); toast('Plan updated'); close(); }
+          try { await Host.api('POST', `/accounts/${a.id}/plan`, { plan: plan(), days: Number(el.querySelector('#days').value), extend: el.querySelector('#ext').checked, until: el.querySelector('#until').value, note: el.querySelector('#note').value }); toast('Plan updated'); close(); }
           catch (er) { toast(er.message, true); }
         }));
       } });

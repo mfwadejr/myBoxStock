@@ -26,7 +26,7 @@ test('failed sign-ins are logged (raw, human, database) with the reason', async 
   assert.ok(raw.some(e => e.data.reason === 'no such user' && e.data.realm === 'app'));
   assert.ok(raw.some(e => e.data.reason === 'wrong password' && e.data.realm === 'host'));
   assert.ok(readHuman(srv.logDir, 'auth').some(l => /WARN\s+login\.failed\s+Failed sign-in for "ghost@bx-aaaaaa" — no such user/.test(l)));
-  const db = (await host.req('GET', '/api/host/logs?area=auth&q=failed')).data;
+  const db = (await host.req('GET', '/api/host/logs?area=auth&q=failed')).data.rows;
   assert.ok(db.length >= 2); assert.ok(db.every(r => r.area === 'auth' && JSON.parse(r.raw).event));
 });
 
@@ -77,16 +77,17 @@ test('raw and human logs stay in step, and every line is valid JSON with the sta
 test('secrets and business data never appear in any log', async () => {
   const text = allLogText(srv.logDir);
   for (const secret of [PW, 'wrong-password-1', 'wrong-password-3', srv.hostPw, SECRET_UID]) assert.ok(!text.includes(secret), `"${secret}" must not be logged`);
-  const db = JSON.stringify((await host.req('GET', '/api/host/logs?limit=500')).data);
+  const db = JSON.stringify((await host.req('GET', '/api/host/logs?limit=500')).data.rows);
   assert.ok(!db.includes(SECRET_UID) && !db.includes(PW));
   const cookieTokens = Object.values(alice.jar); for (const t of cookieTokens) assert.ok(!text.includes(t), 'session token not logged');
 });
 
 test('host log API hides the private tenant area but lists everything else', async () => {
   const areas = (await host.req('GET', '/api/host/logs/areas')).data.map(a => a.area);
-  assert.ok(!areas.includes('tenant')); for (const a of ['auth', 'security', 'host', 'accounts', 'backup', 'mail', 'system', 'database', 'error', 'http']) assert.ok(areas.includes(a), a);
+  assert.ok(!areas.includes('tenant')); for (const a of ['auth', 'security', 'host', 'accounts', 'backup', 'mail', 'system', 'database', 'error']) assert.ok(areas.includes(a), a);
+  assert.ok(!areas.includes('http'), 'http is file-only and is not offered in the viewer');
   assert.equal((await host.req('GET', '/api/host/logs?area=tenant')).status, 400);
-  const all = (await host.req('GET', '/api/host/logs?limit=500')).data; assert.ok(all.length > 5); assert.ok(all.every(r => r.area !== 'tenant' && r.area !== 'http'));
+  const all = (await host.req('GET', '/api/host/logs?limit=500')).data.rows; assert.ok(all.length > 5); assert.ok(all.every(r => r.area !== 'tenant' && r.area !== 'http'));
 });
 
 test('host support actions are logged in the accounts area with the account id', async () => {

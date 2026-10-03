@@ -3,6 +3,19 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.3.0] - 2026-10-03
+
+### Added
+- Sign-in activity: every sign-in, wrong password, wrong code and blocked attempt is recorded with IP address and device. People see their own history and the devices they are signed in on (Security page) and can sign a device out. Account Administrators see the whole team's history and sessions (new Activity page), and Team shows each person's last IP. Repeated failures from one address are grouped. A sign-in from a new IP queues an email to the person. Retention is a Host setting (Settings → Keep sign-in history, default 90 days).
+- Full-site backup: one passphrase-protected `.mbsbak` file holding the database and the encryption key. Create it from Host Console → Backups; restore from the console or on a new server with `node server.mjs restore-bundle` — everyone, including people using two-factor, signs in as before.
+- Searchable logs: search text, level and event filters, date range, quick filters, Load more, CSV/JSON export, filters kept in the page address. Searches and exports are themselves logged.
+- Themed dropdown used everywhere (keyboard friendly); native dropdowns are no longer allowed (a test enforces it).
+- `docs/ENCRYPTION-DESIGN.md`: proposed design for browser-side customer-data encryption (for review, not yet built).
+
+### Changed
+- Messages now say what actually happened: a suspended account says it is suspended, a disabled person says so, a read-only account says so, and so on. Only a wrong username or password stays deliberately vague.
+- The `http` log area is file-only and no longer appears in the log menu.
+
 ## [0.2.1] - 2026-10-03
 
 ### Changed

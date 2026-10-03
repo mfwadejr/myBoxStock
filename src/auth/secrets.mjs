@@ -27,3 +27,6 @@ export function unseal(blob) {
   d.setAuthTag(Buffer.from(tag, 'base64'));
   return Buffer.concat([d.update(Buffer.from(enc, 'base64')), d.final()]).toString('utf8');
 }
+
+// The raw 32-byte key (base64) — included in full-site backups so another server can read the same encrypted values.
+export const exportKey = () => getKey().toString('base64');

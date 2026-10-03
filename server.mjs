@@ -13,6 +13,7 @@ import { startMailWorker } from './src/services/mail/index.mjs';
 import { loadFirewall, firewallMiddleware } from './src/security/firewall/index.mjs';
 import { purgeExpired } from './src/auth/session.mjs';
 import { sweepExpired } from './src/services/billing/index.mjs';
+import { purgeSignInHistory } from './src/services/signins/index.mjs';
 import { hostRouter } from './src/routes/host/index.mjs';
 import { appRouter } from './src/routes/app/index.mjs';
 
@@ -29,6 +30,8 @@ await loadFirewall(db);
 startMailWorker(db); startBackupScheduler(db);
 sweepExpired(db).catch(() => {});
 setInterval(() => sweepExpired(db).catch(() => {}), 3600e3).unref();
+purgeSignInHistory(db).catch(() => {});
+setInterval(() => purgeSignInHistory(db).catch(() => {}), 6 * 3600e3).unref();
 setInterval(() => purgeExpired(db).catch(() => {}), 3600e3).unref();
 setInterval(() => pruneEventLog().then(n => n && L.info('log.pruned', `Removed ${n} log rows older than ${config.log.retentionDays} days`)).catch(() => {}), 24 * 3600e3).unref();
 

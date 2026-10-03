@@ -2,6 +2,7 @@
 import { log } from '../../logging/logger.mjs';
 import { normalizeIp } from '../../security/firewall/ip.mjs';
 import { fullPath } from '../../core/http.mjs';
+import { fail } from '../../core/messages.mjs';
 import { billingState } from '../../services/billing/state.mjs';
 
 export const DEFAULT_ROLES = {
@@ -29,4 +30,4 @@ export function tenantLog(req, event, message, data) {
 }
 export const need = (perm) => (req, res, next) => can(req.subject.perms, perm) ? next()
   : (log('tenant', 'warn', 'permission.denied', `${req.subject.login} (${req.subject.role}) was denied "${perm}" on ${req.method} ${fullPath(req)}`, { actor: req.subject.login, accountId: req.subject.account_id, ip: normalizeIp(req.ip), data: { perm } }),
-     res.status(403).json({ error: 'Your role does not allow this.' }));
+     fail(res, 403, 'PERMISSION_DENIED'));

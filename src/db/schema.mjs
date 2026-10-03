@@ -63,7 +63,7 @@ export const INDEXES = [
 ];
 
 // Order matters when copying between databases (parents before children).
-export const COPY_ORDER = ['settings', 'host_admins', 'accounts', 'billing_events', 'account_users', 'account_roles', 'inventory_items',
+export const COPY_ORDER = ['settings', 'host_admins', 'accounts', 'billing_events', 'account_users', 'sign_in_history', 'account_roles', 'inventory_items',
   'firewall_rules', 'mail_queue', 'event_log', 'password_resets', 'sessions'];
 
 // Versioned migrations. Each runs once, in order, and is recorded in schema_migrations.
@@ -84,6 +84,14 @@ const MIGRATIONS = [
       id ${id} PRIMARY KEY, account_id ${id} NOT NULL, ts BIGINT NOT NULL, kind ${s(30)} NOT NULL,
       from_plan ${s(40)}, to_plan ${s(40)}, actor ${s(100)}, note ${s()}, detail TEXT)`);
     await db.exec('CREATE INDEX idx_billing_account ON billing_events (account_id, ts)');
+  } },
+  { id: 3, name: 'sign-in history and session activity', up: async (db) => {
+    await db.exec(`CREATE TABLE sign_in_history (
+      id ${id} PRIMARY KEY, account_id ${id} NOT NULL, user_id ${id} NOT NULL, login ${s(160)}, ts BIGINT NOT NULL,
+      result ${s(20)} NOT NULL, reason ${s(40)}, ip ${s(64)}, device ${s(100)}, new_ip INTEGER NOT NULL DEFAULT 0, attempts INTEGER NOT NULL DEFAULT 1)`);
+    await db.exec('CREATE INDEX idx_signin_account ON sign_in_history (account_id, ts)');
+    await db.exec('CREATE INDEX idx_signin_user ON sign_in_history (user_id, ts)');
+    await db.exec('ALTER TABLE sessions ADD COLUMN last_seen BIGINT');
   } },
 ];
 

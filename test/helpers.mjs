@@ -18,19 +18,19 @@ async function isolatedDbEnv() {
 
 export async function startServer(extraEnv = {}) {
   Object.assign(extraEnv, await isolatedDbEnv());
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mbs-')), port = 18000 + Math.floor(Math.random() * 1500), base = `http://127.0.0.1:${port}`;
+  const restored = !!extraEnv.DATA_DIR, dir = extraEnv.DATA_DIR || fs.mkdtempSync(path.join(os.tmpdir(), 'mbs-')), port = 18000 + Math.floor(Math.random() * 1500), base = `http://127.0.0.1:${port}`;
   const proc = spawn('node', ['server.mjs'], { env: { ...process.env, PORT: String(port), DATA_DIR: dir, ...extraEnv }, cwd: ROOT });
   let out = ''; proc.stdout.on('data', d => { out += d; }); proc.stderr.on('data', () => {});
   let hostPw;
-  for (let i = 0; i < 60; i++) { await sleep(200); const m = out.match(/Temporary password: (\S+)/); if (m && out.includes('listening')) { hostPw = m[1]; break; } }
+  for (let i = 0; i < 60; i++) { await sleep(200); const m = out.match(/Temporary password: (\S+)/); if (restored && out.includes('listening')) { hostPw = 'restored'; break; } if (m && out.includes('listening')) { hostPw = m[1]; break; } }
   if (!hostPw) { proc.kill(); throw new Error('server did not start: ' + out); }
   return { dir, port, base, hostPw, env: extraEnv, logDir: path.join(dir, 'logs'), proc, stop: () => { proc.kill(); fs.rmSync(dir, { recursive: true, force: true }); } };
 }
 
 export class Client {
-  constructor(base) { this.base = base; this.jar = {}; this.csrf = ''; }
+  constructor(base) { this.base = base; this.jar = {}; this.csrf = ''; this.headers = {}; }
   async req(method, url, body, { csrf = true } = {}) {
-    const res = await fetch(this.base + url, { method, headers: { 'Content-Type': 'application/json', Cookie: Object.entries(this.jar).map(([k, v]) => `${k}=${v}`).join('; '), ...(csrf && this.csrf ? { 'X-CSRF-Token': this.csrf } : {}) }, body: body ? JSON.stringify(body) : undefined });
+    const res = await fetch(this.base + url, { method, headers: { ...this.headers, 'Content-Type': 'application/json', Cookie: Object.entries(this.jar).map(([k, v]) => `${k}=${v}`).join('; '), ...(csrf && this.csrf ? { 'X-CSRF-Token': this.csrf } : {}) }, body: body ? JSON.stringify(body) : undefined });
     for (const c of res.headers.getSetCookie()) { const [kv] = c.split(';'), i = kv.indexOf('='), v = kv.slice(i + 1); if (/Max-Age=0/.test(c)) delete this.jar[kv.slice(0, i)]; else this.jar[kv.slice(0, i)] = v; }
     let data = {}; try { data = await res.json(); } catch {}
     if (data.csrf) this.csrf = data.csrf;

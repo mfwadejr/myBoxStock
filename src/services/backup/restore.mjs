@@ -20,6 +20,8 @@ export function applyPendingRestore(dbFile) { // run before the DB is opened at 
   if (fs.existsSync(dbFile)) fs.copyFileSync(dbFile, path.join(backupDir(), `myboxstock-pre-restore-${stamp()}.db`));
   for (const ext of ['-wal', '-shm']) fs.rmSync(dbFile + ext, { force: true });
   fs.renameSync(pendingFile(), dbFile);
+  const keyPending = path.join(config.dataDir, 'restore-pending.key');
+  if (fs.existsSync(keyPending)) { const k = path.join(config.dataDir, 'secret.key'); if (fs.existsSync(k)) fs.copyFileSync(k, path.join(backupDir(), `secret-pre-restore-${stamp()}.key`)); fs.renameSync(keyPending, k); }
   L.warn('restore.applied', 'Pending restore applied; the previous database was saved as a pre-restore backup');
   return true;
 }

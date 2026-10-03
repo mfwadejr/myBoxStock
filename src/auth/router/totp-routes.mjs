@@ -1,4 +1,5 @@
 // AUTH / router / totp-routes — POST /totp/setup, /totp/enable, /totp/disable
+import { fail } from '../../core/messages.mjs';
 import { verifyPassword } from '../password.mjs';
 import { verifyTotp, newTotpSecret, otpauthUri, newRecoveryCodes } from '../totp.mjs';
 import { seal, unseal } from '../secrets.mjs';
@@ -16,7 +17,7 @@ export function totpRoutes(r, c) {
     res.json({ secret, uri: otpauthUri(secret, c.publicUser(user).label) });
   });
   r.post('/totp/enable', need, async (req, res) => {
-    const user = req.subject; if (!user.totp_secret) return res.status(400).json({ error: 'Start setup first.' });
+    const user = req.subject; if (!user.totp_secret) return fail(res, 400, 'TOTP_SETUP_FIRST');
     if (!verifyTotp(unseal(user.totp_secret), req.body.code)) { c.log.warn('mfa.enable_failed', `Wrong code while enabling two-factor: ${c.who(user).actor}`, req, user, { realm }); return res.status(400).json({ error: 'That code did not match. Check your device clock and try again.' }); }
     const rc = newRecoveryCodes();
     await db.run(`UPDATE ${table} SET totp_enabled = 1, recovery_hashes = ? WHERE id = ?`, [JSON.stringify(rc.hashes), user.id]);

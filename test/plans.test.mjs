@@ -60,6 +60,13 @@ test('deleting people: account admin, host on a user, host on another host admin
   assert.equal((await alice.req('DELETE', `/api/app/users/${bob.id}`, {})).status, 400, 'needs typed confirmation');
   assert.equal((await alice.req('DELETE', `/api/app/users/${bob.id}`, { confirm: bob.login })).status, 200);
   assert.equal((await mk(srv.base).req('POST', '/api/app/login', { login: bob.login, password: STRONG })).status, 401, 'deleted user cannot sign in');
+  // a disabled person with the right password is told why; the log records login.blocked
+  r = await alice.req('POST', '/api/app/users', { username: 'dave', role: 'Standard', password: STRONG }); assert.equal(r.status, 200);
+  const dave = (await alice.req('GET', '/api/app/users')).data.find(u => u.username === 'dave');
+  assert.equal((await alice.req('POST', `/api/app/users/${dave.id}/disabled`, { disabled: true })).status, 200);
+  r = await mk(srv.base).req('POST', '/api/app/login', { login: dave.login, password: STRONG }); assert.equal(r.status, 403); assert.equal(r.data.code, 'USER_DISABLED');
+  assert.ok(readJsonl(srv.logDir, 'auth').some(e => e.event === 'login.blocked' && e.data?.reason === 'USER_DISABLED'));
+  assert.equal((await host.req('DELETE', `/api/host/accounts/${accId}/users/${dave.id}`, { confirm: dave.login })).status, 200);
   assert.equal((await host.req('DELETE', `/api/host/accounts/${accId}/users/${carol.id}`, { confirm: carol.login })).status, 200);
   assert.equal((await alice.req('GET', '/api/app/users')).data.length, 1);
   assert.equal((await host.req('DELETE', `/api/host/accounts/${accId}/users/${myId}`, { confirm: users.find(u => u.id === myId).login })).status, 400, 'last Administrator is protected');

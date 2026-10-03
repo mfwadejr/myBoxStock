@@ -42,7 +42,7 @@
   }
   Host.route = async () => {
     clearInterval(Host.timer);
-    const key = (location.hash.replace(/^#\//, '') || 'overview').split('/')[0], k = Host.views[key] ? key : 'overview';
+    const key = (location.hash.replace(/^#\//, '').split('?')[0] || 'overview').split('/')[0], k = Host.views[key] ? key : 'overview';
     root.querySelectorAll('.side a').forEach(a => a.classList.toggle('active', a.dataset.k === k));
     const main = root.querySelector('#main'); if (!main) return;
     try { await Host.views[k](main); } catch (e) { if (e.status === 401) return boot(); swap(main, `<div class="card"><p class="banner red">${esc(e.message)}</p></div>`); }

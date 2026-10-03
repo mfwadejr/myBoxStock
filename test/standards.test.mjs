@@ -111,3 +111,17 @@ test('every version has release notes in CHANGELOG.md', () => {
   const log = read(path.join(ROOT, 'CHANGELOG.md'));
   assert.ok(new RegExp(`^## \\[${v.replace(/\./g, '\\.')}\\] - \\d{4}-\\d{2}-\\d{2}`, 'm').test(log), `CHANGELOG.md needs a "## [${v}] - YYYY-MM-DD" section (see docs/RELEASING.md)`);
 });
+
+test('every error code used in the server has one message in the catalog', async () => {
+  const { MSG } = await import('../src/core/messages.mjs');
+  const used = new Set();
+  for (const f of walk(path.join(ROOT, 'src'), p => p.endsWith('.mjs'))) for (const m of read(f).matchAll(/fail\(res,\s*\d+,\s*'([A-Z_]+)'/g)) used.add(m[1]);
+  for (const f of walk(path.join(ROOT, 'src'), p => p.endsWith('.mjs'))) for (const m of read(f).matchAll(/blockedReason = '([A-Z_]+)'|'(USER_DISABLED)'/g)) used.add(m[1] || m[2]);
+  assert.deepEqual([...used].filter(c => !MSG[c]), [], 'codes without a message');
+  assert.deepEqual(Object.values(MSG).filter(t => !/^[A-Z].*[.]$/.test(t)), [], 'messages are full sentences');
+});
+
+test('the themed dropdown is the only dropdown (no native <select> anywhere)', () => {
+  const files = [...walk(path.join(ROOT, 'public'), p => /\.(js|html)$/.test(p))];
+  assert.deepEqual(files.filter(f => /<select\b/i.test(read(f))).map(rel), []);
+});
