@@ -1,0 +1,74 @@
+# myBoxStock for ZimaOS / CasaOS — paste into App Store -> Custom Install -> Import (docker-compose).
+# First start: open the app's Logs and copy the one-time host admin password, then sign in at /host/.
+name: myboxstock
+services:
+  myboxstock:
+    image: ghcr.io/mfwadejr/myboxstock:latest
+    container_name: myboxstock
+    restart: unless-stopped            # required: restoring a backup restarts the app
+    ports:
+      - target: 8080
+        published: "8080"
+        protocol: tcp
+    environment:
+      PORT: "8080"
+      SECURE_COOKIES: "0"              # set to "1" once served over HTTPS (reverse proxy)
+      TRUST_PROXY: "0"                 # set to "1" when behind a reverse proxy
+      PUBLIC_URL: "http://zimaos.local:8080"   # change to the address people use (used in emails and links)
+      # APP_SECRET: "long-random-string"       # optional; otherwise a key is generated in /data/secret.key
+      LOG_LEVEL: "info"
+      LOG_RETENTION_DAYS: "30"
+      TZ: "UTC"
+    volumes:
+      - type: bind
+        source: /DATA/AppData/myboxstock/data
+        target: /data                  # database, backups, logs and secret key live here
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    x-casaos:
+      envs:
+        - container: PUBLIC_URL
+          description:
+            en_us: "Public address of this site (used in emails and links)"
+        - container: SECURE_COOKIES
+          description:
+            en_us: "1 when served over HTTPS, 0 for plain http on your LAN"
+        - container: TRUST_PROXY
+          description:
+            en_us: "1 when behind a reverse proxy"
+      ports:
+        - container: "8080"
+          description:
+            en_us: "Web interface (host console at /host/, accounts at /app/)"
+      volumes:
+        - container: /data
+          description:
+            en_us: "Database, backups, logs and secret key"
+
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+  main: myboxstock
+  author: Marvin Wade
+  developer: Marvin Wade
+  category: Business
+  title:
+    en_us: myBoxStock
+  tagline:
+    en_us: Multi-account streaming box inventory and sales tracker
+  description:
+    en_us: >-
+      Hosted multi-account inventory and sales tracker. A host console (dashboard, backups, firewall,
+      email, account support) plus private accounts with their own users and roles. Embedded SQLite by
+      default, PostgreSQL ready. On first start, read the container logs for the one-time host admin
+      password, then sign in at /host/.
+  thumbnail: ""
+  screenshot_link: []
+  index: /host/
+  port_map: "8080"
+  scheme: http
+  project_url: https://github.com/mfwadejr/myBoxStock

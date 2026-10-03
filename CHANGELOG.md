@@ -15,7 +15,7 @@ First published version (phase 1).
 - Logging in raw (JSONL) and human-readable form, per area, with rotation and retention.
 - Single design-token stylesheet (`tokens.css`) enforced by tests; strict CSP with no inline styles.
 - Deployed-version badge on every page and version reporting in `/healthz`.
-- Docker image published to `ghcr.io/mfwadejr/myboxstock`.
+- Docker image published to `ghcr.io/mfwadejr/myboxstock`, plus a ready-made ZimaOS/CasaOS app file (`zimaos/docker-compose.yml`).
 
 ### Known limitations
 - MariaDB/MySQL driver is untested; live direct-to-MX email delivery is untested.

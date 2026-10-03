@@ -19,6 +19,11 @@ files can still read raw data — per-account encryption is a possible later ste
 Open `/host/`, sign in as `admin`, change the password, then turn on two-factor under **Security**.
 Without Docker: `npm install && npm start` (Node 22.13+).
 
+## ZimaOS / CasaOS
+
+`zimaos/docker-compose.yml` is a ready-made app file: in ZimaOS open App Store -> Custom Install -> Import, paste it, and install.
+Data is kept in `/DATA/AppData/myboxstock/data`. After the first start, open the app's logs for the one-time host admin password.
+
 ## Databases and scale
 SQLite is embedded for testing. For many concurrent distributors use PostgreSQL or MariaDB/MySQL:
 
