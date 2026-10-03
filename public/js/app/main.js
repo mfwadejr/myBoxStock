@@ -11,6 +11,10 @@
   const onSubmit = (sel, fn) => root.querySelector(sel).addEventListener('submit', (e) => { e.preventDefault(); busy(root.querySelector(sel + ' button.block'), async () => { try { await fn(); } catch (er) { toast(er.message, true); } }); });
   const val = (id) => root.querySelector(id).value;
 
+  // Sign in | Create account switch shown at the top of both screens (only when sign-ups are open).
+  const modeSwitch = (on) => cfg.signupsEnabled ? `<div class="seg wide mb-lg" role="tablist"><button type="button" data-mode="login" class="${on === 'login' ? 'on' : ''}">Sign in</button><button type="button" data-mode="signup" class="${on === 'signup' ? 'on' : ''}">Create account</button></div>` : '';
+  const wireSwitch = () => root.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => b.dataset.mode === 'signup' ? signupScreen() : loginScreen()));
+
   async function boot() {
     try { cfg = await AccountApp.api('GET', '/public-config'); } catch {}
     const m = location.hash.match(/^#\/reset\/(.+)$/); if (m) return resetScreen(m[1]);
@@ -18,10 +22,11 @@
     catch { loginScreen(); }
   }
   function loginScreen() {
-    authShell(`<h1>${esc(cfg.siteName)}</h1><p class="lead">Sign in to your account.</p>
+    authShell(`${modeSwitch('login')}<h1>${esc(cfg.siteName)}</h1><p class="lead">Sign in to your account.</p>
       <form id="f"><div class="field"><label>Sign-in</label><input type="text" id="l" placeholder="username@BX-ABC123" autocapitalize="none" autocomplete="username" required><div class="hint">Your username followed by your account ID.</div></div>
       <div class="field"><label>Password</label><input type="password" id="p" autocomplete="current-password" required></div><button class="btn block">Sign in</button></form>
       <p class="hint center mt-lg"><a href="#" id="fg">Forgot password?</a>${cfg.signupsEnabled ? ' · <a href="#" id="su">Create an account</a>' : ''}</p>`);
+    wireSwitch();
     root.querySelector('#fg').addEventListener('click', (e) => { e.preventDefault(); forgotScreen(); });
     root.querySelector('#su')?.addEventListener('click', (e) => { e.preventDefault(); signupScreen(); });
     onSubmit('#f', async () => { const r = await AccountApp.api('POST', '/login', { login: val('#l'), password: val('#p') }); UI.setCsrf(r.csrf); if (r.mfa) return mfaScreen(); await boot(); });
@@ -37,10 +42,11 @@
     onSubmit('#f', async () => { await AccountApp.api('POST', '/change-password', { current: val('#a'), next: val('#b') }); await boot(); });
   }
   function signupScreen() {
-    authShell(`<h1>Create your account</h1><p class="lead">Track inventory and sales for your business. Free for ${esc(cfg.trialDays)} days — no card needed.</p>
+    authShell(`${modeSwitch('signup')}<h1>Create your account</h1><p class="lead">Track inventory and sales for your business. Free for ${esc(cfg.trialDays)} days — no card needed.</p>
       <form id="f"><div class="field"><label>Business name</label><input type="text" id="bn" required></div><div class="field"><label>Email</label><input type="email" id="em" autocomplete="email" required></div>
       <div class="field"><label>Username</label><input type="text" id="un" autocapitalize="none" autocomplete="username" required></div><div class="field"><label>Password</label><input type="password" id="pw" autocomplete="new-password" required><div class="hint">At least 10 characters with letters and numbers.</div></div>
       <button class="btn block">Create account</button></form><p class="hint center mt-lg"><a href="#" id="bk">Back to sign in</a></p>`);
+    wireSwitch();
     root.querySelector('#bk').addEventListener('click', (e) => { e.preventDefault(); loginScreen(); });
     onSubmit('#f', async () => {
       const r = await AccountApp.api('POST', '/signup', { businessName: val('#bn'), email: val('#em'), username: val('#un'), password: val('#pw') });

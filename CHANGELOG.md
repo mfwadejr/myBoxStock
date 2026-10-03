@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.2.1] - 2026-10-03
+
+### Changed
+- Sign-in page now has a clear "Sign in | Create account" switch at the top (shown while sign-ups are open), so new accounts can be created straight from the login screen.
+
 ## [0.2.0] - 2026-10-03
 
 ### Added
