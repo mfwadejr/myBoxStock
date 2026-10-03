@@ -19,6 +19,20 @@ files can still read raw data — per-account encryption is a possible later ste
 Open `/host/`, sign in as `admin`, change the password, then turn on two-factor under **Security**.
 Without Docker: `npm install && npm start` (Node 22.13+).
 
+## Run from the published Docker image
+
+Every push to `main` publishes `ghcr.io/mfwadejr/myboxstock:latest` (amd64 and arm64). No clone needed:
+
+```
+docker run -d --name myboxstock --restart unless-stopped -p 8080:8080 \
+  -e SECURE_COOKIES=0 -v myboxstock-data:/data ghcr.io/mfwadejr/myboxstock:latest
+docker logs myboxstock     # prints the one-time host admin password on first start
+```
+
+Then open http://localhost:8080/host/ for the host console and http://localhost:8080/app/ for accounts.
+Set `SECURE_COOKIES=1` and `TRUST_PROXY=1` once it is served over HTTPS behind a proxy.
+If the package is private, make it public once under the repo's Packages settings.
+
 ## Databases and scale
 SQLite is embedded for testing. For many concurrent distributors use PostgreSQL or MariaDB/MySQL:
 
