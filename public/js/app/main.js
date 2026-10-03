@@ -18,10 +18,14 @@
   const wireSwitch = () => root.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => b.dataset.mode === 'signup' ? signupScreen() : loginScreen()));
 
   async function boot() {
+    if (!globalThis.crypto?.subtle) { // browsers only offer encryption on https:// or localhost
+      authShell(`<h1>Secure connection needed</h1><p class="lead">Your data is encrypted in your browser, and browsers only allow that on a secure (https) address. You opened this site over plain http (${esc(location.host)}).</p><p class="hint">Ask whoever runs this site to publish it with https, or open it from the computer that hosts it using localhost.</p>`);
+      return;
+    }
     try { cfg = await AccountApp.api('GET', '/public-config'); } catch {}
     const m = location.hash.match(/^#\/reset\/(.+)$/); if (m) return resetScreen(m[1]);
     try { const r = await AccountApp.api('GET', '/me'); UI.setCsrf(r.csrf); AccountApp.me = r.user; AccountApp.vault.state = r.vault; if (r.mfaPending) return mfaScreen(); if (r.mustChange) return changePwScreen(); if (!await AccountApp.vault.gate(r, AccountApp.pw)) return; AccountApp.pw = null; await AccountApp.store.load(); return shell(); }
-    catch { loginScreen(); }
+    catch (e) { loginScreen(); if (e && e.status !== 401) toast(e.message || 'Sign-in could not finish. Please try again.', true); }
   }
   function loginScreen() {
     authShell(`${modeSwitch('login')}<h1>${esc(cfg.siteName)}</h1><p class="lead">Sign in to your account.</p>

@@ -3,6 +3,12 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.5.2] - 2026-10-03
+
+### Fixed
+- Opening the site over plain http on a network address (for example http://192.168.1.118:9080) made sign-in silently fall back to the login screen, because browsers switch off the encryption features there. The site now says a secure (https) address is needed.
+- Signing in no longer drops you silently back to the sign-in screen if something goes wrong after the password is accepted; the reason is now shown on screen.
+
 ## [0.5.1] - 2026-10-03
 
 ### Fixed
