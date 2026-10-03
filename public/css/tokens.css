@@ -135,6 +135,10 @@
   --control-h: 44px;
   --control-h-lg: 46px;
   --control-h-xl: 56px;
+  --col-check-w: 88px;
+  --col-req-w: 168px;
+  --chip-type-w: 120px;
+  --config-w: 760px;
   --topbar-h: 52px;
   --sidebar-w: 232px;
   --content-max: 1240px;

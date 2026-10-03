@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.5.3] - 2026-10-03
+
+### Fixed
+- Settings: the tick boxes now line up under their headings, and the name fields are a sensible size.
+
 ## [0.5.2] - 2026-10-03
 
 ### Fixed

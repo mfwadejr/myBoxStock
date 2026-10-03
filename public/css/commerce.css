@@ -26,11 +26,16 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .receipt table { margin: var(--space-lg) var(--space-0); }
 .receipt .line-total { display: flex; justify-content: space-between; font-weight: var(--weight-semibold); font-size: var(--text-lg); border-top: var(--border-strong); padding-top: var(--space-md); }
 .test-record { margin-top: var(--space-xs); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-sm); background: var(--color-wash-faint); border: var(--border-default); }
-.check-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(4, auto); gap: var(--space-md); align-items: center; padding: var(--space-sm) var(--space-0); border-bottom: var(--border-default); }
+.check-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(4, var(--col-check-w)); gap: var(--space-sm); align-items: center; padding: var(--space-sm) var(--space-0); border-bottom: var(--border-default); }
 .check-row:last-child { border-bottom: 0; }
 .check-head { font-size: var(--text-xs); color: var(--color-text-muted); font-weight: var(--weight-medium); }
 .check-row .check { justify-content: center; }
-.step-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-md); align-items: center; padding: var(--space-xs) var(--space-0); }
+.check-head span:not(:first-child) { text-align: center; }
+.check-row, .step-row { max-width: var(--config-w); }
+.check-row input[type=text], .step-row input[type=text] { height: var(--control-h-md); }
+.check-row .row { gap: var(--space-sm); }
+.check-row .chip { flex: none; width: var(--chip-type-w); justify-content: center; }
+.step-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--col-req-w) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); }
 .tests { margin-top: var(--space-md); padding: var(--space-md) var(--space-lg); border-radius: var(--radius-md); background: var(--color-wash-faint); border: var(--border-default); }
 .tests .check { padding: var(--space-3xs) var(--space-0); }
 .recovery-key { font-family: var(--font-mono); font-size: var(--text-lg); line-height: var(--leading-code); text-align: center; word-break: break-all; user-select: all; background: var(--color-code-bg); border: var(--border-strong); border-radius: var(--radius-md); padding: var(--space-lg); margin: var(--space-lg) var(--space-0); }
