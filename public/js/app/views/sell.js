@@ -12,6 +12,9 @@
   function add(code) {
     const e = lookup(code);
     if (!e) return `Nothing in your inventory matches "${code.trim()}".`;
+    return addEntry(e);
+  }
+  function addEntry(e) {
     if (e.data.status === 'sold') return `${C.itemLabel(e.data)} was already sold${e.data.soldAt ? ' on ' + F.day(e.data.soldAt) : ''}.`;
     if (e.data.status !== 'available' && e.data.status !== 'returned') return `${C.itemLabel(e.data)} is marked ${C.STATUS[e.data.status]?.[1].toLowerCase() || e.data.status}, not available.`;
     if (st.cart.some(l => l.id === e.id)) return `${C.itemLabel(e.data)} is already in this sale.`;
@@ -41,7 +44,7 @@
     if (!A.can('sales.write')) return swap(main, '<div class="page-head"><h1>Quick sale</h1></div><div class="card"><div class="empty">Your user type cannot record sales.</div></div>');
     const picked = st.cust && S.get('customer', st.cust);
     swap(main, `<div class="page-head"><h1>Quick sale</h1><p>Scan or type a device identifier, set the price, and finish.</p></div>
-      <div class="sell"><div><div class="card"><input type="text" id="scan" class="scan" placeholder="Scan or type a ${esc(C.lookupFields().map(f => f.label).join(', ') || 'device identifier')} and press Enter" autocomplete="off" autocapitalize="none"><div class="hint mt-sm ${st.msg ? 'danger-text' : ''}" id="msg">${esc(st.msg)}</div></div>
+      <div class="sell"><div><div class="card"><input type="text" id="scan" class="scan" placeholder="Scan or type a ${esc(C.lookupFields().map(f => f.label).join(', ') || 'device identifier')} and press Enter" autocomplete="off" autocapitalize="none"><div class="stock-tools mt-md"><button type="button" class="btn secondary small" id="browse">Browse available stock</button>${C.modelCounts(C.availableStock(st.cart.map(l => l.id))).map(([m, n]) => `<button type="button" class="filter" data-model="${esc(m)}">${esc(m || 'No model')} · ${n}</button>`).join('')}</div><div class="hint mt-sm ${st.msg ? 'danger-text' : ''}" id="msg">${esc(st.msg)}</div></div>
         <div class="card"><h3>This sale</h3><div id="cart">${st.cart.length ? st.cart.map(l => { const it = S.get('item', l.id).data; return `<div class="cart-line"><div><div class="strong">${esc(it.model || 'Device')}</div><div class="mono muted">${esc(C.lookupFields().map(f => C.getVal(it, f)).filter(Boolean).join(' · '))}</div><div class="mt-xs">${C.testChip(it)}${C.testState(it).missingRequired.length ? ' <span class="chip red">Required checks missing</span>' : ''}</div></div><input type="number" class="price" min="0" step="0.01" data-line="${esc(l.id)}" value="${esc(F.dollars(l.price) || '0.00')}" aria-label="Price"><button class="btn secondary small" data-rm="${esc(l.id)}" aria-label="Remove">✕</button></div>`; }).join('') : '<div class="empty">Nothing added yet.</div>'}</div></div></div>
         <div><div class="card"><h3>Customer</h3><div class="seg wide mt-sm" role="tablist"><button type="button" data-mode="walk" class="${st.mode === 'walk' ? 'on' : ''}">Walk-in</button><button type="button" data-mode="existing" class="${st.mode === 'existing' ? 'on' : ''}">Existing</button><button type="button" data-mode="new" class="${st.mode === 'new' ? 'on' : ''}">New</button></div>
           ${st.mode === 'existing' ? (picked ? `<div class="picked mt-md"><span>${esc(picked.data.name)}${picked.data.phone ? ' · ' + esc(picked.data.phone) : ''}</span><button class="btn secondary small" id="chg">Change</button></div>` : '<div class="mt-md"><input type="search" id="cs" placeholder="Search name, phone or email" autocomplete="off"><ul class="pick-list" id="cl" hidden></ul></div>') : ''}
@@ -51,6 +54,9 @@
     const q = (s) => main.querySelector(s), again = () => render(main);
     const scan = q('#scan'); scan.focus();
     scan.addEventListener('keydown', (e) => { if (e.key !== 'Enter') return; e.preventDefault(); const v = scan.value; if (!v.trim()) return; st.msg = add(v); again(); });
+    const browse = async (model) => { const ids = await C.pickStock({ exclude: st.cart.map(l => l.id), model }); if (!ids?.length) return; const bad = ids.map(id => addEntry(S.get('item', id))).filter(Boolean); st.msg = bad.join(' '); again(); };
+    q('#browse').addEventListener('click', () => browse(''));
+    main.querySelectorAll('[data-model]').forEach(b => b.addEventListener('click', () => browse(b.dataset.model)));
     main.querySelectorAll('[data-line]').forEach(i => i.addEventListener('input', () => { const l = st.cart.find(x => x.id === i.dataset.line); l.price = F.cents(i.value); q('#tot').textContent = F.money(total()); }));
     main.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => { st.cart = st.cart.filter(l => l.id !== b.dataset.rm); st.msg = ''; again(); }));
     main.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => { st.mode = b.dataset.mode; again(); }));

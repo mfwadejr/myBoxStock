@@ -61,6 +61,12 @@ test('browser: setup, add, sell, sign out, unlock, recovery key, CSV import', { 
     await page.goto(srv.base + '/app/#/inventory'); await page.waitForSelector('#imp'); const csv = path.join(os.tmpdir(), `imp-${Date.now()}.csv`); fs.writeFileSync(csv, 'uid,model,cost,price,condition\nCSV-1,X5,30,60,Used\nCSV-2,X5,30,60,New\nCSV-1,X5,1,1,New\n');
     await page.setInputFiles('#file', csv); await page.waitForSelector('#go'); assert.match(await page.textContent('.sheet .sub'), /2 devices will be added\. 1 row will be skipped/); await page.click('#go'); await page.waitForSelector('tr.click');
     assert.equal(await page.locator('tr.click').count(), 2); fs.rmSync(csv, { force: true });
+    // browse available stock on Quick sale: filter by model, tick two, add them to the sale
+    await page.goto(srv.base + '/app/#/sell'); await page.waitForSelector('#browse'); await page.click('#browse'); await page.waitForSelector('.stock-row');
+    const before = await page.locator('.stock-row').count(); assert.ok(before >= 2, 'available devices are listed');
+    await page.fill('#q', 'csv-1'); assert.equal(await page.locator('.stock-row').count(), 1, 'search narrows the list'); await page.fill('#q', '');
+    await page.locator('.stock-row input').nth(0).check(); await page.locator('.stock-row input').nth(1).check(); assert.match(await page.textContent('#ok'), /Add 2 to sale/);
+    await page.click('#ok'); await page.waitForSelector('.cart-line'); assert.equal(await page.locator('.cart-line').count(), 2, 'both picked devices are in the cart');
     // a person added from the Team page (in the same browser session as setup) can sign in, choose a password and open the data
     await page.goto(srv.base + '/app/#/team'); await page.waitForSelector('#add'); await page.click('#add'); await page.fill('#u', 'stan'); await page.fill('#p', 'Temp-pass-12345'); await page.click('.sheet #go'); await page.waitForTimeout(800);
     const other = await (await br.newContext()).newPage(); await other.goto(srv.base + '/app/'); await other.fill('#l', 'stan@' + login.split('@')[1]); await other.fill('#p', 'Temp-pass-12345'); await other.click('button.block');

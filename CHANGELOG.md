@@ -3,6 +3,12 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.6.0] - 2026-10-03
+
+### Added
+- Quick sale: **Browse available stock**. Pick devices from a list of what is in stock, without knowing any identifier. Each device is its own row showing model, tracked identifiers, condition, test status and price. Filter by model, search any tracked detail, tick several and add them to the sale in one go.
+- Quick sale shows a chip per in-stock model with its count; tapping one opens the list already filtered to that model.
+
 ## [0.5.3] - 2026-10-03
 
 ### Fixed
