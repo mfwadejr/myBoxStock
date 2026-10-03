@@ -9,9 +9,14 @@
         ${me.totpEnabled ? '<button class="btn danger" id="off">Turn off</button>' : '<button class="btn" id="on">Set up</button>'}</div></div>
       <div class="card"><h3>Password</h3><div class="sub">Change the password for ${esc(me.username)}.</div><button class="btn secondary" id="pw">Change password</button></div>
       <div class="card"><div class="row spread"><h3>Host administrators</h3><button class="btn secondary small" id="addadm">Add administrator</button></div>
-        <div class="tablewrap mt-sm"><table><thead><tr><th>Username</th><th>Two-factor</th><th>Last sign-in</th></tr></thead><tbody>${admins.map(a => `<tr><td>${esc(a.username)}</td><td>${a.totp_enabled ? '<span class="chip green">on</span>' : '<span class="chip amber">off</span>'}</td><td class="muted">${fmt.ago(a.last_login)}</td></tr>`).join('')}</tbody></table></div>
+        <div class="tablewrap mt-sm"><table><thead><tr><th>Username</th><th>Two-factor</th><th>Last sign-in</th><th></th></tr></thead><tbody>${admins.map(a => `<tr><td>${esc(a.username)}</td><td>${a.totp_enabled ? '<span class="chip green">on</span>' : '<span class="chip amber">off</span>'}</td><td class="muted">${fmt.ago(a.last_login)}</td><td class="right">${a.id === me.id ? '<span class="chip">you</span>' : `<button class="btn danger small" data-rm="${a.id}">Delete</button>`}</td></tr>`).join('')}</tbody></table></div>
         <div class="hint">Locked out? Run <span class="mono">node server.mjs reset-host-admin</span> on the server.</div></div>`);
 
+    main.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', async () => {
+      const a = admins.find(x => x.id === b.dataset.rm);
+      const c = await UI.confirmBox({ title: 'Delete administrator?', body: `${esc(a.username)} will lose access to the host console immediately. This cannot be undone.`, confirmLabel: 'Delete', danger: true, typeToConfirm: a.username });
+      if (c) { try { await Host.api('DELETE', `/admins/${a.id}`, { confirm: c }); toast('Administrator deleted'); Host.route(); } catch (e) { toast(e.message, true); } }
+    }));
     main.querySelector('#on')?.addEventListener('click', async () => { if (await UI.totpSetup(Host.api)) Host.route(); });
     main.querySelector('#off')?.addEventListener('click', async () => {
       const r = await sheet(`<h2>Turn off two-factor</h2><div class="field mt-md"><label>Password</label><input type="password" id="p"></div><div class="field"><label>Authenticator code</label><input type="text" id="c" inputmode="numeric"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn danger" id="go">Turn off</button></div>`,

@@ -8,8 +8,11 @@ const btn = (href, label) => `<p><a style="${S.button}" href="${href}">${label}<
 export const TEMPLATES = {
   test: { subject: 'myBoxStock test email', text: 'This is a test message from your myBoxStock server. Outbound email is working.', html: '<p>This is a test message from your myBoxStock server.</p><p>Outbound email is working.</p>' },
   welcome: { subject: 'Welcome to myBoxStock — your account ID is {{accountCode}}',
-    text: 'Hi {{name}},\n\nYour account is ready. Your account ID is {{accountCode}}.\nSign in with: {{login}}\n\n{{url}}',
-    html: `<p>Hi {{name}},</p><p>Your account is ready.</p><p>Account ID: <b>{{accountCode}}</b><br>Sign in with: <b>{{login}}</b></p>${btn('{{url}}', 'Open myBoxStock')}` },
+    text: 'Hi {{name}},\n\nYour account is ready. Your account ID is {{accountCode}}.\nSign in with: {{login}}\n\n{{trialLine}}\n\n{{url}}',
+    html: `<p>Hi {{name}},</p><p>Your account is ready.</p><p>Account ID: <b>{{accountCode}}</b><br>Sign in with: <b>{{login}}</b></p><p>{{trialLine}}</p>${btn('{{url}}', 'Open myBoxStock')}` },
+  trial_ended: { subject: 'Your myBoxStock trial has ended',
+    text: 'Hi {{name}},\n\nThe free trial for account {{accountCode}} has ended. Your data is safe and the account is now read-only: you can still sign in and look at everything, but changes are paused.\nReply to this email or contact support to continue.',
+    html: '<p>Hi {{name}},</p><p>The free trial for account <b>{{accountCode}}</b> has ended. Your data is safe and the account is now read-only: you can still sign in and look at everything, but changes are paused.</p><p>Contact support to continue.</p>' },
   password_reset: { subject: 'Reset your myBoxStock password',
     text: 'Hi {{name}},\n\nUse this link to choose a new password (valid for 1 hour):\n{{link}}\n\nIf you did not ask for this, ignore this email.',
     html: `<p>Hi {{name}},</p><p>Use the button below to choose a new password. The link is valid for 1 hour.</p>${btn('{{link}}', 'Choose a new password')}<p style="${S.faint}">If you did not ask for this, you can ignore this email.</p>` },

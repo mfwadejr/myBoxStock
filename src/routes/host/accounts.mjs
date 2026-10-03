@@ -8,26 +8,32 @@ import { destroyAllFor } from '../../auth/session.mjs';
 import { token, sha256 } from '../../core/ids.mjs';
 import { enqueueMail, processQueue } from '../../services/mail/index.mjs';
 import { config } from '../../core/config.mjs';
+import { billingState } from '../../services/billing/state.mjs';
+import { setPlan } from '../../services/billing/index.mjs';
 
 export function accountsRoutes(db) {
   const r = express.Router();
   const A = (req, level, event, message, a, data) => hostLog(req, level, event, message, { area: 'accounts', accountId: a?.id || null, data });
-  const getAccount = (id) => db.get('SELECT id, account_code, business_name, owner_email, status, plan, created_at, last_activity FROM accounts WHERE id = ?', [id]);
-  const userOf = (req) => db.get('SELECT id, account_id, username, login, email FROM account_users WHERE id = ? AND account_id = ?', [req.params.uid, req.params.id]);
+  const getAccount = (id) => db.get('SELECT id, account_code, business_name, owner_email, status, plan, trial_ends_at, plan_until, plan_note, plan_changed_at, created_at, last_activity FROM accounts WHERE id = ?', [id]);
+  const userOf = (req) => db.get('SELECT id, account_id, username, login, email, role FROM account_users WHERE id = ? AND account_id = ?', [req.params.uid, req.params.id]);
 
   r.get('/', async (req, res) => {
     const q = `%${String(req.query.q || '').toLowerCase()}%`;
-    const rows = await db.all(`SELECT a.id, a.account_code, a.business_name, a.owner_email, a.status, a.plan, a.created_at, a.last_activity,
+    const rows = await db.all(`SELECT a.id, a.account_code, a.business_name, a.owner_email, a.status, a.plan, a.trial_ends_at, a.plan_until, a.plan_note, a.created_at, a.last_activity,
       (SELECT COUNT(*) FROM account_users u WHERE u.account_id = a.id) AS user_count FROM accounts a
       WHERE LOWER(a.business_name) LIKE ? OR LOWER(a.account_code) LIKE ? OR LOWER(a.owner_email) LIKE ? ORDER BY a.created_at DESC LIMIT 200`, [q, q, q]);
-    res.json(rows.map(x => ({ ...x, user_count: Number(x.user_count) })));
+    const want = String(req.query.plan || '');   // '' | trial | free | paid | expired
+    const out = rows.map(x => ({ ...x, user_count: Number(x.user_count), billing: billingState(x) }))
+      .filter(x => !want || (want === 'expired' ? !x.billing.canWrite : x.billing.state === want));
+    res.json(out);
   });
 
   r.get('/:id', async (req, res) => {
     const a = await getAccount(req.params.id); if (!a) return res.status(404).json({ error: 'Not found' });
     const users = await db.all('SELECT id, username, login, email, role, disabled, totp_enabled, must_change, created_at, last_login FROM account_users WHERE account_id = ? ORDER BY created_at', [a.id]);
     const events = await db.all("SELECT ts, actor, event, message FROM event_log WHERE account_id = ? AND area IN ('auth','accounts') ORDER BY ts DESC LIMIT 25", [a.id]);
-    res.json({ account: a, users, events });
+    const history = await db.all('SELECT ts, kind, from_plan, to_plan, actor, note FROM billing_events WHERE account_id = ? ORDER BY ts DESC LIMIT 25', [a.id]);
+    res.json({ account: { ...a, billing: billingState(a) }, users, events, history });
   });
 
   r.post('/:id/status', async (req, res) => {
@@ -46,9 +52,35 @@ export function accountsRoutes(db) {
       await t.run("DELETE FROM sessions WHERE realm = 'app' AND account_id = ?", [a.id]);
       await t.run('DELETE FROM password_resets WHERE realm = ? AND subject_id IN (SELECT id FROM account_users WHERE account_id = ?)', ['app', a.id]);
       await t.run('DELETE FROM inventory_items WHERE account_id = ?', [a.id]); await t.run('DELETE FROM account_roles WHERE account_id = ?', [a.id]);
-      await t.run('DELETE FROM account_users WHERE account_id = ?', [a.id]); await t.run('DELETE FROM accounts WHERE id = ?', [a.id]);
+      await t.run('DELETE FROM account_users WHERE account_id = ?', [a.id]); await t.run('DELETE FROM billing_events WHERE account_id = ?', [a.id]); await t.run('DELETE FROM accounts WHERE id = ?', [a.id]);
     });
     A(req, 'warn', 'account.deleted', `Account ${a.account_code} (${a.business_name}) permanently deleted`, a, { code: a.account_code });
+    res.json({ ok: true });
+  });
+
+  // Change an account's plan: free (comped), trial (start or extend), or paid. Every change is kept in billing_events.
+  r.post('/:id/plan', async (req, res) => {
+    const a = await getAccount(req.params.id); if (!a) return res.status(404).json({ error: 'Not found' });
+    try {
+      const b = await setPlan(db, a, { plan: req.body?.plan, days: req.body?.days, extend: !!req.body?.extend, until: req.body?.until, note: req.body?.note, actor: req.subject.username });
+      res.json({ ok: true, billing: b });
+    } catch (e) { res.status(e.status || 500).json({ error: e.status ? e.message : 'Could not change the plan.' }); }
+  });
+
+  // Delete one person from an account (identity only). Never the account's last Administrator — delete the whole account for that.
+  r.delete('/:id/users/:uid', async (req, res) => {
+    const u = await userOf(req); if (!u) return res.status(404).json({ error: 'Not found' });
+    if (req.body?.confirm !== u.login) return res.status(400).json({ error: `Type ${u.login} to confirm.` });
+    if (u.role === 'Administrator') {
+      const others = await db.get("SELECT COUNT(*) AS n FROM account_users WHERE account_id = ? AND role = 'Administrator' AND id <> ?", [u.account_id, u.id]);
+      if (Number(others.n) < 1) return res.status(400).json({ error: 'This is the last Administrator. Delete the whole account instead.' });
+    }
+    await db.tx(async (t) => {
+      await t.run("DELETE FROM sessions WHERE realm = 'app' AND subject_id = ?", [u.id]);
+      await t.run("DELETE FROM password_resets WHERE realm = 'app' AND subject_id = ?", [u.id]);
+      await t.run('DELETE FROM account_users WHERE id = ? AND account_id = ?', [u.id, u.account_id]);
+    });
+    A(req, 'warn', 'user.deleted', `Host administrator deleted user ${u.login} (${u.role})`, { id: u.account_id }, { login: u.login, role: u.role });
     res.json({ ok: true });
   });
 

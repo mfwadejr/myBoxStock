@@ -2,6 +2,7 @@
 import { log } from '../../logging/logger.mjs';
 import { normalizeIp } from '../../security/firewall/ip.mjs';
 import { fullPath } from '../../core/http.mjs';
+import { billingState } from '../../services/billing/state.mjs';
 
 export const DEFAULT_ROLES = {
   Administrator: ['*'],
@@ -11,14 +12,16 @@ export const DEFAULT_ROLES = {
 export const can = (perms, p) => perms.includes('*') || perms.includes(p);
 
 export async function loadUser(db, s) {
-  const u = await db.get(`SELECT u.*, a.status AS account_status, a.account_code, a.business_name FROM account_users u JOIN accounts a ON a.id = u.account_id WHERE u.id = ?`, [s.subject_id]);
+  const u = await db.get(`SELECT u.*, a.status AS account_status, a.account_code, a.business_name, a.plan, a.trial_ends_at, a.plan_until FROM account_users u JOIN accounts a ON a.id = u.account_id WHERE u.id = ?`, [s.subject_id]);
   if (!u || u.disabled || u.account_status !== 'active') return null;
   const role = await db.get('SELECT perms FROM account_roles WHERE account_id = ? AND name = ?', [u.account_id, u.role]);
   u.perms = role ? JSON.parse(role.perms) : [];
+  u.billing = billingState(u);
   return u;
 }
 export const publicUser = (u) => ({ id: u.id, username: u.username, login: u.login, label: u.login, email: u.email, role: u.role, perms: u.perms,
-  accountCode: u.account_code, businessName: u.business_name, totpEnabled: !!u.totp_enabled });
+  accountCode: u.account_code, businessName: u.business_name, totpEnabled: !!u.totp_enabled,
+  billing: { state: u.billing.state, endsAt: u.billing.endsAt, daysLeft: u.billing.daysLeft, canWrite: u.billing.canWrite } });
 
 // tenantLog(req, event, message, data) — activity in the `tenant` area. Pass ids and event names only, never business data.
 export function tenantLog(req, event, message, data) {

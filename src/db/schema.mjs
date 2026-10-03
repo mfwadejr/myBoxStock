@@ -63,15 +63,39 @@ export const INDEXES = [
 ];
 
 // Order matters when copying between databases (parents before children).
-export const COPY_ORDER = ['settings', 'host_admins', 'accounts', 'account_users', 'account_roles', 'inventory_items',
+export const COPY_ORDER = ['settings', 'host_admins', 'accounts', 'billing_events', 'account_users', 'account_roles', 'inventory_items',
   'firewall_rules', 'mail_queue', 'event_log', 'password_resets', 'sessions'];
+
+// Versioned migrations. Each runs once, in order, and is recorded in schema_migrations.
+// Fresh installs run all of them; existing installs run only the ones they are missing. Never edit an applied migration — add a new one.
+const MIGRATIONS = [
+  { id: 1, name: 'initial schema', up: async (db) => {
+    for (const [name, ddl] of TABLES) { await db.exec(ddl); L.info('table.created', `Created table ${name}`); }
+    for (const ddl of INDEXES) await db.exec(ddl);
+  } },
+  { id: 2, name: 'plans, free trials and billing history', up: async (db) => {
+    // plan: trial | free | paid. Existing accounts were created as 'free', so they simply stay free (no surprise lock-outs).
+    await db.exec('ALTER TABLE accounts ADD COLUMN trial_ends_at BIGINT');
+    await db.exec('ALTER TABLE accounts ADD COLUMN plan_until BIGINT');
+    await db.exec(`ALTER TABLE accounts ADD COLUMN plan_note ${s()}`);
+    await db.exec('ALTER TABLE accounts ADD COLUMN plan_changed_at BIGINT');
+    await db.exec('ALTER TABLE accounts ADD COLUMN expiry_noted INTEGER NOT NULL DEFAULT 0');
+    await db.exec(`CREATE TABLE billing_events (
+      id ${id} PRIMARY KEY, account_id ${id} NOT NULL, ts BIGINT NOT NULL, kind ${s(30)} NOT NULL,
+      from_plan ${s(40)}, to_plan ${s(40)}, actor ${s(100)}, note ${s()}, detail TEXT)`);
+    await db.exec('CREATE INDEX idx_billing_account ON billing_events (account_id, ts)');
+  } },
+];
 
 export async function migrate(db) {
   await db.exec(`CREATE TABLE IF NOT EXISTS schema_migrations (id INTEGER PRIMARY KEY, applied_at BIGINT NOT NULL)`);
-  if (await db.get('SELECT id FROM schema_migrations WHERE id = 1')) return false;
-  for (const [name, ddl] of TABLES) { await db.exec(ddl); L.info('table.created', `Created table ${name}`); }
-  for (const ddl of INDEXES) await db.exec(ddl);
-  await db.run('INSERT INTO schema_migrations (id, applied_at) VALUES (1, ?)', [Date.now()]);
-  L.info('migrate.done', `Database schema v1 applied (${TABLES.length} tables, ${INDEXES.length} indexes)`);
-  return true;
+  let applied = 0;
+  for (const m of MIGRATIONS) {
+    if (await db.get('SELECT id FROM schema_migrations WHERE id = ?', [m.id])) continue;
+    await m.up(db);
+    await db.run('INSERT INTO schema_migrations (id, applied_at) VALUES (?, ?)', [m.id, Date.now()]);
+    L.info('migrate.done', `Database migration ${m.id} applied: ${m.name}`, { data: { id: m.id, name: m.name } });
+    applied++;
+  }
+  return applied > 0;
 }

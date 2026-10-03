@@ -5,7 +5,7 @@
   AccountApp.api = UI.client('/api/app');
   AccountApp.me = null;
   AccountApp.can = (p) => AccountApp.me.perms.includes('*') || AccountApp.me.perms.includes(p);
-  let cfg = { siteName: 'myBoxStock', signupsEnabled: true };
+  let cfg = { siteName: 'myBoxStock', signupsEnabled: true, trialDays: 14 };
 
   const authShell = (inner) => { root.innerHTML = `<div class="authwrap"><div class="authcard"><div class="logo">▦</div>${inner}</div></div>`; };
   const onSubmit = (sel, fn) => root.querySelector(sel).addEventListener('submit', (e) => { e.preventDefault(); busy(root.querySelector(sel + ' button.block'), async () => { try { await fn(); } catch (er) { toast(er.message, true); } }); });
@@ -37,7 +37,7 @@
     onSubmit('#f', async () => { await AccountApp.api('POST', '/change-password', { current: val('#a'), next: val('#b') }); await boot(); });
   }
   function signupScreen() {
-    authShell(`<h1>Create your account</h1><p class="lead">Track inventory and sales for your business.</p>
+    authShell(`<h1>Create your account</h1><p class="lead">Track inventory and sales for your business. Free for ${esc(cfg.trialDays)} days — no card needed.</p>
       <form id="f"><div class="field"><label>Business name</label><input type="text" id="bn" required></div><div class="field"><label>Email</label><input type="email" id="em" autocomplete="email" required></div>
       <div class="field"><label>Username</label><input type="text" id="un" autocapitalize="none" autocomplete="username" required></div><div class="field"><label>Password</label><input type="password" id="pw" autocomplete="new-password" required><div class="hint">At least 10 characters with letters and numbers.</div></div>
       <button class="btn block">Create account</button></form><p class="hint center mt-lg"><a href="#" id="bk">Back to sign in</a></p>`);
@@ -58,10 +58,12 @@
     onSubmit('#f', async () => { await AccountApp.api('POST', '/reset', { token: tok, password: val('#p') }); history.replaceState(null, '', '/app/'); toast('Password updated — sign in'); loginScreen(); });
   }
 
+  const billingChip = (b) => b.state === 'trial' ? `<span class="chip blue">Free trial · ${b.daysLeft} day${b.daysLeft === 1 ? '' : 's'} left</span>`
+    : !b.canWrite ? '<span class="chip red">Trial ended — read-only</span>' : '';
   const NAV = [['inventory', 'Inventory'], ['team', 'Team'], ['security', 'Security']];
   function shell() {
     const me = AccountApp.me;
-    root.innerHTML = `<header class="topbar"><div class="brand"><span class="brand-mark">▦</span>${esc(me.businessName)}</div><div class="grow"></div><span class="muted text-sm">${esc(me.username)} · ${esc(me.role)}</span><button class="btn secondary small" id="out">Sign out</button></header>
+    root.innerHTML = `<header class="topbar"><div class="brand"><span class="brand-mark">▦</span>${esc(me.businessName)}</div><div class="grow"></div>${billingChip(me.billing)}<span class="muted text-sm">${esc(me.username)} · ${esc(me.role)}</span><button class="btn secondary small" id="out">Sign out</button></header>
       <div class="shell"><nav class="side">${NAV.map(([k, l]) => `<a href="#/${k}" data-k="${k}"><span>${l}</span></a>`).join('')}</nav><main class="main" id="main"></main></div>`;
     root.querySelector('#out').addEventListener('click', async () => { await AccountApp.api('POST', '/logout'); AccountApp.me = null; loginScreen(); });
     window.removeEventListener('hashchange', AccountApp.route); window.addEventListener('hashchange', AccountApp.route); AccountApp.route();

@@ -28,5 +28,23 @@ export function usersRoutes(db) {
     if (n.changes) tenantLog(req, off ? 'user.disabled' : 'user.enabled', `${req.subject.login} ${off ? 'disabled' : 'enabled'} user ${req.params.uid}`, { userId: req.params.uid });
     res.json({ ok: n.changes > 0 });
   });
+  // Delete another person from this account. Not yourself, and never the last Administrator.
+  r.delete('/:uid', need('users.manage'), async (req, res) => {
+    const u = await db.get('SELECT id, login, role FROM account_users WHERE id = ? AND account_id = ?', [req.params.uid, req.subject.account_id]);
+    if (!u) return res.status(404).json({ error: 'Person not found.' });
+    if (u.id === req.subject.id) return res.status(400).json({ error: 'You cannot delete yourself.' });
+    if (req.body?.confirm !== u.login) return res.status(400).json({ error: `Type ${u.login} to confirm.` });
+    if (u.role === 'Administrator') {
+      const others = await db.get("SELECT COUNT(*) AS n FROM account_users WHERE account_id = ? AND role = 'Administrator' AND id <> ?", [req.subject.account_id, u.id]);
+      if (Number(others.n) < 1) return res.status(400).json({ error: 'An account needs at least one Administrator.' });
+    }
+    await db.tx(async (t) => {
+      await t.run("DELETE FROM sessions WHERE realm = 'app' AND subject_id = ?", [u.id]);
+      await t.run("DELETE FROM password_resets WHERE realm = 'app' AND subject_id = ?", [u.id]);
+      await t.run('DELETE FROM account_users WHERE id = ? AND account_id = ?', [u.id, req.subject.account_id]);
+    });
+    tenantLog(req, 'user.deleted', `${req.subject.login} deleted ${u.login} (${u.role})`, { userId: u.id, role: u.role });
+    res.json({ ok: true });
+  });
   return r;
 }

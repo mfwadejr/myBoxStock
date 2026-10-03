@@ -113,3 +113,9 @@ tr.click:hover td { background: var(--color-wash-faint); }
 
 /* ---- deployed version badge ---- */
 .version-badge { position: fixed; z-index: var(--z-raised); right: var(--space-md); bottom: var(--space-sm); font-size: var(--text-micro); color: var(--color-text-faint); font-family: var(--font-mono); opacity: var(--opacity-icon); pointer-events: none; user-select: none; }
+
+/* ---- checkbox row & disclosure ---- */
+.check { display: flex; align-items: center; gap: var(--space-sm); font-weight: var(--weight-regular); color: var(--color-text); }
+.check input { width: auto; margin: var(--space-0); }
+details > summary { cursor: pointer; padding: var(--space-xs) var(--space-0); }
+details[open] > summary { margin-bottom: var(--space-xs); }

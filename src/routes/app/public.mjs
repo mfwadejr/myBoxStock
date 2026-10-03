@@ -8,12 +8,14 @@ import { enqueueMail, processQueue } from '../../services/mail/index.mjs';
 import { getSetting } from '../../db/settings.mjs';
 import { config } from '../../core/config.mjs';
 import { DEFAULT_ROLES } from './context.mjs';
+import { trialDays, recordEvent } from '../../services/billing/index.mjs';
+import { DAY } from '../../services/billing/state.mjs';
 
 export function publicRoutes(db) {
   const r = express.Router();
   const loginOf = (username, code) => `${username.toLowerCase()}@${code.toLowerCase()}`;
 
-  r.get('/public-config', async (req, res) => res.json({ siteName: await getSetting(db, 'site_name', 'myBoxStock'), signupsEnabled: await getSetting(db, 'signups_enabled', true) }));
+  r.get('/public-config', async (req, res) => res.json({ siteName: await getSetting(db, 'site_name', 'myBoxStock'), signupsEnabled: await getSetting(db, 'signups_enabled', true), trialDays: await trialDays(db) }));
 
   r.post('/signup', async (req, res) => {
     const ip = normalizeIp(req.ip);
@@ -22,17 +24,19 @@ export function publicRoutes(db) {
     if (!businessName?.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email || '')) return res.status(400).json({ error: 'Enter a business name and a valid email.' });
     if (!/^[a-z0-9._-]{3,30}$/i.test(username || '')) return res.status(400).json({ error: 'Username: 3–30 letters, numbers, . _ -' });
     const bad = passwordProblem(password); if (bad) return res.status(400).json({ error: bad });
-    const accountId = newId(), userId = newId(), now = Date.now();
+    const accountId = newId(), userId = newId(), now = Date.now(), days = await trialDays(db), trialEnds = now + days * DAY;
     let code = newAccountCode(); while (await db.get('SELECT id FROM accounts WHERE account_code = ?', [code])) code = newAccountCode();
     const login = loginOf(username, code);
     await db.tx(async (t) => {
-      await t.run('INSERT INTO accounts (id, account_code, business_name, owner_email, status, plan, created_at) VALUES (?,?,?,?,?,?,?)', [accountId, code, businessName.trim().slice(0, 150), email.trim().slice(0, 200), 'active', 'free', now]);
+      await t.run('INSERT INTO accounts (id, account_code, business_name, owner_email, status, plan, trial_ends_at, plan_changed_at, created_at) VALUES (?,?,?,?,?,?,?,?,?)', [accountId, code, businessName.trim().slice(0, 150), email.trim().slice(0, 200), 'active', 'trial', trialEnds, now, now]);
+      await recordEvent(t, { accountId, kind: 'trial_started', to: 'trial', actor: 'system', note: `Free trial of ${days} days`, detail: { trialEnds, days } });
       for (const [name, perms] of Object.entries(DEFAULT_ROLES)) await t.run('INSERT INTO account_roles (id, account_id, name, perms, builtin) VALUES (?,?,?,?,1)', [newId(), accountId, name, JSON.stringify(perms)]);
       await t.run('INSERT INTO account_users (id, account_id, login, username, email, role, pw_hash, created_at) VALUES (?,?,?,?,?,?,?,?)', [userId, accountId, login, username.toLowerCase(), email.trim(), 'Administrator', hashPassword(password), now]);
     });
-    log('tenant', 'info', 'account.created', `New account ${code} created by ${login}`, { actor: login, accountId, ip, data: { code } });
-    await enqueueMail(db, email.trim(), 'welcome', { name: username, accountCode: code, login, url: `${config.publicUrl}/app/` }); processQueue(db).catch(() => {});
-    res.json({ ok: true, accountCode: code, login });
+    log('tenant', 'info', 'account.created', `New account ${code} created by ${login} with a ${days}-day free trial`, { actor: login, accountId, ip, data: { code, trialDays: days } });
+    log('accounts', 'info', 'trial.started', `Account ${code} signed up — ${days}-day free trial until ${new Date(trialEnds).toISOString().slice(0, 10)}`, { actor: 'system', accountId, ip, data: { code, trialDays: days, trialEnds } });
+    await enqueueMail(db, email.trim(), 'welcome', { name: username, accountCode: code, login, url: `${config.publicUrl}/app/`, trialLine: `Your free trial runs for ${days} days (until ${new Date(trialEnds).toISOString().slice(0, 10)}).` }); processQueue(db).catch(() => {});
+    res.json({ ok: true, accountCode: code, login, trialDays: days });
   });
 
   // Always answers the same way so it can't be used to discover which accounts exist; the log records the truth.

@@ -7,6 +7,7 @@
     swap(main, `${Host.head('Settings', 'Platform-wide options.')}
       <div class="card"><div class="field"><label>Site name</label><input type="text" id="sn" value="${esc(d.siteName)}" class="maxw-lg"></div>
         <div class="setting"><div><div class="setting-title">Open sign-ups</div><div class="setting-desc">Allow new businesses to create an account.</div></div><label class="switch"><input type="checkbox" id="su" ${d.signupsEnabled ? 'checked' : ''}><i></i></label></div>
+        <div class="field"><label>Free trial length for new sign-ups (days)</label><input type="number" id="td" min="1" max="365" value="${esc(d.trialDays)}" class="maxw-lg"><div class="hint">Applies to accounts created from now on. Existing accounts keep their own end date — change those per account under Accounts → Change plan.</div></div>
         <button class="btn mt-sm" id="save">Save</button></div>
       <div class="card"><h3>Database engine</h3><div class="sub">Currently <b>${esc(d.database.client)}</b>. SQLite is ideal for testing; for many simultaneous distributors switch to PostgreSQL or MariaDB.</div>
         <div class="codeblock"># 1. Create an empty database, then copy everything across (the original is untouched)
@@ -15,6 +16,6 @@ node server.mjs migrate-db --to postgres://user:pass@db-host:5432/myboxstock
 # 2. Point the app at it and restart
 DB_CLIENT=postgres
 DATABASE_URL=postgres://user:pass@db-host:5432/myboxstock</div></div>`);
-    main.querySelector('#save').addEventListener('click', async () => { await Host.api('PUT', '/settings', { siteName: main.querySelector('#sn').value, signupsEnabled: main.querySelector('#su').checked }); toast('Saved'); });
+    main.querySelector('#save').addEventListener('click', async () => { await Host.api('PUT', '/settings', { siteName: main.querySelector('#sn').value, signupsEnabled: main.querySelector('#su').checked, trialDays: Number(main.querySelector('#td').value) }).then(() => toast('Saved')).catch((e) => toast(e.message, true)); });
   };
 })();
