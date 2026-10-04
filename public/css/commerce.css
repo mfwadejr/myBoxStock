@@ -1,7 +1,10 @@
 /* COMMERCE — inventory, customers, sales, quick sale, receipts. Values come from tokens.css only. */
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md); margin-bottom: var(--space-lg); }
 .toolbar .search { flex: 1; min-width: var(--width-sm); }
-.toolbar .select { min-width: var(--width-md); }
+.toolbar .select { flex: none; min-width: var(--width-sm); }
+.toolbar input[type=date] { flex: none; width: var(--width-date); }
+.linkbtn { border: 0; background: none; color: var(--color-primary); font: inherit; font-size: var(--text-sm); font-weight: var(--weight-medium); cursor: pointer; padding: var(--space-xs) var(--space-sm); }
+.linkbtn:hover { text-decoration: underline; }
 .sheet.wide { width: min(var(--sheet-w-wide), 100%); }
 tr.click { cursor: pointer; }
 tr.click:hover td { background: var(--color-wash-faint); }

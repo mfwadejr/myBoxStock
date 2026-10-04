@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.8.1] - 2026-10-04
+
+### Changed
+- Sales page: search, From, To and the warranty filter now sit on one row (they wrapped onto four lines before). Quick period buttons (Today, 7 days, 30 days, This month, All time), a Clear filters link, and a line saying exactly what the numbers cover. Search also matches payment method and warranty.
+
 ## [0.8.0] - 2026-10-04
 
 ### Added

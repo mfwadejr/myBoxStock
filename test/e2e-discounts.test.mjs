@@ -35,6 +35,8 @@ test('browser: bulk add, discounts, receipt, Standard-user limit', { skip, timeo
     await page.click('#done'); await page.waitForSelector('.receipt'); const rc = await page.textContent('.receipt');
     assert.match(rc, /10% off/); assert.match(rc, /Order discount 5%/); assert.match(rc, /275\.50/); await page.click('[data-cancel]');
     await page.goto(srv.base + '/app/#/sales'); await page.waitForSelector('tr.click'); assert.match(await page.textContent('tr.click'), /275\.50/);
+    const bar = await page.locator('#q').boundingBox(), dt = await page.locator('#from').boundingBox(), wr = await page.locator('#war').boundingBox(); assert.ok(Math.abs(bar.y - dt.y) < 8 && Math.abs(dt.y - wr.y) < 8, 'search, dates and warranty share one row');
+    await page.click('[data-period=today]'); assert.equal(await page.locator('tr.click').count(), 1); await page.click('#war'); await page.click('.select-option[data-value=expired]'); assert.equal(await page.locator('tr.click').count(), 0); await page.click('#clr'); assert.equal(await page.locator('tr.click').count(), 1);
 
     // a Standard user is held to the limit (10% by default)
     await page.goto(srv.base + '/app/#/team'); await page.waitForSelector('#add'); await page.click('#add'); await page.fill('#u', 'stan'); await page.click('.sheet #r'); await page.click('.sheet .select-option[data-value=Standard]'); await page.fill('#p', 'Temp-pass-12345'); await page.click('.sheet #go'); await page.waitForTimeout(800);
