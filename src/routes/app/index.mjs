@@ -8,6 +8,7 @@ import { rolesRoutes } from './roles.mjs';
 import { vaultRoutes } from './vault.mjs';
 import { activityRoutes } from './activity.mjs';
 import { emailRoutes } from './email.mjs';
+import { accountRoutes } from './account.mjs';
 import { hostLinkRoutes } from './hostlink.mjs';
 import { loadUser } from './context.mjs';
 import { log } from '../../logging/logger.mjs';
@@ -21,6 +22,13 @@ export function appRouter(db) {
   r.use((req, res, next) => { db.run('UPDATE accounts SET last_activity = ? WHERE id = ?', [Date.now(), req.subject.account_id]).catch(() => {}); next(); });
   // Remember when this session was last used (at most once a minute) so people can see which devices are active.
   r.use((req, res, next) => { if (Date.now() - Number(req.session.last_seen || 0) > 60e3) db.run('UPDATE sessions SET last_seen = ? WHERE token_hash = ?', [Date.now(), req.session.token_hash]).catch(() => {}); next(); });
+  // A closing account is read-only for its Administrators (so they can still export) until it is restored or erased.
+  r.use((req, res, next) => {
+    if (!req.subject.closing_at || req.method === 'GET' || req.method === 'HEAD' || ['/account/restore', '/account/export-note'].includes(req.path)) return next();
+    log('tenant', 'warn', 'account.closing_locked', `${req.subject.login} tried ${req.method} ${fullPath(req)} but the account is closing`, { actor: req.subject.login, accountId: req.subject.account_id });
+    fail(res, 423, 'ACCOUNT_CLOSING_LOCKED');
+  });
+  r.use('/account', accountRoutes(db)); // closing is allowed even when a trial has ended
   // Ended trials and paid periods are read-only: viewing still works, changes are refused (data is never deleted).
   r.use((req, res, next) => {
     if (req.subject.billing.canWrite || req.method === 'GET' || req.method === 'HEAD') return next();

@@ -12,6 +12,7 @@ import { applyPendingRestore, startBackupScheduler } from './src/services/backup
 import { startMailWorker } from './src/services/mail/index.mjs';
 import { loadFirewall, firewallMiddleware } from './src/security/firewall/index.mjs';
 import { purgeExpired } from './src/auth/session.mjs';
+import { sweepClosing } from './src/services/accounts/closing.mjs';
 import { sweepExpired } from './src/services/billing/index.mjs';
 import { purgeSignInHistory } from './src/services/signins/index.mjs';
 import { hostRouter } from './src/routes/host/index.mjs';
@@ -29,6 +30,8 @@ const firstPw = await ensureHostAdmin(db);
 await loadFirewall(db);
 startMailWorker(db); startBackupScheduler(db);
 sweepExpired(db).catch(() => {});
+sweepClosing(db).catch((e) => E.error('closing.sweep', e.message));
+setInterval(() => sweepClosing(db).catch((e) => E.error('closing.sweep', e.message)), config.closingSweepMs).unref();
 setInterval(() => sweepExpired(db).catch(() => {}), 3600e3).unref();
 purgeSignInHistory(db).catch(() => {});
 setInterval(() => purgeSignInHistory(db).catch(() => {}), 6 * 3600e3).unref();

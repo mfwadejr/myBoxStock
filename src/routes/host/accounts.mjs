@@ -11,17 +11,18 @@ import { config } from '../../core/config.mjs';
 import { fail } from '../../core/messages.mjs';
 import { billingState } from '../../services/billing/state.mjs';
 import { sendConfirmation } from '../../services/verify/index.mjs';
+import { eraseAccount, restoreClosing } from '../../services/accounts/closing.mjs';
 import { setPlan } from '../../services/billing/index.mjs';
 
 export function accountsRoutes(db) {
   const r = express.Router();
   const A = (req, level, event, message, a, data) => hostLog(req, level, event, message, { area: 'accounts', accountId: a?.id || null, data });
-  const getAccount = (id) => db.get('SELECT id, account_code, business_name, owner_email, status, plan, trial_ends_at, plan_until, plan_note, plan_changed_at, created_at, last_activity, host_link_allowed FROM accounts WHERE id = ?', [id]);
+  const getAccount = (id) => db.get('SELECT id, account_code, business_name, owner_email, status, plan, trial_ends_at, plan_until, plan_note, plan_changed_at, created_at, last_activity, closing_at, closing_by, host_link_allowed FROM accounts WHERE id = ?', [id]);
   const userOf = (req) => db.get('SELECT id, account_id, username, login, email, role FROM account_users WHERE id = ? AND account_id = ?', [req.params.uid, req.params.id]);
 
   r.get('/', async (req, res) => {
     const q = `%${String(req.query.q || '').toLowerCase()}%`;
-    const rows = await db.all(`SELECT a.id, a.account_code, a.business_name, a.owner_email, a.status, a.plan, a.trial_ends_at, a.plan_until, a.plan_note, a.created_at, a.last_activity,
+    const rows = await db.all(`SELECT a.id, a.account_code, a.business_name, a.owner_email, a.status, a.plan, a.trial_ends_at, a.plan_until, a.plan_note, a.created_at, a.last_activity, a.closing_at,
       (SELECT COUNT(*) FROM account_users u WHERE u.account_id = a.id) AS user_count FROM accounts a
       WHERE LOWER(a.business_name) LIKE ? OR LOWER(a.account_code) LIKE ? OR LOWER(a.owner_email) LIKE ? ORDER BY a.created_at DESC LIMIT 200`, [q, q, q]);
     const want = String(req.query.plan || '');   // '' | trial | free | paid | expired
@@ -63,16 +64,16 @@ export function accountsRoutes(db) {
     res.json({ ok: true });
   });
 
+  r.post('/:id/restore-closing', async (req, res) => {
+    const a = await getAccount(req.params.id); if (!a) return fail(res, 404, 'NOT_FOUND');
+    if (!a.closing_at) return fail(res, 400, 'NOT_CLOSING');
+    await restoreClosing(db, a, { actor: req.subject.username }); A(req, 'warn', 'account.restored', `Account ${a.account_code} restored by a Host administrator (closing cancelled)`, a, { code: a.account_code });
+    res.json({ ok: true });
+  });
   r.delete('/:id', async (req, res) => {
     const a = await getAccount(req.params.id); if (!a) return fail(res, 404, 'NOT_FOUND');
     if (req.body.confirm !== a.account_code) return res.status(400).json({ error: `Type the Reseller ID (${a.account_code}) to confirm.` });
-    await db.tx(async (t) => { // write-only erase; nothing is read
-      await t.run("DELETE FROM sessions WHERE realm = 'app' AND account_id = ?", [a.id]);
-      await t.run('DELETE FROM password_resets WHERE realm = ? AND subject_id IN (SELECT id FROM account_users WHERE account_id = ?)', ['app', a.id]);
-      await t.run('DELETE FROM admin_links WHERE user_id IN (SELECT id FROM account_users WHERE account_id = ?)', [a.id]);
-      await t.run('DELETE FROM inventory_items WHERE account_id = ?', [a.id]); await t.run('DELETE FROM records WHERE account_id = ?', [a.id]); await t.run('DELETE FROM account_keys WHERE account_id = ?', [a.id]); await t.run('DELETE FROM account_recovery WHERE account_id = ?', [a.id]); await t.run('DELETE FROM account_roles WHERE account_id = ?', [a.id]);
-      await t.run('DELETE FROM account_users WHERE account_id = ?', [a.id]); await t.run('DELETE FROM billing_events WHERE account_id = ?', [a.id]); await t.run('DELETE FROM sign_in_history WHERE account_id = ?', [a.id]); await t.run('DELETE FROM accounts WHERE id = ?', [a.id]);
-    });
+    await eraseAccount(db, a.id); // write-only erase; nothing is read
     A(req, 'warn', 'account.deleted', `Account ${a.account_code} (${a.business_name}) permanently deleted`, a, { code: a.account_code });
     res.json({ ok: true });
   });

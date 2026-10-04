@@ -97,6 +97,12 @@
     root.querySelector('#out').addEventListener('click', () => AccountApp.signOut());
     window.removeEventListener('hashchange', AccountApp.route); window.addEventListener('hashchange', AccountApp.route); AccountApp.route();
   }
+  // A closing account shows its erase date on every page, with a way back.
+  function closingBanner(main) {
+    const me = AccountApp.me; if (!me.closingAt) return;
+    main.insertAdjacentHTML('afterbegin', `<div class="banner red row spread wrap mb-lg" id="cb"><span>This account is closing and will be erased on ${esc(AccountApp.fmt.day(me.closingAt))}. Until then it is read-only.</span>${AccountApp.can('users.manage') ? '<button class="btn secondary small" id="cbr">Restore account</button>' : ''}</div>`);
+    main.querySelector('#cbr')?.addEventListener('click', async () => { try { await AccountApp.api('POST', '/account/restore'); const r = await AccountApp.api('GET', '/me'); AccountApp.me = r.user; toast('Account restored'); AccountApp.route(); } catch (er) { toast(er.message, true); } });
+  }
   // Soft email confirmation: a banner on Home and Security until the address is confirmed.
   function emailBanner(main) {
     const me = AccountApp.me; if (!me.emailBanner) return;
@@ -107,7 +113,7 @@
     const k = (location.hash.replace(/^#\//, '') || 'home').split('/')[0], key = AccountApp.views[k] ? k : 'home';
     root.querySelectorAll('.side a').forEach(a => a.classList.toggle('active', a.dataset.k === key));
     const main = root.querySelector('#main'); if (!main) return;
-    try { await AccountApp.fresh(); await AccountApp.views[key](main); if (key === 'home' || key === 'security') emailBanner(main); } catch (e) { if (e.status === 401) return boot(); swap(main, `<div class="card"><p class="banner red">${esc(e.message)}</p></div>`); }
+    try { await AccountApp.fresh(); await AccountApp.views[key](main); if (key === 'home' || key === 'security') emailBanner(main); closingBanner(main); } catch (e) { if (e.status === 401) return boot(); swap(main, `<div class="card"><p class="banner red">${esc(e.message)}</p></div>`); }
   };
   AccountApp.boot = boot;
   boot();

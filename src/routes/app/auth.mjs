@@ -16,8 +16,9 @@ export const appAuthRouter = (db) => authRouter({
   },
   record: (info) => recordSignIn(db, info),
   findByLogin: async (d, login) => {
-    const u = await d.get('SELECT u.*, a.status AS account_status FROM account_users u JOIN accounts a ON a.id = u.account_id WHERE u.login = ?', [login]);
+    const u = await d.get('SELECT u.*, a.status AS account_status, a.closing_at FROM account_users u JOIN accounts a ON a.id = u.account_id WHERE u.login = ?', [login]);
     if (u && u.account_status !== 'active') u.blockedReason = 'ACCOUNT_SUSPENDED';
+    else if (u && u.closing_at && u.role !== 'Administrator') u.blockedReason = 'ACCOUNT_CLOSING';
     return u;
   },
   who: (u) => ({ actor: u?.login || null, accountId: u?.account_id || null }),

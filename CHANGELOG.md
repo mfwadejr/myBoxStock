@@ -3,6 +3,18 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.13.0] - 2026-10-04
+
+### Added
+- **Export everything** (Security → Your data, Administrators). One zip with your devices, customers, sales, one row per device sold, and your settings, as CSV and JSON files. It is built in your browser: the server never sees it.
+- **Close my account** (Security → Your data, Administrators). Needs your password and your Reseller ID, and offers the export first. The account is locked for 7 days: other people cannot sign in, Administrators can still sign in to look around, export or restore it, and a banner shows the erase date. After 7 days it is erased automatically by an hourly server job (a server that was down catches up when it starts). Emails go out when the account closes and when it is erased, and say plainly that encrypted copies may remain in backups until those expire.
+- **Host Console:** accounts that are closing show "Closing, erases <date>" with a Restore button; "Delete forever" still erases at once.
+- **Per customer** (Customers → open a customer): **Export** gives a zip of their details and purchases; **Erase** removes their name, phone, email and notes from the customer and from their past sales. Totals and receipt numbers stay and show "Erased customer".
+- New messages "Account closing" and "Account erased" in the Messages editor. Migration 10 adds the closing date.
+
+### Changed
+- Every export, close, restore and customer erase is written to the log (counts only, never contents).
+
 ## [0.12.0] - 2026-10-04
 
 ### Added

@@ -130,6 +130,10 @@ const MIGRATIONS = [
     await db.exec('ALTER TABLE account_users ADD COLUMN email_grandfathered INTEGER NOT NULL DEFAULT 0');
     await db.exec('UPDATE account_users SET email_grandfathered = 1');
   } },
+  { id: 10, name: 'closing an account (7-day period before erase)', up: async (db) => {
+    await db.exec('ALTER TABLE accounts ADD COLUMN closing_at BIGINT');
+    await db.exec(`ALTER TABLE accounts ADD COLUMN closing_by ${s(160)}`);
+  } },
 ];
 
 export async function migrate(db) {

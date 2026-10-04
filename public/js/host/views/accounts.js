@@ -11,7 +11,7 @@
       const rows = await Host.api('GET', '/accounts?q=' + encodeURIComponent(q) + '&plan=' + encodeURIComponent(plan));
       main.querySelector('#tbl').innerHTML = rows.length ? `<table><thead><tr><th>Business</th><th>Reseller ID</th><th>Owner</th><th>Users</th><th>Plan</th><th>Status</th><th>Last active</th></tr></thead><tbody>${rows.map(a => `
         <tr class="click" data-id="${a.id}"><td><b>${esc(a.business_name)}</b></td><td class="mono">${esc(a.account_code)}</td><td class="muted">${esc(a.owner_email)}</td><td>${a.user_count}</td><td>${planChip(a.billing)}</td>
-        <td><span class="chip ${a.status === 'active' ? 'green' : 'red'}">${esc(a.status)}</span></td><td class="muted">${fmt.ago(a.last_activity)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No accounts yet.</div>';
+        <td>${a.closing_at ? `<span class="chip red">Closing, erases ${fmt.date(a.closing_at)}</span>` : `<span class="chip ${a.status === 'active' ? 'green' : 'red'}">${esc(a.status)}</span>`}</td><td class="muted">${fmt.ago(a.last_activity)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No accounts yet.</div>';
     };
     swap(main, `${Host.head('Accounts', 'Support tools for signed-up businesses. Their inventory, sales and customers are private and never shown here.')}
       <div class="card"><div class="row wrap"><div class="field grow"><input type="search" id="q" placeholder="Search by business, Reseller ID or email"></div>
@@ -28,6 +28,7 @@
       <div class="setting-desc">${esc(u.login)} · last sign-in ${fmt.ago(u.last_login)}</div></div><button class="btn secondary small" data-u="${u.id}">Manage</button></div>`).join('');
     await sheet(`<div class="row spread"><h2>${esc(a.business_name)}</h2><span class="chip ${a.status === 'active' ? 'green' : 'red'}">${esc(a.status)}</span></div>
       <p class="muted"><span class="mono">${esc(a.account_code)}</span> · created ${fmt.date(a.created_at)}</p>
+      ${a.closing_at ? `<div class="banner red row spread wrap my-md"><span>Closing: erases on ${fmt.date(a.closing_at)}.</span><button class="btn secondary small" id="unclose">Restore</button></div>` : ''}
       <div class="banner blue my-md">You can help with sign-in and security. Business data is not visible to host administrators.</div>
       <h3 class="mt-sm">Data</h3>
       <div class="setting"><div><div class="setting-title">${d.data.encrypted ? '<span class="chip green">Encrypted</span>' : '<span class="chip amber">Not set up yet</span>'}</div><div class="setting-desc">${d.data.recordCount} stored record${d.data.recordCount === 1 ? '' : 's'}. Their contents are unreadable to you by design — only the account's own people can open them.</div></div></div>
@@ -44,6 +45,7 @@
         el.querySelector('#plan').addEventListener('click', () => { close(); planSheet(a, () => accountSheet(id, refresh)); });
         el.querySelector('#hla').addEventListener('change', async (e) => { try { await Host.api('POST', `/accounts/${id}/host-link`, { allowed: e.target.checked }); toast(e.target.checked ? 'Linking allowed' : 'Linking turned off'); } catch (er) { e.target.checked = !e.target.checked; toast(er.message, true); } });
         el.querySelector('#sus').addEventListener('click', async () => { await Host.api('POST', `/accounts/${id}/status`, { status: a.status === 'active' ? 'suspended' : 'active' }); toast('Updated'); close(); refresh(); });
+        el.querySelector('#unclose')?.addEventListener('click', async () => { try { await Host.api('POST', `/accounts/${id}/restore-closing`); toast('Closing cancelled'); close(); refresh(); } catch (er) { toast(er.message, true); } });
         el.querySelector('#del').addEventListener('click', async () => {
           close();
           const c = await confirmBox({ title: 'Delete account?', body: 'This permanently erases the account, its users and all of its data. It cannot be undone.', confirmLabel: 'Delete forever', danger: true, typeToConfirm: a.account_code });

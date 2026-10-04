@@ -79,10 +79,15 @@
   const csvFields = () => [...C.fields().map(f => ({ key: f.key, label: f.label, f })), { key: 'make', label: 'Make' }, { key: 'model', label: 'Model' }, { key: 'cost', label: 'Cost' }, { key: 'price', label: 'Price' }, { key: 'status', label: 'Status' }, { key: 'receivedOn', label: 'Date received' }, { key: 'notes', label: 'Notes' }];
   // CSV columns for the extra items under test steps: From → To items get two columns.
   const itemCols = () => C.steps().flatMap(st => (st.details || []).flatMap(it => it.type === 'fromto' ? [{ st, it, part: 'from', label: `${it.label} from` }, { st, it, part: 'to', label: `${it.label} to` }] : [{ st, it, label: it.label }]));
-  function exportCsv() {
+  // The device table as headers + rows; shared by "Export CSV" here and "Export everything" in Security.
+  AccountApp.inventoryTable = () => {
     const cols = csvFields(), steps = C.steps();
     const rows = S.all('item').map(e => { const d = e.data; return [...cols.map(c => c.f ? C.showVal(c.f, C.getVal(d, c.f)) : c.key === 'cost' || c.key === 'price' ? F.dollars(d[c.key]) : c.key === 'receivedOn' ? C.dateStr(C.receivedMs(d)) : d[c.key]), ...(steps.length ? [...steps.map(st => d.checks?.[st.key] ? 'yes' : ''), ...itemCols().map(x => { const v = d.checkVals?.[x.st.key]?.[x.it.key]; return x.part ? (v?.[x.part] || '') : C.detailText(x.it, v); }), d.checks && Object.keys(d.checks).length ? C.dateStr(C.testedMs(d)) : '', d.testNotes || ''] : [])]; });
-    C.download(`inventory-${F.ymd(Date.now())}.csv`, C.toCsv([...cols.map(c => c.label), ...(steps.length ? [...steps.map(st => st.label), ...itemCols().map(x => x.label), 'Tested on', 'Test notes'] : [])], rows)); toast(`Exported ${rows.length} devices`);
+    return { headers: [...cols.map(c => c.label), ...(steps.length ? [...steps.map(st => st.label), ...itemCols().map(x => x.label), 'Tested on', 'Test notes'] : [])], rows };
+  };
+  function exportCsv() {
+    const t = AccountApp.inventoryTable();
+    C.download(`inventory-${F.ymd(Date.now())}.csv`, C.toCsv(t.headers, t.rows)); toast(`Exported ${t.rows.length} devices`);
   }
   async function importCsv(file) {
     const rows = C.parseCsv((await file.text()).replace(/^\uFEFF/, '')); if (rows.length < 2) return toast('That file has no rows to import.', true);

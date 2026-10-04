@@ -17,6 +17,7 @@ export const config = {
   dbUrl: env.DATABASE_URL || '',
   dbPoolMax: Number(env.DB_POOL_MAX || 10),
   trustProxy: env.TRUST_PROXY || '',            // set to 1 behind a reverse proxy so client IPs are real
+  closingSweepMs: Number(env.CLOSING_SWEEP_MS || 3600e3), // how often accounts past their closing date are erased
   hostAllowAny: env.HOST_ALLOW_ANY === '1',      // emergency switch: ignore the Host Console address list (use if you are locked out)
   secureCookies: env.SECURE_COOKIES === '1',
   publicUrl: env.PUBLIC_URL || '',

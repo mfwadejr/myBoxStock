@@ -9,6 +9,9 @@
   const WAR = { active: 'In warranty', expired: 'Expired', none: 'No warranty' };
   const day = (s, end) => s ? new Date(`${s}T${end ? '23:59:59.999' : '00:00:00'}`).getTime() : null;
 
+  // One row per sale; shared by "Export CSV" here and "Export everything" in Security.
+  A.salesTable = (entries) => ({ headers: ['receipt', 'date', 'customer', 'devices', 'payment', 'warranty', 'warranty_ends', 'total', 'cost', 'profit', 'voided'],
+    rows: entries.map(e => [e.data.no, new Date(e.data.ts).toISOString(), e.data.customerName || '', e.data.items.map(C.itemLabel).join('; '), C.paymentLabel(e.data.payment), e.data.warranty?.label || 'No warranty', e.data.warranty?.end ? F.ymd(e.data.warranty.end) : '', F.dollars(e.data.total), F.dollars(e.data.cost || 0), F.dollars(e.data.total - (e.data.cost || 0)), e.data.voided ? 'yes' : '']) });
   A.views.sales = async (main) => {
     if (!A.can('sales.read')) return swap(main, '<div class="page-head"><h1>Sales</h1></div><div class="card"><div class="empty">Your user type does not include sales.</div></div>');
     const from = day(f.from), to = day(f.to, true), q = f.q.toLowerCase();
@@ -28,6 +31,6 @@
     main.querySelector('#war').addEventListener('change', (e) => { f.war = UI.select.value(e.target); again(); });
     main.querySelector('#to').addEventListener('change', (e) => { f.to = e.target.value; again(); });
     main.querySelectorAll('tr.click').forEach(tr => tr.addEventListener('click', async () => { if (await C.showReceipt(S.get('sale', tr.dataset.id))) again(); }));
-    main.querySelector('#exp').addEventListener('click', () => C.download(`sales-${F.ymd(Date.now())}.csv`, C.toCsv(['receipt', 'date', 'customer', 'devices', 'payment', 'warranty', 'warranty_ends', 'total', 'cost', 'profit', 'voided'], rows.map(e => [e.data.no, new Date(e.data.ts).toISOString(), e.data.customerName || '', e.data.items.map(C.itemLabel).join('; '), C.paymentLabel(e.data.payment), e.data.warranty?.label || 'No warranty', e.data.warranty?.end ? F.ymd(e.data.warranty.end) : '', F.dollars(e.data.total), F.dollars(e.data.cost || 0), F.dollars(e.data.total - (e.data.cost || 0)), e.data.voided ? 'yes' : '']))));
+    main.querySelector('#exp').addEventListener('click', () => { const t = A.salesTable(rows); C.download(`sales-${F.ymd(Date.now())}.csv`, C.toCsv(t.headers, t.rows)); });
   };
 })();
