@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.17.1] - 2026-10-04
+
+### Fixed
+- **Bulk scan made one device per scan when UID, Serial and MAC were all tracked.** Every tracked identifier is now ticked by default, so scanning UID, then Serial, then MAC makes one device. Untick the ones you do not scan; press Enter on a blank box to skip one.
+
 ## [0.17.0] - 2026-10-04
 
 ### Added

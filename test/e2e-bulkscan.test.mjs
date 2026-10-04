@@ -24,8 +24,12 @@ test('browser: scanned "UID" label is removed; bulk scan adds a batch and reject
     await page.click('[data-cancel]');
     await page.click('#bulk'); await page.fill('#make_new', 'Acme'); await page.fill('#model_new', 'Box'); await page.fill('#cost', '10'); await page.fill('#price', '25'); await page.fill('#recv', '2026-01-15');
     const scan = async (v) => { await page.fill('#scanbox', v); await page.press('#scanbox', 'Enter'); };
-    // default: only the UID is scanned, one Enter per device, with the scanner's "UID" label removed
-    assert.equal(await page.locator('[data-id=uid]').isChecked(), true); assert.equal(await page.locator('[data-id=serial]').isChecked(), false);
+    // every tracked identifier is ticked by default, so one device = UID + Serial + MAC (one device, not three)
+    for (const k of ['uid', 'serial', 'mac']) assert.equal(await page.locator(`[data-id=${k}]`).isChecked(), true);
+    await page.fill('#scanbox', 'UID A1A1A1A1'); await page.press('#scanbox', 'Enter'); await page.fill('#scanbox', 'SN S1S1S1S1'); await page.press('#scanbox', 'Enter'); await page.fill('#scanbox', 'MAC 00:AA'); await page.press('#scanbox', 'Enter');
+    assert.equal(await page.locator('#blist .chip').count(), 1, 'three scans make one device'); await page.click('#undo'); await page.click('#undo'); await page.click('#undo');
+    await page.uncheck('[data-id=serial]'); await page.uncheck('[data-id=mac]');
+    // only the UID is scanned: one Enter per device, with the scanner's "UID" label removed
     await page.fill('#scanbox', 'UID 273D00000019D0E3'); assert.equal(await page.inputValue('#scanbox'), '273D00000019D0E3', 'the label is removed as soon as it is typed');
     await page.press('#scanbox', 'Enter'); assert.equal(await page.locator('#blist .chip').count(), 1);
     for (const v of ['UID', 'B2']) await scan(v);
