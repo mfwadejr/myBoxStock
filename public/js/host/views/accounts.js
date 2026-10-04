@@ -36,10 +36,13 @@
         <div class="setting-desc">${a.billing.endsAt ? `${a.billing.canWrite ? 'Ends' : 'Ended'} ${fmt.date(a.billing.endsAt)}` : a.plan === 'free' ? 'Free account — never expires' : 'No end date'}${a.billing.canWrite ? '' : ' · account is read-only'}</div></div>
         <button class="btn secondary small" id="plan">Change plan</button></div>
       ${d.history.length ? `<details class="mt-sm"><summary class="muted text-sm">Plan history (${d.history.length})</summary>${d.history.map(h => `<div class="setting-desc">${fmt.date(h.ts)} · ${esc(h.kind.replace(/_/g, ' '))}${h.to_plan && h.kind.startsWith('plan') ? ` → ${esc(h.to_plan)}` : ''} · ${esc(h.actor || '')}${h.note ? ` — ${esc(h.note)}` : ''}</div>`).join('')}</details>` : ''}
+      <h3 class="mt-sm">Site admin linking</h3>
+      <div class="setting"><div><div class="setting-title">Allow this account to link a Host administrator</div><div class="setting-desc">Shows the Link option in the account's Security page, so a person who also runs the site can switch between the two. Off by default. ${d.isOwner ? 'Switching it off removes any existing links.' : 'Only the Owner administrator can change this.'}</div></div><label class="switch"><input type="checkbox" id="hla" ${a.host_link_allowed ? 'checked' : ''} ${d.isOwner ? '' : 'disabled'}><i></i></label></div>
       <h3 class="mt-sm">People</h3>${rows}
       <div class="actions split"><div class="row"><button class="btn secondary small" id="sus">${a.status === 'active' ? 'Suspend' : 'Reactivate'}</button><button class="btn danger small" id="del">Delete</button></div><button class="btn" data-cancel>Done</button></div>`, {
       onMount: (el, close) => {
         el.querySelector('#plan').addEventListener('click', () => { close(); planSheet(a, () => accountSheet(id, refresh)); });
+        el.querySelector('#hla').addEventListener('change', async (e) => { try { await Host.api('POST', `/accounts/${id}/host-link`, { allowed: e.target.checked }); toast(e.target.checked ? 'Linking allowed' : 'Linking turned off'); } catch (er) { e.target.checked = !e.target.checked; toast(er.message, true); } });
         el.querySelector('#sus').addEventListener('click', async () => { await Host.api('POST', `/accounts/${id}/status`, { status: a.status === 'active' ? 'suspended' : 'active' }); toast('Updated'); close(); refresh(); });
         el.querySelector('#del').addEventListener('click', async () => {
           close();

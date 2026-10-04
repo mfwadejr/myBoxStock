@@ -112,6 +112,10 @@ const MIGRATIONS = [
     await db.exec(`CREATE TABLE admin_links (id ${id} PRIMARY KEY, admin_id ${id} NOT NULL, user_id ${id} NOT NULL UNIQUE, created_at BIGINT NOT NULL)`);
     await db.exec('CREATE INDEX idx_admin_links_admin ON admin_links (admin_id)');
   } },
+  { id: 7, name: 'per-account permission to link a Host administrator', up: async (db) => {
+    // Off for every account until the Owner administrator switches it on for that account.
+    await db.exec('ALTER TABLE accounts ADD COLUMN host_link_allowed INTEGER NOT NULL DEFAULT 0');
+  } },
 ];
 
 export async function migrate(db) {

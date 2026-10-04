@@ -22,10 +22,17 @@ test('browser: link Host administrator, switcher on both sides, wrong password r
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');
     assert.equal(await page.locator('#sw').count(), 0, 'no switcher before linking');
 
-    await page.goto(srv.base + '/app/#/security'); await page.waitForSelector('#hl'); await page.click('#hl');
+    // off by default: no card, and the endpoint refuses
+    await page.goto(srv.base + '/app/#/security'); await page.waitForSelector('#pw'); assert.equal(await page.locator('#hl').count(), 0, 'no Link option until the Owner allows it');
+    assert.equal((await page.evaluate(async () => (await fetch('/api/app/hostlink', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': document.cookie } , body: '{}' })).status)) >= 400, true);
+    // the Owner allows this account in the Host Console
+    const list = (await owner.req('GET', '/api/host/accounts')).data, acct = list[0].id;
+    await owner.req('POST', `/api/host/accounts/${acct}/host-link`, { allowed: true });
+    await page.goto(srv.base + '/app/#/home'); await page.waitForSelector('.side'); await page.goto(srv.base + '/app/#/security'); await page.waitForSelector('#hl'); await page.click('#hl');
     await page.fill('.sheet #u', 'admin'); await page.fill('.sheet #p', 'wrong-password-1'); await page.click('.sheet #go');
-    await page.waitForSelector('.toast'); assert.equal(await page.locator('#hlo').count(), 0, 'wrong password does not link');
-    await page.fill('.sheet #p', STRONG); await page.click('.sheet #go'); await page.waitForSelector('#sw'); await page.waitForSelector('#hlo');
+    await page.waitForSelector('.toast'); const msgWrong = await page.textContent('.toast'); assert.equal(await page.locator('#hlo').count(), 0, 'wrong password does not link');
+    await page.fill('.sheet #u', 'nobody-here'); await page.click('.sheet #go'); await page.waitForFunction((m) => [...document.querySelectorAll('.toast')].some(t => t.textContent === m), msgWrong); // same answer for an unknown username
+    await page.fill('.sheet #u', 'admin'); await page.fill('.sheet #p', STRONG); await page.click('.sheet #go'); await page.waitForSelector('#sw'); await page.waitForSelector('#hlo');
     assert.match(await page.textContent('#sw'), /Reseller · Dual Co/);
     await page.screenshot({ path: process.env.SHOT_DIR ? `${process.env.SHOT_DIR}/switch-app.png` : '/tmp/switch-app.png' });
     await page.click('#sw'); assert.ok(await page.locator('.select-option', { hasText: 'Site admin' }).count());
@@ -39,6 +46,11 @@ test('browser: link Host administrator, switcher on both sides, wrong password r
     const [popup] = await Promise.all([ctx.waitForEvent('page'), hp.locator('.select-option', { hasText: 'Reseller · Dual Co' }).click()]);
     await popup.waitForSelector('#l'); assert.equal(await popup.inputValue('#l'), login.toLowerCase());
 
+    // the Owner turns linking off for the account: the link and switcher go away
+    await owner.req('POST', `/api/host/accounts/${acct}/host-link`, { allowed: false });
+    assert.equal((await owner.req('GET', '/api/host/links')).data.accounts.length, 0, 'Host switcher list is empty again');
+    await page.goto(srv.base + '/app/#/home'); await page.waitForSelector('.side'); await page.goto(srv.base + '/app/#/security'); await page.waitForSelector('#pw'); assert.equal(await page.locator('#hl, #hlo').count(), 0, 'card is gone');
+    return assert.deepEqual(errors, []);
     // unlink: switcher disappears
     await page.keyboard.press('Escape'); await page.click('#hlo'); await page.click('.sheet .btn:not(.secondary), .modal .btn:not(.secondary)').catch(() => {});
     await page.waitForFunction(() => !document.querySelector('#sw'));

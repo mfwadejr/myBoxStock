@@ -15,7 +15,7 @@ import { setPlan } from '../../services/billing/index.mjs';
 export function accountsRoutes(db) {
   const r = express.Router();
   const A = (req, level, event, message, a, data) => hostLog(req, level, event, message, { area: 'accounts', accountId: a?.id || null, data });
-  const getAccount = (id) => db.get('SELECT id, account_code, business_name, owner_email, status, plan, trial_ends_at, plan_until, plan_note, plan_changed_at, created_at, last_activity FROM accounts WHERE id = ?', [id]);
+  const getAccount = (id) => db.get('SELECT id, account_code, business_name, owner_email, status, plan, trial_ends_at, plan_until, plan_note, plan_changed_at, created_at, last_activity, host_link_allowed FROM accounts WHERE id = ?', [id]);
   const userOf = (req) => db.get('SELECT id, account_id, username, login, email, role FROM account_users WHERE id = ? AND account_id = ?', [req.params.uid, req.params.id]);
 
   r.get('/', async (req, res) => {
@@ -37,7 +37,20 @@ export function accountsRoutes(db) {
     // What the Host can know about stored data: whether it is encrypted and how many opaque records exist. Never what they contain.
     const enc = await db.get('SELECT confirmed_at FROM account_recovery WHERE account_id = ?', [a.id]);
     const n = await db.get('SELECT COUNT(*) AS n FROM records WHERE account_id = ?', [a.id]);
-    res.json({ account: { ...a, billing: billingState(a) }, users, events, history, data: { encrypted: !!enc, recordCount: Number(n.n) } });
+    const owner = (await db.get('SELECT id FROM host_admins ORDER BY created_at, id LIMIT 1'))?.id;
+    res.json({ account: { ...a, billing: billingState(a) }, isOwner: req.subject.id === owner, users, events, history, data: { encrypted: !!enc, recordCount: Number(n.n) } });
+  });
+
+  // Owner administrator only: let this account's Administrators link a Host administrator sign-in (the account switcher). Switching off also removes existing links.
+  r.post('/:id/host-link', async (req, res) => {
+    const owner = (await db.get('SELECT id FROM host_admins ORDER BY created_at, id LIMIT 1'))?.id;
+    if (req.subject.id !== owner) return res.status(403).json({ error: 'Only the Owner administrator can do that.' });
+    const a = await getAccount(req.params.id); if (!a) return fail(res, 404, 'NOT_FOUND');
+    const allowed = !!req.body?.allowed;
+    await db.run('UPDATE accounts SET host_link_allowed = ? WHERE id = ?', [allowed ? 1 : 0, a.id]);
+    if (!allowed) await db.run('DELETE FROM admin_links WHERE user_id IN (SELECT id FROM account_users WHERE account_id = ?)', [a.id]);
+    A(req, 'warn', allowed ? 'account.hostlink_allowed' : 'account.hostlink_blocked', `Account ${a.account_code}: linking a Host administrator ${allowed ? 'allowed' : 'turned off (existing links removed)'}`, a, { code: a.account_code });
+    res.json({ ok: true });
   });
 
   r.post('/:id/status', async (req, res) => {

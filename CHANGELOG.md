@@ -3,6 +3,12 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.9.6] - 2026-10-04
+
+### Changed
+- **Linking a Host administrator is now off for every account until the Owner administrator allows it.** Host Console → Accounts → open an account → "Site admin linking". Until it is on, the Link option does not appear in that account's Security page and the server refuses the request. Switching it off also removes any existing links, so the switcher disappears on both sides. Only the Owner administrator can change it, and each change is logged.
+- **Every linking failure now gives the same answer** ("Those details are not right."), so nothing about Host usernames or two-factor can be learned from an account. Failed attempts are also limited per account (6 in 15 minutes), as well as per Host username, and are logged. Migration 7 adds the per-account setting.
+
 ## [0.9.5] - 2026-10-04
 
 ### Added
