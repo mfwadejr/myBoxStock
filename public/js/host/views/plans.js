@@ -15,7 +15,7 @@
             <div class="field"><label>Users included</label><input type="number" data-k="maxUsers" data-i="${i}" value="${esc(p.maxUsers ?? '')}" min="1" placeholder="No limit"></div>
             <div class="field"><label>Devices included</label><input type="number" data-k="maxDevices" data-i="${i}" value="${esc(p.maxDevices ?? '')}" min="1" placeholder="No limit"></div>
             <div class="field"><label>Note</label><input type="text" data-k="note" data-i="${i}" value="${esc(p.note || '')}" maxlength="200"></div></div></div>`).join('') || '<div class="card"><div class="empty">No plans yet.</div></div>'}
-        <div class="row"><button class="btn secondary" id="add">Add a plan</button><button class="btn" id="save">Save plans</button></div>`);
+        <div class="row mt-lg"><button class="btn secondary" id="add">Add a plan</button><button class="btn" id="save">Save plans</button></div>`);
       main.querySelectorAll('[data-k]').forEach(el => el.addEventListener('input', () => { plans[+el.dataset.i][el.dataset.k] = el.value; }));
       plans.forEach((p, i) => main.querySelector('#iv' + i).addEventListener('change', (e) => { p.interval = UI.select.value(e.target); }));
       main.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => { plans.splice(+b.dataset.rm, 1); draw(); }));

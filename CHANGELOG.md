@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.14.1] - 2026-10-04
+
+### Fixed
+- Plans page: the Add a plan and Save plans buttons now have space above them instead of touching the card.
+
 ## [0.14.0] - 2026-10-04
 
 ### Added
