@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.9.1] - 2026-10-04
+
+### Fixed
+- Emails: the logo showed at full size and left-aligned in Apple Mail. It now has an explicit size and is centred in the header, so it looks the same in mail apps as in the preview.
+
 ## [0.9.0] - 2026-10-04
 
 ### Added

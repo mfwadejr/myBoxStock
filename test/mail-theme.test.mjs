@@ -13,6 +13,7 @@ test('every template is branded: logo, name, title, footer, product colours, and
     assert.ok(m.html.includes('cid:mbs-logo'), `${key}: logo`); assert.ok(m.html.includes('>myBoxStock<'), `${key}: brand name`);
     assert.match(m.html, /<h1 [^>]*>[^<]+<\/h1>/, `${key}: title`); assert.ok(m.html.includes('Please do not reply'), `${key}: footer`);
     assert.ok(m.html.includes(EMAIL_THEME['--color-bg']) && m.html.includes(EMAIL_THEME['--color-surface']), `${key}: theme colours`);
+    assert.match(m.html, /<img [^>]*style="[^"]*width:56px;height:56px/, `${key}: logo has an explicit size in its style (mail apps ignore the attributes)`); assert.ok(m.html.includes('align="center"'), `${key}: header centred`);
     assert.ok(m.text.includes('myBoxStock'), `${key}: plain text`); assert.ok(!/\{\{/.test(m.html + m.text), `${key}: unfilled placeholder`);
   }
   assert.ok(fs.existsSync(new URL('../public/assets/logo-email.png', import.meta.url)), 'the email logo file exists');

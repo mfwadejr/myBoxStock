@@ -18,7 +18,7 @@ export const emailStyles = {
   body: `margin:0;padding:24px 12px;background:${T['--color-bg']};font-family:${font};font-size:15px;line-height:1.5;color:${T['--color-text']}`,
   card: `max-width:520px;margin:0 auto;background:${T['--color-surface']};border-radius:${T['--radius-lg']};padding:32px`,
   header: `text-align:center;margin-bottom:24px`,
-  logo: `display:block;margin:0 auto 8px;border:0`,
+  logo: `display:inline-block;width:56px;height:56px;margin:0 0 8px;border:0`, // explicit size in the style: Apple Mail ignores the width/height attributes and shows the file at full size
   brand: `font-weight:600;font-size:18px;color:${T['--color-text']}`,
   title: `font-size:22px;font-weight:600;line-height:1.25;margin:0 0 16px;color:${T['--color-text']}`,
   button: `display:inline-block;background:${T['--color-primary']};color:${T['--color-primary-on']};text-decoration:none;font-weight:600;padding:12px 24px;border-radius:${T['--radius-pill']}`,

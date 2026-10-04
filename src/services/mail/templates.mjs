@@ -71,7 +71,7 @@ const fillText = (str, vars) => str.replace(/\{\{(\w+)\}\}/g, (_, k) => String(v
 const fillHtml = (str, vars) => esc(str).replace(/\{\{(\w+)\}\}/g, (_, k) => { const v = esc(vars[k] ?? ''); return PLACEHOLDERS[k]?.bold && v ? `<b>${v}</b>` : v; });
 const paragraphs = (body) => body.replace(/\r/g, '').trim().split(/\n{2,}/);
 const btn = (href, label) => `<p><a style="${S.button}" href="${esc(href)}">${esc(label)}</a></p>`;
-const wrap = (title, inner) => `<!doctype html><html><body style="${S.body}"><div style="${S.card}"><div style="${S.header}"><img src="cid:${LOGO_CID}" width="56" height="56" alt="myBoxStock" style="${S.logo}"><div style="${S.brand}">myBoxStock</div></div><h1 style="${S.title}">${esc(title)}</h1>${inner}</div><div style="${S.footer}">You are receiving this because of activity on your myBoxStock account.<br>Please do not reply to this message.</div></body></html>`;
+const wrap = (title, inner) => `<!doctype html><html><body style="${S.body}"><div style="${S.card}"><div align="center" style="${S.header}"><img src="cid:${LOGO_CID}" width="56" height="56" alt="myBoxStock" style="${S.logo}"><div style="${S.brand}">myBoxStock</div></div><h1 style="${S.title}">${esc(title)}</h1>${inner}</div><div style="${S.footer}">You are receiving this because of activity on your myBoxStock account.<br>Please do not reply to this message.</div></body></html>`;
 
 export function render(key, vars, override) {
   const t = TEMPLATES[key], w = wording(key, override), url = t.button ? String(vars[t.button.to] || '') : '';
