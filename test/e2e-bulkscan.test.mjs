@@ -31,13 +31,19 @@ test('browser: scanned "UID" label is removed; bulk scan adds a batch and reject
     for (const v of ['UID', 'B2']) await scan(v);
     await scan('b2'); assert.match(await page.textContent('#bmsg'), /already scanned/);
     assert.equal(await page.locator('#blist .chip').count(), 2);
+    // a scanner types fast and sends no Enter: the code is added by itself and the cursor stays in the box
+    await page.locator('#scanbox').pressSequentially('UID D4D4D4D4', { delay: 5 }); await page.waitForFunction(() => document.querySelectorAll('#blist .chip').length === 3);
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'scanbox', 'cursor stays in the scan box');
+    // a scanner that ends with Tab
+    await page.locator('#scanbox').pressSequentially('E5E5E5E5', { delay: 5 }); await page.keyboard.press('Tab'); assert.equal(await page.locator('#blist .chip').count(), 4);
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'scanbox');
     // now also scan serial and MAC
     await page.check('[data-id=serial]'); await page.check('[data-id=mac]');
     for (const v of ['UID', 'C3', 'Serial number', 'S3', 'MAC 00:11']) await scan(v);
-    assert.equal(await page.locator('#blist .chip').count(), 3);
+    assert.equal(await page.locator('#blist .chip').count(), 5);
     assert.equal(await page.locator('.sheet #f_uid').count(), 0, 'identifiers are scanned, not shared fields');
     await page.click('#bsave'); await page.waitForSelector('tr.click');
-    assert.equal(await page.locator('tbody tr.click').count(), 3);
+    assert.equal(await page.locator('tbody tr.click').count(), 5);
     const text = await page.locator('tbody').first().textContent(); assert.ok(text.includes('273D00000019D0E3') && text.includes('B2') && text.includes('C3') && !text.includes('UID'));
     const cs = await page.evaluate(() => ['UID', 'UID\n273D00000019D128', 'UID273D00000019D128', 'UID: 273D00000019D128', 'SN 12345', 'Serial number', 'MAC 00:11:22', 'SN-98765', '273D00000019D128'].map(v => AccountApp.commerce.cleanScan(v)));
     assert.deepEqual(cs, ['', '273D00000019D128', '273D00000019D128', '273D00000019D128', '12345', '', '00:11:22', 'SN-98765', '273D00000019D128']);

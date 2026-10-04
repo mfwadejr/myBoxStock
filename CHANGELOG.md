@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.16.1] - 2026-10-04
+
+### Fixed
+- **Bulk scan adds each code by itself.** Scanners that do not send Enter no longer need one: a quick burst of scanner typing is added when it stops, Tab adds it too, a paste adds it, and leaving the box adds it. The cursor stays in the scan box ready for the next scan. Typing by hand still works with Enter.
+
 ## [0.16.0] - 2026-10-04
 
 ### Added

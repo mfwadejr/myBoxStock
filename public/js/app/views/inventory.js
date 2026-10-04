@@ -88,13 +88,20 @@
       el.querySelectorAll('[data-id]').forEach(c => c.addEventListener('change', () => { if (cur.length) { c.checked = !c.checked; return toast('Finish the device you are scanning first.', true); } if (!ids().length) { c.checked = true; } draw(); }));
       // Scanners type the label too ("UID 273D…"): remove it as soon as it lands in the box, so only the number is ever shown.
       q('scanbox').addEventListener('input', () => { const box = q('scanbox'), c = C.cleanScan(box.value); if (c && c !== box.value.trim() && box.value.trim().length > c.length + 2) box.value = c; });
-      q('scanbox').addEventListener('keydown', (e) => { if (e.key !== 'Enter') return; e.preventDefault();
+      // One scan finished: add it and move to the next identifier. Triggered by Enter or Tab (many scanners send one of them), by a quick burst of
+      // typing that then stops (a scanner types far faster than a person), by pasting, or by the cursor leaving the box.
+      const submit = () => {
         const l = ids(), raw = q('scanbox').value, v = C.cleanScan(raw), n = cur.length, f = l[n]; q('scanbox').value = '';
         if (!f || (!v && (n === 0 || raw.trim()))) return; // nothing, or only a label such as "UID" that the scanner sends before the number
         if (v && (f.unique || n === 0)) { const bad = clash(f, n, v); if (bad) return msg(bad); }
         msg(''); cur.push(v);
         if (cur.length === l.length) { devices.push(cur); cur = []; }
-        draw(); });
+        draw(); };
+      let last = 0, fast = 0, idle = null;
+      q('scanbox').addEventListener('input', (e) => { const now = performance.now(); fast = now - last < 40 ? fast + 1 : 0; last = now; clearTimeout(idle);
+        if (e.inputType === 'insertFromPaste' || fast >= 5) idle = setTimeout(() => { if (C.cleanScan(q('scanbox').value).length >= 5) submit(); fast = 0; }, 150); });
+      q('scanbox').addEventListener('keydown', (e) => { if (e.key !== 'Enter' && !(e.key === 'Tab' && !e.shiftKey && q('scanbox').value.trim())) return; e.preventDefault(); clearTimeout(idle); submit(); });
+      q('scanbox').addEventListener('blur', () => { clearTimeout(idle); if (C.cleanScan(q('scanbox').value)) { submit(); setTimeout(() => q('scanbox').focus(), 0); } });
       q('undo').addEventListener('click', () => { if (cur.length) cur.pop(); else devices.pop(); msg(''); draw(); q('scanbox').focus(); });
       q('bsave').addEventListener('click', async () => { try { if (cur.length > 1 || (cur.length === 1 && cur[0])) { devices.push(cur); cur = []; } if (!devices.length) return toast('Scan at least one device.', true);
         await S.commit({ puts: devices.map(v => ({ type: 'item', data: build(v) })) }); toast(`${devices.length} devices added`); close(true); } catch (err) { toast(err.message, true); } });
