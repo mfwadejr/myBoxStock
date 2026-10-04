@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.15.3] - 2026-10-04
+
+### Fixed
+- Bulk scan listed dropdown details such as Condition as something to scan. Only text details (UID, Serial number, MAC address and similar) are scanned now; dropdowns are set once for the whole batch.
+
 ## [0.15.2] - 2026-10-04
 
 ### Fixed

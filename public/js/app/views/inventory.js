@@ -66,7 +66,7 @@
   // Bulk scan: set what is the same once, then scan each device's identifiers (UID, serial number, MAC...) in turn; Enter after each.
   // Enter on an empty box skips an identifier the device does not have. When the last one is done the device is added to the batch.
   function bulkSheet() {
-    const ids = C.fields().filter(f => f.lookup || f.unique);
+    const ids = C.fields().filter(f => (f.lookup || f.unique) && (!f.type || f.type === 'text'));
     if (!ids.length) return toast('Turn on a device detail you can scan (such as UID) under Settings first.', true);
     const idKeys = new Set(ids.map(f => f.key)), shared = C.fields().filter(f => !idKeys.has(f.key));
     return sheet(`<h2>Bulk scan</h2><p class="sub">Choose what is the same for every device. Then scan each device’s ${ids.map(f => esc(f.label)).join(', ')} in that order, pressing Enter after each (Enter on an empty box skips one). Press Save when all are scanned.</p>

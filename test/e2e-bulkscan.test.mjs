@@ -28,6 +28,7 @@ test('browser: scanned "UID" label is removed; bulk scan adds a batch and reject
     for (const v of ['UID B2', 'SN S2']) await scan(v); await scan('');
     await scan('a1'); assert.match(await page.textContent('#bmsg'), /already scanned/);
     assert.equal(await page.locator('#blist .chip').count(), 2);
+    assert.equal(await page.locator('.sheet #f_cond').count(), 1, 'Condition stays a shared dropdown, not a scan step');
     assert.equal(await page.locator('.sheet #f_uid').count(), 0, 'identifiers are scanned, not shared fields');
     assert.equal(await page.locator('.sheet #blist .chip').first().textContent().then(t => t.includes('A1') && t.includes('S1')), true);
     await page.click('#bsave'); await page.waitForSelector('tr.click');
