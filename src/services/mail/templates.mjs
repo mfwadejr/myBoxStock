@@ -19,6 +19,9 @@ export const PLACEHOLDERS = {
   time: { label: 'Time', sample: 'Sun, 04 Oct 2026 09:15:00 GMT', bold: true },
   when: { label: 'Time', sample: 'Sun, 04 Oct 2026 02:00:00 GMT', bold: true },
   error: { label: 'Problem', sample: 'Not enough disk space', bold: true },
+  business: { label: 'Business name', sample: 'Alex Boxes', bold: true },
+  receiptNo: { label: 'Receipt number', sample: 'S-20261004-7K2Q', bold: true },
+  message: { label: 'Receipt', sample: 'Alex Boxes\nReceipt S-20261004-7K2Q\nTotal: $40.00' },
   url: { label: 'Link', sample: 'https://app.myboxstock.com/app/' },
   link: { label: 'Link', sample: 'https://app.myboxstock.com/app/#/reset/example' },
 };
@@ -58,6 +61,8 @@ export const TEMPLATES = {
   backup_failed: { group: 'System', name: 'Backup failed', title: 'A scheduled backup did not complete', subject: 'myBoxStock: the scheduled backup did not complete',
     body: 'The scheduled full-site backup did not complete.\n\nTime: {{when}}\nProblem: {{error}}\n\nOpen the Host Console, Backups page, to check it and run one by hand.',
     vars: ['when', 'error'], required: ['when', 'error'] },
+  receipt: { group: 'Customer', name: 'Receipt', title: 'Your receipt', subject: 'Receipt {{receiptNo}} from {{business}}',
+    body: '{{message}}', vars: ['business', 'receiptNo', 'message'], required: ['message'] },
   test: { group: 'System', name: 'Test message', title: 'Email is working', subject: 'myBoxStock test email',
     body: 'This is a test message from your myBoxStock server.\n\nOutbound email is working.', vars: [], required: [] },
 };

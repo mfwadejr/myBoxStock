@@ -8,6 +8,7 @@ import { rolesRoutes } from './roles.mjs';
 import { vaultRoutes } from './vault.mjs';
 import { activityRoutes } from './activity.mjs';
 import { emailRoutes } from './email.mjs';
+import { receiptRoutes } from './receipts.mjs';
 import { accountRoutes } from './account.mjs';
 import { hostLinkRoutes } from './hostlink.mjs';
 import { loadUser } from './context.mjs';
@@ -35,6 +36,6 @@ export function appRouter(db) {
     log('tenant', 'warn', 'billing.read_only', `${req.subject.login} tried ${req.method} ${fullPath(req)} but the account is read-only (${req.subject.billing.state})`, { actor: req.subject.login, accountId: req.subject.account_id, data: { state: req.subject.billing.state } });
     fail(res, 402, 'ACCOUNT_READ_ONLY', { billing: req.subject.billing });
   });
-  r.use('/users', usersRoutes(db)); r.use('/roles', rolesRoutes(db)); r.use('/vault', vaultRoutes(db)); r.use('/activity', activityRoutes(db)); r.use('/hostlink', hostLinkRoutes(db)); r.use('/email', emailRoutes(db));
+  r.use('/receipt-email', receiptRoutes(db)); r.use('/users', usersRoutes(db)); r.use('/roles', rolesRoutes(db)); r.use('/vault', vaultRoutes(db)); r.use('/activity', activityRoutes(db)); r.use('/hostlink', hostLinkRoutes(db)); r.use('/email', emailRoutes(db));
   return r;
 }

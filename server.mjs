@@ -11,6 +11,7 @@ import { initDb } from './src/db/connection.mjs';
 import { applyPendingRestore, startBackupScheduler } from './src/services/backup/index.mjs';
 import { startMailWorker } from './src/services/mail/index.mjs';
 import { loadFirewall, firewallMiddleware } from './src/security/firewall/index.mjs';
+import { applyRuntime } from './src/services/runtime/index.mjs';
 import { purgeExpired } from './src/auth/session.mjs';
 import { sweepClosing } from './src/services/accounts/closing.mjs';
 import { sweepExpired } from './src/services/billing/index.mjs';
@@ -41,6 +42,7 @@ setInterval(() => pruneEventLog().then(n => n && L.info('log.pruned', `Removed $
 const app = express();
 app.disable('x-powered-by');
 if (config.trustProxy) app.set('trust proxy', /^\d+$/.test(config.trustProxy) ? Number(config.trustProxy) : config.trustProxy);
+await applyRuntime(db, app); // options saved in the Host Console (Settings) win over the environment
 app.use(accessLog);
 app.use((req, res, next) => { // security headers; style-src has no 'unsafe-inline' — all styling comes from /css
   res.set({ 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'no-referrer',

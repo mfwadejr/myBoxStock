@@ -65,7 +65,7 @@ export const INDEXES = [
 
 // Order matters when copying between databases (parents before children).
 export const COPY_ORDER = ['settings', 'host_admins', 'accounts', 'billing_events', 'account_users', 'sign_in_history', 'account_keys', 'account_recovery', 'account_roles', 'inventory_items', 'records',
-  'firewall_rules', 'mail_queue', 'event_log', 'password_resets', 'sessions', 'admin_links', 'email_confirmations', 'billing_receipts'];
+  'firewall_rules', 'mail_queue', 'event_log', 'password_resets', 'sessions', 'admin_links', 'email_confirmations', 'billing_receipts', 'receipt_mail_usage'];
 
 // Versioned migrations. Each runs once, in order, and is recorded in schema_migrations.
 // Fresh installs run all of them; existing installs run only the ones they are missing. Never edit an applied migration — add a new one.
@@ -138,6 +138,10 @@ const MIGRATIONS = [
     // A Host-side record of money received for an account (entered by hand today; payments can fill it in later). Amounts are whole cents.
     await db.exec(`CREATE TABLE billing_receipts (id ${id} PRIMARY KEY, account_id ${id} NOT NULL, ts BIGINT NOT NULL, amount_cents BIGINT NOT NULL, currency ${s(8)} NOT NULL, method ${s(40)}, reference ${s(120)}, note ${s(255)}, period_end BIGINT, actor ${s(100)})`);
     await db.exec('CREATE INDEX idx_receipts_account ON billing_receipts (account_id, ts)');
+  } },
+  { id: 12, name: 'daily count of receipts emailed per account', up: async (db) => {
+    // Only a count per day: no address, no content (receipts are relayed, never stored).
+    await db.exec(`CREATE TABLE receipt_mail_usage (account_id ${id} NOT NULL, day ${s(10)} NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (account_id, day))`);
   } },
 ];
 

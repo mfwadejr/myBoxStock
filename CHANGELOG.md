@@ -3,6 +3,22 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.15.1] - 2026-10-04
+
+### Added
+- **Server options in the Host Console** (Settings → Server options): secure cookies, how many reverse proxies sit in front of the site, log detail and how long the activity log is kept. These no longer need container environment variables. A value saved here wins; "Back to server defaults" returns to whatever the container sets. Secure cookies can only be turned on from an https page, so you cannot lock yourself out. Changes apply at once, with no restart.
+- **Use this address** button next to Site address: fills in the https address you are using to reach the Host Console, so email links (confirm, reset, welcome) point to the right place in one click.
+
+### Notes
+- Still container settings, because they are needed before the database opens or exist for emergencies: the data folder, port, database type and connection, the application secret and `HOST_ALLOW_ANY`.
+
+## [0.15.0] - 2026-10-04
+
+### Added
+- **Email a receipt.** On a sale's receipt, Email now opens a box with the customer's saved address filled in (editable). Send delivers the receipt straight from the site, with your business name as the sender and your own email as the reply address. "Open in my mail app" is still there for anyone who prefers it.
+- **Nothing is kept.** The receipt passes through the server to reach the customer and is not saved: not in the mail queue, the database or the logs (the log only notes that a receipt was sent). Each account is limited to 100 receipts a day (migration 12 keeps only that daily count).
+- The wording of the receipt email can be edited by the Host administrator under Messages (new Customer group).
+
 ## [0.14.3] - 2026-10-04
 
 ### Added
