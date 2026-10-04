@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.8.2] - 2026-10-04
+
+### Added
+- Opening `/app/#/signup` while signed out goes straight to the Create account screen, so the "Sign up" button on the marketing site lands on the right page.
+
 ## [0.8.1] - 2026-10-04
 
 ### Changed

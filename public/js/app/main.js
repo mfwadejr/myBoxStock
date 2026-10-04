@@ -25,7 +25,7 @@
     try { cfg = await AccountApp.api('GET', '/public-config'); } catch {}
     const m = location.hash.match(/^#\/reset\/(.+)$/); if (m) return resetScreen(m[1]);
     try { const r = await AccountApp.api('GET', '/me'); UI.setCsrf(r.csrf); AccountApp.me = r.user; AccountApp.vault.state = r.vault; if (r.mfaPending) return mfaScreen(); if (r.mustChange) return changePwScreen(); if (!await AccountApp.vault.gate(r, AccountApp.pw)) return; AccountApp.pw = null; await AccountApp.store.load(); await AccountApp.vault.policy(); return shell(); }
-    catch (e) { loginScreen(); if (e && e.status !== 401) toast(e.message || 'Sign-in could not finish. Please try again.', true); }
+    catch (e) { if (location.hash === '#/signup' && cfg.signupsEnabled) signupScreen(); else loginScreen(); if (e && e.status !== 401) toast(e.message || 'Sign-in could not finish. Please try again.', true); }
   }
   function loginScreen() {
     authShell(`${modeSwitch('login')}<h1>${esc(cfg.siteName)}</h1><p class="lead">Sign in to your account.</p>
