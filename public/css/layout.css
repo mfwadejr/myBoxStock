@@ -7,10 +7,9 @@
 }
 .brand { display: flex; align-items: center; gap: var(--space-sm); font-weight: var(--weight-semibold); font-size: var(--text-lg); letter-spacing: var(--tracking-brand); }
 .brand-sub { font-weight: var(--weight-regular); color: var(--color-text-faint); }
-.brand-mark {
-  width: var(--logo-sm); height: var(--logo-sm); border-radius: var(--radius-sm); display: grid; place-items: center;
-  background: var(--gradient-logo); color: var(--color-logo-on); font-size: var(--text-sm);
-}
+.brand-link { display: inline-flex; line-height: 0; }
+.brand-link:hover { text-decoration: none; }
+.brand-mark { display: block; width: var(--logo-nav); height: var(--logo-nav); object-fit: contain; }
 .shell { display: grid; grid-template-columns: var(--sidebar-w) 1fr; gap: var(--space-3xl); max-width: var(--content-max); margin: 0 auto; padding: var(--space-3xl) var(--space-2xl) var(--space-6xl); }
 .side { position: sticky; top: var(--sticky-offset); align-self: start; display: flex; flex-direction: column; gap: var(--space-3xs); }
 .side a {

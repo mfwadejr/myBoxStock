@@ -2,7 +2,29 @@
 (() => {
   const { esc, toast } = UI;
   const S = AccountApp.vault = { adk: null, state: null };
-  S.clear = () => { S.adk = null; S.state = null; AccountApp.store.reset(); };
+  // Optional "stay unlocked after a refresh" (chosen by the Administrator in Settings). The key lives only in this tab's sessionStorage:
+  // it is wiped on sign-out, when the tab closes, and after the idle time. The default is to ask for the password again.
+  const KEEP = 'bx.keep'; let idleTimer = null, lastTouch = 0;
+  const wipeKept = () => { try { sessionStorage.removeItem(KEEP); } catch {} };
+  const stopIdle = () => { clearInterval(idleTimer); idleTimer = null; };
+  S.clear = () => { stopIdle(); wipeKept(); S.adk = null; S.state = null; AccountApp.store.reset(); };
+  const restore = async (user) => {
+    try {
+      const k = JSON.parse(sessionStorage.getItem(KEEP) || 'null'); if (!k) return null;
+      if (k.u !== user || Date.now() - k.at > k.idle * 60000) { wipeKept(); return null; }
+      return await Vault.importAdk(k.k);
+    } catch { wipeKept(); return null; }
+  };
+  S.policy = async () => { // call once the account settings are loaded, and again whenever they change
+    const u = AccountApp.store.config().unlock; stopIdle();
+    if (u.mode !== 'stay' || !S.adk) { wipeKept(); return; }
+    const raw = await Vault.exportAdk(S.adk), save = () => { lastTouch = Date.now(); try { sessionStorage.setItem(KEEP, JSON.stringify({ u: AccountApp.me.username, k: raw, idle: u.idleMin, at: lastTouch })); } catch {} };
+    save();
+    const touch = () => { if (Date.now() - lastTouch > 15000) save(); };
+    for (const ev of ['pointerdown', 'keydown']) window.addEventListener(ev, touch, { passive: true });
+    idleTimer = setInterval(() => { if (Date.now() - lastTouch > u.idleMin * 60000) { for (const ev of ['pointerdown', 'keydown']) window.removeEventListener(ev, touch); S.lock(); } }, 15000);
+  };
+  S.lock = () => { stopIdle(); wipeKept(); S.adk = null; AccountApp.store.reset(); AccountApp.boot(); };
   const api = (...a) => AccountApp.api(...a);
   const form = (sel, fn) => AccountApp.root.querySelector(sel).addEventListener('submit', (e) => { e.preventDefault(); UI.busy(AccountApp.root.querySelector(sel + ' button.block'), async () => { try { await fn(); } catch (er) { toast(er.message, true); } }); });
   const val = (id) => AccountApp.root.querySelector(id).value;
@@ -85,6 +107,7 @@
       if (pw) await setup(pw); else await askPassword({ title: 'Turn on encryption', lead: esc(lead), button: 'Turn on', onSubmit: setup });
       return true;
     }
+    if (!S.adk && !pw && v.keys) S.adk = await restore(me.user.username);
     if (S.adk) return true;
     if (!v.keys) { await recoverAccess(); return true; }
     if (pw) { try { S.adk = await Vault.unlock(pw, v.keys); } catch {} }

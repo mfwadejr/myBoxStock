@@ -3,6 +3,7 @@ import { getSetting, setSetting } from '../../db/settings.mjs';
 import { areaLogger } from '../../logging/logger.mjs';
 import { createBackup } from './create.mjs';
 import { listBackups, deleteBackup } from './files.mjs';
+import { maybeRunFull } from './auto.mjs';
 
 const L = areaLogger('backup');
 export const DEFAULT_SCHEDULE = { enabled: true, hourUtc: 3, keep: 14 };
@@ -24,6 +25,7 @@ export function startBackupScheduler(db) {
       const s = await getSchedule(db), now = new Date(), day = now.toISOString().slice(0, 10);
       if (s.enabled && now.getUTCHours() === s.hourUtc && lastAutoDay !== day) { lastAutoDay = day; await createBackup(db, 'auto', 'scheduler'); pruneBackups(s.keep); }
     } catch (e) { L.error('scheduler.error', `Automatic backup failed: ${e.message}`); }
+    try { await maybeRunFull(db); } catch (e) { L.error('scheduler.error', `Scheduled full-site backup check failed: ${e.message}`); }
   }, 60000).unref();
   L.info('scheduler.started', 'Backup scheduler started');
 }

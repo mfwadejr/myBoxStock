@@ -38,6 +38,8 @@
   };
   V.newSalt = () => b64(rand(16));
   V.wrapAdk = async (adk, kek) => sealBytes(kek, new Uint8Array(await subtle.exportKey('raw', adk)), 'adk');
+  V.exportAdk = async (adk) => b64(await subtle.exportKey('raw', adk));
+  V.importAdk = (b64) => aesKey(unb64(b64), ['encrypt', 'decrypt'], true);
   V.unwrapAdk = async (blob, kek) => aesKey(await openBytes(kek, blob, 'adk'), ['encrypt', 'decrypt'], true);
   // A person's key material for the server: { salt, iters, wrappedAdk }.
   V.keysFor = async (password, adk, iters = V.ITERS) => { const salt = V.newSalt(); return { salt, iters, wrappedAdk: await V.wrapAdk(adk, await V.deriveKek(password, salt, iters)) }; };

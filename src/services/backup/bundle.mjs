@@ -45,13 +45,13 @@ export function openBundle(file, passphrase) {
   } catch { throw new Error('Wrong passphrase, or the backup file is damaged.'); }
 }
 
-export async function createBundle(db, passphrase, actor = null) {
+export async function createBundle(db, passphrase, actor = null, tag = '') {
   if (typeof passphrase !== 'string' || passphrase.length < MIN_PASSPHRASE) throw new Error(`The backup passphrase must be at least ${MIN_PASSPHRASE} characters.`);
   const snap = await createBackup(db, 'bundle-temp', actor), snapPath = path.join(backupDir(), snap);
   try {
     const manifest = { format: 1, app: 'myBoxStock', version: config.version, engine: db.client, createdAt: new Date().toISOString(), database: db.client === 'sqlite' ? 'database.db' : 'database.sql' };
     const entries = [['manifest.json', Buffer.from(JSON.stringify(manifest, null, 2))], [manifest.database, fs.readFileSync(snapPath)], ['secret.key', Buffer.from(exportKey())]];
-    const name = `myboxstock-fullsite-${new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19)}.mbsbak`, out = path.join(backupDir(), name);
+    const name = `myboxstock-fullsite${tag ? '-' + tag : ''}-${new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19)}.mbsbak`, out = path.join(backupDir(), name);
     fs.writeFileSync(out, sealBundle(entries, passphrase), { mode: 0o600 });
     L.info('bundle.created', `Full-site backup ${name} created (${(fs.statSync(out).size / 1024).toFixed(0)} KB, ${db.client})`, { actor, data: { name, engine: db.client } });
     return name;

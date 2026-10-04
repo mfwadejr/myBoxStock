@@ -8,7 +8,7 @@
 
   A.customerSheet = (e) => {
     const d = e?.data, can = A.can('customers.write'), sales = e ? C.salesOf(e.id).sort((a, b) => b.data.ts - a.data.ts) : [];
-    return sheet(`<h2>${e ? esc(d.name) : 'Add customer'}</h2>${fields(d)}${e ? `<h3 class="mt-lg">Purchases</h3>${sales.length ? `<div class="tablewrap"><table><tbody>${sales.map(s => `<tr class="click" data-sale="${esc(s.id)}"><td>${esc(F.day(s.data.ts))}</td><td>${esc(s.data.no)}</td><td>${s.data.items.length} item${s.data.items.length === 1 ? '' : 's'}</td><td class="right">${esc(F.money(s.data.total))}</td></tr>`).join('')}</tbody></table></div>` : '<p class="sub">No purchases yet.</p>'}` : ''}
+    return sheet(`<h2>${e ? esc(d.name) : 'Add customer'}</h2>${fields(d)}${e ? `<h3 class="mt-lg">Purchases</h3>${sales.length ? `<div class="tablewrap"><table><tbody>${sales.map(s => `<tr class="click" data-sale="${esc(s.id)}"><td>${esc(F.day(s.data.ts))}</td><td>${esc(s.data.no)}</td><td>${s.data.items.length} item${s.data.items.length === 1 ? '' : 's'}</td><td>${C.warrantyChip(s.data)}</td><td class="right">${esc(F.money(s.data.total))}</td></tr>`).join('')}</tbody></table></div>` : '<p class="sub">No purchases yet.</p>'}` : ''}
       <div class="actions split"><div class="row">${e && can ? '<button class="btn danger small" id="del">Delete</button>' : ''}</div><div class="row"><button class="btn secondary" data-cancel>${can ? 'Cancel' : 'Close'}</button>${can ? '<button class="btn" id="go">Save</button>' : ''}</div></div>`, { onMount: (el, close) => {
       if (!can) el.querySelectorAll('input,textarea').forEach(i => { i.disabled = true; });
       el.querySelectorAll('[data-sale]').forEach(tr => tr.addEventListener('click', () => C.showReceipt(S.get('sale', tr.dataset.sale))));

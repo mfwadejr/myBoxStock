@@ -49,6 +49,10 @@ outbound email queue, firewall/rate limiting, DB portability, full logging, desi
 Next: full inventory model, sales & customers, mobile quick-sale site, custom user-type editor, per-account API ID/keys for a future app,
 account-side log viewer, kernel-level (iptables) port enforcement.
 
+## Scheduled backups
+
+Host Console → Backups → **Scheduled full-site backups**: choose nightly or weekly, a passphrase (kept encrypted on the server so it can run unattended — keep your own copy too), and optionally an **off-box folder** such as a mounted NAS share or USB drive (in Docker, add a volume and enter its path). Every backup is opened and checked after it is written, and Host administrators are emailed if one fails. The Overview shows the last good backup.
+
 ## Moving to a new server (full-site backup)
 
 1. In the Host Console → Backups, choose **Full-site backup**, set a passphrase, and download the `.mbsbak` file.

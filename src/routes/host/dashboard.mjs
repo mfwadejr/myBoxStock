@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { snapshot } from '../../services/system/metrics.mjs';
 import { firewallStats } from '../../security/firewall/index.mjs';
 import { billingState, DAY } from '../../services/billing/state.mjs';
-import { restorePending } from '../../services/backup/index.mjs';
+import { restorePending, getFullConfig, getFullStatus } from '../../services/backup/index.mjs';
 
 export function dashboardRoutes(db) {
   const r = express.Router();
@@ -24,7 +24,7 @@ export function dashboardRoutes(db) {
       plans,
       accounts: Number(acc.n), users: Number(usr.n), activeSessions: Number(act.n),
       accountsByStatus: Object.fromEntries(byStatus.map(x => [x.status, Number(x.n)])), mail: Object.fromEntries(mailQ.map(x => [x.status, Number(x.n)])),
-      firewall: firewallStats(), restorePending: restorePending(), dbFileSize: db.file && fs.existsSync(db.file) ? fs.statSync(db.file).size : null,
+      backup: { full: await getFullConfig(db), status: await getFullStatus(db) }, firewall: firewallStats(), restorePending: restorePending(), dbFileSize: db.file && fs.existsSync(db.file) ? fs.statSync(db.file).size : null,
     }));
   });
   return r;

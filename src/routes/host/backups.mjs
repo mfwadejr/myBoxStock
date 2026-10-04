@@ -5,7 +5,7 @@ import * as bk from '../../services/backup/index.mjs';
 
 export function backupsRoutes(db) {
   const r = express.Router(), H = (req, lvl, ev, msg, data) => hostLog(req, lvl, ev, msg, { data });
-  r.get('/', async (req, res) => res.json({ backups: bk.listBackups(), schedule: await bk.getSchedule(db), engine: db.client, restorePending: bk.restorePending() }));
+  r.get('/', async (req, res) => res.json({ backups: bk.listBackups(), schedule: await bk.getSchedule(db), full: await bk.getFullConfig(db), fullStatus: await bk.getFullStatus(db), engine: db.client, restorePending: bk.restorePending() }));
   r.post('/', async (req, res) => { try { const name = await bk.createBackup(db, 'manual', req.subject.username); res.json({ ok: true, name }); } catch (e) { res.status(500).json({ error: e.message }); } });
   // Full-site backup: database + encryption key in one file protected by a passphrase the host chooses (never stored or logged).
   r.post('/bundle', async (req, res) => { try { const name = await bk.createBundle(db, req.body?.passphrase, req.subject.username); res.json({ ok: true, name }); } catch (e) { res.status(400).json({ error: e.message }); } });
@@ -20,6 +20,8 @@ export function backupsRoutes(db) {
       res.json({ ok: true, restarting: true }); setTimeout(() => process.exit(0), 600);
     } catch (e) { res.status(400).json({ error: e.message }); }
   });
+  r.put('/full', async (req, res) => { try { res.json(await bk.saveFullConfig(db, req.body || {}, req.subject.username)); } catch (e) { res.status(400).json({ error: e.message }); } });
+  r.post('/full/run', async (req, res) => { const out = await bk.runFullBackup(db, 'manual', req.subject.username); res.status(out.ok ? 200 : 400).json(out.ok ? out : { error: out.error }); });
   r.put('/schedule', async (req, res) => res.json(await bk.saveSchedule(db, req.body, req.subject.username)));
   r.get('/:name/download', (req, res) => { try { const p = bk.backupPath(req.params.name); H(req, 'info', 'backup.downloaded', `Downloaded backup ${req.params.name}`, { name: req.params.name }); res.download(p); } catch { res.status(404).end(); } });
   r.delete('/:name', async (req, res) => { try { bk.deleteBackup(req.params.name, req.subject.username); res.json({ ok: true }); } catch (e) { res.status(404).json({ error: e.message }); } });

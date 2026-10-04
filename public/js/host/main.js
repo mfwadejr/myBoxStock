@@ -6,7 +6,7 @@
   Host.me = null;
   Host.head = (t, s = '') => `<div class="page-head"><h1>${t}</h1>${s ? `<p>${s}</p>` : ''}</div>`;
 
-  const authShell = (inner) => { root.innerHTML = `<div class="authwrap"><div class="authcard"><div class="logo">▦</div>${inner}</div></div>`; };
+  const authShell = (inner) => { root.innerHTML = `<div class="authwrap"><div class="authcard"><img class="logo" src="/assets/logo-512.png" alt="myBoxStock" width="512" height="512">${inner}</div></div>`; };
 
   async function boot() {
     try { const r = await Host.api('GET', '/me'); UI.setCsrf(r.csrf); Host.me = r.user; if (r.mfaPending) return mfaScreen(); if (r.mustChange) return changePwScreen(true); return shell(); }
@@ -34,7 +34,7 @@
   }
 
   function shell() {
-    root.innerHTML = `<header class="topbar"><div class="brand"><span class="brand-mark">▦</span>myBoxStock <span class="brand-sub">Host</span></div><div class="grow"></div>
+    root.innerHTML = `<header class="topbar"><div class="brand"><a class="brand-link" href="#/overview" aria-label="Home"><img class="brand-mark" src="/assets/logo-512.png" alt="myBoxStock" width="512" height="512"></a>myBoxStock <span class="brand-sub">Host</span></div><div class="grow"></div>
       <span class="muted text-sm">${esc(Host.me.username)}</span><button class="btn secondary small" id="out">Sign out</button></header>
       <div class="shell"><nav class="side">${Host.nav.map(([k, l]) => `<a href="#/${k}" data-k="${k}">${Host.icons[k]}<span>${l}</span></a>`).join('')}</nav><main class="main" id="main"></main></div>`;
     root.querySelector('#out').addEventListener('click', async () => { await Host.api('POST', '/logout'); Host.me = null; clearInterval(Host.timer); loginScreen(); });

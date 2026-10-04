@@ -52,10 +52,29 @@
     row.push(v); if (row.some(x => x !== '')) rows.push(row); return rows;
   };
 
+  // ---- warranty: periods live in the encrypted config; each sale keeps its own snapshot ----
+  const UNITS = [['days', 'Days'], ['months', 'Months'], ['years', 'Years']];
+  C.WARRANTY_UNITS = UNITS;
+  C.periodLabel = (p) => `${p.amount} ${p.amount === 1 ? p.unit.replace(/s$/, '') : p.unit}`;
+  C.warrantyPeriods = () => AccountApp.store.config().warranty.periods;
+  C.warrantyDefault = () => { const w = AccountApp.store.config().warranty; return w.periods.some(p => p.key === w.default && !p.archived) ? w.default : (w.periods.find(p => !p.archived)?.key || ''); };
+  C.warrantyEnd = (start, p) => { if (!p || !p.amount) return null; const d = new Date(start); if (p.unit === 'years') d.setFullYear(d.getFullYear() + p.amount); else if (p.unit === 'months') d.setMonth(d.getMonth() + p.amount); else d.setDate(d.getDate() + p.amount); return d.getTime(); };
+  C.warrantySnapshot = (key, start) => { const p = C.warrantyPeriods().find(x => x.key === key); return p ? { key: p.key, label: p.label, start, end: C.warrantyEnd(start, p) } : { key: 'none', label: 'No warranty', start, end: null }; };
+  C.warrantyState = (w, now = Date.now()) => {
+    if (!w || !w.end) return { kind: 'none', cls: 'gray', text: 'No warranty' };
+    const day = 86400000, left = Math.ceil((w.end - now) / day);
+    if (left > 0) return { kind: 'active', cls: 'green', text: `In warranty · ${left} day${left === 1 ? '' : 's'} remaining` };
+    const ago = Math.floor((now - w.end) / day);
+    return { kind: 'expired', cls: 'red', text: ago < 1 ? 'Expired today' : `Expired · ${ago} day${ago === 1 ? '' : 's'} ago` };
+  };
+  C.warrantyChip = (sale) => { const s = C.warrantyState(sale.warranty); return sale.voided ? '<span class="chip gray">Void</span>' : `<span class="chip ${s.cls}">${esc(s.text)}</span>`; };
+  C.warrantyLine = (sale) => sale.warranty?.end ? `Warranty: ${sale.warranty.label} · ends ${F().day(sale.warranty.end)} · ${C.warrantyState(sale.warranty).text}` : 'Warranty: none';
+
   // ---- sales helpers ----
   C.newReceiptNo = () => `S-${F().ymd(Date.now())}-${Vault.newId().replace(/[-_]/g, '').slice(0, 4).toUpperCase()}`;
   C.salesOf = (customerId) => AccountApp.store.all('sale').filter(s => !s.data.voided && s.data.customerId === customerId);
-  C.itemLabel = (it) => [it.model, it.uid || it.serial || it.mac || it.fields?.[0]?.value || Object.values(it.custom || {}).find(Boolean)].filter(Boolean).join(' · ') || 'Device';
+  C.deviceName = (d) => [d.make, d.model].filter(Boolean).join(' ');
+  C.itemLabel = (it) => [C.deviceName(it), it.uid || it.serial || it.mac || it.fields?.[0]?.value || Object.values(it.custom || {}).find(Boolean)].filter(Boolean).join(' · ') || 'Device';
 
   const stepLine = (st) => `${st.done ? '✓' : '—'} ${st.label}${st.done && st.at ? ` (${F().day(st.at)}${st.by ? ', ' + st.by : ''})` : ''}`;
   C.receiptText = (sale, withTests = false) => {
@@ -64,24 +83,30 @@
       lines.push(`${C.itemLabel(it)}  ${F().money(it.price)}`); for (const x of it.fields || []) lines.push(`   ${x.label}: ${x.value}`);
       if (withTests && it.inspection) { lines.push('   Test record:'); for (const st of it.inspection.steps) lines.push(`    ${stepLine(st)}`); if (it.inspection.notes) lines.push(`    Notes: ${it.inspection.notes}`); }
     }
-    lines.push('', `Total: ${F().money(d.total)}`, `Paid by: ${C.paymentLabel(d.payment)}`); if (d.notes) lines.push('', d.notes); lines.push('', 'Thank you!'); return lines.join('\n');
+    lines.push('', `Total: ${F().money(d.total)}`, `Paid by: ${C.paymentLabel(d.payment)}`, C.warrantyLine(d)); if (d.notes) lines.push('', d.notes); lines.push('', 'Thank you!'); return lines.join('\n');
   };
   C.hasTests = (sale) => sale.data.items.some(it => it.inspection?.steps?.length);
   const testHtml = (it) => it.inspection?.steps?.length ? `<div class="test-record"><div class="strong text-sm">Test record</div>${it.inspection.steps.map(st => `<div class="text-sm ${st.done ? '' : 'faint'}">${esc(stepLine(st))}</div>`).join('')}${it.inspection.notes ? `<div class="text-sm mt-xs">${esc(it.inspection.notes)}</div>` : ''}</div>` : '';
   const receiptHtml = (sale, withTests) => { const d = sale.data;
-    return `<div class="receipt"><h2>${esc(AccountApp.me.businessName)}</h2><div class="sub center">Receipt ${esc(d.no)} · ${esc(F().when(d.ts))}</div>${d.voided ? '<p class="banner red center mt-md">This sale was voided.</p>' : ''}
+    return `<div class="receipt"><img class="receipt-logo" src="/assets/logo-512.png" alt="" width="512" height="512"><h2>${esc(AccountApp.me.businessName)}</h2><div class="sub center">Receipt ${esc(d.no)} · ${esc(F().when(d.ts))}</div>${d.voided ? '<p class="banner red center mt-md">This sale was voided.</p>' : ''}
       <p class="center mt-md">${d.customerName ? `Customer: <b>${esc(d.customerName)}</b>` : 'Walk-in customer'}</p>
       <table><tbody>${d.items.map(it => `<tr><td><div>${esc(C.itemLabel(it))}</div>${(it.fields || []).length ? `<div class="sub text-sm">${it.fields.map(x => `${esc(x.label)}: ${esc(x.value)}`).join(' · ')}</div>` : ''}${withTests ? testHtml(it) : ''}</td><td class="right nowrap">${esc(F().money(it.price))}</td></tr>`).join('')}</tbody></table>
-      <div class="line-total"><span>Total</span><span>${esc(F().money(d.total))}</span></div><p class="sub center mt-md">Paid by ${esc(C.paymentLabel(d.payment))}</p>${d.notes ? `<p class="center mt-md">${esc(d.notes)}</p>` : ''}<p class="sub center mt-lg">Thank you!</p></div>`; };
+      <div class="line-total"><span>Total</span><span>${esc(F().money(d.total))}</span></div><p class="sub center mt-md">Paid by ${esc(C.paymentLabel(d.payment))}</p><p class="center mt-sm">${esc(C.warrantyLine(d))}</p>${d.notes ? `<p class="center mt-md">${esc(d.notes)}</p>` : ''}<p class="sub center mt-lg">Thank you!</p></div>`; };
 
   // Receipt sheet: print, email (opens the person's own mail app — nothing goes through our server), void.
   C.showReceipt = async (sale, { canVoid = true } = {}) => {
     const d = sale.data, can = canVoid && AccountApp.can('sales.write') && !d.voided;
     let withTests = false;
-    return sheet(`<div id="rc">${receiptHtml(sale, false)}</div>${C.hasTests(sale) ? '<label class="check mt-md no-print"><input type="checkbox" id="wt"><span>Include the test record (shows what was checked before it was sold)</span></label>' : ''}<div class="actions split"><div class="row">${can ? '<button class="btn danger small" id="void">Void sale</button>' : ''}</div><div class="row"><button class="btn secondary small" id="mail">Email</button><button class="btn secondary small" id="print">Print</button><button class="btn" data-cancel>Done</button></div></div>`, { onMount: (el, close) => {
+    return sheet(`<div id="rc">${receiptHtml(sale, false)}</div>${C.hasTests(sale) ? '<label class="check mt-md no-print"><input type="checkbox" id="wt"><span>Include the test record (shows what was checked before it was sold)</span></label>' : ''}<div class="actions split"><div class="row">${can ? '<button class="btn danger small" id="void">Void sale</button>' : ''}${can && AccountApp.can('users.manage') ? '<button class="btn secondary small" id="wchg">Change warranty</button>' : ''}</div><div class="row"><button class="btn secondary small" id="mail">Email</button><button class="btn secondary small" id="print">Print</button><button class="btn" data-cancel>Done</button></div></div>`, { onMount: (el, close) => {
       el.querySelector('#wt')?.addEventListener('change', (e) => { withTests = e.target.checked; el.querySelector('#rc').innerHTML = receiptHtml(sale, withTests); });
       el.querySelector('#print').addEventListener('click', () => { document.documentElement.classList.add('printing'); window.addEventListener('afterprint', () => document.documentElement.classList.remove('printing'), { once: true }); window.print(); });
       el.querySelector('#mail').addEventListener('click', () => { location.href = `mailto:${encodeURIComponent(d.customerEmail || '')}?subject=${encodeURIComponent(`Receipt ${d.no} from ${AccountApp.me.businessName}`)}&body=${encodeURIComponent(C.receiptText(sale, withTests))}`; });
+      el.querySelector('#wchg')?.addEventListener('click', async () => {
+        const opts = C.warrantyPeriods().filter(p => !p.archived || p.key === d.warranty?.key).map(p => [p.key, p.label]);
+        const key = await sheet(`<h2>Change warranty</h2><p class="sub">The end date is worked out again from the sale date.</p><div class="field mt-md"><label>Warranty</label>${UI.select.html({ id: 'wk', options: opts, value: d.warranty?.key || 'none' })}</div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Save</button></div>`, { onMount: (m, done) => m.querySelector('#go').addEventListener('click', () => done(UI.select.value(m.querySelector('#wk')))) });
+        if (!key) return;
+        try { await AccountApp.store.commit({ puts: [{ type: 'sale', id: sale.id, data: { ...d, warranty: C.warrantySnapshot(key, d.ts) } }] }); toast('Warranty updated'); close('warranty'); } catch (e) { toast(e.message, true); }
+      });
       el.querySelector('#void')?.addEventListener('click', async () => {
         if (!await UI.confirmBox({ title: 'Void this sale?', body: 'The devices go back to available and the sale stays in your history marked as voided.', confirmLabel: 'Void sale', danger: true })) return;
         try { await C.voidSale(sale); toast('Sale voided'); close('voided'); } catch (e) { toast(e.message, true); }

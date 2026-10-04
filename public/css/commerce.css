@@ -32,6 +32,10 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .check-row .check { justify-content: center; }
 .check-head span:not(:first-child) { text-align: center; }
 .check-row, .step-row { max-width: var(--config-w); }
+.war-row input[type=text] { height: var(--control-h-md); }
+.war-row .chip { justify-content: center; }
+.war-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--chip-type-w) var(--col-war-w) var(--col-war-w) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); max-width: var(--config-w); }
+.icon-slot { width: var(--control-h-md); }
 .check-row input[type=text], .step-row input[type=text] { height: var(--control-h-md); }
 .check-row .row { gap: var(--space-sm); }
 .check-row .chip { flex: none; width: var(--chip-type-w); justify-content: center; }
@@ -64,3 +68,5 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .stock-tags { display: flex; gap: var(--space-xs); flex-wrap: wrap; justify-content: flex-end; }
 .stock-price { min-width: var(--stock-price-w); text-align: right; }
 .stock-main { min-width: var(--space-0); }
+
+.receipt-logo { display: block; width: var(--logo-receipt); height: var(--logo-receipt); margin: var(--space-0) auto var(--space-sm); object-fit: contain; }

@@ -3,6 +3,20 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.7.0] - 2026-10-03
+
+### Added
+- **Warranty periods.** Administrators choose the periods offered at Quick sale (starter set: No warranty, 30/60/90 days, 1 year; add your own in days, months or years; pick a default; archive or remove). Each sale stores its own warranty snapshot, with a live countdown ("In warranty · 42 days remaining" / "Expired · 3 days ago") on the sales list, receipt and customer history. Filter sales by warranty status, change a sale's warranty later, and see warranty in the sales CSV.
+- **Unlock behaviour** setting: ask for the password after a refresh (default) or stay unlocked while the tab is open, with an idle auto-lock (default 30 minutes). The key is wiped on sign-out, tab close and idle.
+- **Make** field beside Model on devices, in search, the stock picker, sale records and CSV; Make and Model now sit at the top of the form.
+- **Scheduled full-site backups** (Host Console → Backups): nightly or weekly, passphrase kept sealed on the server, each backup opened and checked after it is written, optional copy to an off-box folder, retention (14 daily / 8 weekly by default), last-good-backup status on the Overview, and an email to Host administrators when one fails.
+- Host Email: **Resend** and **Resend all failed** for messages that could not be delivered.
+- myBoxStock logo as the browser-tab icon, home-screen icon and web manifest, and prominently on every sign-in card, signed-in header, receipt and the secure-connection screen.
+
+### Changed
+- Every device detail can now be removed (with a confirmation; entered values are kept hidden). The ✕ buttons are restyled as neutral round icon buttons.
+- Host Email: turning on TLS from the start of the connection fixes the port at 465 and greys it out; with it off the port is editable (default 587) and port 465 is refused. Recent messages refresh by themselves.
+
 ## [0.6.0] - 2026-10-03
 
 ### Added

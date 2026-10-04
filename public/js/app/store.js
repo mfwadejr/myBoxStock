@@ -54,6 +54,14 @@
       { key: 'cond', label: 'Condition', type: 'choice', options: ['New', 'Refurbished', 'Used'], core: true, enabled: true, lookup: false, unique: false, onSale: false },
       { key: 'supplier', label: 'Supplier', type: 'text', core: true, enabled: true, lookup: false, unique: false, onSale: false },
     ],
+    warranty: { default: 'none', periods: [
+      { key: 'none', label: 'No warranty', amount: 0, unit: 'days' },
+      { key: 'd30', label: '30 days', amount: 30, unit: 'days' },
+      { key: 'd60', label: '60 days', amount: 60, unit: 'days' },
+      { key: 'd90', label: '90 days', amount: 90, unit: 'days' },
+      { key: 'y1', label: '1 year', amount: 1, unit: 'years' },
+    ] },
+    unlock: { mode: 'ask', idleMin: 30 },
     steps: [
       { key: 'inspected', label: 'Device inspected', required: false },
       { key: 'batteries', label: 'Batteries installed in remote', required: false },
@@ -64,6 +72,6 @@
   };
   S.CONFIG_ID = CONFIG_ID;
   S.defaults = () => JSON.parse(JSON.stringify(DEFAULTS));
-  S.config = () => { const c = S.get('config', CONFIG_ID)?.data; return c && Array.isArray(c.fields) && Array.isArray(c.steps) ? c : S.defaults(); };
+  S.config = () => { const c = S.get('config', CONFIG_ID)?.data; if (!(c && Array.isArray(c.fields) && Array.isArray(c.steps))) return S.defaults(); return { ...c, warranty: c.warranty?.periods ? c.warranty : S.defaults().warranty, unlock: { ...S.defaults().unlock, ...(c.unlock || {}) } }; };
   S.saveConfig = (cfg) => S.commit({ puts: [{ type: 'config', id: CONFIG_ID, data: cfg }] });
 })();

@@ -136,7 +136,7 @@
   --control-h-lg: 46px;
   --control-h-xl: 56px;
   --col-check-w: 88px;
-  --col-req-w: 168px;
+  --col-req-w: 168px; --col-war-w: 112px;
   --chip-type-w: 120px;
   --stock-list-max-h: 380px;
   --stock-price-w: 80px;
@@ -162,6 +162,9 @@
   --qr-w: 190px;
   --logo-sm: 24px;
   --logo-lg: 56px;
+  --logo-nav: 40px;
+  --logo-auth: 96px;
+  --logo-receipt: 56px;
   --card-padding: var(--space-2xl);
   --sheet-padding: var(--space-3xl);
   --auth-padding-y: var(--space-4xl);
