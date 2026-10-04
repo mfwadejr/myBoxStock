@@ -6,7 +6,7 @@
 
   A.views.settings = async (main) => {
     if (!A.can('users.manage')) return swap(main, '<div class="page-head"><h1>Settings</h1></div><div class="card"><div class="empty">Only Administrators can change these settings.</div></div>');
-    const cfg = S.defaults(), saved = S.config(); cfg.fields = JSON.parse(JSON.stringify(saved.fields)); cfg.steps = JSON.parse(JSON.stringify(saved.steps)); cfg.tests = { ...saved.tests }; cfg.warranty = JSON.parse(JSON.stringify(saved.warranty)); cfg.unlock = { ...saved.unlock }; cfg.discount = { ...saved.discount };
+    const cfg = S.defaults(), saved = S.config(); cfg.fields = JSON.parse(JSON.stringify(saved.fields)); cfg.steps = JSON.parse(JSON.stringify(saved.steps)); cfg.tests = { ...saved.tests }; cfg.warranty = JSON.parse(JSON.stringify(saved.warranty)); cfg.unlock = { ...saved.unlock }; cfg.discount = { ...saved.discount }; cfg.mail = { ...saved.mail };
     const usedKeys = new Set(S.all('sale').map(e => e.data.warranty?.key).filter(Boolean));
     const chk = (k, on, i) => `<label class="check"><input type="checkbox" data-k="${k}" data-i="${i}" ${on ? 'checked' : ''}></label>`;
 
@@ -51,6 +51,19 @@
           <div class="field mt-md"><label>After a browser refresh</label>${UI.select.html({ id: 'um', options: [['ask', 'Ask for the password again (most private)'], ['stay', 'Stay unlocked while this tab is open']], value: cfg.unlock.mode })}</div>
           <div class="field" id="uiw" ${cfg.unlock.mode === 'stay' ? '' : 'hidden'}><label>Lock automatically after (minutes without activity)</label><input type="number" id="ui" min="1" max="1440" step="1" value="${esc(cfg.unlock.idleMin)}"></div>
           <p class="hint">Staying unlocked keeps the account key in this tab’s temporary browser storage. It is cleared when the tab closes, when someone signs out, and after the idle time. The trade-off: malicious script running on the page while the tab is open could use that key, so keep it on the default if the device is shared or untrusted.</p></div>
+        <div class="card mt-lg"><h3>Email sending</h3><div class="sub">Receipts (and later newsletters) can go out from your own mail server, so they come from your address and do not use the site’s shared sender. Leave it off to use the site’s sender, with replies going to your email address.</div>
+          <div class="setting mt-md"><div><div class="setting-title">Send from my own mail server</div><div class="setting-desc">Your mail provider’s details (Gmail, Outlook, your web host, an email service…).</div></div><label class="switch"><input type="checkbox" id="mon" ${cfg.mail.enabled ? 'checked' : ''}><i></i></label></div>
+          <div id="mbox" ${cfg.mail.enabled ? '' : 'hidden'}>
+            <div class="grid g2"><div class="field"><label>Mail server</label><input type="text" id="mh" value="${esc(cfg.mail.host)}" placeholder="smtp.example.com" autocapitalize="none" spellcheck="false"></div>
+              <div class="field"><label>Port</label><input type="number" id="mp" min="1" max="65535" value="${esc(cfg.mail.port)}"></div>
+              <div class="field"><label>User name</label><input type="text" id="mu" value="${esc(cfg.mail.user)}" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
+              <div class="field"><label>Password</label><input type="password" id="mw" value="${esc(cfg.mail.pass)}" autocomplete="new-password"></div>
+              <div class="field"><label>From name</label><input type="text" id="mfn" value="${esc(cfg.mail.fromName)}" placeholder="${esc(A.me.businessName)}"></div>
+              <div class="field"><label>From address</label><input type="email" id="mfa" value="${esc(cfg.mail.fromAddress)}" placeholder="sales@yourbusiness.com" autocapitalize="none"></div></div>
+            <label class="check mt-sm"><input type="checkbox" id="mtls" ${cfg.mail.secure ? 'checked' : ''}><span>Use TLS from the start of the connection (port 465). Leave off for port 587.</span></label>
+            <div class="row mt-md"><button class="btn secondary" id="mtest" type="button">Send a test email to me</button></div>
+            <p class="hint">These details are saved encrypted with the rest of your account data. When you send, they pass through the site once to reach your mail server and are not stored, logged or queued there. Anyone on your team who can send receipts can use them, so give your Administrator role only to people you trust with this.</p>
+          </div></div>
         <div class="card mt-lg"><h3>Discounts</h3><div class="sub">Quick sale lets you take a % off a single device or the whole order. Administrators can give any discount. Set the most a Standard user may give in total on one sale.</div>
           <div class="field mt-md"><label>Most a Standard user can discount (%)</label><input type="number" id="dc" min="0" max="100" step="1" value="${esc(cfg.discount.maxStandardPct)}"></div>
           <p class="hint">This limit is checked in the app when the sale is completed. Because your data is encrypted, the server cannot enforce it, so treat it as a guard rail for honest mistakes rather than a security control.</p></div>
@@ -64,6 +77,9 @@
       q('[data-k=mvw]').forEach(b => b.addEventListener('click', () => shift(cfg.warranty.periods, b)));
       q('[data-k=fl]').forEach(e => e.addEventListener('input', () => { cfg.fields[e.dataset.i].label = e.value; }));
       for (const [cls, k] of [['[data-k=fe]', 'enabled'], ['[data-k=fk]', 'lookup'], ['[data-k=fu]', 'unique'], ['[data-k=fs]', 'onSale']]) q(cls).forEach(e => e.addEventListener('change', () => { cfg.fields[e.dataset.i][k] = e.checked; }));
+      const mailBody = () => ({ enabled: main.querySelector('#mon').checked, host: main.querySelector('#mh').value.trim(), port: Number(main.querySelector('#mp').value) || 587, secure: main.querySelector('#mtls').checked, user: main.querySelector('#mu').value.trim(), pass: main.querySelector('#mw').value, fromName: main.querySelector('#mfn').value.trim(), fromAddress: main.querySelector('#mfa').value.trim() });
+      main.querySelector('#mon').addEventListener('change', (e) => { main.querySelector('#mbox').hidden = !e.target.checked; });
+      main.querySelector('#mtest').addEventListener('click', (e) => UI.busy(e.currentTarget, async () => { const m = mailBody(); try { await A.api('POST', '/receipt-email/test', { smtp: { ...m, fromName: m.fromName || A.me.businessName } }); toast(`Test email sent to ${A.me.email || 'you'}`); } catch (err) { toast(err.message, true); } }));
       q('[data-k=sl]').forEach(e => e.addEventListener('input', () => { cfg.steps[e.dataset.i].label = e.value; }));
       q('[data-k=sr]').forEach(e => e.addEventListener('change', () => { cfg.steps[e.dataset.i].required = e.checked; }));
       q('[data-k=ech]').forEach(b => b.addEventListener('click', async () => {
@@ -140,7 +156,8 @@
         if (wl.some(x => !x)) return toast('Every warranty period needs a name.', true); if (new Set(wl).size !== wl.length) return toast('Two warranty periods have the same name.', true);
         if (cfg.unlock.mode === 'stay' && !(cfg.unlock.idleMin >= 1 && cfg.unlock.idleMin <= 1440)) return toast('Enter an idle lock time from 1 to 1440 minutes.', true);
         const dcap = Number(cfg.discount.maxStandardPct); if (!(dcap >= 0 && dcap <= 100)) return toast('Enter a discount limit from 0 to 100.', true);
-        try { await S.saveConfig({ ...S.config(), discount: { maxStandardPct: dcap }, unlock: { mode: cfg.unlock.mode, idleMin: cfg.unlock.idleMin || 30 }, warranty: { default: cfg.warranty.default, periods: cfg.warranty.periods.map(x => ({ ...x, label: x.label.trim() })) }, tests: { enabled: cfg.tests.enabled }, fields: cfg.fields.map(f => ({ ...f, label: f.label.trim() })), steps: cfg.steps.map(s => ({ ...s, label: s.label.trim() })) }); await A.vault.policy(); toast('Settings saved'); } catch (er) { toast(er.message, true); }
+        const mail = mailBody(); if (mail.enabled && (!mail.host || !mail.fromAddress)) return toast('Enter the mail server and a From address, or turn off sending from your own mail server.', true);
+        try { await S.saveConfig({ ...S.config(), mail, discount: { maxStandardPct: dcap }, unlock: { mode: cfg.unlock.mode, idleMin: cfg.unlock.idleMin || 30 }, warranty: { default: cfg.warranty.default, periods: cfg.warranty.periods.map(x => ({ ...x, label: x.label.trim() })) }, tests: { enabled: cfg.tests.enabled }, fields: cfg.fields.map(f => ({ ...f, label: f.label.trim() })), steps: cfg.steps.map(s => ({ ...s, label: s.label.trim() })) }); await A.vault.policy(); toast('Settings saved'); } catch (er) { toast(er.message, true); }
       }));
     };
     draw();

@@ -66,29 +66,34 @@
   // Bulk scan: set what is the same once, then scan each device's identifiers (UID, serial number, MAC...) in turn; Enter after each.
   // Enter on an empty box skips an identifier the device does not have. When the last one is done the device is added to the batch.
   function bulkSheet() {
-    const ids = C.fields().filter(f => (f.lookup || f.unique) && (!f.type || f.type === 'text'));
-    if (!ids.length) return toast('Turn on a device detail you can scan (such as UID) under Settings first.', true);
-    const idKeys = new Set(ids.map(f => f.key)), shared = C.fields().filter(f => !idKeys.has(f.key));
-    return sheet(`<h2>Bulk scan</h2><p class="sub">Choose what is the same for every device. Then scan each device’s ${ids.map(f => esc(f.label)).join(', ')} in that order, pressing Enter after each (Enter on an empty box skips one). Press Save when all are scanned.</p>
+    const all = C.fields().filter(f => (f.lookup || f.unique) && (!f.type || f.type === 'text'));
+    if (!all.length) return toast('Turn on a device detail you can scan (such as UID) under Settings first.', true);
+    const idKeys = new Set(all.map(f => f.key)), shared = C.fields().filter(f => !idKeys.has(f.key));
+    return sheet(`<h2>Bulk scan</h2><p class="sub">Choose what is the same for every device, and what is on the label you scan. Then scan each device, pressing Enter after each one. Press Save when all are scanned.</p>
       <div class="grid g2">${C.catalog.makeField({})}${C.catalog.modelField({})}${shared.map(f => `<div class="field"><label>${esc(f.label)}</label>${C.fieldInput(f, '')}</div>`).join('')}
       <div class="field"><label>Status</label>${UI.select.html({ id: 'status', options: STATUSES, value: 'available' })}</div><div class="field"><label>Cost</label><input type="number" id="cost" min="0" step="0.01"></div><div class="field"><label>Selling price</label><input type="number" id="price" min="0" step="0.01"></div></div>
+      <div class="field mt-md"><label>What do you scan for each device?</label><div class="row wrap">${all.map((f, n) => `<label class="check"><input type="checkbox" data-id="${esc(f.key)}" ${n === 0 ? 'checked' : ''}><span>${esc(f.label)}</span></label>`).join('')}</div></div>
       <div class="field mt-md"><label id="slabel"></label><input type="text" id="scanbox" autocomplete="off" placeholder="Scan or type, then Enter"></div>
       <div class="banner" id="bmsg" hidden></div><div class="row wrap mt-md" id="blist"></div>
       <div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn secondary" id="undo">Remove last</button><button class="btn" id="bsave">Save 0 devices</button></div>`, { wide: true, onMount: (el, close) => {
       C.catalog.wire(el);
       const devices = [], q = (id) => el.querySelector('#' + id); let cur = [];
-      const label = () => { q('slabel').textContent = `Scan ${ids[cur.length].label}${cur.length ? ' (Enter to skip)' : ''}`; };
+      const ids = () => all.filter(f => el.querySelector(`[data-id="${f.key}"]`).checked);
+      const label = () => { const l = ids(); q('slabel').textContent = l.length ? `Scan ${l[Math.min(cur.length, l.length - 1)].label}${cur.length ? ' (Enter to skip)' : ''}` : 'Choose what you scan above'; };
       const draw = () => { q('blist').innerHTML = [...devices, cur.length ? cur : null].filter(Boolean).map(d => `<span class="chip gray mono">${esc(d.filter(Boolean).join(' · ') || '…')}</span>`).join(''); q('bsave').textContent = `Save ${devices.length} device${devices.length === 1 ? '' : 's'}`; label(); };
       const msg = (t) => { q('bmsg').hidden = !t; q('bmsg').textContent = t || ''; };
       const build = (vals) => { const d = { ...C.catalog.read(el), status: UI.select.value(q('status')), cost: F.cents(q('cost').value.trim()), price: F.cents(q('price').value.trim()), notes: '', addedAt: Date.now(), receivedOn: C.dateStr(Date.now()) };
-        for (const f of shared) C.setVal(d, f, C.readInput(el, f)); ids.forEach((f, n) => C.setVal(d, f, vals[n] || '')); return d; };
+        for (const f of shared) C.setVal(d, f, C.readInput(el, f)); ids().forEach((f, n) => C.setVal(d, f, vals[n] || '')); return d; };
       const clash = (f, n, v) => devices.some(d => String(d[n] || '').toLowerCase() === v.toLowerCase()) ? `${v} was already scanned in this batch.` : f.unique && S.all('item').some(e => e.data.status !== 'archived' && String(C.getVal(e.data, f)).toLowerCase() === v.toLowerCase()) ? `Another device already has that ${f.label}.` : '';
+      el.querySelectorAll('[data-id]').forEach(c => c.addEventListener('change', () => { if (cur.length) { c.checked = !c.checked; return toast('Finish the device you are scanning first.', true); } if (!ids().length) { c.checked = true; } draw(); }));
+      // Scanners type the label too ("UID 273D…"): remove it as soon as it lands in the box, so only the number is ever shown.
+      q('scanbox').addEventListener('input', () => { const box = q('scanbox'), c = C.cleanScan(box.value); if (c && c !== box.value.trim() && box.value.trim().length > c.length + 2) box.value = c; });
       q('scanbox').addEventListener('keydown', (e) => { if (e.key !== 'Enter') return; e.preventDefault();
-        const raw = q('scanbox').value, v = C.cleanScan(raw), n = cur.length, f = ids[n]; q('scanbox').value = '';
-        if (!v && (n === 0 || raw.trim())) return; // nothing, or only a label such as "UID" that the scanner sends before the number
+        const l = ids(), raw = q('scanbox').value, v = C.cleanScan(raw), n = cur.length, f = l[n]; q('scanbox').value = '';
+        if (!f || (!v && (n === 0 || raw.trim()))) return; // nothing, or only a label such as "UID" that the scanner sends before the number
         if (v && (f.unique || n === 0)) { const bad = clash(f, n, v); if (bad) return msg(bad); }
         msg(''); cur.push(v);
-        if (cur.length === ids.length) { devices.push(cur); cur = []; }
+        if (cur.length === l.length) { devices.push(cur); cur = []; }
         draw(); });
       q('undo').addEventListener('click', () => { if (cur.length) cur.pop(); else devices.pop(); msg(''); draw(); q('scanbox').focus(); });
       q('bsave').addEventListener('click', async () => { try { if (cur.length > 1 || (cur.length === 1 && cur[0])) { devices.push(cur); cur = []; } if (!devices.length) return toast('Scan at least one device.', true);

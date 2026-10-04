@@ -3,13 +3,14 @@
 import { getSetting, setSetting } from '../../db/settings.mjs';
 import { config } from '../../core/config.mjs';
 
-const ENV = { trustProxy: config.trustProxy, secureCookies: config.secureCookies, logLevel: config.log.level, logRetentionDays: config.log.retentionDays };
+const ENV = { trustProxy: config.trustProxy, secureCookies: config.secureCookies, logLevel: config.log.level, logRetentionDays: config.log.retentionDays, allowPrivateMail: config.mailAllowPrivate };
 const LEVELS = ['debug', 'info', 'warn', 'error'], PROXY = ['', '1', '2', '3'];
 
 // Each option: how to check it, and how to apply it to the running server.
 const SPEC = {
   trustProxy: { check: (v) => PROXY.includes(String(v)) ? null : 'Choose Off, or 1, 2 or 3 proxies.', norm: (v) => String(v), apply: (v, app) => app?.set('trust proxy', /^\d+$/.test(v) ? Number(v) : (v || false)), set: (v) => { config.trustProxy = v; } },
   secureCookies: { check: (v) => typeof v === 'boolean' ? null : 'Choose on or off.', norm: Boolean, set: (v) => { config.secureCookies = v; } },
+  allowPrivateMail: { check: (v) => typeof v === 'boolean' ? null : 'Choose on or off.', norm: Boolean, set: (v) => { config.mailAllowPrivate = v; } },
   logLevel: { check: (v) => LEVELS.includes(v) ? null : 'Choose debug, info, warn or error.', norm: String, set: (v) => { config.log.level = v; } },
   logRetentionDays: { check: (v) => Number.isInteger(Number(v)) && v >= 7 && v <= 730 ? null : 'Keep the log for a whole number of days from 7 to 730.', norm: Number, set: (v) => { config.log.retentionDays = v; } },
 };

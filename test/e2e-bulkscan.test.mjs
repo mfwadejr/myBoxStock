@@ -24,18 +24,21 @@ test('browser: scanned "UID" label is removed; bulk scan adds a batch and reject
     await page.click('[data-cancel]');
     await page.click('#bulk'); await page.fill('#make_new', 'Acme'); await page.fill('#model_new', 'Box'); await page.fill('#cost', '10'); await page.fill('#price', '25');
     const scan = async (v) => { await page.fill('#scanbox', v); await page.press('#scanbox', 'Enter'); };
-    for (const v of ['UID A1', 'SN S1', 'MAC 00:11']) await scan(v);
-    for (const v of ['UID', 'B2', 'Serial number', 'S2']) await scan(v); await scan('');
-    await scan('a1'); assert.match(await page.textContent('#bmsg'), /already scanned/);
+    // default: only the UID is scanned, one Enter per device, with the scanner's "UID" label removed
+    assert.equal(await page.locator('[data-id=uid]').isChecked(), true); assert.equal(await page.locator('[data-id=serial]').isChecked(), false);
+    await page.fill('#scanbox', 'UID 273D00000019D0E3'); assert.equal(await page.inputValue('#scanbox'), '273D00000019D0E3', 'the label is removed as soon as it is typed');
+    await page.press('#scanbox', 'Enter'); assert.equal(await page.locator('#blist .chip').count(), 1);
+    for (const v of ['UID', 'B2']) await scan(v);
+    await scan('b2'); assert.match(await page.textContent('#bmsg'), /already scanned/);
     assert.equal(await page.locator('#blist .chip').count(), 2);
-    assert.equal(await page.locator('.sheet #f_cond').count(), 1, 'Condition stays a shared dropdown, not a scan step');
+    // now also scan serial and MAC
+    await page.check('[data-id=serial]'); await page.check('[data-id=mac]');
+    for (const v of ['UID', 'C3', 'Serial number', 'S3', 'MAC 00:11']) await scan(v);
+    assert.equal(await page.locator('#blist .chip').count(), 3);
     assert.equal(await page.locator('.sheet #f_uid').count(), 0, 'identifiers are scanned, not shared fields');
-    assert.equal(await page.locator('.sheet #blist .chip').first().textContent().then(t => t.includes('A1') && t.includes('S1')), true);
     await page.click('#bsave'); await page.waitForSelector('tr.click');
-    assert.equal(await page.locator('tbody tr.click').count(), 2);
-    const text = await page.locator('tbody').first().textContent(); assert.ok(text.includes('A1') && text.includes('B2') && !text.includes('UID'));
-    await page.locator('tbody tr.click').first().click(); await page.waitForSelector('#f_serial');
-    assert.ok(['S1', 'S2'].includes(await page.inputValue('#f_serial')), 'serial number was saved');
+    assert.equal(await page.locator('tbody tr.click').count(), 3);
+    const text = await page.locator('tbody').first().textContent(); assert.ok(text.includes('273D00000019D0E3') && text.includes('B2') && text.includes('C3') && !text.includes('UID'));
     const cs = await page.evaluate(() => ['UID', 'UID\n273D00000019D128', 'UID273D00000019D128', 'UID: 273D00000019D128', 'SN 12345', 'Serial number', 'MAC 00:11:22', 'SN-98765', '273D00000019D128'].map(v => AccountApp.commerce.cleanScan(v)));
     assert.deepEqual(cs, ['', '273D00000019D128', '273D00000019D128', '273D00000019D128', '12345', '', '00:11:22', 'SN-98765', '273D00000019D128']);
     assert.deepEqual(errors, []);

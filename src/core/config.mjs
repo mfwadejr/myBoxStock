@@ -20,6 +20,7 @@ export const config = {
   closingSweepMs: Number(env.CLOSING_SWEEP_MS || 3600e3), // how often accounts past their closing date are erased
   hostAllowAny: env.HOST_ALLOW_ANY === '1',      // emergency switch: ignore the Host Console address list (use if you are locked out)
   secureCookies: env.SECURE_COOKIES === '1',
+  mailAllowPrivate: env.MAIL_ALLOW_PRIVATE === '1', // let resellers' own mail servers be on a private network (off: public servers only)
   publicUrl: env.PUBLIC_URL || '',
   secretKey: env.APP_SECRET || '',              // else a key is generated in DATA_DIR/secret.key
   log: {

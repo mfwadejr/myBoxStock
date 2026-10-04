@@ -108,6 +108,8 @@
     if (d.orderPct) lines.push('', `Subtotal: ${F().money(d.subtotal)}`, `Order discount ${d.orderPct}%: -${F().money(d.orderOff)}`);
     lines.push('', `Total: ${F().money(d.total)}`, `Paid by: ${C.paymentLabel(d.payment)}`, C.warrantyLine(d)); if (d.notes) lines.push('', d.notes); lines.push('', 'Thank you!'); return lines.join('\n');
   };
+  // The reseller's own mail server details (saved in Settings), or null to use the site's shared sender.
+  C.ownMail = () => { const m = AccountApp.store.config().mail; return m?.enabled && m.host && m.fromAddress ? { host: m.host, port: m.port, secure: !!m.secure, user: m.user, pass: m.pass, fromName: m.fromName || AccountApp.me.businessName, fromAddress: m.fromAddress } : null; };
   C.hasTests = (sale) => sale.data.items.some(it => it.inspection?.steps?.length);
   const testHtml = (it) => it.inspection?.steps?.length ? `<div class="test-record"><div class="strong text-sm">${esc(recHead(it.inspection))}</div>${it.inspection.steps.map(st => `<div class="text-sm ${st.done ? '' : 'faint'}">${esc(stepLine(st, it.inspection))}</div>`).join('')}${it.inspection.notes ? `<div class="text-sm mt-xs">${esc(it.inspection.notes)}</div>` : ''}</div>` : '';
   const receiptHtml = (sale, withTests) => { const d = sale.data;
@@ -125,10 +127,10 @@
       el.querySelector('#print').addEventListener('click', () => { document.documentElement.classList.add('printing'); window.addEventListener('afterprint', () => document.documentElement.classList.remove('printing'), { once: true }); window.print(); });
       el.querySelector('#mail').addEventListener('click', async () => {
         const subject = `Receipt ${d.no} from ${AccountApp.me.businessName}`, text = () => C.receiptText(sale, withTests);
-        await sheet(`<h2>Email receipt</h2><p class="sub">The receipt is sent from here and is not kept on our server. Replies go to ${esc(AccountApp.me.email || 'your own address')}.</p><div class="field mt-md"><label>Send to</label><input type="email" id="rto" value="${esc(d.customerEmail || '')}" autocomplete="off"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn secondary" id="rapp">Open in my mail app</button><button class="btn" id="rgo">Send</button></div>`, { onMount: (m, done) => {
+        await sheet(`<h2>Email receipt</h2><p class="sub">${C.ownMail() ? `Sent from your own mail server (${esc(C.ownMail().fromAddress)}).` : `Sent from the site, and replies go to ${esc(AccountApp.me.email || 'your own address')}.`} The receipt is not kept on our server.</p><div class="field mt-md"><label>Send to</label><input type="email" id="rto" value="${esc(d.customerEmail || '')}" autocomplete="off"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn secondary" id="rapp">Open in my mail app</button><button class="btn" id="rgo">Send</button></div>`, { onMount: (m, done) => {
           const to = () => m.querySelector('#rto').value.trim();
           m.querySelector('#rapp').addEventListener('click', () => { location.href = `mailto:${encodeURIComponent(to())}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text())}`; done(false); });
-          m.querySelector('#rgo').addEventListener('click', async () => { try { await AccountApp.api('POST', '/receipt-email', { to: to(), receiptNo: d.no, text: text() }); toast('Receipt sent'); done(true); } catch (e) { toast(e.message, true); } });
+          m.querySelector('#rgo').addEventListener('click', async () => { try { await AccountApp.api('POST', '/receipt-email', { to: to(), receiptNo: d.no, text: text(), ...(C.ownMail() ? { smtp: C.ownMail() } : {}) }); toast('Receipt sent'); done(true); } catch (e) { toast(e.message, true); } });
         } });
       });
       el.querySelector('#wchg')?.addEventListener('click', async () => {

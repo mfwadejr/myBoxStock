@@ -63,6 +63,8 @@ export const TEMPLATES = {
     vars: ['when', 'error'], required: ['when', 'error'] },
   receipt: { group: 'Customer', name: 'Receipt', title: 'Your receipt', subject: 'Receipt {{receiptNo}} from {{business}}',
     body: '{{message}}', vars: ['business', 'receiptNo', 'message'], required: ['message'] },
+  own_mail_test: { group: 'Customer', name: 'Reseller mail test', title: 'Your mail server works', subject: 'Test from {{business}}: your own mail server works',
+    body: 'This is a test message from {{business}}.\n\nYour receipts and other messages can now be sent from your own mail server.', vars: ['business'], required: [] },
   test: { group: 'System', name: 'Test message', title: 'Email is working', subject: 'myBoxStock test email',
     body: 'This is a test message from your myBoxStock server.\n\nOutbound email is working.', vars: [], required: [] },
 };

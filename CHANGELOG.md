@@ -3,6 +3,15 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.16.0] - 2026-10-04
+
+### Added
+- **Resellers can send from their own mail server.** Settings → Email sending: mail server, port, user name, password, From name and From address, with a "Send a test email to me" button. When it is on, receipts go out from the reseller's own address. When it is off, the site's shared sender is used as before. The details are saved encrypted with the rest of the account data and pass through the site once per message to reach the mail server; they are never stored, logged or queued. It is built so newsletters can use it later.
+- **Safeguards:** only standard mail ports (587, 465, 25, 2525), servers on private networks are refused so a reseller cannot probe your network (Host Console → Settings → Server options can allow them), clear messages for a wrong login or unreachable server, and a daily limit (1,000 a day from their own server, 100 from the shared sender).
+
+### Fixed
+- **Bulk scan** only asks for what is on your label. UID is ticked by default, with Serial number and MAC address as optional tick boxes, so a UID-only label completes the device with one scan and Enter. The scanner's "UID" text is removed from the box the moment it is typed.
+
 ## [0.15.4] - 2026-10-04
 
 ### Fixed
