@@ -64,7 +64,7 @@ export const INDEXES = [
 
 // Order matters when copying between databases (parents before children).
 export const COPY_ORDER = ['settings', 'host_admins', 'accounts', 'billing_events', 'account_users', 'sign_in_history', 'account_keys', 'account_recovery', 'account_roles', 'inventory_items', 'records',
-  'firewall_rules', 'mail_queue', 'event_log', 'password_resets', 'sessions'];
+  'firewall_rules', 'mail_queue', 'event_log', 'password_resets', 'sessions', 'admin_links'];
 
 // Versioned migrations. Each runs once, in order, and is recorded in schema_migrations.
 // Fresh installs run all of them; existing installs run only the ones they are missing. Never edit an applied migration — add a new one.
@@ -106,6 +106,11 @@ const MIGRATIONS = [
   { id: 5, name: 'host administrator contact details', up: async (db) => {
     await db.exec(`ALTER TABLE host_admins ADD COLUMN display_name ${s(100)}`);
     await db.exec(`ALTER TABLE host_admins ADD COLUMN cell ${s(40)}`);
+  } },
+  { id: 6, name: 'link a host administrator to their own reseller account', up: async (db) => {
+    // Lets one person switch between the Host Console and their own account. A link is created from inside the account, after proving the Host password.
+    await db.exec(`CREATE TABLE admin_links (id ${id} PRIMARY KEY, admin_id ${id} NOT NULL, user_id ${id} NOT NULL UNIQUE, created_at BIGINT NOT NULL)`);
+    await db.exec('CREATE INDEX idx_admin_links_admin ON admin_links (admin_id)');
   } },
 ];
 

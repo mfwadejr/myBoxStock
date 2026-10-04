@@ -33,6 +33,7 @@
       <div class="field"><label>Password</label><input type="password" id="p" autocomplete="current-password" required></div><button class="btn block">Sign in</button></form>
       <p class="hint center mt-lg"><a href="#" id="fg">Forgot password?</a>${cfg.signupsEnabled ? ' · <a href="#" id="su">Create an account</a>' : ''}</p>`);
     wireSwitch();
+    { const m = location.hash.match(/^#\/u\/(.+)$/); if (m) { root.querySelector('#l').value = decodeURIComponent(m[1]); root.querySelector('#p').focus(); } } // opened from the Host Console switcher
     root.querySelector('#fg').addEventListener('click', (e) => { e.preventDefault(); forgotScreen(); });
     root.querySelector('#su')?.addEventListener('click', (e) => { e.preventDefault(); signupScreen(); });
     onSubmit('#f', async () => { AccountApp.pw = val('#p'); let r; try { r = await AccountApp.api('POST', '/login', { login: val('#l'), password: AccountApp.pw }); } catch (e) { AccountApp.pw = null; throw e; } UI.setCsrf(r.csrf); if (r.mfa) return mfaScreen(); await boot(); });
@@ -77,8 +78,9 @@
   AccountApp.showShell = () => shell();
   function shell() {
     const me = AccountApp.me;
-    root.innerHTML = `<header class="topbar"><div class="brand"><a class="brand-link" href="#/home" aria-label="Home"><img class="brand-mark" src="/assets/logo-512.png" alt="myBoxStock" width="512" height="512"></a>${esc(me.businessName)}</div><div class="grow"></div>${billingChip(me.billing)}<span class="muted text-sm">${esc(me.username)} · ${esc(me.role)}</span><button class="btn secondary small" id="out">Sign out</button></header>
+    root.innerHTML = `<header class="topbar"><div class="brand"><a class="brand-link" href="#/home" aria-label="Home"><img class="brand-mark" src="/assets/logo-512.png" alt="myBoxStock" width="512" height="512"></a>${esc(me.businessName)}</div><div class="grow"></div>${me.hostLinked ? '<span id="swh"></span>' : ''}${billingChip(me.billing)}<span class="muted text-sm">${esc(me.username)} · ${esc(me.role)}</span><button class="btn secondary small" id="out">Sign out</button></header>
       <div class="shell"><nav class="side">${NAV.filter(([, , p]) => !p || AccountApp.can(p)).map(([k, l]) => `<a href="#/${k}" data-k="${k}"><span>${l}</span></a>`).join('')}</nav><main class="main" id="main"></main></div>`;
+    if (me.hostLinked) UI.select.switcher(root.querySelector('#swh'), { value: 'me', options: [['me', `Reseller · ${me.businessName}`], ['host', 'Site admin']], pick: (v) => { if (v === 'host') window.open('/host/', '_blank', 'noopener'); } });
     root.querySelector('#out').addEventListener('click', () => AccountApp.signOut());
     window.removeEventListener('hashchange', AccountApp.route); window.addEventListener('hashchange', AccountApp.route); AccountApp.route();
   }

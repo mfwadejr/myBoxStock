@@ -88,6 +88,7 @@ export function adminsRoutes(db) {
     await db.tx(async (t) => {
       await t.run("DELETE FROM sessions WHERE realm = 'host' AND subject_id = ?", [a.id]);
       await t.run("DELETE FROM password_resets WHERE realm = 'host' AND subject_id = ?", [a.id]);
+      await t.run('DELETE FROM admin_links WHERE admin_id = ?', [a.id]);
       await t.run('DELETE FROM host_admins WHERE id = ?', [a.id]);
     });
     hostLog(req, 'warn', 'admin.deleted', `Host administrator "${a.username}" deleted`, { data: { username: a.username } });

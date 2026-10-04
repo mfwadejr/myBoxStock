@@ -3,6 +3,12 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.9.5] - 2026-10-04
+
+### Added
+- **Account switcher for people who run the site and a reseller account.** In the app, Security → Host administrator → "Link Host administrator" (Administrators only) asks for the Host username, password and two-factor code once. After linking, a switcher appears at the top right on both sides: the Host Console lists "Site admin" and your reseller accounts (opens the app sign-in in a new tab with the login filled in); the app lists your account and "Site admin". Linking can be removed at any time, and deleting a Host administrator removes their links.
+- Nothing from the reseller account is shared with the Host side (it only learns the login name and business name), each side still has its own sign-in, and linking attempts are rate-limited and logged. Migration 6 adds the `admin_links` table.
+
 ## [0.9.4] - 2026-10-04
 
 ### Fixed

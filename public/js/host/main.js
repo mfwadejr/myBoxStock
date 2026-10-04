@@ -34,9 +34,11 @@
   }
 
   function shell() {
-    root.innerHTML = `<header class="topbar"><div class="brand"><a class="brand-link" href="#/overview" aria-label="Home"><img class="brand-mark" src="/assets/logo-512.png" alt="myBoxStock" width="512" height="512"></a>myBoxStock <span class="brand-sub">Host</span></div><div class="grow"></div>
+    root.innerHTML = `<header class="topbar"><div class="brand"><a class="brand-link" href="#/overview" aria-label="Home"><img class="brand-mark" src="/assets/logo-512.png" alt="myBoxStock" width="512" height="512"></a>myBoxStock <span class="brand-sub">Host</span></div><div class="grow"></div><span id="swh"></span>
       <span class="muted text-sm">${esc(Host.me.username)}</span><button class="btn secondary small" id="out">Sign out</button></header>
       <div class="shell"><nav class="side">${Host.nav.map(([k, l]) => `<a href="#/${k}" data-k="${k}">${Host.icons[k]}<span>${l}</span></a>`).join('')}</nav><main class="main" id="main"></main></div>`;
+    // Administrators who also run a reseller account (linked from inside that account) get a switch to it.
+    Host.api('GET', '/links').then(({ accounts }) => { if (accounts.length && root.querySelector('#swh')) UI.select.switcher(root.querySelector('#swh'), { value: 'host', options: [['host', 'Site admin'], ...accounts.map(a => [a.login, `Reseller · ${a.businessName}`])], pick: (v) => window.open(`/app/#/u/${encodeURIComponent(v)}`, '_blank', 'noopener') }); }).catch(() => {});
     root.querySelector('#out').addEventListener('click', async () => { await Host.api('POST', '/logout'); Host.me = null; clearInterval(Host.timer); loginScreen(); });
     window.removeEventListener('hashchange', Host.route); window.addEventListener('hashchange', Host.route); Host.route();
   }
