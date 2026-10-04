@@ -32,14 +32,14 @@ export async function saveLimits(db, patch, actor) {
     enabled: !!patch.enabled, windowSec: n(patch.windowSec, 1, 3600, before.windowSec), maxRequests: n(patch.maxRequests, 10, 100000, before.maxRequests),
     authWindowSec: n(patch.authWindowSec, 10, 86400, before.authWindowSec), authMaxAttempts: n(patch.authMaxAttempts, 1, 1000, before.authMaxAttempts),
     banMinutes: n(patch.banMinutes, 1, 10080, before.banMinutes), banAfterViolations: n(patch.banAfterViolations, 1, 100, before.banAfterViolations),
-    hostConsoleAllowOnly: !!patch.hostConsoleAllowOnly,
+    hostConsoleAllowOnly: patch.hostConsoleAllowOnly === undefined ? before.hostConsoleAllowOnly : !!patch.hostConsoleAllowOnly,
   };
   await setSetting(db, 'firewall_limits', limits);
   L.info('limits.changed', 'Rate-limit settings changed', { actor, data: { before, after: limits } });
   return limits;
 }
 export async function addRule(db, { kind, cidr, port = null, note = '' }, actor) {
-  if (!['deny', 'allow'].includes(kind)) throw new Error('kind must be deny or allow');
+  if (!['deny', 'allow', 'host'].includes(kind)) throw new Error('kind must be deny, allow or host');
   if (!validCidr(cidr)) throw new Error('Enter a valid IP address or CIDR range, e.g. 203.0.113.0/24');
   const id = newId();
   await db.run('INSERT INTO firewall_rules (id, kind, cidr, port, note, enabled, created_at) VALUES (?,?,?,?,?,1,?)', [id, kind, cidr, port ? Number(port) : null, String(note).slice(0, 200), Date.now()]);
@@ -57,3 +57,8 @@ export async function setRuleEnabled(db, id, on, actor) {
   L.info('rule.toggled', `Rule ${id} ${on ? 'enabled' : 'disabled'}`, { actor, data: { id, enabled: on } });
 }
 export const ruleAppliesToAppPort = (r) => !r.port || r.port === appConfig.port;
+export async function setHostAccess(db, on, actor) {
+  limits = { ...limits, hostConsoleAllowOnly: !!on }; await setSetting(db, 'firewall_limits', limits);
+  L.info('host_access.changed', `Host Console access limit turned ${on ? 'on' : 'off'}`, { actor, data: { enabled: !!on } });
+  return limits;
+}

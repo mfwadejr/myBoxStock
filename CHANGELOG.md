@@ -3,6 +3,20 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.10.0] - 2026-10-04
+
+### Added
+- **Host Console access is now its own card on the Firewall page.** Switch it on to limit the console to the addresses you list; everyone else gets a plain "Not Found" page (the console no longer announces that it exists). The card shows your current address with an **Add my address** button, takes single addresses or ranges with a note, and lists each entry with an on/off switch and Remove. You cannot switch the limit on, or disable or remove the entry that lets you in, while it would lock you out. If the server sees only an internal address (a proxy that is not passing the real one on), the card says so before you switch it on.
+- **Emergency override.** Setting `HOST_ALLOW_ANY=1` on the server ignores the list until you are back in; the card shows when it is active.
+- Migration 8 gives every address that was already enabled as an "allow" rule a matching Host Console entry, so nothing changes for anyone who already used the old switch.
+
+### Changed
+- The old "allow-listed addresses only" switch moved out of Rate limiting. "Allow" rules in Address rules now only skip rate limiting.
+
+### Fixed
+- Safari: the date text in Date received and Tested on sits level with the other boxes (awaiting confirmation in Safari).
+- A deleted account no longer stays in the Site admin switcher: the list refreshes on every page change, and deleting an account or user removes its link.
+
 ## [0.9.6] - 2026-10-04
 
 ### Changed

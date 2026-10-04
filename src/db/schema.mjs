@@ -1,6 +1,7 @@
 // DATABASE / schema — portable DDL for SQLite, PostgreSQL and MariaDB/MySQL.
 // Rules: string primary keys, VARCHAR(n) for anything indexed, TEXT otherwise, BIGINT epoch-ms timestamps,
 // INTEGER 0/1 booleans, no vendor-specific upsert/returning/autoincrement, no reserved-word column names.
+import { newId } from '../core/ids.mjs';
 import { areaLogger } from '../logging/logger.mjs';
 
 const L = areaLogger('database');
@@ -115,6 +116,11 @@ const MIGRATIONS = [
   { id: 7, name: 'per-account permission to link a Host administrator', up: async (db) => {
     // Off for every account until the Owner administrator switches it on for that account.
     await db.exec('ALTER TABLE accounts ADD COLUMN host_link_allowed INTEGER NOT NULL DEFAULT 0');
+  } },
+  { id: 8, name: 'Host Console access rules', up: async (db) => {
+    // Host Console access now has its own rule kind. Anything that was an enabled "allow" rule keeps working by getting a host twin.
+    const rows = await db.all("SELECT cidr, port, note FROM firewall_rules WHERE kind = 'allow' AND enabled = 1");
+    for (const r of rows) await db.run('INSERT INTO firewall_rules (id, kind, cidr, port, note, enabled, created_at) VALUES (?,?,?,?,?,1,?)', [newId(), 'host', r.cidr, r.port, r.note, Date.now()]);
   } },
 ];
 

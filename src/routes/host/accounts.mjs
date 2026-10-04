@@ -68,6 +68,7 @@ export function accountsRoutes(db) {
     await db.tx(async (t) => { // write-only erase; nothing is read
       await t.run("DELETE FROM sessions WHERE realm = 'app' AND account_id = ?", [a.id]);
       await t.run('DELETE FROM password_resets WHERE realm = ? AND subject_id IN (SELECT id FROM account_users WHERE account_id = ?)', ['app', a.id]);
+      await t.run('DELETE FROM admin_links WHERE user_id IN (SELECT id FROM account_users WHERE account_id = ?)', [a.id]);
       await t.run('DELETE FROM inventory_items WHERE account_id = ?', [a.id]); await t.run('DELETE FROM records WHERE account_id = ?', [a.id]); await t.run('DELETE FROM account_keys WHERE account_id = ?', [a.id]); await t.run('DELETE FROM account_recovery WHERE account_id = ?', [a.id]); await t.run('DELETE FROM account_roles WHERE account_id = ?', [a.id]);
       await t.run('DELETE FROM account_users WHERE account_id = ?', [a.id]); await t.run('DELETE FROM billing_events WHERE account_id = ?', [a.id]); await t.run('DELETE FROM sign_in_history WHERE account_id = ?', [a.id]); await t.run('DELETE FROM accounts WHERE id = ?', [a.id]);
     });
@@ -95,6 +96,7 @@ export function accountsRoutes(db) {
     await db.tx(async (t) => {
       await t.run("DELETE FROM sessions WHERE realm = 'app' AND subject_id = ?", [u.id]);
       await t.run("DELETE FROM password_resets WHERE realm = 'app' AND subject_id = ?", [u.id]);
+      await t.run('DELETE FROM admin_links WHERE user_id = ?', [u.id]);
       await t.run('DELETE FROM account_keys WHERE user_id = ?', [u.id]);
       await t.run('DELETE FROM account_users WHERE id = ? AND account_id = ?', [u.id, u.account_id]);
     });

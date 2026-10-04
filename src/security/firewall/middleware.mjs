@@ -1,6 +1,7 @@
 // SECURITY / firewall / middleware — the Express gate every request passes through first.
 import { MSG } from '../../core/messages.mjs';
 import { normalizeIp, matchCidr } from './ip.mjs';
+import { config as appConfig } from '../../core/config.mjs';
 import { getLimits, getRules, ruleAppliesToAppPort } from './config.mjs';
 import { overLimit, recordViolation, banUntil, countBlocked, countLimited, logThrottled } from './ratelimit.mjs';
 
@@ -12,7 +13,7 @@ export function firewallMiddleware(req, res, next) {
   const deny = rules.some(r => r.kind === 'deny' && ruleAppliesToAppPort(r) && matchCidr(ip, r.cidr));
   const allowed = rules.some(r => r.kind === 'allow' && ruleAppliesToAppPort(r) && matchCidr(ip, r.cidr));
   if (deny && !allowed) { countBlocked(); logThrottled(`deny:${ip}`, 'warn', 'request.blocked', `Blocked ${ip} by address rule (${req.method} ${req.path})`, { ip, data: { path: req.path } }); return res.status(403).type('text/plain').send('Forbidden'); }
-  if (lim.hostConsoleAllowOnly && isHostPath(req.path) && !allowed) { countBlocked(); logThrottled(`hostonly:${ip}`, 'warn', 'host_console.blocked', `Host console request from non-allow-listed ${ip} refused (${req.path})`, { ip, data: { path: req.path } }); return res.status(403).type('text/plain').send('Forbidden'); }
+  if (lim.hostConsoleAllowOnly && !appConfig.hostAllowAny && isHostPath(req.path) && !rules.some(r => r.kind === 'host' && ruleAppliesToAppPort(r) && matchCidr(ip, r.cidr))) { countBlocked(); logThrottled(`hostonly:${ip}`, 'warn', 'host_console.blocked', `Host console request from address ${ip} outside the access list refused (${req.path})`, { ip, data: { path: req.path } }); return res.status(404).type('text/plain').send('Not Found'); }
   if (!lim.enabled || allowed) return next();
 
   const until = banUntil(ip);

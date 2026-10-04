@@ -17,6 +17,7 @@ export const config = {
   dbUrl: env.DATABASE_URL || '',
   dbPoolMax: Number(env.DB_POOL_MAX || 10),
   trustProxy: env.TRUST_PROXY || '',            // set to 1 behind a reverse proxy so client IPs are real
+  hostAllowAny: env.HOST_ALLOW_ANY === '1',      // emergency switch: ignore the Host Console address list (use if you are locked out)
   secureCookies: env.SECURE_COOKIES === '1',
   publicUrl: env.PUBLIC_URL || '',
   secretKey: env.APP_SECRET || '',              // else a key is generated in DATA_DIR/secret.key
