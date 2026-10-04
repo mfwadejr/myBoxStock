@@ -8,7 +8,7 @@
     if (!A.can('users.manage')) return swap(main, '<div class="page-head"><h1>Settings</h1></div><div class="card"><div class="empty">Only Administrators can change these settings.</div></div>');
     const cfg = S.defaults(), saved = S.config(); cfg.fields = JSON.parse(JSON.stringify(saved.fields)); cfg.steps = JSON.parse(JSON.stringify(saved.steps)); cfg.tests = { ...saved.tests }; cfg.warranty = JSON.parse(JSON.stringify(saved.warranty)); cfg.unlock = { ...saved.unlock }; cfg.discount = { ...saved.discount }; cfg.mail = { ...saved.mail };
     const usedKeys = new Set(S.all('sale').map(e => e.data.warranty?.key).filter(Boolean));
-    const chk = (k, on, i) => `<label class="check"><input type="checkbox" data-k="${k}" data-i="${i}" ${on ? 'checked' : ''}></label>`;
+    const chk = (k, on, i) => { const idOnly = (k === 'fk' || k === 'fu') && cfg.fields[i].type && cfg.fields[i].type !== 'text'; return `<label class="check"><input type="checkbox" data-k="${k}" data-i="${i}" ${on && !idOnly ? 'checked' : ''} ${idOnly ? 'disabled' : ''}></label>`; };
 
     const K = C.catalog, key = K.key;
     const variantNote = (x) => x.variants.length > 1 ? `<div class="hint">Also entered as ${x.variants.filter(v => v !== x.name).map(esc).join(', ')}. Use Rename or merge to combine them.</div>` : '';
@@ -148,6 +148,7 @@
         if (f) { cfg.fields.push(f); draw(); }
       });
       main.querySelector('#save').addEventListener('click', (e) => UI.busy(e.currentTarget, async () => {
+        for (const f of cfg.fields) if (f.type && f.type !== 'text') { f.lookup = false; f.unique = false; }
         const labels = cfg.fields.map(f => f.label.trim().toLowerCase());
         if (cfg.fields.some(f => !f.label.trim()) || cfg.steps.some(s => !s.label.trim())) return toast('Every detail and step needs a name.', true);
         if (new Set(labels).size !== labels.length) return toast('Two details have the same name.', true);

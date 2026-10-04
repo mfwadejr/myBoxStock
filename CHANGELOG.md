@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.16.2] - 2026-10-04
+
+### Fixed
+- **"Another device already has that Condition" when adding or editing a device.** "Must be unique" and "Look up in sale" were set on a dropdown detail (Condition), so every device with the same condition counted as a duplicate. These two options now only apply to text details such as UID, Serial number and MAC address; they are ignored on dropdown, number, date and yes/no details, and their tick boxes are switched off for those in Settings.
+
 ## [0.16.1] - 2026-10-04
 
 ### Fixed

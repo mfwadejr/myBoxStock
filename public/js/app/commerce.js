@@ -4,7 +4,8 @@
   const C = AccountApp.commerce = {};
 
   // ---- the account's tracked fields and test checklist (set up under Settings) ----
-  C.fields = () => AccountApp.store.config().fields.filter(f => f.enabled);
+  // "Look up in sale" and "Must be unique" only make sense for text details such as UID, so they are ignored on dropdown, number, date and yes/no details.
+  C.fields = () => AccountApp.store.config().fields.filter(f => f.enabled).map(f => f.type && f.type !== 'text' ? { ...f, lookup: false, unique: false } : f);
   C.testsOn = () => AccountApp.store.config().tests.enabled;
   C.steps = () => C.testsOn() ? AccountApp.store.config().steps : []; // switched off in Settings = no steps anywhere; nothing is deleted
   // Dates typed in forms are plain YYYY-MM-DD; shown and compared at midday so time zones never shift the day.
