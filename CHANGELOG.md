@@ -3,6 +3,15 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.14.2] - 2026-10-04
+
+### Added
+- **Site address** (Host Console → Settings). The public address used for every link in an email (confirm, password reset, welcome, account closing). It can be changed without touching the server; if it is empty the `PUBLIC_URL` server setting is used, as before. The page shows which one is in use.
+- **Warnings for a bad address.** If the address is empty, still the example one, an internal address only your own network can reach (such as `zimaos.local`, `localhost` or `192.168.x.x`), or not https, Settings explains the problem and the Overview shows a banner.
+
+### Fixed
+- Email links pointed at the server's internal address when `PUBLIC_URL` was set to it. Set the Site address to your public one; links sent before that keep the old address, so use "Send it again".
+
 ## [0.14.1] - 2026-10-04
 
 ### Fixed

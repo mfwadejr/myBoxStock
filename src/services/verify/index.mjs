@@ -1,7 +1,7 @@
 // SERVICES / verify — soft email confirmation. The account works straight away; confirming the address unlocks email-based actions
 // (password reset by email, inviting teammates). Does nothing when outbound email is not set up, and never locks out older accounts.
 import { newId, token, sha256 } from '../../core/ids.mjs';
-import { config } from '../../core/config.mjs';
+import { siteUrl } from '../site/index.mjs';
 import { getMailSettings } from '../mail/index.mjs';
 import { enqueueMail, processQueue } from '../mail/index.mjs';
 import { areaLogger } from '../../logging/logger.mjs';
@@ -25,7 +25,7 @@ export async function sendConfirmation(db, u, email, { accountCode, ip } = {}) {
   if (recent.length >= RESEND_PER_DAY) return { sent: false, reason: 'daily_limit' };
   const raw = token(32);
   await db.run('INSERT INTO email_confirmations (token_hash, user_id, email, expires_at, used, created_at) VALUES (?,?,?,?,0,?)', [sha256(raw), u.id, email, Date.now() + VALID_MS, Date.now()]);
-  await enqueueMail(db, email, 'confirm_email', { name: u.username, accountCode: accountCode || '', link: `${config.publicUrl}/app/#/confirm/${raw}` }); processQueue(db).catch(() => {});
+  await enqueueMail(db, email, 'confirm_email', { name: u.username, accountCode: accountCode || '', link: `${await siteUrl(db)}/app/#/confirm/${raw}` }); processQueue(db).catch(() => {});
   L.info('email.confirmation_sent', `Confirmation email sent to ${email} for ${u.login || u.username}`, { actor: u.login || u.username, accountId: u.account_id, ip, data: { change: email !== u.email } });
   return { sent: true };
 }

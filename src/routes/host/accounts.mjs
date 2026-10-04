@@ -7,7 +7,7 @@ import { hashPassword } from '../../auth/password.mjs';
 import { destroyAllFor } from '../../auth/session.mjs';
 import { token, sha256, newId } from '../../core/ids.mjs';
 import { enqueueMail, processQueue } from '../../services/mail/index.mjs';
-import { config } from '../../core/config.mjs';
+import { siteUrl } from '../../services/site/index.mjs';
 import { fail } from '../../core/messages.mjs';
 import { billingState, DAY } from '../../services/billing/state.mjs';
 import { sendConfirmation } from '../../services/verify/index.mjs';
@@ -154,7 +154,7 @@ export function accountsRoutes(db) {
     const reason = reasonOf(req, res); if (!reason) return;
     const raw = token(32);
     await db.run('INSERT INTO password_resets (token_hash, realm, subject_id, expires_at, used) VALUES (?,?,?,?,0)', [sha256(raw), 'app', u.id, Date.now() + 3600e3]);
-    await enqueueMail(db, u.email, 'password_reset', { name: u.username, username: u.username, accountCode: (await db.get('SELECT account_code FROM accounts WHERE id = ?', [u.account_id]))?.account_code || '', link: `${config.publicUrl}/app/#/reset/${raw}` }); processQueue(db).catch(() => {});
+    await enqueueMail(db, u.email, 'password_reset', { name: u.username, username: u.username, accountCode: (await db.get('SELECT account_code FROM accounts WHERE id = ?', [u.account_id]))?.account_code || '', link: `${await siteUrl(db)}/app/#/reset/${raw}` }); processQueue(db).catch(() => {});
     A(req, 'info', 'user.reset_link_sent', `Password reset link emailed to ${u.login}: ${reason}`, { id: u.account_id }, { login: u.login, reason });
     res.json({ ok: true });
   });

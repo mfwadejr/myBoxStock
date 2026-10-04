@@ -6,6 +6,8 @@ import { firewallStats } from '../../security/firewall/index.mjs';
 import { billingState, DAY } from '../../services/billing/state.mjs';
 import { restorePending, getFullConfig, getFullStatus } from '../../services/backup/index.mjs';
 
+import { siteStatus } from '../../services/site/index.mjs';
+
 export function dashboardRoutes(db) {
   const r = express.Router();
   r.get('/', async (req, res) => {
@@ -20,7 +22,9 @@ export function dashboardRoutes(db) {
       if (!b.canWrite) plans.expired++; else plans[b.plan]++;
       if (b.canWrite && b.endsAt && b.endsAt - now <= 7 * DAY) plans.endingSoon++;
     }
+    const site = await siteStatus(db);
     res.json(snapshot({
+      siteUrlProblem: site.problem, siteUrl: site.url,
       plans,
       accounts: Number(acc.n), users: Number(usr.n), activeSessions: Number(act.n),
       accountsByStatus: Object.fromEntries(byStatus.map(x => [x.status, Number(x.n)])), mail: Object.fromEntries(mailQ.map(x => [x.status, Number(x.n)])),

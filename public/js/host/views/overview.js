@@ -16,6 +16,7 @@
       const d = await Host.api('GET', '/dashboard');
       const mp = fmt.pct(d.memory.used, d.memory.total), dp = d.disk ? fmt.pct(d.disk.used, d.disk.total) : 0, cpu = d.history.at(-1)?.cpu ?? 0;
       const html = `${Host.head('Overview', `${esc(d.hostname)} · up ${fmt.dur(d.uptimeSec)} · v${esc(d.version)}`)}
+        ${d.siteUrlProblem ? `<div class="banner mb-lg">Email links will not work: ${esc(d.siteUrlProblem)} <a href="#/settings">Set the site address</a></div>` : ''}
         ${d.restorePending ? '<div class="banner mb-lg">A database restore is staged and will be applied on the next restart.</div>' : ''}
         <div class="grid g4">
           <div class="card stat"><div class="stat-label">Accounts</div><div class="stat-value">${d.accounts}</div><div class="stat-note">${d.accountsByStatus.suspended || 0} suspended</div></div>

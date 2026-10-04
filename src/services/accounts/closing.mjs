@@ -2,7 +2,7 @@
 import { areaLogger } from '../../logging/logger.mjs';
 import { destroyAllFor } from '../../auth/session.mjs';
 import { enqueueMail, processQueue } from '../mail/index.mjs';
-import { config } from '../../core/config.mjs';
+import { siteUrl } from '../site/index.mjs';
 
 const L = areaLogger('accounts');
 export const GRACE_DAYS = 7, GRACE_MS = GRACE_DAYS * 24 * 3600e3;
@@ -28,7 +28,7 @@ export async function startClosing(db, a, { actor, email } = {}) {
   // Everyone but Administrators is signed out now; Administrators can still look around and restore the account.
   for (const u of await db.all("SELECT id FROM account_users WHERE account_id = ? AND role <> 'Administrator'", [a.id])) await destroyAllFor(db, 'app', u.id, 'account is closing');
   L.warn('account.closing', `Account ${a.account_code} is closing: locked now, erases on ${day(at)}`, { actor, accountId: a.id, data: { code: a.account_code, eraseAt: at } });
-  for (const to of recipients(a, email)) await enqueueMail(db, to, 'account_closing', { name: a.business_name, accountCode: a.account_code, eraseDate: day(at), url: `${config.publicUrl}/app/` });
+  for (const to of recipients(a, email)) await enqueueMail(db, to, 'account_closing', { name: a.business_name, accountCode: a.account_code, eraseDate: day(at), url: `${await siteUrl(db)}/app/` });
   processQueue(db).catch(() => {});
   return at;
 }
