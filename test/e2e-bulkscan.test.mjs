@@ -25,7 +25,7 @@ test('browser: scanned "UID" label is removed; bulk scan adds a batch and reject
     await page.click('#bulk'); await page.fill('#make_new', 'Acme'); await page.fill('#model_new', 'Box'); await page.fill('#cost', '10'); await page.fill('#price', '25');
     const scan = async (v) => { await page.fill('#scanbox', v); await page.press('#scanbox', 'Enter'); };
     for (const v of ['UID A1', 'SN S1', 'MAC 00:11']) await scan(v);
-    for (const v of ['UID B2', 'SN S2']) await scan(v); await scan('');
+    for (const v of ['UID', 'B2', 'Serial number', 'S2']) await scan(v); await scan('');
     await scan('a1'); assert.match(await page.textContent('#bmsg'), /already scanned/);
     assert.equal(await page.locator('#blist .chip').count(), 2);
     assert.equal(await page.locator('.sheet #f_cond').count(), 1, 'Condition stays a shared dropdown, not a scan step');
@@ -36,6 +36,8 @@ test('browser: scanned "UID" label is removed; bulk scan adds a batch and reject
     const text = await page.locator('tbody').first().textContent(); assert.ok(text.includes('A1') && text.includes('B2') && !text.includes('UID'));
     await page.locator('tbody tr.click').first().click(); await page.waitForSelector('#f_serial');
     assert.ok(['S1', 'S2'].includes(await page.inputValue('#f_serial')), 'serial number was saved');
+    const cs = await page.evaluate(() => ['UID', 'UID\n273D00000019D128', 'UID273D00000019D128', 'UID: 273D00000019D128', 'SN 12345', 'Serial number', 'MAC 00:11:22', 'SN-98765', '273D00000019D128'].map(v => AccountApp.commerce.cleanScan(v)));
+    assert.deepEqual(cs, ['', '273D00000019D128', '273D00000019D128', '273D00000019D128', '12345', '', '00:11:22', 'SN-98765', '273D00000019D128']);
     assert.deepEqual(errors, []);
   } finally { await br.close(); await srv.stop(); }
 });

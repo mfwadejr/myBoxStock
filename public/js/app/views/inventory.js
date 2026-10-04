@@ -84,8 +84,8 @@
         for (const f of shared) C.setVal(d, f, C.readInput(el, f)); ids.forEach((f, n) => C.setVal(d, f, vals[n] || '')); return d; };
       const clash = (f, n, v) => devices.some(d => String(d[n] || '').toLowerCase() === v.toLowerCase()) ? `${v} was already scanned in this batch.` : f.unique && S.all('item').some(e => e.data.status !== 'archived' && String(C.getVal(e.data, f)).toLowerCase() === v.toLowerCase()) ? `Another device already has that ${f.label}.` : '';
       q('scanbox').addEventListener('keydown', (e) => { if (e.key !== 'Enter') return; e.preventDefault();
-        const v = C.cleanScan(q('scanbox').value), n = cur.length, f = ids[n]; q('scanbox').value = '';
-        if (!v && n === 0) return;
+        const raw = q('scanbox').value, v = C.cleanScan(raw), n = cur.length, f = ids[n]; q('scanbox').value = '';
+        if (!v && (n === 0 || raw.trim())) return; // nothing, or only a label such as "UID" that the scanner sends before the number
         if (v && (f.unique || n === 0)) { const bad = clash(f, n, v); if (bad) return msg(bad); }
         msg(''); cur.push(v);
         if (cur.length === ids.length) { devices.push(cur); cur = []; }

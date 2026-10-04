@@ -57,7 +57,7 @@
     const q = (s) => main.querySelector(s), again = () => render(main);
     const sum = () => { const t = totals(); q('#tot').textContent = F.money(t.total); q('#sub').textContent = F.money(t.list); q('#save').textContent = F.money(t.saved); q('#subrow').hidden = t.saved <= 0; q('#saverow').hidden = t.saved <= 0; };
     const scan = q('#scan'); scan.focus();
-    scan.addEventListener('keydown', (e) => { if (e.key !== 'Enter') return; e.preventDefault(); const v = scan.value; if (!v.trim()) return; st.msg = add(v); again(); });
+    scan.addEventListener('keydown', (e) => { if (e.key !== 'Enter') return; e.preventDefault(); const v = scan.value; if (!C.cleanScan(v)) { scan.value = ''; return; } st.msg = add(v); again(); });
     const browse = async (model) => { const ids = await C.pickStock({ exclude: st.cart.map(l => l.id), model }); if (!ids?.length) return; const bad = ids.map(id => addEntry(S.get('item', id))).filter(Boolean); st.msg = bad.join(' '); again(); };
     q('#bulk').addEventListener('click', async () => { const ids = await C.pickQuantity({ exclude: st.cart.map(l => l.id) }); if (!ids?.length) return; st.msg = ids.map(id => addEntry(S.get('item', id))).filter(Boolean).join(' '); again(); });
     q('#browse').addEventListener('click', () => browse(''));

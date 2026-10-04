@@ -3,6 +3,14 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.15.4] - 2026-10-04
+
+### Fixed
+- **Scanned barcodes that send the label on its own line.** Some scanners send "UID", Enter, then the number, Enter. The label alone is now ignored instead of being taken as the first scan (it shifted every later scan out of place). Also handles "UID273D…" with no space, "UID: 273D…" and "Serial number" on its own line. Applies to Bulk scan, the Add/Edit device form and Quick sale.
+
+### Added
+- **Reorder lists in Settings.** Every row in Device details, Test checklist and Warranty periods has up and down buttons. The order you set is the order used in the Add device form, the checklist on each device and the warranty menu in Quick sale. Press Save changes to keep it.
+
 ## [0.15.3] - 2026-10-04
 
 ### Fixed

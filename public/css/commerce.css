@@ -32,7 +32,7 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .receipt table { margin: var(--space-lg) var(--space-0); }
 .receipt .line-total { display: flex; justify-content: space-between; font-weight: var(--weight-semibold); font-size: var(--text-lg); border-top: var(--border-strong); padding-top: var(--space-md); }
 .test-record { margin-top: var(--space-xs); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-sm); background: var(--color-wash-faint); border: var(--border-default); }
-.check-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(4, var(--col-check-w)) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-sm) var(--space-0); border-bottom: var(--border-default); }
+.check-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(4, var(--col-check-w)) var(--control-h-md) var(--move-w); gap: var(--space-sm); align-items: center; padding: var(--space-sm) var(--space-0); border-bottom: var(--border-default); }
 .check-row:last-child { border-bottom: 0; }
 .check-head { font-size: var(--text-xs); color: var(--color-text-muted); font-weight: var(--weight-medium); }
 .check-row .check, .check-row .icon-btn { justify-self: center; justify-content: center; }
@@ -40,7 +40,7 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .check-row, .step-row { max-width: var(--config-w); }
 .war-row input[type=text] { height: var(--control-h-md); }
 .war-row .chip { justify-content: center; }
-.war-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--chip-type-w) var(--col-war-w) var(--col-war-w) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); max-width: var(--config-w); }
+.war-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--chip-type-w) var(--col-war-w) var(--col-war-w) var(--control-h-md) var(--move-w); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); max-width: var(--config-w); }
 .icon-slot { width: var(--control-h-md); }
 .cat-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--chip-type-w) var(--col-req-w) var(--col-war-w) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); border-bottom: var(--border-default); max-width: var(--config-w); }
 .cat-row .chip { justify-content: center; }
@@ -51,7 +51,7 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .check-row input[type=text], .step-row input[type=text] { height: var(--control-h-md); }
 .check-row .row { gap: var(--space-sm); }
 .check-row .chip, .check-row .type-btn { flex: none; width: var(--chip-type-w); justify-content: center; }
-.step-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--chip-type-w) var(--col-req-w) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); }
+.step-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--chip-type-w) var(--col-req-w) var(--control-h-md) var(--move-w); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); }
 .tests { margin-top: var(--space-md); padding: var(--space-md) var(--space-lg); border-radius: var(--radius-md); background: var(--color-wash-faint); border: var(--border-default); }
 .test-items { margin-left: var(--space-2xl); }
 .test-items .field { margin-bottom: var(--space-sm); }
@@ -84,3 +84,9 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .stock-main { min-width: var(--space-0); }
 
 .receipt-logo { display: block; width: var(--logo-receipt); height: var(--logo-receipt); margin: var(--space-0) auto var(--space-sm); object-fit: contain; }
+
+/* Up / down buttons that reorder a row in Settings lists. */
+.move-btns { display: inline-flex; gap: var(--space-xs); justify-self: center; }
+.icon-btn.move { width: var(--control-h-sm); height: var(--control-h-sm); font-size: var(--text-sm); }
+.icon-btn.move:hover, .icon-btn.move:focus-visible { background: var(--color-primary-soft); color: var(--color-primary); }
+.icon-btn.move[disabled] { opacity: var(--opacity-disabled); pointer-events: none; }

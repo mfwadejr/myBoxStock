@@ -19,7 +19,9 @@
   C.setVal = (d, f, v) => { if (f.core) d[f.key] = v; else d.custom = { ...(d.custom || {}), [f.key]: v }; };
   C.showVal = (f, v) => f.type === 'bool' ? (v === true || v === 'yes' ? 'Yes' : v === false || v === 'no' ? 'No' : '') : String(v ?? '');
   // A scanner can send its label ("UID", "SN", "MAC"...) and line breaks before the value. Keep only the value.
-  C.cleanScan = (v) => String(v ?? '').replace(/\s*[\r\n]+\s*/g, ' ').trim().replace(/^(?:uid|s\/n|sn|serial(?:\s*(?:no|number|#))?|mac(?:\s*address)?|imei|id)\s*[:#=-]?\s+(?=\S)/i, '').replace(/^(?:uid|sn|mac|imei)[:#=]\s*(?=\S)/i, '').trim();
+  C.scanLabel = /^(?:uid|s\/n|sn|serial(?:\s*(?:no\.?|number|#))?|mac(?:\s*address)?|imei|id)\s*[:#=-]?$/i; // a line that is only a label
+  C.cleanScan = (v) => { const t = String(v ?? '').replace(/\s*[\r\n]+\s*/g, ' ').trim(); if (C.scanLabel.test(t)) return '';
+    return t.replace(/^(?:uid|s\/n|sn|serial(?:\s*(?:no|number|#))?|mac(?:\s*address)?|imei|id)\s*[:#=-]?\s+(?=\S)/i, '').replace(/^(?:sn|mac|imei)[:#=]\s*(?=\S)/i, '').replace(/^uid[:#=]?\s*(?=\S{6,})/i, '').trim(); };
   C.lookupFields = () => C.fields().filter(f => f.lookup);
   // Form control for one field, and reading it back.
   C.fieldInput = (f, v) => {

@@ -136,7 +136,8 @@
   --chip-type-w: 120px;
   --stock-list-max-h: 380px;
   --stock-price-w: 80px;
-  --config-w: 760px;
+  --config-w: 840px;
+  --move-w: 72px;
   --topbar-h: 52px;
   --sidebar-w: 232px;
   --content-max: 1240px;
