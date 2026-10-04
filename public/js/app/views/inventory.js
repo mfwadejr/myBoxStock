@@ -63,6 +63,34 @@
       el.querySelector('#go').addEventListener('click', () => save(false)); el.querySelector('#more').addEventListener('click', () => save(true));
     } }).then(r => r === 'more' ? addSheet() : r);
   }
+  // Bulk scan: set what is the same once, then scan identifiers one after another; Enter after each scan.
+  function bulkSheet() {
+    const idf = C.lookupFields()[0] || C.fields().find(f => f.unique);
+    if (!idf) return toast('Turn on a device detail you can scan (such as UID) under Settings first.', true);
+    const shared = C.fields().filter(f => f !== idf && !f.unique && !f.lookup);
+    return sheet(`<h2>Bulk scan</h2><p class="sub">Choose what is the same for every device, then scan each ${esc(idf.label)}. Press Save when all are scanned.</p>
+      <div class="grid g2">${C.catalog.makeField({})}${C.catalog.modelField({})}${shared.map(f => `<div class="field"><label>${esc(f.label)}</label>${C.fieldInput(f, '')}</div>`).join('')}
+      <div class="field"><label>Status</label>${UI.select.html({ id: 'status', options: STATUSES, value: 'available' })}</div><div class="field"><label>Cost</label><input type="number" id="cost" min="0" step="0.01"></div><div class="field"><label>Selling price</label><input type="number" id="price" min="0" step="0.01"></div></div>
+      <div class="field mt-md"><label>Scan ${esc(idf.label)}</label><input type="text" id="scanbox" autocomplete="off" placeholder="Scan or type, then Enter"></div>
+      <div class="banner" id="bmsg" hidden></div><div class="row wrap mt-md" id="blist"></div>
+      <div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn secondary" id="undo">Remove last</button><button class="btn" id="bsave">Save 0 devices</button></div>`, { wide: true, onMount: (el, close) => {
+      C.catalog.wire(el);
+      const codes = [], q = (id) => el.querySelector('#' + id);
+      const draw = () => { q('blist').innerHTML = codes.map(c => `<span class="chip gray mono">${esc(c)}</span>`).join(''); q('bsave').textContent = `Save ${codes.length} device${codes.length === 1 ? '' : 's'}`; };
+      const msg = (t) => { q('bmsg').hidden = !t; q('bmsg').textContent = t || ''; };
+      const build = (code) => { const d = { ...C.catalog.read(el), status: UI.select.value(q('status')), cost: F.cents(q('cost').value.trim()), price: F.cents(q('price').value.trim()), notes: '', addedAt: Date.now(), receivedOn: C.dateStr(Date.now()) };
+        for (const f of shared) C.setVal(d, f, C.readInput(el, f)); C.setVal(d, idf, code); return d; };
+      q('scanbox').addEventListener('keydown', (e) => { if (e.key !== 'Enter') return; e.preventDefault();
+        const code = C.cleanScan(q('scanbox').value); if (!code) return; q('scanbox').value = '';
+        if (codes.some(c => c.toLowerCase() === code.toLowerCase())) { msg(`${code} was already scanned in this batch.`); return; }
+        const bad = idf.unique ? duplicate(build(code)) : ''; if (bad) { msg(`${code}: ${bad}`); return; }
+        msg(''); codes.push(code); draw(); });
+      q('undo').addEventListener('click', () => { codes.pop(); msg(''); draw(); q('scanbox').focus(); });
+      q('bsave').addEventListener('click', async () => { try { if (!codes.length) return toast('Scan at least one device.', true);
+        await S.commit({ puts: codes.map(c => ({ type: 'item', data: build(c) })) }); toast(`${codes.length} devices added`); close(true); } catch (err) { toast(err.message, true); } });
+      q('scanbox').focus();
+    } });
+  }
   function editSheet(e) {
     const d = e.data, sold = d.status === 'sold', can = A.can('inventory.write');
     return sheet(`<h2>${esc(C.itemLabel(d))}</h2>${sold ? `<p class="sub">Sold ${esc(F.when(d.soldAt))}${S.get('sale', d.saleId) ? ` · receipt ${esc(S.get('sale', d.saleId).data.no)}` : ''}</p>` : ''}${fields(d)}
@@ -120,7 +148,7 @@
     const can = A.can('inventory.write'), items = S.all('item'), models = modelsOf(), low = lowModels(), look = C.lookupFields().slice(0, 3);
     const shown = items.filter(e => (view.status === 'active' ? e.data.status === 'available' : view.status === 'all' ? e.data.status !== 'archived' : e.data.status === view.status) && (!view.model || e.data.model === view.model) && matches(e.data, view.q.toLowerCase())).sort((a, b) => C.receivedMs(b.data) - C.receivedMs(a.data));
     swap(main, `<div class="page-head row spread wrap"><div><h1>Inventory</h1><p>${items.filter(e => e.data.status === 'available').length} available · ${items.length} total. Only your team can read this.</p></div>
-      ${can ? '<div class="row"><button class="btn secondary" id="imp">Import CSV</button><button class="btn secondary" id="exp">Export CSV</button><button class="btn" id="add">Add device</button></div><input type="file" id="file" accept=".csv,text/csv">' : '<div class="row"><button class="btn secondary" id="exp">Export CSV</button></div>'}</div>
+      ${can ? '<div class="row"><button class="btn secondary" id="bulk">Bulk scan</button><button class="btn secondary" id="imp">Import CSV</button><button class="btn secondary" id="exp">Export CSV</button><button class="btn" id="add">Add device</button></div><input type="file" id="file" accept=".csv,text/csv">' : '<div class="row"><button class="btn secondary" id="exp">Export CSV</button></div>'}</div>
       ${low.length ? `<div class="banner mb-lg">${low.map(m => `${esc(m.name)}: ${m.n} left (reorder at ${m.r})`).join(' · ')}</div>` : ''}
       <div class="toolbar"><input type="search" class="search" id="q" placeholder="Search ${esc(look.map(f => f.label).join(', ') || 'devices')}, make, model, notes" value="${esc(view.q)}" autocomplete="off">${UI.select.html({ id: 'st', options: FILTERS, value: view.status })}${UI.select.html({ id: 'md', options: [['', 'All models'], ...models.map(m => [m, m])], value: view.model })}</div>
       <div class="card"><div class="tablewrap">${shown.length ? `<table><thead><tr>${look.map(f => `<th>${esc(f.label)}</th>`).join('')}<th>Device</th><th class="right">Cost</th><th class="right">Price</th>${C.testsOn() ? '<th>Tests</th>' : ''}<th>Status</th></tr></thead><tbody>${shown.slice(0, LIMIT).map(e => { const d = e.data; return `<tr class="click" data-id="${esc(e.id)}">${look.map(f => `<td class="mono">${esc(C.showVal(f, C.getVal(d, f)) || '—')}</td>`).join('')}<td>${esc(C.deviceName(d) || '—')}</td><td class="right">${esc(F.money(d.cost))}</td><td class="right">${esc(F.money(d.price))}</td>${C.testsOn() ? `<td>${C.testChip(d)}</td>` : ''}<td>${C.statusChip(d.status)}</td></tr>`; }).join('')}</tbody></table>${shown.length > LIMIT ? `<p class="hint center my-md">Showing the first ${LIMIT} of ${shown.length}. Narrow the search to see the rest.</p>` : ''}` : `<div class="empty">${items.length ? 'No devices match.' : 'No devices yet.'}</div>`}</div></div>
@@ -132,6 +160,7 @@
     main.querySelectorAll('tr.click').forEach(tr => tr.addEventListener('click', async () => { if (await editSheet(S.get('item', tr.dataset.id))) again(); }));
     main.querySelector('#add')?.addEventListener('click', async () => { if (await addSheet()) again(); });
     main.querySelector('#exp')?.addEventListener('click', exportCsv);
+    main.querySelector('#bulk')?.addEventListener('click', async () => { if (await bulkSheet()) again(); });
     main.querySelector('#imp')?.addEventListener('click', () => main.querySelector('#file').click());
     main.querySelector('#file')?.addEventListener('change', async (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) await importCsv(f); });
     main.querySelectorAll('[data-model]').forEach(i => i.addEventListener('change', async () => {

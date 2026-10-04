@@ -18,19 +18,21 @@
   C.getVal = (d, f) => (f.core ? d[f.key] : d.custom?.[f.key]) ?? '';
   C.setVal = (d, f, v) => { if (f.core) d[f.key] = v; else d.custom = { ...(d.custom || {}), [f.key]: v }; };
   C.showVal = (f, v) => f.type === 'bool' ? (v === true || v === 'yes' ? 'Yes' : v === false || v === 'no' ? 'No' : '') : String(v ?? '');
+  // A scanner can send its label ("UID", "SN", "MAC"...) and line breaks before the value. Keep only the value.
+  C.cleanScan = (v) => String(v ?? '').replace(/\s*[\r\n]+\s*/g, ' ').trim().replace(/^(?:uid|s\/n|sn|serial(?:\s*(?:no|number|#))?|mac(?:\s*address)?|imei|id)\s*[:#=-]?\s+(?=\S)/i, '').replace(/^(?:uid|sn|mac|imei)[:#=]\s*(?=\S)/i, '').trim();
   C.lookupFields = () => C.fields().filter(f => f.lookup);
   // Form control for one field, and reading it back.
   C.fieldInput = (f, v) => {
     const id = `f_${f.key}`;
     if (f.type === 'choice') return UI.select.html({ id, options: [['', '—'], ...(f.options || []).map(o => [o, o])], value: v || (f.core && f.key === 'cond' ? f.options?.[0] : '') });
     if (f.type === 'bool') return UI.select.html({ id, options: [['', '—'], ['yes', 'Yes'], ['no', 'No']], value: v === true ? 'yes' : v === false ? 'no' : '' });
-    return `<input type="${f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}" id="${id}" value="${esc(v ?? '')}" autocomplete="off"${f.type === 'number' ? ' step="any"' : ''}>`;
+    return `<input type="${f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}" id="${id}" value="${esc(v ?? '')}" autocomplete="off"${f.lookup || f.unique ? ' data-scan' : ''}${f.type === 'number' ? ' step="any"' : ''}>`;
   };
   C.readInput = (el, f) => {
     const n = el.querySelector(`#f_${f.key}`); if (!n) return '';
     if (f.type === 'choice') return UI.select.value(n);
     if (f.type === 'bool') { const v = UI.select.value(n); return v === 'yes' ? true : v === 'no' ? false : ''; }
-    return n.value.trim();
+    return f.lookup || f.unique ? C.cleanScan(n.value) : n.value.trim();
   };
   // Test record: which checklist steps are done for a device. Stored as checks = { stepKey: { by, at } }.
   C.testState = (d) => { const steps = C.steps(), done = steps.filter(s => d.checks?.[s.key]); return { done: done.length, total: steps.length, missingRequired: steps.filter(s => s.required && !d.checks?.[s.key]) }; };
@@ -137,4 +139,6 @@
     for (const it of sale.data.items) { const cur = AccountApp.store.get('item', it.id); if (cur && cur.data.saleId === sale.id) { const { soldAt, saleId, ...rest } = cur.data; puts.push({ type: 'item', id: cur.id, data: { ...rest, status: 'available' } }); } }
     await AccountApp.store.commit({ puts });
   };
+  // Clean scanned text as soon as the box is left, so what you see is what is saved.
+  document.addEventListener('change', (e) => { const n = e.target; if (n?.matches?.('input[data-scan]')) n.value = C.cleanScan(n.value); });
 })();

@@ -6,7 +6,7 @@
   const totals = () => C.saleTotals(st.cart, st.orderPct), total = () => totals().total;
 
   function lookup(code) {
-    const c = code.trim().toLowerCase(); if (!c) return null;
+    const c = C.cleanScan(code).toLowerCase(); if (!c) return null;
     const look = C.lookupFields(); return S.all('item').find(e => look.some(f => String(C.getVal(e.data, f)).toLowerCase() === c)) || null;
   }
   function add(code) {

@@ -3,6 +3,14 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.14.3] - 2026-10-04
+
+### Added
+- **Bulk scan** (Inventory). Choose make, model, cost, price and the other shared details once, then keep scanning identifiers one after another (Enter after each). Repeats and identifiers already in stock are refused, you can remove the last scan, and one Save adds the whole batch.
+
+### Fixed
+- Scanning a barcode put the scanner's label ("UID") and a line break in front of the number. Labels such as UID, SN, Serial, MAC and IMEI are now removed, in the device form, in Bulk scan and in Quick sale.
+
 ## [0.14.2] - 2026-10-04
 
 ### Added
