@@ -10,7 +10,7 @@
     const rd = new FileReader(); rd.onerror = () => no(new Error('That file could not be read.'));
     rd.onload = () => { const img = new Image(); img.onerror = () => no(new Error('That picture could not be opened.'));
       img.onload = () => { const k = Math.min(1, 256 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        let out = c.toDataURL('image/png'); if (out.length > 150000) out = c.toDataURL('image/jpeg', 0.85); out.length > 190000 ? no(new Error('That picture is too detailed. Try a simpler one.')) : ok(out); };
+        let out = c.toDataURL('image/png'); if (out.length > 60000) out = c.toDataURL('image/jpeg', 0.8); out.length > 100000 ? no(new Error('That picture is too detailed. Try a simpler one.')) : ok(out); };
       img.src = rd.result; };
     rd.readAsDataURL(file); });
 

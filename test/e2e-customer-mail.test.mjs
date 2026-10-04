@@ -36,6 +36,8 @@ test('browser: customer email wording and logo, live preview, saved with the acc
     await page.click('#save'); await page.waitForTimeout(1000);
     const saved = await page.evaluate(() => { const m = AccountApp.store.config().mail; return { title: m.wording.receipt?.title, logo: m.logo.slice(0, 22) }; });
     assert.deepEqual(saved, { title: 'Thank you for shopping', logo: 'data:image/png;base64,' });
+    // a big logo plus mail server details must still fit in the saved account settings (was: "That record is too large to save")
+    await page.evaluate(async () => { const S = AccountApp.store, c = S.config(); c.mail.logo = 'data:image/png;base64,' + 'A'.repeat(95000); c.mail.pass = 'api-key-123'; await S.saveConfig(c); });
     await page.click('#creset'); assert.equal(await page.inputValue('#ct'), 'Your receipt', 'back to the default wording');
     assert.deepEqual(errors, []);
   } finally { await br.close(); await srv.stop(); fs.rmSync(png, { force: true }); }

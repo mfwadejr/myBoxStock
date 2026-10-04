@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.17.2] - 2026-10-04
+
+### Fixed
+- **"That record is too large to save" when saving email settings in a reseller account.** A business logo plus the mail server details could exceed the size allowed for the account's settings record. The limit is raised (64 KB to 256 KB) and logos are now shrunk smaller when chosen. Pick the logo again if it was refused before.
+
 ## [0.17.1] - 2026-10-04
 
 ### Fixed
