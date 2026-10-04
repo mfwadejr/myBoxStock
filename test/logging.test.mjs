@@ -94,7 +94,7 @@ test('host log API hides the private tenant area but lists everything else', asy
 test('host support actions are logged in the accounts area with the account id', async () => {
   const acct = (await host.req('GET', '/api/host/accounts')).data[0];
   const detail = (await host.req('GET', `/api/host/accounts/${acct.id}`)).data;
-  await host.req('POST', `/api/host/accounts/${acct.id}/users/${detail.users[0].id}/temp-password`);
+  await host.req('POST', `/api/host/accounts/${acct.id}/users/${detail.users[0].id}/temp-password`, { reason: 'test temp' });
   await sleep(600);
   const e = readJsonl(srv.logDir, 'accounts').find(x => x.event === 'user.temp_password');
   assert.ok(e && e.accountId === acct.id && e.actor === 'admin');

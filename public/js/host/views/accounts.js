@@ -5,19 +5,26 @@
   const PLAN_CHIP = { trial: ['blue', 'Trial'], trial_expired: ['red', 'Trial ended'], free: ['green', 'Free'], paid: ['green', 'Paid'], paid_expired: ['red', 'Paid ended'] };
   const planChip = (b) => { const [c, l] = PLAN_CHIP[b.state]; return `<span class="chip ${c}">${l}${b.daysLeft != null && b.canWrite ? ` · ${b.daysLeft}d left` : ''}</span>`; };
 
+  // Support actions ask for a short reason first; it is saved in the log and shown in the account's Support history.
+  const askReason = (title, body = 'It is saved in the log, with your name.') => sheet(`<h2>${esc(title)}</h2><p class="sub">${body}</p><div class="field mt-md"><label>Reason (a few words)</label><input type="text" id="rs" maxlength="200" autocomplete="off"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Continue</button></div>`,
+    { onMount: (el, close) => { const go = () => { const v = el.querySelector('#rs').value.trim(); if (v.length < 3) return toast('Say why, in a few words.', true); close(v); }; el.querySelector('#go').addEventListener('click', go); el.querySelector('#rs').addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); }); } });
+  const healthChips = (a) => [a.encrypted && !a.recovery_saved ? '<span class="chip amber">No recovery key</span>' : '', !a.encrypted ? '<span class="chip">Not encrypted</span>' : '', !a.admins_2fa ? '<span class="chip">2FA off</span>' : '', a.unverified ? '<span class="chip amber">Email not verified</span>' : ''].filter(Boolean).join(' ') || '<span class="chip green">Good</span>';
+
   Host.views.accounts = async (main) => {
-    let q = '', plan = '';
+    let q = '', plan = '', health = '';
     const load = async () => {
-      const rows = await Host.api('GET', '/accounts?q=' + encodeURIComponent(q) + '&plan=' + encodeURIComponent(plan));
-      main.querySelector('#tbl').innerHTML = rows.length ? `<table><thead><tr><th>Business</th><th>Reseller ID</th><th>Owner</th><th>Users</th><th>Plan</th><th>Status</th><th>Last active</th></tr></thead><tbody>${rows.map(a => `
+      const rows = await Host.api('GET', '/accounts?q=' + encodeURIComponent(q) + '&plan=' + encodeURIComponent(plan) + '&health=' + encodeURIComponent(health));
+      main.querySelector('#tbl').innerHTML = rows.length ? `<table><thead><tr><th>Business</th><th>Reseller ID</th><th>Owner</th><th>Users</th><th>Plan</th><th>Status</th><th>Health</th><th>Last sign-in</th></tr></thead><tbody>${rows.map(a => `
         <tr class="click" data-id="${a.id}"><td><b>${esc(a.business_name)}</b></td><td class="mono">${esc(a.account_code)}</td><td class="muted">${esc(a.owner_email)}</td><td>${a.user_count}</td><td>${planChip(a.billing)}</td>
-        <td>${a.closing_at ? `<span class="chip red">Closing, erases ${fmt.date(a.closing_at)}</span>` : `<span class="chip ${a.status === 'active' ? 'green' : 'red'}">${esc(a.status)}</span>`}</td><td class="muted">${fmt.ago(a.last_activity)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No accounts yet.</div>';
+        <td>${a.closing_at ? `<span class="chip red">Closing, erases ${fmt.date(a.closing_at)}</span>` : `<span class="chip ${a.status === 'active' ? 'green' : 'red'}">${esc(a.status)}</span>`}</td><td>${healthChips(a)}</td><td class="muted">${a.last_login ? fmt.ago(a.last_login) : 'never'}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No accounts yet.</div>';
     };
     swap(main, `${Host.head('Accounts', 'Support tools for signed-up businesses. Their inventory, sales and customers are private and never shown here.')}
       <div class="card"><div class="row wrap"><div class="field grow"><input type="search" id="q" placeholder="Search by business, Reseller ID or email"></div>
-        <div class="field">${UI.select.html({ id: 'pf', options: [['', 'All plans'], ['trial', 'On trial'], ['free', 'Free (comped)'], ['paid', 'Paid'], ['expired', 'Ended / read-only']] })}</div></div><div class="tablewrap" id="tbl"></div></div>`);
+        <div class="field">${UI.select.html({ id: 'pf', options: [['', 'All plans'], ['trial', 'On trial'], ['free', 'Free (comped)'], ['paid', 'Paid'], ['expired', 'Ended / read-only']] })}</div>
+        <div class="field">${UI.select.html({ id: 'hf', options: [['', 'Any health'], ['no_recovery', 'No recovery key saved'], ['no_2fa', 'No two-factor'], ['unverified', 'Email not verified'], ['inactive30', 'Inactive 30 days'], ['not_encrypted', 'Encryption not set up'], ['closing', 'Closing'], ['suspended', 'Suspended']] })}</div></div><div class="tablewrap" id="tbl"></div></div>`);
     let t; main.querySelector('#q').addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => { q = e.target.value; load(); }, 250); });
     main.querySelector('#pf').addEventListener('change', (e) => { plan = UI.select.value(e.target); load(); });
+    main.querySelector('#hf').addEventListener('change', (e) => { health = UI.select.value(e.target); load(); });
     main.querySelector('#tbl').addEventListener('click', (e) => { const tr = e.target.closest('tr[data-id]'); if (tr) accountSheet(tr.dataset.id, load); });
     await load();
   };
@@ -37,14 +44,25 @@
         <div class="setting-desc">${a.billing.endsAt ? `${a.billing.canWrite ? 'Ends' : 'Ended'} ${fmt.date(a.billing.endsAt)}` : a.plan === 'free' ? 'Free account — never expires' : 'No end date'}${a.billing.canWrite ? '' : ' · account is read-only'}</div></div>
         <button class="btn secondary small" id="plan">Change plan</button></div>
       ${d.history.length ? `<details class="mt-sm"><summary class="muted text-sm">Plan history (${d.history.length})</summary>${d.history.map(h => `<div class="setting-desc">${fmt.date(h.ts)} · ${esc(h.kind.replace(/_/g, ' '))}${h.to_plan && h.kind.startsWith('plan') ? ` → ${esc(h.to_plan)}` : ''} · ${esc(h.actor || '')}${h.note ? ` — ${esc(h.note)}` : ''}</div>`).join('')}</details>` : ''}
+      <h3 class="mt-sm">Support tools</h3>
+      <div class="setting"><div><div class="setting-title">Account access</div><div class="setting-desc">${a.status === 'active' ? 'Suspending signs everyone out until you reactivate.' : 'Suspended: nobody can sign in.'} Password resets, temporary passwords, two-factor resets and sign-out are under each person below. Each asks for a reason.</div></div>
+        <div class="row">${a.plan === 'trial' ? '<button class="btn secondary small" id="ext">Extend trial</button>' : ''}<button class="btn secondary small" id="sus">${a.status === 'active' ? 'Suspend' : 'Reactivate'}</button></div></div>
+      <h3 class="mt-sm">Receipts</h3>
+      <div class="setting"><div><div class="setting-title">Money received</div><div class="setting-desc">${d.receipts.length ? '' : 'None recorded yet. '}Write down a payment received outside the app. Online payments can fill this in later.</div></div><button class="btn secondary small" id="rcp">Record a receipt</button></div>
+      ${d.receipts.map(x => `<div class="setting"><div><div class="setting-title mono">${esc((x.amount_cents / 100).toFixed(2))} ${esc(x.currency)}</div><div class="setting-desc">${fmt.date(x.ts)} · ${esc(x.method || 'payment')}${x.reference ? ` · ${esc(x.reference)}` : ''}${x.period_end ? ` · paid through ${fmt.date(x.period_end)}` : ''}${x.note ? ` — ${esc(x.note)}` : ''} · ${esc(x.actor || '')}</div></div><button class="btn danger small" data-rr="${x.id}">Remove</button></div>`).join('')}
+      <h3 class="mt-sm">Support history</h3>
+      ${d.support.length ? d.support.slice(0, 15).map(s => `<div class="setting-desc">${fmt.date(s.ts)} · ${esc(s.actor || 'system')} · ${esc(s.event.replace(/[._]/g, ' '))}${s.reason ? ` — ${esc(s.reason)}` : ''}</div>`).join('') : '<div class="setting-desc">Nothing yet.</div>'}
       <h3 class="mt-sm">Site admin linking</h3>
       <div class="setting"><div><div class="setting-title">Allow this account to link a Host administrator</div><div class="setting-desc">Shows the Link option in the account's Security page, so a person who also runs the site can switch between the two. Off by default. ${d.isOwner ? 'Switching it off removes any existing links.' : 'Only the Owner administrator can change this.'}</div></div><label class="switch"><input type="checkbox" id="hla" ${a.host_link_allowed ? 'checked' : ''} ${d.isOwner ? '' : 'disabled'}><i></i></label></div>
       <h3 class="mt-sm">People</h3>${rows}
-      <div class="actions split"><div class="row"><button class="btn secondary small" id="sus">${a.status === 'active' ? 'Suspend' : 'Reactivate'}</button><button class="btn danger small" id="del">Delete</button></div><button class="btn" data-cancel>Done</button></div>`, {
+      <div class="actions split"><div class="row"><button class="btn danger small" id="del">Delete</button></div><button class="btn" data-cancel>Done</button></div>`, {
       onMount: (el, close) => {
         el.querySelector('#plan').addEventListener('click', () => { close(); planSheet(a, () => accountSheet(id, refresh)); });
         el.querySelector('#hla').addEventListener('change', async (e) => { try { await Host.api('POST', `/accounts/${id}/host-link`, { allowed: e.target.checked }); toast(e.target.checked ? 'Linking allowed' : 'Linking turned off'); } catch (er) { e.target.checked = !e.target.checked; toast(er.message, true); } });
-        el.querySelector('#sus').addEventListener('click', async () => { await Host.api('POST', `/accounts/${id}/status`, { status: a.status === 'active' ? 'suspended' : 'active' }); toast('Updated'); close(); refresh(); });
+        el.querySelector('#sus').addEventListener('click', async () => { const reason = await askReason(a.status === 'active' ? 'Suspend this account?' : 'Reactivate this account?', a.status === 'active' ? 'Everyone is signed out and cannot sign in until it is reactivated.' : 'People can sign in again.'); if (!reason) return; try { await Host.api('POST', `/accounts/${id}/status`, { status: a.status === 'active' ? 'suspended' : 'active', reason }); toast('Updated'); close(); refresh(); } catch (er) { toast(er.message, true); } });
+        el.querySelector('#ext')?.addEventListener('click', () => { close(); planSheet(a, () => accountSheet(id, refresh), { extend: true }); });
+        el.querySelector('#rcp').addEventListener('click', () => { close(); receiptSheet(a, () => accountSheet(id, refresh)); });
+        el.querySelectorAll('[data-rr]').forEach(b => b.addEventListener('click', async () => { const reason = await askReason('Remove this receipt record?'); if (!reason) return; try { await Host.api('DELETE', `/accounts/${id}/receipts/${b.dataset.rr}`, { reason }); toast('Removed'); close(); accountSheet(id, refresh); } catch (er) { toast(er.message, true); } }));
         el.querySelector('#unclose')?.addEventListener('click', async () => { try { await Host.api('POST', `/accounts/${id}/restore-closing`); toast('Closing cancelled'); close(); refresh(); } catch (er) { toast(er.message, true); } });
         el.querySelector('#del').addEventListener('click', async () => {
           close();
@@ -63,11 +81,12 @@
         <button class="btn secondary" id="mv" ${u.email && !u.email_verified_at ? '' : 'disabled'}>Mark email as confirmed</button>
         <button class="btn secondary" id="tmp">Set a temporary password</button>
         <button class="btn secondary" id="mfa" ${u.totp_enabled ? '' : 'disabled'}>Reset two-factor authentication</button>
+        <button class="btn secondary" id="so">Sign out everywhere</button>
         <button class="btn ${u.disabled ? 'secondary' : 'danger'}" id="dis">${u.disabled ? 'Enable sign-in' : 'Disable sign-in'}</button>
         <button class="btn danger" id="rm">Delete this user</button></div>
       <div class="actions"><button class="btn" data-cancel>Back</button></div>`, { onMount: (el, close) => {
         const act = (sel, fn) => el.querySelector(sel).addEventListener('click', (e) => busy(e.currentTarget, async () => { try { await fn(); } catch (er) { toast(er.message, true); } }));
-        act('#link', async () => { await Host.api('POST', `/accounts/${a.id}/users/${u.id}/reset-link`); toast('Reset link queued for ' + u.email); });
+        act('#link', async () => { const reason = await askReason('Email a password reset link', `A link goes to ${esc(u.email)}. It is saved in the log, with your name.`); if (!reason) return; await Host.api('POST', `/accounts/${a.id}/users/${u.id}/reset-link`, { reason }); toast('Reset link queued for ' + u.email); });
         act('#vr', async () => { await Host.api('POST', `/accounts/${a.id}/users/${u.id}/verify-resend`); toast('Confirmation email queued for ' + u.email); });
         act('#mv', async () => {
           close(); const ok = await sheet(`<h2>Mark email as confirmed</h2><p class="sub">Use this only when you have checked it another way. It is recorded in the log with your reason.</p><div class="field mt-md"><label>Reason</label><input type="text" id="rs" placeholder="e.g. confirmed by phone"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Mark as confirmed</button></div>`,
@@ -75,33 +94,50 @@
           if (ok) toast('Marked as confirmed'); back?.();
         });
         act('#tmp', async () => {
-          const r = await Host.api('POST', `/accounts/${a.id}/users/${u.id}/temp-password`); close();
+          const reason = await askReason('Set a temporary password', 'They are signed out everywhere and must choose a new password. It is saved in the log, with your name.'); if (!reason) return;
+          const r = await Host.api('POST', `/accounts/${a.id}/users/${u.id}/temp-password`, { reason }); close();
           await sheet(`<h2>Temporary password</h2><p class="muted">Share this securely with ${esc(u.username)}. They must change it at next sign-in, and it is shown only now.</p><div class="codeblock mt-md">${esc(r.tempPassword)}</div><div class="actions"><button class="btn" data-cancel>Done</button></div>`);
         });
-        act('#mfa', async () => { const ok = await confirmBox({ title: 'Reset two-factor?', body: `${esc(u.username)} will be signed out and must set up two-factor again.`, confirmLabel: 'Reset' }); if (ok) { await Host.api('POST', `/accounts/${a.id}/users/${u.id}/reset-mfa`); toast('Two-factor reset'); close(); } });
+        act('#mfa', async () => { const reason = await askReason('Reset two-factor?', `${esc(u.username)} will be signed out and must set up two-factor again.`); if (reason) { await Host.api('POST', `/accounts/${a.id}/users/${u.id}/reset-mfa`, { reason }); toast('Two-factor reset'); close(); } });
+        act('#so', async () => { const reason = await askReason('Sign out everywhere?', `${esc(u.username)} is signed out on every device.`); if (reason) { await Host.api('POST', `/accounts/${a.id}/users/${u.id}/sign-out`, { reason }); toast('Signed out everywhere'); close(); } });
         act('#rm', async () => {
           close(); const c = await confirmBox({ title: 'Delete user?', body: `${esc(u.login)} is removed from the account and can no longer sign in. This cannot be undone.`, confirmLabel: 'Delete user', danger: true, typeToConfirm: u.login });
           if (c) { try { await Host.api('DELETE', `/accounts/${a.id}/users/${u.id}`, { confirm: c }); toast('User deleted'); } catch (er) { toast(er.message, true); } }
           back();
         });
-        act('#dis', async () => { await Host.api('POST', `/accounts/${a.id}/users/${u.id}/disabled`, { disabled: !u.disabled }); toast('Updated'); close(); });
+        act('#dis', async () => { const reason = await askReason(u.disabled ? 'Enable sign-in?' : 'Disable sign-in?'); if (!reason) return; await Host.api('POST', `/accounts/${a.id}/users/${u.id}/disabled`, { disabled: !u.disabled, reason }); toast('Updated'); close(); });
+      } });
+    back();
+  }
+
+  async function receiptSheet(a, back) {
+    await sheet(`<h2>Record a receipt</h2><p class="muted">${esc(a.business_name)} · <span class="mono">${esc(a.account_code)}</span></p>
+      <div class="grid g2 mt-md"><div class="field"><label>Amount received</label><input type="text" id="am" inputmode="decimal" placeholder="29.00"></div><div class="field"><label>Currency</label><input type="text" id="cu" value="USD" maxlength="3"></div></div>
+      <div class="grid g2"><div class="field"><label>How it was paid</label><input type="text" id="me" placeholder="Bank transfer" maxlength="40"></div><div class="field"><label>Reference</label><input type="text" id="re" placeholder="Invoice or transfer number" maxlength="120"></div></div>
+      <div class="field"><label>Paid through (optional)</label><input type="date" id="pt"><label class="check mt-sm"><input type="checkbox" id="ap"> Also set the plan to Paid through that date</label></div>
+      <div class="field"><label>Note</label><input type="text" id="no" maxlength="255"></div>
+      <div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Save receipt</button></div>`, { onMount: (el, close) => {
+        el.querySelector('#go').addEventListener('click', (e) => busy(e.currentTarget, async () => {
+          try { await Host.api('POST', `/accounts/${a.id}/receipts`, { amount: el.querySelector('#am').value, currency: el.querySelector('#cu').value, method: el.querySelector('#me').value, reference: el.querySelector('#re').value, paidThrough: el.querySelector('#pt').value, applyPlan: el.querySelector('#ap').checked, note: el.querySelector('#no').value }); toast('Receipt saved'); close(true); }
+          catch (er) { toast(er.message, true); }
+        }));
       } });
     back();
   }
 
   // Change plan: free (comped), trial (start / extend), paid. Everything is recorded in the account's plan history.
-  async function planSheet(a, back) {
+  async function planSheet(a, back, { extend = false } = {}) {
     await sheet(`<h2>Change plan</h2><p class="muted">${esc(a.business_name)} · <span class="mono">${esc(a.account_code)}</span></p>
-      <div class="field mt-md"><label>Plan</label>${UI.select.html({ id: 'pl', value: ['free', 'trial', 'paid'].includes(a.plan) ? a.plan : 'free', options: [['free', 'Free — comped, never expires'], ['trial', 'Free trial'], ['paid', 'Paid']] })}</div>
-      <div class="field" id="f-days"><label>Trial length (days)</label><input type="number" id="days" min="1" max="730" value="14"><label class="check mt-sm"><input type="checkbox" id="ext"> Add to the current end date instead of starting today</label></div>
+      <div class="field mt-md"><label>Plan</label>${UI.select.html({ id: 'pl', value: extend ? 'trial' : ['free', 'trial', 'paid'].includes(a.plan) ? a.plan : 'free', options: [['free', 'Free — comped, never expires'], ['trial', 'Free trial'], ['paid', 'Paid']] })}</div>
+      <div class="field" id="f-days"><label>Trial length (days)</label><input type="number" id="days" min="1" max="730" value="14"><label class="check mt-sm"><input type="checkbox" id="ext" ${extend ? 'checked' : ''}> Add to the current end date instead of starting today</label></div>
       <div class="field" id="f-until"><label>Paid through (optional)</label><input type="date" id="until"><div class="hint">Leave empty for no end date.</div></div>
-      <div class="field"><label>Note (only you see this)</label><input type="text" id="note" maxlength="255" placeholder="e.g. Comped for launch partner"></div>
+      <div class="field"><label>Reason (saved in the account's history)</label><input type="text" id="note" maxlength="255" placeholder="e.g. Comped for launch partner"></div>
       <div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Save plan</button></div>`, { onMount: (el, close) => {
         const pl = el.querySelector('#pl'), plan = () => UI.select.value(pl);
         const sync = () => { el.querySelector('#f-days').hidden = plan() !== 'trial'; el.querySelector('#f-until').hidden = plan() !== 'paid'; };
         pl.addEventListener('change', sync); sync();
         el.querySelector('#go').addEventListener('click', (e) => busy(e.currentTarget, async () => {
-          try { await Host.api('POST', `/accounts/${a.id}/plan`, { plan: plan(), days: Number(el.querySelector('#days').value), extend: el.querySelector('#ext').checked, until: el.querySelector('#until').value, note: el.querySelector('#note').value }); toast('Plan updated'); close(); }
+          try { await Host.api('POST', `/accounts/${a.id}/plan`, { plan: plan(), days: Number(el.querySelector('#days').value), extend: el.querySelector('#ext').checked, until: el.querySelector('#until').value, reason: el.querySelector('#note').value }); toast('Plan updated'); close(); }
           catch (er) { toast(er.message, true); }
         }));
       } });

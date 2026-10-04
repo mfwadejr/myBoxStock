@@ -40,9 +40,10 @@ test('expired plan is read-only (view yes, change no) and the host can comp the 
   r = await host.req('GET', '/api/host/accounts?plan=expired'); assert.equal(r.data.length, 1);
   r = await host.req('POST', `/api/host/accounts/${accId}/plan`, { plan: 'free', note: 'launch partner' }); assert.equal(r.status, 200); assert.equal(r.data.billing.state, 'free');
   assert.equal((await putRecord(alice, adk, 'item', { uid: 'A2' })).status, 200);
-  r = await host.req('POST', `/api/host/accounts/${accId}/plan`, { plan: 'trial', days: 10 }); assert.equal(r.data.billing.daysLeft, 10);
-  r = await host.req('POST', `/api/host/accounts/${accId}/plan`, { plan: 'trial', days: 5, extend: true }); assert.equal(r.data.billing.daysLeft, 15);
-  for (const bad of [{ plan: 'gold' }, { plan: 'trial', days: 0 }, { plan: 'paid', until: 'tomorrow' }]) assert.equal((await host.req('POST', `/api/host/accounts/${accId}/plan`, bad)).status, 400);
+  r = await host.req('POST', `/api/host/accounts/${accId}/plan`, { plan: 'trial', days: 10, note: 'start trial' }); assert.equal(r.data.billing.daysLeft, 10);
+  r = await host.req('POST', `/api/host/accounts/${accId}/plan`, { plan: 'trial', days: 5, extend: true, note: 'extend a bit' }); assert.equal(r.data.billing.daysLeft, 15);
+  assert.equal((await host.req('POST', `/api/host/accounts/${accId}/plan`, { plan: 'free' })).status, 400, 'a reason is required');
+  for (const bad of [{ plan: 'gold', note: 'x y z' }, { plan: 'trial', days: 0, note: 'x y z' }, { plan: 'paid', until: 'tomorrow', note: 'x y z' }]) assert.equal((await host.req('POST', `/api/host/accounts/${accId}/plan`, bad)).status, 400);
   r = await host.req('GET', `/api/host/accounts/${accId}`); assert.ok(r.data.history.length >= 5, 'every change is kept in the plan history');
   assert.ok(r.data.history.some(h => h.note === 'launch partner'));
 });

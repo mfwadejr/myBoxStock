@@ -3,6 +3,19 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.14.0] - 2026-10-04
+
+### Added
+- **Pipeline page** (Host Console): sign-ups this week and in 30 days, who is on a trial and how many days are left (trials ending within 7 days are marked), where every account stands (trial, paid, comped, ended), a renewals list for the next 30 days (paid accounts running out and trials ending, including any that just lapsed), and accounts nobody has signed in to for over a week.
+- **Account health** in the Accounts list: last sign-in, and flags for no recovery key saved, encryption not set up, two-factor off for the Administrators, and email not verified. A new filter narrows the list (no recovery key, no two-factor, email not verified, inactive 30 days, encryption not set up, closing, suspended).
+- **Support tools gathered in each account:** suspend or reactivate, extend the trial and change the plan sit together, with every person's password reset, temporary password, two-factor reset, sign-out everywhere (new) and sign-in on/off one click away. **Each of these now asks for a short reason**, which is saved in the log with who did it and shown in a new **Support history** list on the account.
+- **Plans page:** write down plan names, prices (monthly or yearly), and user and device limits, ahead of taking payments. They are recorded only: nothing is charged and no limit is enforced yet, and the page says so.
+- **Receipt records** on each account: write down money received outside the app (amount, how, reference, note), optionally setting the plan to Paid through a date at the same time. Removing one needs a reason. Migration 11 adds the table; receipts are erased with the account.
+
+### Changed
+- Changing an account's plan (including comping or extending a trial) now requires a reason; it appears in the plan history as before.
+- Suspending and reactivating an account moved from the bottom of the account sheet into Support tools.
+
 ## [0.13.0] - 2026-10-04
 
 ### Added

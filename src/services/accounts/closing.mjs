@@ -15,7 +15,7 @@ export async function eraseAccount(db, id) {
     await t.run('DELETE FROM password_resets WHERE realm = ? AND subject_id IN (SELECT id FROM account_users WHERE account_id = ?)', ['app', id]);
     await t.run('DELETE FROM email_confirmations WHERE user_id IN (SELECT id FROM account_users WHERE account_id = ?)', [id]);
     await t.run('DELETE FROM admin_links WHERE user_id IN (SELECT id FROM account_users WHERE account_id = ?)', [id]);
-    for (const tbl of ['inventory_items', 'records', 'account_keys', 'account_recovery', 'account_roles', 'account_users', 'billing_events', 'sign_in_history']) await t.run(`DELETE FROM ${tbl} WHERE account_id = ?`, [id]);
+    for (const tbl of ['inventory_items', 'records', 'account_keys', 'account_recovery', 'account_roles', 'account_users', 'billing_events', 'billing_receipts', 'sign_in_history']) await t.run(`DELETE FROM ${tbl} WHERE account_id = ?`, [id]);
     await t.run('DELETE FROM accounts WHERE id = ?', [id]);
   });
 }

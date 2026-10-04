@@ -62,9 +62,9 @@ test('team view needs the Administrator right and never crosses accounts', async
 
 test('blocked sign-ins show up in the history, and retention is a limited host setting', async () => {
   const acc = (await host.req('GET', '/api/host/accounts')).data.find(a => a.account_code === accId);
-  await host.req('POST', `/api/host/accounts/${acc.id}/status`, { status: 'suspended' });
+  await host.req('POST', `/api/host/accounts/${acc.id}/status`, { status: 'suspended', reason: 'test suspend' });
   assert.equal((await from(new Client(srv.base), IP1).req('POST', '/api/app/login', { login: aLogin, password: PW })).status, 403);
-  await host.req('POST', `/api/host/accounts/${acc.id}/status`, { status: 'active' });
+  await host.req('POST', `/api/host/accounts/${acc.id}/status`, { status: 'active', reason: 'test reactivate' });
   await a1.req('POST', '/api/app/login', { login: aLogin, password: PW }); // suspending ended the old session
   const r = await a1.req('GET', '/api/app/activity/team'); await sleep(0);
   assert.ok(r.data.history.some(h => h.result === 'blocked'));

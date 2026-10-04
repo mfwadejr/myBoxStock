@@ -74,15 +74,15 @@ test('standard/view roles are limited; optional user MFA; host support actions',
   r = await v.req('POST', '/api/app/totp/enable', { code: totpCode(secret) }); assert.equal(r.status, 200);
   const acct = (await host.req('GET', '/api/host/accounts')).data.find(a => a.account_code === alice.code);
   const detail = (await host.req('GET', `/api/host/accounts/${acct.id}`)).data; const vu = detail.users.find(u => u.username === 'viewer'); assert.equal(!!vu.totp_enabled, true);
-  r = await host.req('POST', `/api/host/accounts/${acct.id}/users/${vu.id}/reset-mfa`); assert.equal(r.status, 200);
+  r = await host.req('POST', `/api/host/accounts/${acct.id}/users/${vu.id}/reset-mfa`, { reason: 'test reset' }); assert.equal(r.status, 200);
   r = await v.req('GET', '/api/app/vault/records'); assert.equal(r.status, 401); // signed out by reset
-  r = await host.req('POST', `/api/host/accounts/${acct.id}/users/${vu.id}/temp-password`); assert.equal(r.status, 200);
+  r = await host.req('POST', `/api/host/accounts/${acct.id}/users/${vu.id}/temp-password`, { reason: 'test temp' }); assert.equal(r.status, 200);
   const v2 = mk(); r = await v2.req('POST', '/api/app/login', { login: vu.login, password: r.data.tempPassword }); assert.equal(r.data.mustChange, true); assert.equal(r.data.mfa, false);
   // suspending blocks sign-in
-  await host.req('POST', `/api/host/accounts/${acct.id}/status`, { status: 'suspended' });
+  await host.req('POST', `/api/host/accounts/${acct.id}/status`, { status: 'suspended', reason: 'test suspend' });
   r = await mk().req('POST', '/api/app/login', { login: alice.login, password: STRONG }); assert.equal(r.status, 403); assert.equal(r.data.code, 'ACCOUNT_SUSPENDED'); assert.match(r.data.error, /suspended/);
   r = await mk().req('POST', '/api/app/login', { login: alice.login, password: 'Wrong-password-123' }); assert.equal(r.status, 401); assert.equal(r.data.code, 'LOGIN_INVALID'); // a wrong password never reveals the status
-  await host.req('POST', `/api/host/accounts/${acct.id}/status`, { status: 'active' });
+  await host.req('POST', `/api/host/accounts/${acct.id}/status`, { status: 'active', reason: 'test reactivate' });
 });
 
 test('backup + migrate-db copy the platform data', async () => {

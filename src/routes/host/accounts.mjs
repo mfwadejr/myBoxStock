@@ -5,11 +5,11 @@ import express from 'express';
 import { hostLog } from './context.mjs';
 import { hashPassword } from '../../auth/password.mjs';
 import { destroyAllFor } from '../../auth/session.mjs';
-import { token, sha256 } from '../../core/ids.mjs';
+import { token, sha256, newId } from '../../core/ids.mjs';
 import { enqueueMail, processQueue } from '../../services/mail/index.mjs';
 import { config } from '../../core/config.mjs';
 import { fail } from '../../core/messages.mjs';
-import { billingState } from '../../services/billing/state.mjs';
+import { billingState, DAY } from '../../services/billing/state.mjs';
 import { sendConfirmation } from '../../services/verify/index.mjs';
 import { eraseAccount, restoreClosing } from '../../services/accounts/closing.mjs';
 import { setPlan } from '../../services/billing/index.mjs';
@@ -18,16 +18,32 @@ export function accountsRoutes(db) {
   const r = express.Router();
   const A = (req, level, event, message, a, data) => hostLog(req, level, event, message, { area: 'accounts', accountId: a?.id || null, data });
   const getAccount = (id) => db.get('SELECT id, account_code, business_name, owner_email, status, plan, trial_ends_at, plan_until, plan_note, plan_changed_at, created_at, last_activity, closing_at, closing_by, host_link_allowed FROM accounts WHERE id = ?', [id]);
+  // Every support action needs a short reason; it goes in the log next to who did it (see "Support history").
+  const reasonOf = (req, res) => { const t = String(req.body?.reason ?? req.body?.note ?? '').trim(); if (t.length < 3) { res.status(400).json({ error: 'Say why, in a few words, so the log explains it.', code: 'REASON_REQUIRED' }); return null; } return t.slice(0, 200); };
   const userOf = (req) => db.get('SELECT id, account_id, username, login, email, role FROM account_users WHERE id = ? AND account_id = ?', [req.params.uid, req.params.id]);
 
+  // The account list, with the health signals a Host administrator can see (identity and security only, never business data).
+  const HEALTH_SQL = `(SELECT COUNT(*) FROM account_users u WHERE u.account_id = a.id) AS user_count,
+      (SELECT MAX(u.last_login) FROM account_users u WHERE u.account_id = a.id) AS last_login,
+      (SELECT COUNT(*) FROM account_users u WHERE u.account_id = a.id AND u.role = 'Administrator' AND u.totp_enabled = 1) AS admins_2fa,
+      (SELECT COUNT(*) FROM account_users u WHERE u.account_id = a.id AND u.email IS NOT NULL AND u.email_verified_at IS NULL) AS unverified,
+      (SELECT COUNT(*) FROM account_recovery rc WHERE rc.account_id = a.id) AS encrypted,
+      (SELECT COUNT(*) FROM account_recovery rc WHERE rc.account_id = a.id AND rc.confirmed_at IS NOT NULL) AS recovery_saved`;
+  const FILTERS = {
+    no_recovery: (x) => x.encrypted && !x.recovery_saved, not_encrypted: (x) => !x.encrypted, no_2fa: (x) => !x.admins_2fa, unverified: (x) => x.unverified > 0,
+    inactive30: (x) => (x.last_login ? Date.now() - Number(x.last_login) > 30 * DAY : Date.now() - Number(x.created_at) > 30 * DAY),
+    closing: (x) => !!x.closing_at, suspended: (x) => x.status === 'suspended', read_only: (x) => !x.billing.canWrite,
+  };
   r.get('/', async (req, res) => {
     const q = `%${String(req.query.q || '').toLowerCase()}%`;
     const rows = await db.all(`SELECT a.id, a.account_code, a.business_name, a.owner_email, a.status, a.plan, a.trial_ends_at, a.plan_until, a.plan_note, a.created_at, a.last_activity, a.closing_at,
-      (SELECT COUNT(*) FROM account_users u WHERE u.account_id = a.id) AS user_count FROM accounts a
-      WHERE LOWER(a.business_name) LIKE ? OR LOWER(a.account_code) LIKE ? OR LOWER(a.owner_email) LIKE ? ORDER BY a.created_at DESC LIMIT 200`, [q, q, q]);
-    const want = String(req.query.plan || '');   // '' | trial | free | paid | expired
-    const out = rows.map(x => ({ ...x, user_count: Number(x.user_count), billing: billingState(x) }))
-      .filter(x => !want || (want === 'expired' ? !x.billing.canWrite : x.billing.state === want));
+      ${HEALTH_SQL} FROM accounts a
+      WHERE LOWER(a.business_name) LIKE ? OR LOWER(a.account_code) LIKE ? OR LOWER(a.owner_email) LIKE ? ORDER BY a.created_at DESC LIMIT 500`, [q, q, q]);
+    const want = String(req.query.plan || ''), health = String(req.query.health || '');   // plan: '' | trial | free | paid | expired
+    const num = (x) => ({ ...x, user_count: Number(x.user_count), admins_2fa: Number(x.admins_2fa), unverified: Number(x.unverified), encrypted: Number(x.encrypted), recovery_saved: Number(x.recovery_saved), last_login: x.last_login ? Number(x.last_login) : null });
+    const out = rows.map(x => ({ ...num(x), billing: billingState(x) }))
+      .filter(x => !want || (want === 'expired' ? !x.billing.canWrite : x.billing.state === want))
+      .filter(x => !health || !FILTERS[health] || FILTERS[health](x));
     res.json(out);
   });
 
@@ -40,7 +56,11 @@ export function accountsRoutes(db) {
     const enc = await db.get('SELECT confirmed_at FROM account_recovery WHERE account_id = ?', [a.id]);
     const n = await db.get('SELECT COUNT(*) AS n FROM records WHERE account_id = ?', [a.id]);
     const owner = (await db.get('SELECT id FROM host_admins ORDER BY created_at, id LIMIT 1'))?.id;
-    res.json({ account: { ...a, billing: billingState(a) }, isOwner: req.subject.id === owner, users, events, history, data: { encrypted: !!enc, recordCount: Number(n.n) } });
+    // Support history: what Host administrators did on this account and why.
+    const sup = await db.all("SELECT ts, actor, event, message, raw FROM event_log WHERE account_id = ? AND area = 'accounts' AND (event LIKE 'user.%' OR event LIKE 'account.%' OR event LIKE 'plan.%') ORDER BY ts DESC LIMIT 50", [a.id]);
+    const support = sup.map(e => { let reason = ''; try { reason = JSON.parse(e.raw)?.data?.reason || ''; } catch {} return { ts: Number(e.ts), actor: e.actor, event: e.event, message: e.message, reason }; });
+    const receipts = await db.all('SELECT id, ts, amount_cents, currency, method, reference, note, period_end, actor FROM billing_receipts WHERE account_id = ? ORDER BY ts DESC LIMIT 50', [a.id]);
+    res.json({ support, receipts: receipts.map(x => ({ ...x, ts: Number(x.ts), amount_cents: Number(x.amount_cents), period_end: x.period_end ? Number(x.period_end) : null })), account: { ...a, billing: billingState(a) }, isOwner: req.subject.id === owner, users, events, history, data: { encrypted: !!enc, recordCount: Number(n.n) } });
   });
 
   // Owner administrator only: let this account's Administrators link a Host administrator sign-in (the account switcher). Switching off also removes existing links.
@@ -58,9 +78,10 @@ export function accountsRoutes(db) {
   r.post('/:id/status', async (req, res) => {
     const status = req.body.status; if (!['active', 'suspended'].includes(status)) return fail(res, 400, 'BAD_ACCOUNT_STATUS');
     const a = await getAccount(req.params.id); if (!a) return fail(res, 404, 'NOT_FOUND');
+    const reason = reasonOf(req, res); if (!reason) return;
     await db.run('UPDATE accounts SET status = ? WHERE id = ?', [status, a.id]);
     if (status === 'suspended') await db.run("DELETE FROM sessions WHERE realm = 'app' AND account_id = ?", [a.id]);
-    A(req, 'warn', `account.${status}`, `Account ${a.account_code} ${status === 'active' ? 'reactivated' : 'suspended (all sessions ended)'}`, a, { code: a.account_code });
+    A(req, 'warn', `account.${status}`, `Account ${a.account_code} ${status === 'active' ? 'reactivated' : 'suspended (all sessions ended)'}: ${reason}`, a, { code: a.account_code, reason });
     res.json({ ok: true });
   });
 
@@ -81,10 +102,31 @@ export function accountsRoutes(db) {
   // Change an account's plan: free (comped), trial (start or extend), or paid. Every change is kept in billing_events.
   r.post('/:id/plan', async (req, res) => {
     const a = await getAccount(req.params.id); if (!a) return fail(res, 404, 'NOT_FOUND');
+    const note = reasonOf(req, res); if (!note) return;
     try {
-      const b = await setPlan(db, a, { plan: req.body?.plan, days: req.body?.days, extend: !!req.body?.extend, until: req.body?.until, note: req.body?.note, actor: req.subject.username });
+      const b = await setPlan(db, a, { plan: req.body?.plan, days: req.body?.days, extend: !!req.body?.extend, until: req.body?.until, note, actor: req.subject.username });
       res.json({ ok: true, billing: b });
     } catch (e) { res.status(e.status || 500).json({ error: e.status ? e.message : 'Could not change the plan.' }); }
+  });
+
+  // A receipt record: money received outside the app (bank transfer, cash, invoice) written down against the account. Optionally also sets "paid through".
+  r.post('/:id/receipts', async (req, res) => {
+    const a = await getAccount(req.params.id); if (!a) return fail(res, 404, 'NOT_FOUND');
+    const rawAmt = String(req.body.amount ?? '').replace(/[,\s$]/g, ''), amount = /^\d+(\.\d{1,2})?$/.test(rawAmt) ? Math.round(Number(rawAmt) * 100) : NaN, cur = String(req.body.currency || 'USD').trim().toUpperCase();
+    if (!Number.isFinite(amount) || amount <= 0 || amount > 1e10) return res.status(400).json({ error: 'Enter the amount received, for example 29.00.' });
+    if (!/^[A-Z]{3}$/.test(cur)) return res.status(400).json({ error: 'Currency is a three-letter code such as USD.' });
+    let periodEnd = null; if (req.body.paidThrough) { if (!/^\d{4}-\d{2}-\d{2}$/.test(req.body.paidThrough) || Number.isNaN(Date.parse(req.body.paidThrough))) return res.status(400).json({ error: 'Enter the paid-through date as YYYY-MM-DD.' }); periodEnd = Date.parse(req.body.paidThrough + 'T23:59:59Z'); }
+    const id = newId();
+    await db.run('INSERT INTO billing_receipts (id, account_id, ts, amount_cents, currency, method, reference, note, period_end, actor) VALUES (?,?,?,?,?,?,?,?,?,?)', [id, a.id, Date.now(), amount, cur, String(req.body.method || '').slice(0, 40), String(req.body.reference || '').slice(0, 120), String(req.body.note || '').slice(0, 255), periodEnd, req.subject.username]);
+    if (periodEnd && req.body.applyPlan) { try { await setPlan(db, a, { plan: 'paid', until: req.body.paidThrough, note: `Payment received${req.body.reference ? ' (' + String(req.body.reference).slice(0, 60) + ')' : ''}`, actor: req.subject.username }); } catch (e) { return res.status(e.status || 500).json({ error: e.message }); } }
+    A(req, 'info', 'account.receipt_recorded', `Receipt of ${(amount / 100).toFixed(2)} ${cur} recorded for ${a.account_code}${periodEnd ? ` (paid through ${req.body.paidThrough})` : ''}`, a, { code: a.account_code, amount, currency: cur, reference: String(req.body.reference || '').slice(0, 120) });
+    res.json({ ok: true, id });
+  });
+  r.delete('/:id/receipts/:rid', async (req, res) => {
+    const a = await getAccount(req.params.id); if (!a) return fail(res, 404, 'NOT_FOUND');
+    const reason = reasonOf(req, res); if (!reason) return;
+    await db.run('DELETE FROM billing_receipts WHERE id = ? AND account_id = ?', [req.params.rid, a.id]);
+    A(req, 'warn', 'account.receipt_removed', `A receipt record was removed from ${a.account_code}: ${reason}`, a, { code: a.account_code, reason }); res.json({ ok: true });
   });
 
   // Delete one person from an account (identity only). Never the account's last Administrator — delete the whole account for that.
@@ -109,10 +151,11 @@ export function accountsRoutes(db) {
   r.post('/:id/users/:uid/reset-link', async (req, res) => {
     const u = await userOf(req); if (!u) return fail(res, 404, 'NOT_FOUND');
     if (!u.email) return res.status(400).json({ error: 'This user has no email address on file.' });
+    const reason = reasonOf(req, res); if (!reason) return;
     const raw = token(32);
     await db.run('INSERT INTO password_resets (token_hash, realm, subject_id, expires_at, used) VALUES (?,?,?,?,0)', [sha256(raw), 'app', u.id, Date.now() + 3600e3]);
     await enqueueMail(db, u.email, 'password_reset', { name: u.username, username: u.username, accountCode: (await db.get('SELECT account_code FROM accounts WHERE id = ?', [u.account_id]))?.account_code || '', link: `${config.publicUrl}/app/#/reset/${raw}` }); processQueue(db).catch(() => {});
-    A(req, 'info', 'user.reset_link_sent', `Password reset link emailed to ${u.login}`, { id: u.account_id }, { login: u.login });
+    A(req, 'info', 'user.reset_link_sent', `Password reset link emailed to ${u.login}: ${reason}`, { id: u.account_id }, { login: u.login, reason });
     res.json({ ok: true });
   });
   r.post('/:id/users/:uid/verify-resend', async (req, res) => {
@@ -131,26 +174,34 @@ export function accountsRoutes(db) {
   });
   r.post('/:id/users/:uid/temp-password', async (req, res) => {
     const u = await userOf(req); if (!u) return fail(res, 404, 'NOT_FOUND');
+    const reason = reasonOf(req, res); if (!reason) return;
     const pw = token(9).replace(/[-_]/g, 'x') + '7';
     await db.run('UPDATE account_users SET pw_hash = ?, must_change = 1 WHERE id = ?', [hashPassword(pw), u.id]);
     await destroyAllFor(db, 'app', u.id, 'temporary password set by host admin');
-    A(req, 'warn', 'user.temp_password', `Temporary password set for ${u.login}`, { id: u.account_id }, { login: u.login });
+    A(req, 'warn', 'user.temp_password', `Temporary password set for ${u.login}: ${reason}`, { id: u.account_id }, { login: u.login, reason });
     res.json({ ok: true, tempPassword: pw }); // shown once to the host admin, never logged
   });
   r.post('/:id/users/:uid/reset-mfa', async (req, res) => {
     const u = await userOf(req); if (!u) return fail(res, 404, 'NOT_FOUND');
+    const reason = reasonOf(req, res); if (!reason) return;
     await db.run('UPDATE account_users SET totp_enabled = 0, totp_secret = NULL, recovery_hashes = NULL WHERE id = ?', [u.id]);
     await destroyAllFor(db, 'app', u.id, 'two-factor reset by host admin');
     if (u.email) { await enqueueMail(db, u.email, 'mfa_reset', { name: u.username }); processQueue(db).catch(() => {}); }
-    A(req, 'warn', 'user.mfa_reset', `Two-factor reset for ${u.login}`, { id: u.account_id }, { login: u.login });
+    A(req, 'warn', 'user.mfa_reset', `Two-factor reset for ${u.login}: ${reason}`, { id: u.account_id }, { login: u.login, reason });
     res.json({ ok: true });
+  });
+  r.post('/:id/users/:uid/sign-out', async (req, res) => {
+    const u = await userOf(req); if (!u) return fail(res, 404, 'NOT_FOUND');
+    const reason = reasonOf(req, res); if (!reason) return;
+    await destroyAllFor(db, 'app', u.id, 'signed out everywhere by host admin');
+    A(req, 'warn', 'user.signed_out', `${u.login} signed out everywhere: ${reason}`, { id: u.account_id }, { login: u.login, reason }); res.json({ ok: true });
   });
   r.post('/:id/users/:uid/disabled', async (req, res) => {
     const u = await userOf(req); if (!u) return fail(res, 404, 'NOT_FOUND');
-    const off = !!req.body.disabled;
+    const off = !!req.body.disabled; const reason = reasonOf(req, res); if (!reason) return;
     await db.run('UPDATE account_users SET disabled = ? WHERE id = ?', [off ? 1 : 0, u.id]);
     if (off) await destroyAllFor(db, 'app', u.id, 'user disabled by host admin');
-    A(req, 'warn', off ? 'user.disabled' : 'user.enabled', `Sign-in ${off ? 'disabled' : 'enabled'} for ${u.login}`, { id: u.account_id }, { login: u.login });
+    A(req, 'warn', off ? 'user.disabled' : 'user.enabled', `Sign-in ${off ? 'disabled' : 'enabled'} for ${u.login}: ${reason}`, { id: u.account_id }, { login: u.login, reason });
     res.json({ ok: true });
   });
   return r;
