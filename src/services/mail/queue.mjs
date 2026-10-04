@@ -3,6 +3,7 @@ import { newId } from '../../core/ids.mjs';
 import { areaLogger } from '../../logging/logger.mjs';
 import { getMailSettings } from './settings.mjs';
 import { render } from './templates.mjs';
+import { getSetting } from '../../db/settings.mjs';
 import { transportFor } from './transport.mjs';
 import { LOGO_CID } from './theme.mjs';
 import path from 'node:path';
@@ -13,8 +14,10 @@ const LOGO_FILE = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 
 const L = areaLogger('mail');
 const MAX_ATTEMPTS = 5;
 
-export async function enqueueMail(db, to, template, vars = {}) {
-  const m = render(template, vars), id = newId();
+// opts.override = wording to use instead of the saved one (used to send a draft as a test); opts.subjectPrefix = text put before the subject.
+export async function enqueueMail(db, to, template, vars = {}, opts = {}) {
+  const saved = (await getSetting(db, 'mail_templates', {}))[template], m = render(template, vars, opts.override || saved), id = newId();
+  if (opts.subjectPrefix) m.subject = opts.subjectPrefix + m.subject;
   await db.run('INSERT INTO mail_queue (id,to_addr,subject,body_text,body_html,status,attempts,created_at) VALUES (?,?,?,?,?,?,0,?)', [id, to, m.subject, m.text, m.html, 'queued', Date.now()]);
   L.info('queued', `Queued "${template}" email to ${to}`, { data: { id, template, to } });
   return id;

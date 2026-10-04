@@ -42,6 +42,12 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .war-row .chip { justify-content: center; }
 .war-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--chip-type-w) var(--col-war-w) var(--col-war-w) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); max-width: var(--config-w); }
 .icon-slot { width: var(--control-h-md); }
+.cat-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--chip-type-w) var(--col-req-w) var(--col-war-w) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); border-bottom: var(--border-default); max-width: var(--config-w); }
+.cat-row .chip { justify-content: center; }
+.cat-make .cat-name { font-weight: var(--weight-semibold); }
+.cat-model { padding-left: var(--space-2xl); }
+.cat-model .cat-name { color: var(--color-text-muted); }
+.cat-spaced { margin-top: var(--space-md); }
 .check-row input[type=text], .step-row input[type=text] { height: var(--control-h-md); }
 .check-row .row { gap: var(--space-sm); }
 .check-row .chip, .check-row .type-btn { flex: none; width: var(--chip-type-w); justify-content: center; }

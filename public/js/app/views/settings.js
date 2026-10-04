@@ -10,6 +10,30 @@
     const usedKeys = new Set(S.all('sale').map(e => e.data.warranty?.key).filter(Boolean));
     const chk = (k, on, i) => `<label class="check"><input type="checkbox" data-k="${k}" data-i="${i}" ${on ? 'checked' : ''}></label>`;
 
+    const K = C.catalog, key = K.key;
+    const variantNote = (x) => x.variants.length > 1 ? `<div class="hint">Also entered as ${x.variants.filter(v => v !== x.name).map(esc).join(', ')}. Use Rename or merge to combine them.</div>` : '';
+    const devs = (n) => `<span class="chip gray nowrap">${n} device${n === 1 ? '' : 's'}</span>`;
+    const catHtml = () => { const makes = K.makes(); return makes.length ? makes.map(m => `<div class="cat-row cat-make"><div><div class="cat-name">${esc(m.name)}</div>${variantNote(m)}</div>${devs(m.devices)}<button type="button" class="btn secondary small" data-k="mkr" data-n="${esc(m.name)}">Rename or merge</button><button type="button" class="btn secondary small" data-k="mda" data-n="${esc(m.name)}">Add model</button>${m.devices ? '<span class="icon-slot"></span>' : `<button type="button" class="icon-btn" data-k="mkx" data-n="${esc(m.name)}" aria-label="Remove ${esc(m.name)}" title="Remove">✕</button>`}</div>`
+      + K.models(m.name).map(x => `<div class="cat-row cat-model"><div><div class="cat-name">${esc(x.name)}</div>${variantNote(x)}</div>${devs(x.devices)}<button type="button" class="btn secondary small" data-k="mdr" data-m="${esc(m.name)}" data-n="${esc(x.name)}">Rename or merge</button><span class="icon-slot"></span>${x.devices ? '<span class="icon-slot"></span>' : `<button type="button" class="icon-btn" data-k="mdx" data-m="${esc(m.name)}" data-n="${esc(x.name)}" aria-label="Remove ${esc(x.name)}" title="Remove">✕</button>`}</div>`).join('')).join('') : '<div class="empty">No makes yet. They appear as you add devices, or add some here first.</div>'; };
+    const nameSheet = (title, body, value, label) => sheet(`<h2>${esc(title)}</h2><p class="sub">${body}</p><div class="field mt-md"><label>${esc(label)}</label><input type="text" id="n" value="${esc(value)}" autocomplete="off"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Save</button></div>`, { onMount: (el, close) => { const go = () => { const v = el.querySelector('#n').value.trim(); if (!v) return toast('Enter a name.', true); close(v); }; el.querySelector('#go').addEventListener('click', go); el.querySelector('#n').addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); }); el.querySelector('#n').focus(); } });
+    const catDo = async (fn, msg) => { try { const n = await fn(); toast(typeof msg === 'function' ? msg(n) : msg); main.querySelector('#catlist').innerHTML = catHtml(); wireCat(); } catch (er) { toast(er.message, true); } };
+    const wireCat = () => {
+      const q = (s) => main.querySelectorAll(s);
+      q('[data-k=mkr]').forEach(b => b.addEventListener('click', async () => {
+        const from = b.dataset.n, to = await nameSheet('Rename or merge make', `Type a new name for “${esc(from)}”. If you type a name that is already in the list, the two are merged and every device moves to it.`, from, 'Make'); if (!to || to === from) return;
+        const other = K.makes().find(m => key(m.name) === key(to) && key(m.name) !== key(from));
+        if (other && !await UI.confirmBox({ title: `Merge into “${other.name}”?`, body: `Every device and model under “${from}” moves to “${other.name}”.`, confirmLabel: 'Merge' })) return;
+        catDo(() => K.renameMake(from, to), (n) => `Updated ${n} device${n === 1 ? '' : 's'}`);
+      }));
+      q('[data-k=mdr]').forEach(b => b.addEventListener('click', async () => {
+        const make = b.dataset.m, from = b.dataset.n, to = await nameSheet('Rename or merge model', `Type a new name for “${esc(from)}” under ${esc(make)}. If you type a model that is already listed there, the two are merged.`, from, 'Model'); if (!to || to === from) return;
+        catDo(() => K.renameModel(make, from, to), (n) => `Updated ${n} device${n === 1 ? '' : 's'}`);
+      }));
+      q('[data-k=mda]').forEach(b => b.addEventListener('click', async () => { const make = b.dataset.n, name = await nameSheet('Add a model', `A new model under ${esc(make)}.`, '', 'Model'); if (name) catDo(() => K.addModel(make, name), 'Model added'); }));
+      q('[data-k=mkx]').forEach(b => b.addEventListener('click', async () => { if (await UI.confirmBox({ title: `Remove “${b.dataset.n}”?`, body: 'No device uses it, so nothing else changes.', confirmLabel: 'Remove', danger: true })) catDo(() => K.removeMake(b.dataset.n), 'Removed'); }));
+      q('[data-k=mdx]').forEach(b => b.addEventListener('click', async () => { if (await UI.confirmBox({ title: `Remove “${b.dataset.n}”?`, body: 'No device uses it, so nothing else changes.', confirmLabel: 'Remove', danger: true })) catDo(() => K.removeModel(b.dataset.m, b.dataset.n), 'Removed'); }));
+    };
+
     const draw = () => {
       swap(main, `<div class="page-head row spread wrap"><div><h1>Settings</h1><p>What you track for each device, and the checks you do before selling it.</p></div><button class="btn" id="save">Save changes</button></div>
         <div class="card"><div class="row spread wrap"><div><h3>Device details to track</h3><div class="sub mb-0">Turn on what you record for each device. Identifiers you can scan or type at the till are looked up in Quick sale. Anything ticked for the sale record is copied onto the sale.</div></div><button class="btn secondary" id="addf">Add a detail</button></div>
@@ -18,6 +42,8 @@
           <p class="hint mt-md">Make, model, cost, selling price, status and notes are always available. Turning a detail off, or removing it, hides it but keeps what was entered.</p></div>
         <div class="card mt-lg"><div class="row spread wrap"><div><h3>Warranty periods</h3><div class="sub mb-0">The choices offered at Quick sale. The chosen period is saved on each sale, so changing this list never alters past sales. A period that has been used on a sale can be archived but not removed.</div></div><button class="btn secondary" id="addw">Add a period</button></div>
           <div class="mt-md">${cfg.warranty.periods.map((p, i) => `<div class="war-row"><input type="text" data-k="wl" data-i="${i}" value="${esc(p.label)}" aria-label="Name"><span class="chip gray nowrap">${esc(p.amount ? C.periodLabel(p) : 'No cover')}</span>${cfg.warranty.default === p.key ? '<span class="chip green nowrap">Default</span>' : `<button type="button" class="btn secondary small" data-k="wd" data-i="${i}" ${p.archived ? 'disabled' : ''}>Make default</button>`}<button type="button" class="btn secondary small" data-k="wa" data-i="${i}" ${cfg.warranty.default === p.key ? 'disabled' : ''}>${p.archived ? 'Restore' : 'Archive'}</button>${usedKeys.has(p.key) || p.key === 'none' ? '<span class="icon-slot"></span>' : `<button type="button" class="icon-btn" data-k="wr" data-i="${i}" aria-label="Remove ${esc(p.label)}" title="Remove">✕</button>`}</div>`).join('')}</div></div>
+        <div class="card mt-lg"><div class="row spread wrap"><div><h3>Makes and models</h3><div class="sub mb-0">The lists offered when you add a device. They are built from your devices; add names here ahead of time, rename them, or merge two spellings of the same name. Changes here are saved straight away and update the devices that use them. Past sales keep the name they were sold under.</div></div><button class="btn secondary" id="addmk">Add a make</button></div>
+          <div class="mt-md" id="catlist">${catHtml()}</div></div>
         <div class="card mt-lg"><h3>Unlock behaviour</h3><div class="sub">Your data is encrypted in the browser. This decides what happens when someone on your team refreshes the page. It applies to everyone on the account.</div>
           <div class="field mt-md"><label>After a browser refresh</label>${UI.select.html({ id: 'um', options: [['ask', 'Ask for the password again (most private)'], ['stay', 'Stay unlocked while this tab is open']], value: cfg.unlock.mode })}</div>
           <div class="field" id="uiw" ${cfg.unlock.mode === 'stay' ? '' : 'hidden'}><label>Lock automatically after (minutes without activity)</label><input type="number" id="ui" min="1" max="1440" step="1" value="${esc(cfg.unlock.idleMin)}"></div>
@@ -45,6 +71,10 @@
         if (!await UI.confirmBox({ title: `Remove “${f.label.trim() || 'this detail'}”?`, body: 'It stops showing in Inventory, Quick sale and new sale records. What was already entered on your devices, and on past sales, is kept — it is only hidden. This takes effect when you press Save changes.', confirmLabel: 'Remove', danger: true })) return;
         cfg.fields.splice(Number(b.dataset.i), 1); draw();
       }));
+      wireCat();
+      main.querySelector('#addmk').addEventListener('click', async () => {
+        const name = await nameSheet('Add a make', 'Add a make ahead of time. You can add its models afterwards.', '', 'Make'); if (name) catDo(() => K.addMake(name), 'Make added');
+      });
       main.querySelector('#um').addEventListener('change', (e) => { cfg.unlock.mode = UI.select.value(e.target); main.querySelector('#uiw').hidden = cfg.unlock.mode !== 'stay'; });
       main.querySelector('#ui').addEventListener('input', (e) => { cfg.unlock.idleMin = Math.floor(Number(e.target.value)) || 0; });
       main.querySelector('#dc').addEventListener('input', (e) => { cfg.discount.maxStandardPct = e.target.value; });
@@ -82,7 +112,7 @@
         if (wl.some(x => !x)) return toast('Every warranty period needs a name.', true); if (new Set(wl).size !== wl.length) return toast('Two warranty periods have the same name.', true);
         if (cfg.unlock.mode === 'stay' && !(cfg.unlock.idleMin >= 1 && cfg.unlock.idleMin <= 1440)) return toast('Enter an idle lock time from 1 to 1440 minutes.', true);
         const dcap = Number(cfg.discount.maxStandardPct); if (!(dcap >= 0 && dcap <= 100)) return toast('Enter a discount limit from 0 to 100.', true);
-        try { await S.saveConfig({ discount: { maxStandardPct: dcap }, unlock: { mode: cfg.unlock.mode, idleMin: cfg.unlock.idleMin || 30 }, warranty: { default: cfg.warranty.default, periods: cfg.warranty.periods.map(x => ({ ...x, label: x.label.trim() })) }, fields: cfg.fields.map(f => ({ ...f, label: f.label.trim() })), steps: cfg.steps.map(s => ({ ...s, label: s.label.trim() })) }); await A.vault.policy(); toast('Settings saved'); } catch (er) { toast(er.message, true); }
+        try { await S.saveConfig({ ...S.config(), discount: { maxStandardPct: dcap }, unlock: { mode: cfg.unlock.mode, idleMin: cfg.unlock.idleMin || 30 }, warranty: { default: cfg.warranty.default, periods: cfg.warranty.periods.map(x => ({ ...x, label: x.label.trim() })) }, fields: cfg.fields.map(f => ({ ...f, label: f.label.trim() })), steps: cfg.steps.map(s => ({ ...s, label: s.label.trim() })) }); await A.vault.policy(); toast('Settings saved'); } catch (er) { toast(er.message, true); }
       }));
     };
     draw();

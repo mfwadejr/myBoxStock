@@ -16,7 +16,7 @@ export function publicRoutes(db) {
   const r = express.Router();
   const loginOf = (username, code) => `${username.toLowerCase()}@${code.toLowerCase()}`;
 
-  r.get('/public-config', async (req, res) => res.json({ siteName: await getSetting(db, 'site_name', 'myBoxStock'), signupsEnabled: await getSetting(db, 'signups_enabled', true), trialDays: await trialDays(db) }));
+  r.get('/public-config', async (req, res) => res.json({ signupsEnabled: await getSetting(db, 'signups_enabled', true), trialDays: await trialDays(db) }));
 
   r.post('/signup', async (req, res) => {
     const ip = normalizeIp(req.ip);

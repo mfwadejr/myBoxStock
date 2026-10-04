@@ -5,7 +5,7 @@
   AccountApp.api = UI.client('/api/app');
   AccountApp.me = null;
   AccountApp.can = (p) => AccountApp.me.perms.includes('*') || AccountApp.me.perms.includes(p);
-  let cfg = { siteName: 'myBoxStock', signupsEnabled: true, trialDays: 14 };
+  let cfg = { signupsEnabled: true, trialDays: 14 };
 
   const authShell = (inner) => { root.innerHTML = `<div class="authwrap"><div class="authcard"><img class="logo" src="/assets/logo-512.png" alt="myBoxStock" width="512" height="512">${inner}</div></div>`; };
   AccountApp.root = root; AccountApp.authShell = authShell; AccountApp.pw = null; // the password typed at sign-in, held only until the data is unlocked
@@ -28,7 +28,7 @@
     catch (e) { if (location.hash === '#/signup' && cfg.signupsEnabled) signupScreen(); else loginScreen(); if (e && e.status !== 401) toast(e.message || 'Sign-in could not finish. Please try again.', true); }
   }
   function loginScreen() {
-    authShell(`${modeSwitch('login')}<h1>${esc(cfg.siteName)}</h1><p class="lead">Sign in to your account.</p>
+    authShell(`${modeSwitch('login')}<h1>myBoxStock</h1><p class="lead">Sign in to your account.</p>
       <form id="f"><div class="field"><label>Sign-in</label><input type="text" id="l" placeholder="username@BX-ABC123" autocapitalize="none" autocomplete="username" required><div class="hint">Your username followed by your account ID.</div></div>
       <div class="field"><label>Password</label><input type="password" id="p" autocomplete="current-password" required></div><button class="btn block">Sign in</button></form>
       <p class="hint center mt-lg"><a href="#" id="fg">Forgot password?</a>${cfg.signupsEnabled ? ' · <a href="#" id="su">Create an account</a>' : ''}</p>`);

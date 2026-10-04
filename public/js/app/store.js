@@ -62,6 +62,7 @@
       { key: 'y1', label: '1 year', amount: 1, unit: 'years' },
     ] },
     unlock: { mode: 'ask', idleMin: 30 },
+    catalog: { makes: [] },
     discount: { maxStandardPct: 10 },
     steps: [
       { key: 'inspected', label: 'Device inspected', required: false },
@@ -73,6 +74,6 @@
   };
   S.CONFIG_ID = CONFIG_ID;
   S.defaults = () => JSON.parse(JSON.stringify(DEFAULTS));
-  S.config = () => { const c = S.get('config', CONFIG_ID)?.data; if (!(c && Array.isArray(c.fields) && Array.isArray(c.steps))) return S.defaults(); return { ...c, warranty: c.warranty?.periods ? c.warranty : S.defaults().warranty, unlock: { ...S.defaults().unlock, ...(c.unlock || {}) }, discount: { ...S.defaults().discount, ...(c.discount || {}) } }; };
+  S.config = () => { const c = S.get('config', CONFIG_ID)?.data; if (!(c && Array.isArray(c.fields) && Array.isArray(c.steps))) return S.defaults(); return { ...c, warranty: c.warranty?.periods ? c.warranty : S.defaults().warranty, unlock: { ...S.defaults().unlock, ...(c.unlock || {}) }, discount: { ...S.defaults().discount, ...(c.discount || {}) }, catalog: { makes: Array.isArray(c.catalog?.makes) ? c.catalog.makes : [] } }; };
   S.saveConfig = (cfg) => S.commit({ puts: [{ type: 'config', id: CONFIG_ID, data: cfg }] });
 })();

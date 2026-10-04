@@ -180,6 +180,8 @@
   --textarea-min-h: 88px;
   --pick-list-max-h: 220px;
   --recovery-key-w: 28ch;
+  --mail-preview-h: 560px;
+  --width-phone: 375px;
 
   /* ---- glass & overlay effects ---- */
   --blur-md: 20px;

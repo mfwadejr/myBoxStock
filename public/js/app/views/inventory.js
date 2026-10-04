@@ -20,11 +20,11 @@
   }
   const testBlock = (d = {}) => { const steps = C.steps(); if (!steps.length) return '';
     return `<div class="tests"><div class="row spread"><h3>Test record</h3><button type="button" class="btn secondary small" id="allt">Mark all done</button></div>${steps.map(st => { const c = d.checks?.[st.key]; return `<label class="check"><input type="checkbox" data-step="${esc(st.key)}" ${c ? 'checked' : ''}><span>${esc(st.label)}${st.required ? ' <span class="faint">(required before sale)</span>' : ''}${c ? ` <span class="faint text-sm">— ${esc(F.day(c.at))}${c.by ? ', ' + esc(c.by) : ''}</span>` : ''}</span></label>`; }).join('')}<div class="field mt-md mb-0"><label>Test notes</label><textarea id="tnotes">${esc(d.testNotes || '')}</textarea></div></div>`; };
-  const fields = (d = {}) => `<div class="grid g2 mt-md"><div class="field"><label>Make</label><input type="text" id="make" value="${esc(d.make || '')}" autocomplete="off"></div><div class="field"><label>Model</label><input type="text" id="model" value="${esc(d.model || '')}" autocomplete="off"></div>${C.fields().map(f => `<div class="field"><label>${esc(f.label)}</label>${C.fieldInput(f, C.getVal(d, f))}</div>`).join('')}
+  const fields = (d = {}) => `<div class="grid g2 mt-md">${C.catalog.makeField(d)}${C.catalog.modelField(d)}${C.fields().map(f => `<div class="field"><label>${esc(f.label)}</label>${C.fieldInput(f, C.getVal(d, f))}</div>`).join('')}
     <div class="field"><label>Status</label>${UI.select.html({ id: 'status', options: STATUSES, value: d.status || 'available' })}</div><div class="field"><label>Cost</label><input type="number" id="cost" min="0" step="0.01" value="${esc(F.dollars(d.cost))}"></div><div class="field"><label>Selling price</label><input type="number" id="price" min="0" step="0.01" value="${esc(F.dollars(d.price))}"></div></div>
     <div class="field"><label>Notes</label><textarea id="notes">${esc(d.notes || '')}</textarea></div>${testBlock(d)}`;
   const read = (el, old = {}) => {
-    const v = (id) => el.querySelector('#' + id).value.trim(), d = { ...old, make: v('make'), model: v('model'), status: UI.select.value(el.querySelector('#status')), cost: F.cents(v('cost')), price: F.cents(v('price')), notes: v('notes'), addedAt: old.addedAt || Date.now() };
+    const v = (id) => el.querySelector('#' + id).value.trim(), d = { ...old, ...C.catalog.read(el), status: UI.select.value(el.querySelector('#status')), cost: F.cents(v('cost')), price: F.cents(v('price')), notes: v('notes'), addedAt: old.addedAt || Date.now() };
     for (const f of C.fields()) C.setVal(d, f, C.readInput(el, f));
     if (el.querySelector('[data-step]')) {
       const checks = {}; el.querySelectorAll('[data-step]').forEach(c => { if (c.checked) checks[c.dataset.step] = old.checks?.[c.dataset.step] || { by: A.me.username, at: Date.now() }; });
@@ -37,7 +37,7 @@
 
   function addSheet(again) {
     return sheet(`<h2>Add device</h2>${fields()}<div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn secondary" id="more">Save and add another</button><button class="btn" id="go">Save</button></div>`, { wide: true, onMount: (el, close) => {
-      wireTests(el);
+      wireTests(el); C.catalog.wire(el);
       const save = async (more) => { try { const d = read(el); const bad = check(d); if (bad) return toast(bad, true); await S.commit({ puts: [{ type: 'item', data: d }] }); toast('Device added'); close(more ? 'more' : true); } catch (e) { toast(e.message, true); } };
       el.querySelector('#go').addEventListener('click', () => save(false)); el.querySelector('#more').addEventListener('click', () => save(true));
     } }).then(r => r === 'more' ? addSheet() : r);
@@ -47,7 +47,7 @@
     return sheet(`<h2>${esc(C.itemLabel(d))}</h2>${sold ? `<p class="sub">Sold ${esc(F.when(d.soldAt))}${S.get('sale', d.saleId) ? ` · receipt ${esc(S.get('sale', d.saleId).data.no)}` : ''}</p>` : ''}${fields(d)}
       <div class="actions split"><div class="row">${can ? `<button class="btn danger small" id="del">Delete</button><button class="btn secondary small" id="arch">${d.status === 'archived' ? 'Restore' : 'Archive'}</button>` : ''}</div><div class="row"><button class="btn secondary" data-cancel>${can ? 'Cancel' : 'Close'}</button>${can ? '<button class="btn" id="go">Save</button>' : ''}</div></div>`, { wide: true, onMount: (el, close) => {
       if (!can) { el.querySelectorAll('input,textarea,button.select-btn').forEach(i => { i.disabled = true; }); el.querySelector('#allt')?.remove(); return; }
-      wireTests(el);
+      wireTests(el); C.catalog.wire(el);
       const run = async (fn) => { try { await fn(); close(true); } catch (er) { toast(er.message, true); } };
       el.querySelector('#go').addEventListener('click', () => run(async () => { const n = read(el, d); const bad = check(n, e.id); if (bad) throw new Error(bad); await S.commit({ puts: [{ type: 'item', id: e.id, data: n }] }); toast('Saved'); }));
       el.querySelector('#arch').addEventListener('click', () => run(async () => { await S.commit({ puts: [{ type: 'item', id: e.id, data: { ...d, status: d.status === 'archived' ? 'available' : 'archived' } }] }); }));
@@ -66,10 +66,11 @@
     const head = rows[0].map(h => h.trim().toLowerCase()), cols = csvFields(), colOf = (c) => { const names = [c.key, c.label.toLowerCase()]; if (c.key === 'cond') names.push('condition'); return head.findIndex(h => names.includes(h)); };
     const look = C.lookupFields(); if (!look.some(f => colOf({ key: f.key, label: f.label }) >= 0)) return toast(`The first row must have column names, including at least one of: ${look.map(f => f.label).join(', ')}.`, true);
     const have = new Map(); for (const f of C.fields().filter(x => x.unique)) have.set(f.key, new Set(S.all('item').map(e => String(C.getVal(e.data, f)).toLowerCase()).filter(Boolean)));
-    const good = [], skipped = [];
+    const good = [], skipped = [], norm = C.catalog.normalizer();
     for (const r of rows.slice(1)) {
       const d = { status: 'available', cost: 0, price: 0, addedAt: Date.now() };
       for (const c of cols) { const i = colOf(c); if (i < 0) continue; const raw = (r[i] || '').trim(); if (c.f) { let v = raw; if (c.f.type === 'choice') v = (c.f.options || []).find(o => o.toLowerCase() === raw.toLowerCase()) || ''; if (c.f.type === 'bool') v = /^(y|yes|true|1)$/i.test(raw) ? true : /^(n|no|false|0)$/i.test(raw) ? false : ''; C.setVal(d, c.f, v); } else if (c.key === 'cost' || c.key === 'price') d[c.key] = F.cents(raw); else if (c.key === 'status') d.status = STATUSES.some(s => s[0] === raw.toLowerCase()) ? raw.toLowerCase() : 'available'; else d[c.key] = raw; }
+      Object.assign(d, norm(d.make, d.model));
       if (!d.cond && C.fields().some(f => f.key === 'cond')) d.cond = C.fields().find(f => f.key === 'cond').options?.[0] || '';
       const steps = C.steps(); steps.forEach(st => { const i = head.indexOf(st.label.toLowerCase()); if (i >= 0 && /^(y|yes|true|1|x)$/i.test((r[i] || '').trim())) (d.checks ||= {})[st.key] = { by: A.me.username, at: Date.now() }; });
       const ti = head.indexOf('test notes'); if (ti >= 0 && r[ti]) d.testNotes = r[ti].trim();

@@ -5,9 +5,19 @@
   const rowHtml = (q) => `<tr><td>${esc(q.to_addr)}</td><td class="muted">${esc(q.subject)}${q.last_error ? `<div class="hint danger-text">${esc(q.last_error)}</div>` : ''}</td><td><span class="chip ${q.status === 'sent' ? 'green' : q.status === 'failed' ? 'red' : 'amber'}">${q.status}</span></td><td class="muted">${fmt.ago(q.created_at)}</td><td class="right">${q.status === 'failed' ? `<button class="btn secondary small" data-resend="${esc(q.id)}">Resend</button>` : ''}</td></tr>`;
   const queueHtml = (queue) => queue.length ? `<table><thead><tr><th>To</th><th>Subject</th><th>Status</th><th>When</th><th></th></tr></thead><tbody>${queue.map(rowHtml).join('')}</tbody></table>` : '<div class="empty">Nothing sent yet.</div>';
 
+  // Email page: two tabs. Delivery = how mail is sent; Messages = the wording of each message (views/messages.js).
+  let tab = 'delivery';
   Host.views.email = async (main) => {
-    const d = await Host.api('GET', '/mail'), m = d.settings;
     swap(main, `${Host.head('Email', 'Outbound only — for password resets, welcome messages and security notices. This server never receives mail.')}
+      <div class="seg mb-lg" id="etabs" role="tablist"><button type="button" data-t="delivery" class="${tab === 'delivery' ? 'on' : ''}">Delivery</button><button type="button" data-t="messages" class="${tab === 'messages' ? 'on' : ''}">Messages</button></div><div id="pane"></div>`);
+    const show = async () => { main.querySelectorAll('#etabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab)); const pane = main.querySelector('#pane'); try { await (tab === 'messages' ? Host.emailMessages(pane) : delivery(pane)); } catch (er) { toast(er.message, true); } };
+    main.querySelectorAll('#etabs button').forEach(b => b.addEventListener('click', () => { if (tab !== b.dataset.t) { tab = b.dataset.t; show(); } }));
+    show();
+  };
+
+  async function delivery(main) {
+    const d = await Host.api('GET', '/mail'), m = d.settings;
+    swap(main, `
       <div class="card"><div class="setting"><div><div class="setting-title">Send email</div><div class="setting-desc">Turn off to pause all outgoing messages.</div></div><label class="switch"><input type="checkbox" id="en" ${m.enabled ? 'checked' : ''}><i></i></label></div>
         <div class="field mt-xs"><label>Delivery method</label><div class="seg" id="mode"><button data-m="direct" class="${m.mode === 'direct' ? 'on' : ''}">Direct to recipient</button><button data-m="smtp" class="${m.mode === 'smtp' ? 'on' : ''}">SMTP relay</button></div><div class="hint" id="modehint"></div></div>
         <div class="grid g2"><div class="field"><label>From name</label><input type="text" id="fn" value="${esc(m.fromName)}"></div><div class="field"><label>From address</label><input type="email" id="fa" value="${esc(m.fromAddress)}" placeholder="no-reply@yourdomain.com"></div></div>
@@ -50,5 +60,5 @@
     const poll = async () => { try { if (!box.isConnected) return; paint((await Host.api('GET', '/mail/queue')).queue); } catch {} };
     paint(d.queue); const timer = setInterval(() => { if (!box.isConnected || document.hidden) { if (!box.isConnected) clearInterval(timer); return; } poll(); }, 3000);
     all.addEventListener('click', (e) => busy(e.currentTarget, async () => { try { const r = await Host.api('POST', '/mail/resend-failed'); toast(`${r.count} message${r.count === 1 ? '' : 's'} sent back to the queue`); poll(); } catch (er) { toast(er.message, true); } }));
-  };
+  }
 })();

@@ -1,11 +1,11 @@
-// HOST / views / settings — site name, open sign-ups, how to change the database engine.
+// HOST / views / settings — open sign-ups, trial length, sign-in history, how to change the database engine.
 (() => {
   const { esc, toast, swap } = UI;
 
   Host.views.settings = async (main) => {
     const d = await Host.api('GET', '/settings');
     swap(main, `${Host.head('Settings', 'Platform-wide options.')}
-      <div class="card"><div class="field"><label>Site name</label><input type="text" id="sn" value="${esc(d.siteName)}" class="maxw-lg"></div>
+      <div class="card">
         <div class="setting"><div><div class="setting-title">Open sign-ups</div><div class="setting-desc">Allow new businesses to create an account.</div></div><label class="switch"><input type="checkbox" id="su" ${d.signupsEnabled ? 'checked' : ''}><i></i></label></div>
         <div class="field"><label>Free trial length for new sign-ups (days)</label><input type="number" id="td" min="1" max="365" value="${esc(d.trialDays)}" class="maxw-lg"><div class="hint">Applies to accounts created from now on. Existing accounts keep their own end date — change those per account under Accounts → Change plan.</div></div>
         <div class="field"><label>Keep sign-in history (days)</label><input type="number" id="sh" min="7" max="730" value="${esc(d.signInHistoryDays)}" class="maxw-lg"><div class="hint">How long each account keeps its list of sign-ins (who, from which IP and device). Older entries are removed automatically.</div></div>
@@ -17,6 +17,6 @@ node server.mjs migrate-db --to postgres://user:pass@db-host:5432/myboxstock
 # 2. Point the app at it and restart
 DB_CLIENT=postgres
 DATABASE_URL=postgres://user:pass@db-host:5432/myboxstock</div></div>`);
-    main.querySelector('#save').addEventListener('click', async () => { await Host.api('PUT', '/settings', { siteName: main.querySelector('#sn').value, signupsEnabled: main.querySelector('#su').checked, trialDays: Number(main.querySelector('#td').value), signInHistoryDays: Number(main.querySelector('#sh').value) }).then(() => toast('Saved')).catch((e) => toast(e.message, true)); });
+    main.querySelector('#save').addEventListener('click', async () => { await Host.api('PUT', '/settings', { signupsEnabled: main.querySelector('#su').checked, trialDays: Number(main.querySelector('#td').value), signInHistoryDays: Number(main.querySelector('#sh').value) }).then(() => toast('Saved')).catch((e) => toast(e.message, true)); });
   };
 })();

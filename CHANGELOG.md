@@ -3,6 +3,20 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.9.0] - 2026-10-04
+
+### Added
+- **Make and Model are dropdowns** when adding or editing a device, like Condition and Status. The lists come from the devices you already have, plus "Add new…". Model shows only the models of the chosen make. Capitalisation never makes a second entry: typing "ACME" next to an existing "Acme" reuses "Acme" (the same applies to CSV import).
+- **Settings → Makes and models** (Administrators): add a make or model ahead of time, rename one, merge two spellings of the same name (every device moves over), and remove names no device uses. Names that were entered more than one way are flagged. Past sales keep the name they were sold under.
+- **Host Console → Email → Messages**: edit the subject, heading, body and button label of every message (welcome, new sign-in, password reset, temporary password, two-factor reset, trial ended, backup failed, test) with a live preview. The preview switches between Styled and Plain text, and Desktop and Phone width. Details such as the name or account ID are inserted from buttons, and the ones a message needs cannot be removed. Reset to default and Send a test of this message are included. Only the words change: colours, fonts and layout stay locked to the site theme. The styled and plain-text versions are built from the same words, so they always match.
+
+### Changed
+- Host Console → Email is now two tabs: Delivery (sending settings, test, recent messages) and Messages.
+- Wording of some built-in messages was tidied so both versions read the same; the link now also appears in the plain-text version as "Button label: link".
+
+### Removed
+- Host Console → Settings → **Site name**. It only changed the heading on the sign-in screen, so the name is now fixed as myBoxStock everywhere.
+
 ## [0.8.2] - 2026-10-04
 
 ### Added

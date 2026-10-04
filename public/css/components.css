@@ -144,3 +144,8 @@ details[open] > summary { margin-bottom: var(--space-xs); }
 /* Quiet icon button (remove, close): neutral until hovered, then danger. */
 .icon-btn { display: inline-grid; place-items: center; flex: none; width: var(--control-h-md); height: var(--control-h-md); border: 0; border-radius: var(--radius-pill); background: var(--color-wash); color: var(--color-text-muted); font: inherit; font-size: var(--text-lg); cursor: pointer; transition: background var(--dur-base) var(--ease), color var(--dur-base); }
 .icon-btn:hover, .icon-btn:focus-visible { background: var(--color-danger-soft); color: var(--color-danger); outline: none; }
+
+/* ---- email message preview (Host Console → Email → Messages) ---- */
+.mail-frame { display: block; width: 100%; height: var(--mail-preview-h); margin: var(--space-0) auto; border: var(--border-default); border-radius: var(--radius-md); background: var(--color-surface); }
+.mail-frame.phone { width: var(--width-phone); max-width: 100%; }
+.mail-text { margin: var(--space-0); min-height: var(--mail-preview-h); padding: var(--space-lg); white-space: pre-wrap; word-break: break-word; font-family: var(--font-mono); font-size: var(--text-sm); line-height: var(--leading-code); color: var(--color-text); background: var(--color-code-bg); border: var(--border-default); border-radius: var(--radius-md); }

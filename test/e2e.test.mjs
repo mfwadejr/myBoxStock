@@ -29,8 +29,8 @@ test('browser: setup, add, sell, sign out, unlock, recovery key, CSV import', { 
     await page.locator('[data-k=fs]').last().check(); await page.click('#save'); await page.waitForTimeout(600);
 
     await page.goto(srv.base + '/app/#/inventory'); await page.click('#add');
-    await page.fill('#f_uid', 'UID-1001'); await page.fill('#model', 'V6 Box'); await page.fill('#cost', '40'); await page.fill('#price', '75'); await page.fill('input[id^="f_c"]', 'FW 2.4'); await page.click('#allt'); await page.fill('#tnotes', 'Remote paired and tested'); await page.click('#more'); await page.waitForTimeout(500);
-    await page.fill('#f_uid', 'UID-1002'); await page.fill('#model', 'V6 Box'); await page.fill('#cost', '40'); await page.fill('#price', '75'); await page.click('#go'); await page.waitForSelector('tr.click');
+    await page.fill('#f_uid', 'UID-1001'); await page.fill('#model_new', 'V6 Box'); await page.fill('#cost', '40'); await page.fill('#price', '75'); await page.fill('input[id^="f_c"]', 'FW 2.4'); await page.click('#allt'); await page.fill('#tnotes', 'Remote paired and tested'); await page.click('#more'); await page.waitForTimeout(500);
+    await page.fill('#f_uid', 'UID-1002'); await page.click('#model'); await page.click('.select-option[data-value="V6 Box"]'); await page.fill('#cost', '40'); await page.fill('#price', '75'); await page.click('#go'); await page.waitForSelector('tr.click');
     assert.equal(await page.locator('tr.click').count(), 2);
 
     await page.goto(srv.base + '/app/#/sell'); await page.waitForSelector('#scan');
