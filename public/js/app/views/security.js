@@ -4,7 +4,7 @@
 
   AccountApp.views.security = async (main) => {
     const r = await AccountApp.api('GET', '/me'); AccountApp.me = r.user; const me = r.user;
-    swap(main, `<div class="page-head"><h1>Security</h1><p>Your sign-in: <span class="mono">${esc(me.login)}</span></p></div>
+    swap(main, `<div class="page-head"><h1>Security</h1><p>Reseller ID <span class="mono">${esc(me.accountCode)}</span> · username <span class="mono">${esc(me.username)}</span></p></div>
       <div class="card"><div class="row spread wrap"><div><h3>Two-factor authentication</h3><div class="sub mb-0">${me.totpEnabled ? 'On.' : 'Optional, and a good idea. Adds a code from your phone at sign-in.'}</div></div>${me.totpEnabled ? '<button class="btn danger" id="off">Turn off</button>' : '<button class="btn" id="on">Set up</button>'}</div></div>
       <div class="card"><div class="row spread wrap"><div><h3>Password</h3><div class="sub mb-0">Changing it keeps your access to the encrypted data.</div></div><button class="btn secondary" id="pw">Change password</button></div></div>
       ${me.role === 'Administrator' && AccountApp.vault.state?.enabled ? `<div class="card"><div class="row spread wrap"><div><h3>Recovery key</h3><div class="sub mb-0">${AccountApp.vault.state.recoveryConfirmed ? 'Saved. It is the only way to restore access if every password is forgotten.' : 'Not confirmed yet.'} Creating a new one makes the old one stop working.</div></div><button class="btn secondary" id="rk">Create new recovery key</button></div></div>` : ''}

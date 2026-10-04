@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { startServer } from './helpers.mjs';
+import { startServer, fillLogin } from './helpers.mjs';
 
 const exe = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium';
 let pw; try { pw = await import('playwright'); } catch { try { pw = await import('/opt/npm-tools/node_modules/playwright/index.mjs'); } catch {} }
@@ -19,8 +19,8 @@ test('browser: setup, add, sell, sign out, unlock, recovery key, CSV import', { 
   try {
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
     await page.fill('#bn', 'Demo Boxes'); await page.fill('#em', 'd@example.com'); await page.fill('#un', 'dana'); await page.fill('#pw', PW); await page.click('button.block');
-    await page.waitForSelector('#go'); const login = (await page.textContent('.codeblock')).trim(); await page.click('#go');
-    await page.fill('#l', login); await page.fill('#p', PW); await page.click('button.block');
+    await page.waitForSelector('#go'); const login = 'dana@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');
+    await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); const key = (await page.textContent('.recovery-key')).trim(); assert.equal(key.length, 52);
     assert.ok(await page.isDisabled('#go'), 'cannot continue before confirming the key is saved'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');
 
@@ -46,14 +46,14 @@ test('browser: setup, add, sell, sign out, unlock, recovery key, CSV import', { 
     assert.ok(!raw.includes('UID-1001') && !raw.includes('Zelda'));
 
     // sign out and in again: password unlocks; reload asks for the password again
-    await page.click('#out'); await page.fill('#l', login); await page.fill('#p', PW); await page.click('button.block'); await page.waitForSelector('.side');
+    await page.click('#out'); await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block'); await page.waitForSelector('.side');
     await page.goto(srv.base + '/app/#/sales'); await page.waitForSelector('tr.click'); assert.equal(await page.locator('tr.click').count(), 1);
     await page.reload(); await page.waitForSelector('#pw'); await page.fill('#pw', 'wrong-password-1'); await page.click('button.block'); await page.waitForTimeout(500); assert.ok(await page.isVisible('#pw'), 'wrong password does not unlock');
     await page.fill('#pw', PW); await page.click('button.block'); await page.waitForSelector('.side');
 
     // password reset by email leaves no key: the recovery key brings access back
     await page.click('#out'); const { DatabaseSync } = await import('node:sqlite'); const d = new DatabaseSync(path.join(srv.dir, 'myboxstock.db')); d.prepare('DELETE FROM account_keys').run(); d.close();
-    await page.fill('#l', login); await page.fill('#p', PW); await page.click('button.block'); await page.waitForSelector('#rk');
+    await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block'); await page.waitForSelector('#rk');
     await page.fill('#rk', 'AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA'); await page.fill('#pw', PW); await page.click('button.block'); await page.waitForTimeout(500); assert.ok(await page.isVisible('#rk'), 'wrong recovery key is refused');
     await page.fill('#rk', key); await page.fill('#pw', PW); await page.click('button.block'); await page.waitForSelector('.side');
 
@@ -69,7 +69,7 @@ test('browser: setup, add, sell, sign out, unlock, recovery key, CSV import', { 
     await page.click('#ok'); await page.waitForSelector('.cart-line'); assert.equal(await page.locator('.cart-line').count(), 2, 'both picked devices are in the cart');
     // a person added from the Team page (in the same browser session as setup) can sign in, choose a password and open the data
     await page.goto(srv.base + '/app/#/team'); await page.waitForSelector('#add'); await page.click('#add'); await page.fill('#u', 'stan'); await page.fill('#p', 'Temp-pass-12345'); await page.click('.sheet #go'); await page.waitForTimeout(800);
-    const other = await (await br.newContext()).newPage(); await other.goto(srv.base + '/app/'); await other.fill('#l', 'stan@' + login.split('@')[1]); await other.fill('#p', 'Temp-pass-12345'); await other.click('button.block');
+    const other = await (await br.newContext()).newPage(); await other.goto(srv.base + '/app/'); await fillLogin(other, 'stan@' + login.split('@')[1]); await other.fill('#p', 'Temp-pass-12345'); await other.click('button.block');
     await other.waitForSelector('#a'); await other.fill('#a', 'Temp-pass-12345'); await other.fill('#b', 'Brand-new-pass-678'); await other.click('button.block'); await other.waitForSelector('.side');
     await other.goto(srv.base + '/app/#/sales'); await other.waitForSelector('tr.click'); assert.equal(await other.locator('tr.click').count(), 1, 'the new person sees the account data');
     assert.deepEqual(errors, [], 'no script errors in the page');

@@ -3,6 +3,18 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.11.0] - 2026-10-04
+
+### Added
+- **Sign in with a Reseller ID and a username.** The sign-in page now has two boxes. New accounts get a generated Reseller ID made of three easy words and a number (for example `amber-fox-4271`), so it is always unique and never has to be invented. This browser remembers the ID, so next time only the username and password are needed. Capital letters and stray spaces do not matter.
+- **The same username or email can exist under different resellers.** A person with two businesses signs in to each with its own Reseller ID, and each has its own password and encrypted data.
+- **Reset by email address.** "Forgot password" now asks for the email address. One message lists a reset link for every reseller account that uses that mailbox, so nothing about which accounts exist is shown on screen, and each link changes only that account's password. New message "Password reset (several accounts)" in the Messages editor; the single-account reset message now names the Reseller ID and username.
+
+### Changed
+- Existing accounts keep their current ID (for example `BX-4K7Q2M`) as their Reseller ID, and the old one-box `username@id` sign-in keeps working. Nothing needs migrating.
+- Wording: "Account ID" is now "Reseller ID" in the Welcome and Trial ended messages, the Host Console and the Team and Security pages. The Welcome message lists the Reseller ID and username.
+- Links in messages are clickable in the styled version.
+
 ## [0.10.0] - 2026-10-04
 
 ### Added

@@ -12,7 +12,9 @@ export function loginRoutes(r, c) {
   const { db, realm, table } = c;
 
   r.post('/login', async (req, res) => {
-    const login = String(req.body.login || '').trim().toLowerCase(), pw = String(req.body.password || ''), ip = normalizeIp(req.ip);
+    const clean = (v) => String(v || '').trim().toLowerCase().replace(/\s+/g, '');
+    // Two boxes (Reseller ID + username) or the older single "username@id" box: both end up as the same sign-in name.
+    const login = req.body.resellerId !== undefined ? (req.body.username && req.body.resellerId ? `${clean(req.body.username)}@${clean(req.body.resellerId)}` : '') : String(req.body.login || '').trim().toLowerCase(), pw = String(req.body.password || ''), ip = normalizeIp(req.ip);
     if (!login || !pw) return fail(res, 400, 'LOGIN_MISSING_FIELDS');
     if (isLocked(login)) {
       L.warn('login.locked_out', `Sign-in attempt for locked identity "${login}"`, { actor: login, ip, data: { realm } });

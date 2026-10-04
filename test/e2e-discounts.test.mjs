@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { startServer } from './helpers.mjs';
+import { startServer, fillLogin } from './helpers.mjs';
 
 const exe = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium';
 let pw; try { pw = await import('playwright'); } catch { try { pw = await import('/opt/npm-tools/node_modules/playwright/index.mjs'); } catch {} }
@@ -17,8 +17,8 @@ test('browser: bulk add, discounts, receipt, Standard-user limit', { skip, timeo
   try {
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
     await page.fill('#bn', 'Reseller Co'); await page.fill('#em', 'r@example.com'); await page.fill('#un', 'rita'); await page.fill('#pw', PW); await page.click('button.block');
-    await page.waitForSelector('#go'); const login = (await page.textContent('.codeblock')).trim(); await page.click('#go');
-    await page.fill('#l', login); await page.fill('#p', PW); await page.click('button.block'); await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');
+    await page.waitForSelector('#go'); const login = 'rita@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');
+    await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block'); await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');
 
     await page.goto(srv.base + '/app/#/inventory'); await page.waitForSelector('#imp');
     const csv = path.join(os.tmpdir(), `d-${Date.now()}.csv`); fs.writeFileSync(csv, 'uid,model,cost,price\n' + [1, 2, 3, 4, 5, 6].map(i => `D-${i},X5,50,100`).join('\n'));
@@ -40,7 +40,7 @@ test('browser: bulk add, discounts, receipt, Standard-user limit', { skip, timeo
 
     // a Standard user is held to the limit (10% by default)
     await page.goto(srv.base + '/app/#/team'); await page.waitForSelector('#add'); await page.click('#add'); await page.fill('#u', 'stan'); await page.click('.sheet #r'); await page.click('.sheet .select-option[data-value=Standard]'); await page.fill('#p', 'Temp-pass-12345'); await page.click('.sheet #go'); await page.waitForTimeout(800);
-    const o = await (await br.newContext()).newPage(); await o.goto(srv.base + '/app/'); await o.fill('#l', 'stan@' + login.split('@')[1]); await o.fill('#p', 'Temp-pass-12345'); await o.click('button.block');
+    const o = await (await br.newContext()).newPage(); await o.goto(srv.base + '/app/'); await fillLogin(o, 'stan@' + login.split('@')[1]); await o.fill('#p', 'Temp-pass-12345'); await o.click('button.block');
     await o.waitForSelector('#a'); await o.fill('#a', 'Temp-pass-12345'); await o.fill('#b', 'Brand-new-pass-678'); await o.click('button.block'); await o.waitForSelector('.side');
     await o.goto(srv.base + '/app/#/sell'); await o.waitForSelector('#scan'); await o.fill('#scan', 'D-4'); await o.press('#scan', 'Enter'); await o.locator('[data-pct]').first().fill('25'); await o.click('#done'); await o.waitForTimeout(600);
     assert.equal(await o.locator('.receipt').count(), 0, 'sale over the limit is refused'); assert.match(await o.textContent('.toasts'), /more than the 10%/);

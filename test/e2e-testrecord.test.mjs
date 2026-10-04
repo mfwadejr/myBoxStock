@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startServer } from './helpers.mjs';
+import { startServer, fillLogin } from './helpers.mjs';
 
 const exe = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium';
 let pw; try { pw = await import('playwright'); } catch { try { pw = await import('/opt/npm-tools/node_modules/playwright/index.mjs'); } catch {} }
@@ -15,8 +15,8 @@ test('browser: test record details, tested-on date, switch off/on, date received
   try {
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
     await page.fill('#bn', 'Record Co'); await page.fill('#em', 'r@example.com'); await page.fill('#un', 'rita'); await page.fill('#pw', PW); await page.click('button.block');
-    await page.waitForSelector('#go'); const login = (await page.textContent('.codeblock')).trim(); await page.click('#go');
-    await page.fill('#l', login); await page.fill('#p', PW); await page.click('button.block');
+    await page.waitForSelector('#go'); const login = 'rita@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');
+    await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');
 
     // add a device: items under the firmware step stay hidden until it is ticked

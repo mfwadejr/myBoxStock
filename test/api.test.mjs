@@ -35,7 +35,7 @@ test('host admin: forced password change, then TOTP required at sign-in', async 
 test('accounts sign up with unique IDs; CSRF is enforced', async () => {
   await host.req('PUT', '/api/host/firewall/limits', { enabled: true, maxRequests: 5000, windowSec: 60, authMaxAttempts: 500, authWindowSec: 60, banAfterViolations: 50, banMinutes: 1, hostConsoleAllowOnly: false });
   let r = await alice.req('POST', '/api/app/signup', { businessName: 'Alice Boxes', email: 'alice@example.com', username: 'alice', password: STRONG }); assert.equal(r.status, 200);
-  assert.match(r.data.accountCode, /^BX-[A-Z2-9]{6}$/); assert.match(r.data.login, /^alice@bx-/);
+  assert.match(r.data.accountCode, /^[a-z]+-[a-z]+-\d{4}$/); assert.match(r.data.login, /^alice@[a-z]+-[a-z]+-\d{4}$/);
   alice.login = r.data.login; alice.code = r.data.accountCode;
   r = await bob.req('POST', '/api/app/signup', { businessName: 'Bob Streams', email: 'bob@example.com', username: 'alice', password: STRONG }); assert.equal(r.status, 200);
   assert.notEqual(r.data.accountCode, alice.code); bob.login = r.data.login; // same username, different account = fine

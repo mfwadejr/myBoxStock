@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startServer, Client } from './helpers.mjs';
+import { startServer, Client, fillLogin } from './helpers.mjs';
 
 const exe = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium';
 let pw; try { pw = await import('playwright'); } catch { try { pw = await import('/opt/npm-tools/node_modules/playwright/index.mjs'); } catch {} }
@@ -17,8 +17,8 @@ test('browser: link Host administrator, switcher on both sides, wrong password r
   try {
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
     await page.fill('#bn', 'Dual Co'); await page.fill('#em', 'd@example.com'); await page.fill('#un', 'dana'); await page.fill('#pw', PW); await page.click('button.block');
-    await page.waitForSelector('#go'); const login = (await page.textContent('.codeblock')).trim(); await page.click('#go');
-    await page.fill('#l', login); await page.fill('#p', PW); await page.click('button.block');
+    await page.waitForSelector('#go'); const login = 'dana@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');
+    await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');
     assert.equal(await page.locator('#sw').count(), 0, 'no switcher before linking');
 
@@ -44,7 +44,7 @@ test('browser: link Host administrator, switcher on both sides, wrong password r
     await hp.screenshot({ path: process.env.SHOT_DIR ? `${process.env.SHOT_DIR}/switch-host.png` : '/tmp/switch-host.png' });
     // choosing the reseller opens the app sign-in with the login filled in
     const [popup] = await Promise.all([ctx.waitForEvent('page'), hp.locator('.select-option', { hasText: 'Reseller · Dual Co' }).click()]);
-    await popup.waitForSelector('#l'); assert.equal(await popup.inputValue('#l'), login.toLowerCase());
+    await popup.waitForSelector('#l'); const at = login.lastIndexOf('@'); assert.equal(await popup.inputValue('#l'), login.slice(0, at).toLowerCase()); assert.equal(await popup.inputValue('#r'), login.slice(at + 1).toLowerCase());
 
     // the Owner turns linking off for the account: the link and switcher go away
     await owner.req('POST', `/api/host/accounts/${acct}/host-link`, { allowed: false });

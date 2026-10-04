@@ -9,12 +9,12 @@
     let q = '', plan = '';
     const load = async () => {
       const rows = await Host.api('GET', '/accounts?q=' + encodeURIComponent(q) + '&plan=' + encodeURIComponent(plan));
-      main.querySelector('#tbl').innerHTML = rows.length ? `<table><thead><tr><th>Business</th><th>Account ID</th><th>Owner</th><th>Users</th><th>Plan</th><th>Status</th><th>Last active</th></tr></thead><tbody>${rows.map(a => `
+      main.querySelector('#tbl').innerHTML = rows.length ? `<table><thead><tr><th>Business</th><th>Reseller ID</th><th>Owner</th><th>Users</th><th>Plan</th><th>Status</th><th>Last active</th></tr></thead><tbody>${rows.map(a => `
         <tr class="click" data-id="${a.id}"><td><b>${esc(a.business_name)}</b></td><td class="mono">${esc(a.account_code)}</td><td class="muted">${esc(a.owner_email)}</td><td>${a.user_count}</td><td>${planChip(a.billing)}</td>
         <td><span class="chip ${a.status === 'active' ? 'green' : 'red'}">${esc(a.status)}</span></td><td class="muted">${fmt.ago(a.last_activity)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No accounts yet.</div>';
     };
     swap(main, `${Host.head('Accounts', 'Support tools for signed-up businesses. Their inventory, sales and customers are private and never shown here.')}
-      <div class="card"><div class="row wrap"><div class="field grow"><input type="search" id="q" placeholder="Search by business, account ID or email"></div>
+      <div class="card"><div class="row wrap"><div class="field grow"><input type="search" id="q" placeholder="Search by business, Reseller ID or email"></div>
         <div class="field">${UI.select.html({ id: 'pf', options: [['', 'All plans'], ['trial', 'On trial'], ['free', 'Free (comped)'], ['paid', 'Paid'], ['expired', 'Ended / read-only']] })}</div></div><div class="tablewrap" id="tbl"></div></div>`);
     let t; main.querySelector('#q').addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => { q = e.target.value; load(); }, 250); });
     main.querySelector('#pf').addEventListener('change', (e) => { plan = UI.select.value(e.target); load(); });

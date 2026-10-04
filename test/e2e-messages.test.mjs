@@ -38,7 +38,7 @@ test('browser: Messages tab edits wording with a live preview', { skip, timeout:
 
     // a placeholder chip inserts at the cursor; a required one cannot be dropped
     await page.click('#mk'); await page.click('.select-option[data-value=welcome]'); await page.waitForSelector('.sheet #ok'); await page.click('.sheet #ok'); // discard prompt (unsaved changes)
-    await page.waitForSelector('[data-ph=login]'); await page.fill('#sub', 'Welcome'); await page.fill('#body', 'Hello'); await page.click('[data-ph=name]');
+    await page.waitForSelector('[data-ph=username]'); await page.fill('#sub', 'Welcome'); await page.fill('#body', 'Hello'); await page.click('[data-ph=name]');
     assert.equal(await page.inputValue('#body'), 'Hello{{name}}');
     await page.waitForFunction(() => document.querySelector('#prob')?.textContent.includes('{{accountCode}}')); assert.equal(await page.locator('#save').isDisabled(), true, 'Save is off while a required detail is missing');
     await page.fill('#body', 'Hello {{name}}, your ID is {{accountCode}}'); await page.waitForFunction(() => !document.querySelector('#save').disabled);

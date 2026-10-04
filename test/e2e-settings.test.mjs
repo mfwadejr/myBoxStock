@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startServer } from './helpers.mjs';
+import { startServer, fillLogin } from './helpers.mjs';
 
 const exe = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium';
 let pw; try { pw = await import('playwright'); } catch { try { pw = await import('/opt/npm-tools/node_modules/playwright/index.mjs'); } catch {} }
@@ -15,8 +15,8 @@ test('browser: remove a built-in detail, warranty countdown, unlock behaviour', 
   try {
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
     await page.fill('#bn', 'Warranty Co'); await page.fill('#em', 'w@example.com'); await page.fill('#un', 'wanda'); await page.fill('#pw', PW); await page.click('button.block');
-    await page.waitForSelector('#go'); const login = (await page.textContent('.codeblock')).trim(); await page.click('#go');
-    await page.fill('#l', login); await page.fill('#p', PW); await page.click('button.block');
+    await page.waitForSelector('#go'); const login = 'wanda@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');
+    await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');
 
     // 1. a built-in detail (Supplier) can be removed, after a confirmation
@@ -52,7 +52,7 @@ test('browser: remove a built-in detail, warranty countdown, unlock behaviour', 
     await page.click('#out'); await page.waitForSelector('#l'); assert.ok(await page.evaluate(() => !sessionStorage.getItem('bx.keep')), 'sign-out wipes the key');
 
     // strict mode prompts again
-    await page.fill('#l', login); await page.fill('#p', PW); await page.click('button.block'); await page.waitForSelector('.side');
+    await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block'); await page.waitForSelector('.side');
     await page.goto(srv.base + '/app/#/settings'); await page.waitForSelector('#um'); await page.click('#um'); await page.click('.select-option[data-value=ask]'); await page.click('#save'); await page.waitForTimeout(800);
     assert.ok(await page.evaluate(() => !sessionStorage.getItem('bx.keep')), 'strict mode keeps nothing');
     await page.reload(); await page.waitForSelector('#pw');

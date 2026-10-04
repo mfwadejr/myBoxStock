@@ -8,8 +8,10 @@ const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;
 // Placeholders a message may use. sample = what the preview shows; bold = shown in bold (identifiers people may need to copy).
 export const PLACEHOLDERS = {
   name: { label: 'Name', sample: 'Alex' },
-  accountCode: { label: 'Account ID', sample: 'BX-4K7Q2M', bold: true },
-  login: { label: 'Sign-in name', sample: 'alex@BX-4K7Q2M', bold: true },
+  accountCode: { label: 'Reseller ID', sample: 'amber-fox-4271', bold: true },
+  username: { label: 'Username', sample: 'alex', bold: true },
+  login: { label: 'Sign-in name', sample: 'alex@amber-fox-4271', bold: true },
+  accounts: { label: 'Your accounts and reset links', sample: 'Alex Boxes — Reseller ID: amber-fox-4271, username: alex\nhttps://app.myboxstock.com/app/#/reset/example' },
   trialLine: { label: 'Trial sentence', sample: 'Your free trial runs for 14 days (until 2026-10-18).' },
   ip: { label: 'Address', sample: '203.0.113.24', bold: true },
   device: { label: 'Device', sample: 'Chrome on a Mac', bold: true },
@@ -22,15 +24,18 @@ export const PLACEHOLDERS = {
 
 // group = how the Messages editor groups them; vars = placeholders offered; required = ones the wording must keep; button = { label, to: placeholder holding the address }.
 export const TEMPLATES = {
-  welcome: { group: 'Account', name: 'Welcome', title: 'Welcome to myBoxStock', subject: 'Welcome to myBoxStock — your account ID is {{accountCode}}',
-    body: 'Hi {{name}},\n\nYour account is ready.\n\nAccount ID: {{accountCode}}\nSign in with: {{login}}\n\n{{trialLine}}',
-    button: { label: 'Open myBoxStock', to: 'url' }, vars: ['name', 'accountCode', 'login', 'trialLine'], required: ['accountCode'] },
+  welcome: { group: 'Account', name: 'Welcome', title: 'Welcome to myBoxStock', subject: 'Welcome to myBoxStock — your Reseller ID is {{accountCode}}',
+    body: 'Hi {{name}},\n\nYour account is ready. You sign in with two things: your Reseller ID and your username.\n\nReseller ID: {{accountCode}}\nUsername: {{username}}\n\nKeep your Reseller ID somewhere safe. This browser remembers it, but you will need it on a new device.\n\n{{trialLine}}',
+    button: { label: 'Open myBoxStock', to: 'url' }, vars: ['name', 'accountCode', 'username', 'trialLine'], required: ['accountCode'] },
   new_sign_in: { group: 'Account', name: 'New sign-in alert', title: 'New sign-in to your account', subject: 'New sign-in to your myBoxStock account',
     body: 'Hi {{name}},\n\nYour account was just signed in to from a new address.\n\nAddress: {{ip}}\nDevice: {{device}}\nTime: {{time}}\n\nIf this was you, no action is needed. If not, change your password right away and tell your account administrator.',
     vars: ['name', 'ip', 'device', 'time'], required: ['ip', 'time'] },
   password_reset: { group: 'Account', name: 'Password reset', title: 'Choose a new password', subject: 'Reset your myBoxStock password',
-    body: 'Hi {{name}},\n\nSomeone asked to reset the password for your account. Use the button below to choose a new password. The link is valid for 1 hour.\n\nIf this was not you, you can ignore this email.',
-    button: { label: 'Choose a new password', to: 'link' }, vars: ['name'], required: [] },
+    body: 'Hi {{name}},\n\nSomeone asked to reset the password for your account (Reseller ID: {{accountCode}}, username: {{username}}). Use the button below to choose a new password. The link is valid for 1 hour.\n\nIf this was not you, you can ignore this email.',
+    button: { label: 'Choose a new password', to: 'link' }, vars: ['name', 'accountCode', 'username'], required: [] },
+  password_reset_multi: { group: 'Account', name: 'Password reset (several accounts)', title: 'Choose a new password', subject: 'Reset your myBoxStock password',
+    body: 'Hi {{name}},\n\nSomeone asked to reset your password. This email address is used on more than one account, so there is a link for each. Each account has its own password: use the link for the account you want. The links are valid for 1 hour.\n\n{{accounts}}\n\nIf this was not you, you can ignore this email.',
+    vars: ['name', 'accounts'], required: ['accounts'] },
   temp_password: { group: 'Account', name: 'Temporary password', title: 'Your temporary password', subject: 'Your temporary myBoxStock password',
     body: 'Hi {{name}},\n\nA support administrator set a temporary password for your account. You will be asked to change it when you sign in.',
     button: { label: 'Sign in', to: 'url' }, vars: ['name'], required: [] },
@@ -38,7 +43,7 @@ export const TEMPLATES = {
     body: 'Hi {{name}},\n\nA support administrator reset two-factor authentication on your account. Sign in and set it up again from Security settings.\n\nIf this was unexpected, contact support.',
     vars: ['name'], required: [] },
   trial_ended: { group: 'Trial', name: 'Trial ended', title: 'Your free trial has ended', subject: 'Your myBoxStock trial has ended',
-    body: 'Hi {{name}},\n\nThe free trial for account {{accountCode}} has ended. Your data is safe and the account is now read-only: you can still sign in and look at everything, but changes are paused.\n\nContact support to continue.',
+    body: 'Hi {{name}},\n\nThe free trial for Reseller ID {{accountCode}} has ended. Your data is safe and the account is now read-only: you can still sign in and look at everything, but changes are paused.\n\nContact support to continue.',
     vars: ['name', 'accountCode'], required: ['accountCode'] },
   backup_failed: { group: 'System', name: 'Backup failed', title: 'A scheduled backup did not complete', subject: 'myBoxStock: the scheduled backup did not complete',
     body: 'The scheduled full-site backup did not complete.\n\nTime: {{when}}\nProblem: {{error}}\n\nOpen the Host Console, Backups page, to check it and run one by hand.',
@@ -68,7 +73,8 @@ export function problems(key, w) {
 }
 
 const fillText = (str, vars) => str.replace(/\{\{(\w+)\}\}/g, (_, k) => String(vars[k] ?? ''));
-const fillHtml = (str, vars) => esc(str).replace(/\{\{(\w+)\}\}/g, (_, k) => { const v = esc(vars[k] ?? ''); return PLACEHOLDERS[k]?.bold && v ? `<b>${v}</b>` : v; });
+const linkify = (html) => html.replace(/https?:\/\/[^\s<]+/g, (u) => `<a href="${u}">${u}</a>`);
+const fillHtml = (str, vars) => linkify(esc(str).replace(/\{\{(\w+)\}\}/g, (_, k) => { const v = esc(vars[k] ?? ''); return PLACEHOLDERS[k]?.bold && v ? `<b>${v}</b>` : v; }));
 const paragraphs = (body) => body.replace(/\r/g, '').trim().split(/\n{2,}/);
 const btn = (href, label) => `<p><a style="${S.button}" href="${esc(href)}">${esc(label)}</a></p>`;
 const wrap = (title, inner) => `<!doctype html><html><body style="${S.body}"><div style="${S.card}"><div align="center" style="${S.header}"><img src="cid:${LOGO_CID}" width="56" height="56" alt="myBoxStock" style="${S.logo}"><div style="${S.brand}">myBoxStock</div></div><h1 style="${S.title}">${esc(title)}</h1>${inner}</div><div style="${S.footer}">You are receiving this because of activity on your myBoxStock account.<br>Please do not reply to this message.</div></body></html>`;

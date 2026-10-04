@@ -46,3 +46,6 @@ export function allLogText(logDir) {
 }
 export const readJsonl = (logDir, area) => fs.readFileSync(path.join(logDir, area, `${area}.jsonl`), 'utf8').trim().split('\n').filter(Boolean).map(l => JSON.parse(l));
 export const readHuman = (logDir, area) => fs.readFileSync(path.join(logDir, area, `${area}.log`), 'utf8').trim().split('\n').filter(Boolean);
+
+// The sign-in form has two boxes (Reseller ID, username): fill both from a "username@reseller-id" sign-in name.
+export async function fillLogin(page, login) { const i = String(login).lastIndexOf('@'); await page.fill('#r', String(login).slice(i + 1)); await page.fill('#l', String(login).slice(0, i)); }

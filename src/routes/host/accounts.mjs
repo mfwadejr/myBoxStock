@@ -64,7 +64,7 @@ export function accountsRoutes(db) {
 
   r.delete('/:id', async (req, res) => {
     const a = await getAccount(req.params.id); if (!a) return fail(res, 404, 'NOT_FOUND');
-    if (req.body.confirm !== a.account_code) return res.status(400).json({ error: `Type the account ID (${a.account_code}) to confirm.` });
+    if (req.body.confirm !== a.account_code) return res.status(400).json({ error: `Type the Reseller ID (${a.account_code}) to confirm.` });
     await db.tx(async (t) => { // write-only erase; nothing is read
       await t.run("DELETE FROM sessions WHERE realm = 'app' AND account_id = ?", [a.id]);
       await t.run('DELETE FROM password_resets WHERE realm = ? AND subject_id IN (SELECT id FROM account_users WHERE account_id = ?)', ['app', a.id]);
@@ -109,7 +109,7 @@ export function accountsRoutes(db) {
     if (!u.email) return res.status(400).json({ error: 'This user has no email address on file.' });
     const raw = token(32);
     await db.run('INSERT INTO password_resets (token_hash, realm, subject_id, expires_at, used) VALUES (?,?,?,?,0)', [sha256(raw), 'app', u.id, Date.now() + 3600e3]);
-    await enqueueMail(db, u.email, 'password_reset', { name: u.username, link: `${config.publicUrl}/app/#/reset/${raw}` }); processQueue(db).catch(() => {});
+    await enqueueMail(db, u.email, 'password_reset', { name: u.username, username: u.username, accountCode: (await db.get('SELECT account_code FROM accounts WHERE id = ?', [u.account_id]))?.account_code || '', link: `${config.publicUrl}/app/#/reset/${raw}` }); processQueue(db).catch(() => {});
     A(req, 'info', 'user.reset_link_sent', `Password reset link emailed to ${u.login}`, { id: u.account_id }, { login: u.login });
     res.json({ ok: true });
   });

@@ -27,16 +27,22 @@
     try { const r = await AccountApp.api('GET', '/me'); UI.setCsrf(r.csrf); AccountApp.me = r.user; AccountApp.vault.state = r.vault; if (r.mfaPending) return mfaScreen(); if (r.mustChange) return changePwScreen(); if (!await AccountApp.vault.gate(r, AccountApp.pw)) return; AccountApp.pw = null; await AccountApp.store.load(); await AccountApp.vault.policy(); return shell(); }
     catch (e) { if (location.hash === '#/signup' && cfg.signupsEnabled) signupScreen(); else loginScreen(); if (e && e.status !== 401) toast(e.message || 'Sign-in could not finish. Please try again.', true); }
   }
+  // This browser remembers the Reseller ID (not the password) so next time only the username is needed.
+  const rememberedId = () => { try { return localStorage.getItem('mbs.resellerId') || ''; } catch { return ''; } };
+  const rememberId = (v) => { try { localStorage.setItem('mbs.resellerId', v); } catch {} };
   function loginScreen() {
     authShell(`${modeSwitch('login')}<h1>myBoxStock</h1><p class="lead">Sign in to your account.</p>
-      <form id="f"><div class="field"><label>Sign-in</label><input type="text" id="l" placeholder="username@BX-ABC123" autocapitalize="none" autocomplete="username" required><div class="hint">Your username followed by your account ID.</div></div>
+      <form id="f"><div class="field"><label>Reseller ID</label><input type="text" id="r" placeholder="amber-fox-4271" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="organization" required><div class="hint">It was in your welcome email, and your account administrator can tell you.</div></div>
+      <div class="field"><label>Username</label><input type="text" id="l" autocapitalize="none" autocorrect="off" autocomplete="username" required></div>
       <div class="field"><label>Password</label><input type="password" id="p" autocomplete="current-password" required></div><button class="btn block">Sign in</button></form>
       <p class="hint center mt-lg"><a href="#" id="fg">Forgot password?</a>${cfg.signupsEnabled ? ' · <a href="#" id="su">Create an account</a>' : ''}</p>`);
     wireSwitch();
-    { const m = location.hash.match(/^#\/u\/(.+)$/); if (m) { root.querySelector('#l').value = decodeURIComponent(m[1]); root.querySelector('#p').focus(); } } // opened from the Host Console switcher
+    root.querySelector('#r').value = rememberedId();
+    { const m = location.hash.match(/^#\/u\/(.+)$/); if (m) { const v = decodeURIComponent(m[1]), i = v.lastIndexOf('@'); root.querySelector('#l').value = i < 0 ? v : v.slice(0, i); if (i >= 0) root.querySelector('#r').value = v.slice(i + 1); } } // opened from the Host Console switcher
+    root.querySelector(root.querySelector('#r').value ? (root.querySelector('#l').value ? '#p' : '#l') : '#r').focus();
     root.querySelector('#fg').addEventListener('click', (e) => { e.preventDefault(); forgotScreen(); });
     root.querySelector('#su')?.addEventListener('click', (e) => { e.preventDefault(); signupScreen(); });
-    onSubmit('#f', async () => { AccountApp.pw = val('#p'); let r; try { r = await AccountApp.api('POST', '/login', { login: val('#l'), password: AccountApp.pw }); } catch (e) { AccountApp.pw = null; throw e; } UI.setCsrf(r.csrf); if (r.mfa) return mfaScreen(); await boot(); });
+    onSubmit('#f', async () => { AccountApp.pw = val('#p'); let r; try { r = await AccountApp.api('POST', '/login', { resellerId: val('#r'), username: val('#l'), password: AccountApp.pw }); } catch (e) { AccountApp.pw = null; throw e; } rememberId(val('#r').trim().toLowerCase()); UI.setCsrf(r.csrf); if (r.mfa) return mfaScreen(); await boot(); });
   }
   function mfaScreen() {
     authShell(`<h1>Two-factor code</h1><p class="lead">Enter the 6-digit code from your authenticator app, or a recovery code.</p>
@@ -57,14 +63,14 @@
     root.querySelector('#bk').addEventListener('click', (e) => { e.preventDefault(); loginScreen(); });
     onSubmit('#f', async () => {
       const r = await AccountApp.api('POST', '/signup', { businessName: val('#bn'), email: val('#em'), username: val('#un'), password: val('#pw') });
-      authShell(`<h1>You’re all set</h1><p class="lead">Keep your account ID — it’s part of every sign-in.</p><div class="codeblock large">${esc(r.login)}</div><p class="hint center my-lg">Account ID <b>${esc(r.accountCode)}</b>. We’ve also emailed it to you.</p><button class="btn block" id="go">Continue to sign in</button>`);
-      root.querySelector('#go').addEventListener('click', loginScreen);
+      authShell(`<h1>You’re all set</h1><p class="lead">Keep your Reseller ID — you need it, with your username, to sign in.</p><div class="codeblock large">${esc(r.resellerId)}</div><p class="hint center my-lg">Username <b>${esc(r.username)}</b>. We’ve also emailed these to you. This browser will remember the ID.</p><button class="btn block" id="go">Continue to sign in</button>`);
+      rememberId(r.resellerId); root.querySelector('#go').addEventListener('click', loginScreen);
     });
   }
   function forgotScreen() {
-    authShell(`<h1>Reset password</h1><p class="lead">Enter your sign-in and we’ll email a reset link.</p><form id="f"><div class="field"><input type="text" id="l" placeholder="username@BX-ABC123" autocapitalize="none" required></div><button class="btn block">Send link</button></form><p class="hint center mt-lg"><a href="#" id="bk">Back</a></p>`);
+    authShell(`<h1>Reset password</h1><p class="lead">Enter the email address on your account and we’ll send a reset link for each account that uses it.</p><form id="f"><div class="field"><label>Email</label><input type="email" id="l" autocapitalize="none" autocomplete="email" required></div><button class="btn block">Send link</button></form><p class="hint center mt-lg"><a href="#" id="bk">Back</a></p>`);
     root.querySelector('#bk').addEventListener('click', (e) => { e.preventDefault(); loginScreen(); });
-    onSubmit('#f', async () => { await AccountApp.api('POST', '/forgot', { login: val('#l') }); toast('If that account exists, a link is on its way.'); loginScreen(); });
+    onSubmit('#f', async () => { await AccountApp.api('POST', '/forgot', { email: val('#l') }); toast('If that email is on an account, a link is on its way.'); loginScreen(); });
   }
   function resetScreen(tok) {
     authShell(`<h1>New password</h1><p class="lead">Choose a new password for your account.</p><form id="f"><div class="field"><input type="password" id="p" autocomplete="new-password" required><div class="hint">At least 10 characters with letters and numbers.</div></div><button class="btn block">Save password</button></form>`);
