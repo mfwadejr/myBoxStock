@@ -3,6 +3,18 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.8.0] - 2026-10-04
+
+### Added
+- **Discounts** in Quick sale: a % off any single device and/or a % off the whole order. The sale shows the subtotal, what was saved and the total; receipts show each discount and the order discount. Settings has a limit on how much a Standard user may discount in total (Administrators are unlimited). The limit is checked in the app, because the server cannot see encrypted sale data.
+- **Add by quantity** in Quick sale: choose a model and a number and the oldest available units are added. The stock picker also has **Select all shown**.
+- Settings: the choices of a "Choice from a list" detail (such as Condition) can now be changed at any time.
+
+### Changed
+- **Outbound emails** (welcome, password reset, new sign-in, trial ended, two-factor reset, temporary password, backup failure, test) now share one branded layout: the myBoxStock logo and name at the top, a clear title, the app's colours, font and button style, and a footer. The logo is attached inside the message so it shows without loading remote images.
+- Settings → Device details: the delete ✕ now sits at the far right of each row, in line with the other lists. The ✕ on Quick sale lines matches the same round icon button.
+- Removed unused logo tokens from `tokens.css`.
+
 ## [0.7.0] - 2026-10-03
 
 ### Added

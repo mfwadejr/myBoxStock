@@ -4,6 +4,11 @@ import { areaLogger } from '../../logging/logger.mjs';
 import { getMailSettings } from './settings.mjs';
 import { render } from './templates.mjs';
 import { transportFor } from './transport.mjs';
+import { LOGO_CID } from './theme.mjs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const LOGO_FILE = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'public', 'assets', 'logo-email.png');
 
 const L = areaLogger('mail');
 const MAX_ATTEMPTS = 5;
@@ -20,7 +25,7 @@ async function deliver(db, row) {
   if (!settings.enabled) throw new Error('Outbound email is disabled in Host settings.');
   if (!settings.fromAddress) throw new Error('Set a From address first.');
   const { transport, via } = await transportFor(settings, row.to_addr);
-  await transport.sendMail({ from: `"${settings.fromName}" <${settings.fromAddress}>`, to: row.to_addr, subject: row.subject, text: row.body_text, html: row.body_html });
+  await transport.sendMail({ from: `"${settings.fromName}" <${settings.fromAddress}>`, to: row.to_addr, subject: row.subject, text: row.body_text, html: row.body_html, attachments: [{ filename: 'myboxstock.png', path: LOGO_FILE, cid: LOGO_CID, contentDisposition: 'inline' }] });
   return via;
 }
 

@@ -13,9 +13,12 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .sell .card + .card { margin-top: var(--space-lg); }
 @media (max-width: 820px) { .sell { grid-template-columns: 1fr; } }
 .scan { font-size: var(--text-lg); height: var(--control-h-xl); }
-.cart-line { display: grid; grid-template-columns: minmax(0, 1fr) var(--width-xs) auto; gap: var(--space-md); align-items: center; padding: var(--space-md) var(--space-0); border-bottom: var(--border-default); }
+.cart-line { display: grid; grid-template-columns: minmax(0, 1fr) var(--width-xs) var(--col-pct-w) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-md) var(--space-0); border-bottom: var(--border-default); }
 .cart-line:last-child { border-bottom: 0; }
-.cart-line .price { text-align: right; }
+.cart-line .price, .cart-line .pct { text-align: right; }
+.stock-bulk { margin-top: var(--space-md); }
+.sum-line, .line-sub { display: flex; justify-content: space-between; align-items: baseline; color: var(--color-text-muted); font-size: var(--text-sm); margin: var(--space-xs) var(--space-0); }
+.strike { text-decoration: line-through; }
 .total-line { display: flex; justify-content: space-between; align-items: baseline; font-size: var(--text-xl); font-weight: var(--weight-semibold); margin: var(--space-lg) var(--space-0); }
 .pick-list { list-style: none; margin: var(--space-xs) var(--space-0) var(--space-0); padding: var(--space-xs); background: var(--color-surface); border: var(--border-default); border-radius: var(--radius-md); box-shadow: var(--shadow-overlay); max-height: var(--pick-list-max-h); overflow: auto; }
 .pick-list li { padding: var(--space-sm) var(--space-md); border-radius: var(--radius-sm); cursor: pointer; }
@@ -26,10 +29,10 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .receipt table { margin: var(--space-lg) var(--space-0); }
 .receipt .line-total { display: flex; justify-content: space-between; font-weight: var(--weight-semibold); font-size: var(--text-lg); border-top: var(--border-strong); padding-top: var(--space-md); }
 .test-record { margin-top: var(--space-xs); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-sm); background: var(--color-wash-faint); border: var(--border-default); }
-.check-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(4, var(--col-check-w)); gap: var(--space-sm); align-items: center; padding: var(--space-sm) var(--space-0); border-bottom: var(--border-default); }
+.check-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(4, var(--col-check-w)) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-sm) var(--space-0); border-bottom: var(--border-default); }
 .check-row:last-child { border-bottom: 0; }
 .check-head { font-size: var(--text-xs); color: var(--color-text-muted); font-weight: var(--weight-medium); }
-.check-row .check { justify-content: center; }
+.check-row .check, .check-row .icon-btn { justify-self: center; justify-content: center; }
 .check-head span:not(:first-child) { text-align: center; }
 .check-row, .step-row { max-width: var(--config-w); }
 .war-row input[type=text] { height: var(--control-h-md); }
@@ -38,7 +41,7 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .icon-slot { width: var(--control-h-md); }
 .check-row input[type=text], .step-row input[type=text] { height: var(--control-h-md); }
 .check-row .row { gap: var(--space-sm); }
-.check-row .chip { flex: none; width: var(--chip-type-w); justify-content: center; }
+.check-row .chip, .check-row .type-btn { flex: none; width: var(--chip-type-w); justify-content: center; }
 .step-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--col-req-w) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); }
 .tests { margin-top: var(--space-md); padding: var(--space-md) var(--space-lg); border-radius: var(--radius-md); background: var(--color-wash-faint); border: var(--border-default); }
 .tests .check { padding: var(--space-3xs) var(--space-0); }

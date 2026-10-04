@@ -25,6 +25,11 @@ test('browser: remove a built-in detail, warranty countdown, unlock behaviour', 
     await page.locator('[data-k=rmf]').last().click(); await page.waitForSelector('.sheet #ok'); await page.click('.sheet #ok');
     assert.equal(await page.locator('[data-k=fl]').count(), rows - 1, 'Supplier is gone from the list');
 
+    // a choice list can be changed, and the delete buttons sit at the far right of each row
+    await page.locator('[data-k=ech]').first().click(); await page.fill('.sheet #o', 'New\nRefurbished\nUsed\nFor parts'); await page.click('.sheet #go');
+    assert.match(await page.locator('[data-k=ech]').first().textContent(), /Choices \(4\)/);
+    const rm = await page.locator('[data-k=rmf]').first().boundingBox(), sw = await page.locator('[data-k=fs]').first().boundingBox(); assert.ok(rm.x > sw.x, 'the delete button is right of the last checkbox');
+
     // 2. add a 6-month warranty period and make it the default
     await page.click('#addw'); await page.fill('.sheet #a', '6');
     await page.click('.sheet #go'); const wl = page.locator('[data-k=wl]'); assert.equal(await wl.last().inputValue(), '6 months');

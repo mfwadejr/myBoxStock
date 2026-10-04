@@ -70,6 +70,13 @@
   C.warrantyChip = (sale) => { const s = C.warrantyState(sale.warranty); return sale.voided ? '<span class="chip gray">Void</span>' : `<span class="chip ${s.cls}">${esc(s.text)}</span>`; };
   C.warrantyLine = (sale) => sale.warranty?.end ? `Warranty: ${sale.warranty.label} · ends ${F().day(sale.warranty.end)} · ${C.warrantyState(sale.warranty).text}` : 'Warranty: none';
 
+  // ---- discounts: a % off any line and/or the whole order; Administrators may be capped for Standard users in Settings ----
+  C.pct = (v) => Math.min(100, Math.max(0, Math.round((Number(v) || 0) * 10) / 10));
+  C.lineNet = (price, pct) => Math.round(price * (100 - C.pct(pct)) / 100);
+  C.saleTotals = (lines, orderPct) => { const list = lines.reduce((t, l) => t + l.price, 0), sub = lines.reduce((t, l) => t + C.lineNet(l.price, l.pct), 0), off = Math.round(sub * C.pct(orderPct) / 100); return { list, sub, off, total: sub - off, saved: list - (sub - off) }; };
+  C.discountCap = () => AccountApp.can('users.manage') ? 100 : AccountApp.store.config().discount.maxStandardPct;
+  C.overCap = (lines, orderPct) => { const t = C.saleTotals(lines, orderPct); return t.list > 0 && (t.saved / t.list) * 100 > C.discountCap() + 0.05; };
+
   // ---- sales helpers ----
   C.newReceiptNo = () => `S-${F().ymd(Date.now())}-${Vault.newId().replace(/[-_]/g, '').slice(0, 4).toUpperCase()}`;
   C.salesOf = (customerId) => AccountApp.store.all('sale').filter(s => !s.data.voided && s.data.customerId === customerId);
@@ -80,9 +87,10 @@
   C.receiptText = (sale, withTests = false) => {
     const d = sale.data, me = AccountApp.me, lines = [`${me.businessName}`, `Receipt ${d.no}`, F().when(d.ts), d.customerName ? `Customer: ${d.customerName}` : 'Walk-in customer', ''];
     for (const it of d.items) {
-      lines.push(`${C.itemLabel(it)}  ${F().money(it.price)}`); for (const x of it.fields || []) lines.push(`   ${x.label}: ${x.value}`);
+      lines.push(`${C.itemLabel(it)}  ${F().money(it.price)}${it.pct ? ` (${it.pct}% off ${F().money(it.listPrice)})` : ''}`); for (const x of it.fields || []) lines.push(`   ${x.label}: ${x.value}`);
       if (withTests && it.inspection) { lines.push('   Test record:'); for (const st of it.inspection.steps) lines.push(`    ${stepLine(st)}`); if (it.inspection.notes) lines.push(`    Notes: ${it.inspection.notes}`); }
     }
+    if (d.orderPct) lines.push('', `Subtotal: ${F().money(d.subtotal)}`, `Order discount ${d.orderPct}%: -${F().money(d.orderOff)}`);
     lines.push('', `Total: ${F().money(d.total)}`, `Paid by: ${C.paymentLabel(d.payment)}`, C.warrantyLine(d)); if (d.notes) lines.push('', d.notes); lines.push('', 'Thank you!'); return lines.join('\n');
   };
   C.hasTests = (sale) => sale.data.items.some(it => it.inspection?.steps?.length);
@@ -90,8 +98,8 @@
   const receiptHtml = (sale, withTests) => { const d = sale.data;
     return `<div class="receipt"><img class="receipt-logo" src="/assets/logo-512.png" alt="" width="512" height="512"><h2>${esc(AccountApp.me.businessName)}</h2><div class="sub center">Receipt ${esc(d.no)} · ${esc(F().when(d.ts))}</div>${d.voided ? '<p class="banner red center mt-md">This sale was voided.</p>' : ''}
       <p class="center mt-md">${d.customerName ? `Customer: <b>${esc(d.customerName)}</b>` : 'Walk-in customer'}</p>
-      <table><tbody>${d.items.map(it => `<tr><td><div>${esc(C.itemLabel(it))}</div>${(it.fields || []).length ? `<div class="sub text-sm">${it.fields.map(x => `${esc(x.label)}: ${esc(x.value)}`).join(' · ')}</div>` : ''}${withTests ? testHtml(it) : ''}</td><td class="right nowrap">${esc(F().money(it.price))}</td></tr>`).join('')}</tbody></table>
-      <div class="line-total"><span>Total</span><span>${esc(F().money(d.total))}</span></div><p class="sub center mt-md">Paid by ${esc(C.paymentLabel(d.payment))}</p><p class="center mt-sm">${esc(C.warrantyLine(d))}</p>${d.notes ? `<p class="center mt-md">${esc(d.notes)}</p>` : ''}<p class="sub center mt-lg">Thank you!</p></div>`; };
+      <table><tbody>${d.items.map(it => `<tr><td><div>${esc(C.itemLabel(it))}</div>${it.pct ? `<div class="sub text-sm">${esc(it.pct)}% off</div>` : ''}${(it.fields || []).length ? `<div class="sub text-sm">${it.fields.map(x => `${esc(x.label)}: ${esc(x.value)}`).join(' · ')}</div>` : ''}${withTests ? testHtml(it) : ''}</td><td class="right nowrap">${it.pct ? `<div class="sub text-sm strike">${esc(F().money(it.listPrice))}</div>` : ''}<div>${esc(F().money(it.price))}</div></td></tr>`).join('')}</tbody></table>
+      ${d.orderPct ? `<div class="line-sub"><span>Subtotal</span><span>${esc(F().money(d.subtotal))}</span></div><div class="line-sub"><span>Order discount ${esc(d.orderPct)}%</span><span>−${esc(F().money(d.orderOff))}</span></div>` : ''}<div class="line-total"><span>Total</span><span>${esc(F().money(d.total))}</span></div><p class="sub center mt-md">Paid by ${esc(C.paymentLabel(d.payment))}</p><p class="center mt-sm">${esc(C.warrantyLine(d))}</p>${d.notes ? `<p class="center mt-md">${esc(d.notes)}</p>` : ''}<p class="sub center mt-lg">Thank you!</p></div>`; };
 
   // Receipt sheet: print, email (opens the person's own mail app — nothing goes through our server), void.
   C.showReceipt = async (sale, { canVoid = true } = {}) => {
