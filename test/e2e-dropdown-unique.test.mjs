@@ -20,11 +20,11 @@ test('browser: a dropdown marked unique does not block adding or editing devices
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');
     // simulate an account whose Condition was ticked "Must be unique" and "Look up in sale"
     await page.evaluate(async () => { const S = AccountApp.store, c = S.config(); c.fields = c.fields.map(f => f.key === 'cond' ? { ...f, unique: true, lookup: true } : f); await S.saveConfig(c); });
-    const add = async (uid) => { await page.evaluate(() => { location.hash = '#/inventory'; }); await page.waitForSelector('#add'); await page.click('#add'); await page.fill('#f_uid', uid); 
+    const add = async (uid, n) => { await page.evaluate(() => { location.hash = '#/inventory'; }); await page.waitForSelector('#add'); await page.click('#add'); await page.fill('#f_uid', uid); 
       if (await page.locator('#make_new').isVisible()) { await page.fill('#make_new', 'Acme'); await page.fill('#model_new', 'Box'); }
       else for (const [id, v] of [['make', 'Acme'], ['model', 'Box']]) { await page.click('#' + id); await page.locator('#' + id).locator('xpath=..').locator(`.select-option[data-value="${v}"]`).click(); }
-      await page.click('#go'); await page.waitForSelector('tr.click'); };
-    await add('U-1'); await add('U-2');
+      await page.click('#go'); await page.waitForFunction(n => document.querySelectorAll('tbody tr.click').length >= n, n); };
+    await add('U-1', 1); await add('U-2', 2);
     assert.equal(await page.locator('tbody tr.click').count(), 2, 'two devices with the same condition');
     await page.locator('tbody tr.click').first().click(); await page.waitForSelector('#f_uid'); await page.fill('#notes', 'edited'); await page.click('.sheet #go');
     await page.waitForFunction(() => !document.querySelector('.scrim'));

@@ -32,9 +32,9 @@ export async function checkOwnSmtp(s = {}) {
   return { smtp: { host, port, secure, user: String(s.user || '').slice(0, 200), pass: String(s.pass || '').slice(0, 400), fromName: clean(s.fromName, 80), fromAddress: from } };
 }
 
-export async function sendOwn(smtp, { to, subject, text, html }) {
+export async function sendOwn(smtp, { to, subject, text, html, attachments }) {
   const t = nodemailer.createTransport({ host: smtp.host, port: smtp.port, secure: smtp.secure, auth: smtp.user ? { user: smtp.user, pass: smtp.pass } : undefined, connectionTimeout: 15000, greetingTimeout: 15000, socketTimeout: 30000 });
-  try { await t.sendMail({ from: smtp.fromName ? `"${smtp.fromName}" <${smtp.fromAddress}>` : smtp.fromAddress, to, subject, text, html, attachments: [{ filename: 'myboxstock.png', path: LOGO_FILE, cid: LOGO_CID }] }); } finally { t.close(); }
+  try { await t.sendMail({ from: smtp.fromName ? `"${smtp.fromName}" <${smtp.fromAddress}>` : smtp.fromAddress, to, subject, text, html, attachments: attachments || [{ filename: 'myboxstock.png', path: LOGO_FILE, cid: LOGO_CID }] }); } finally { t.close(); }
 }
 // Which of our messages fits what the mail server said.
 export const ownErrorCode = (e) => e?.code === 'EAUTH' || /535|auth/i.test(String(e?.response || '')) ? 'MAIL_OWN_AUTH' : ['ECONNECTION', 'ETIMEDOUT', 'ESOCKET', 'ENOTFOUND', 'ECONNREFUSED', 'EDNS'].includes(e?.code) ? 'MAIL_OWN_CONNECT' : 'MAIL_OWN_REFUSED';

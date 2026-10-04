@@ -4,9 +4,21 @@
   const TYPES = [['text', 'Text'], ['number', 'Number'], ['date', 'Date'], ['bool', 'Yes / No'], ['choice', 'Choice from a list']];
   const typeLabel = (f) => (TYPES.find(t => t[0] === f.type) || ['', f.type])[1];
 
+  // Reads a picture and returns it as a small data URL (at most 256 px, under about 140 KB) so it can be saved with the account and attached to emails.
+  A.shrinkLogo = (file) => new Promise((ok, no) => {
+    if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type)) return no(new Error('Choose a PNG, JPEG, WebP or GIF picture.'));
+    const rd = new FileReader(); rd.onerror = () => no(new Error('That file could not be read.'));
+    rd.onload = () => { const img = new Image(); img.onerror = () => no(new Error('That picture could not be opened.'));
+      img.onload = () => { const k = Math.min(1, 256 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        let out = c.toDataURL('image/png'); if (out.length > 150000) out = c.toDataURL('image/jpeg', 0.85); out.length > 190000 ? no(new Error('That picture is too detailed. Try a simpler one.')) : ok(out); };
+      img.src = rd.result; };
+    rd.readAsDataURL(file); });
+
   A.views.settings = async (main) => {
     if (!A.can('users.manage')) return swap(main, '<div class="page-head"><h1>Settings</h1></div><div class="card"><div class="empty">Only Administrators can change these settings.</div></div>');
-    const cfg = S.defaults(), saved = S.config(); cfg.fields = JSON.parse(JSON.stringify(saved.fields)); cfg.steps = JSON.parse(JSON.stringify(saved.steps)); cfg.tests = { ...saved.tests }; cfg.warranty = JSON.parse(JSON.stringify(saved.warranty)); cfg.unlock = { ...saved.unlock }; cfg.discount = { ...saved.discount }; cfg.mail = { ...saved.mail };
+    const cfg = S.defaults(), saved = S.config(); cfg.fields = JSON.parse(JSON.stringify(saved.fields)); cfg.steps = JSON.parse(JSON.stringify(saved.steps)); cfg.tests = { ...saved.tests }; cfg.warranty = JSON.parse(JSON.stringify(saved.warranty)); cfg.unlock = { ...saved.unlock }; cfg.discount = { ...saved.discount }; cfg.mail = JSON.parse(JSON.stringify(saved.mail));
+    let tpl = null; try { tpl = (await A.api('GET', '/receipt-email/templates')).templates; } catch { tpl = null; }
+    const cm = { key: 'receipt', seq: 0 };
     const usedKeys = new Set(S.all('sale').map(e => e.data.warranty?.key).filter(Boolean));
     const chk = (k, on, i) => { const idOnly = (k === 'fk' || k === 'fu') && cfg.fields[i].type && cfg.fields[i].type !== 'text'; return `<label class="check"><input type="checkbox" data-k="${k}" data-i="${i}" ${on && !idOnly ? 'checked' : ''} ${idOnly ? 'disabled' : ''}></label>`; };
 
@@ -64,6 +76,18 @@
             <div class="row mt-md"><button class="btn secondary" id="mtest" type="button">Send a test email to me</button></div>
             <p class="hint">These details are saved encrypted with the rest of your account data. When you send, they pass through the site once to reach your mail server and are not stored, logged or queued there. Anyone on your team who can send receipts can use them, so give your Administrator role only to people you trust with this. Press Save changes at the top of the page to keep them.</p>
           </div></div>
+        ${tpl ? `<div class="card mt-lg"><h3>Customer emails</h3><div class="sub">The emails your customers receive, such as receipts. They show your business name and your logo, not ours. Change the words and see the result as you type. Everything here is saved encrypted with the rest of your account data.</div>
+          <div class="row mt-md"><div id="clpic">${cfg.mail.logo ? `<img class="brand-logo" src="${esc(cfg.mail.logo)}" alt="Your logo">` : '<span class="brand-logo empty">No logo</span>'}</div><button class="btn secondary" id="clpick" type="button">Choose logo</button><button class="btn secondary" id="clrm" type="button" ${cfg.mail.logo ? '' : 'disabled'}>Remove logo</button><input type="file" id="clfile" accept="image/png,image/jpeg,image/webp,image/gif" hidden></div>
+          <div class="hint">A square picture works best. It is made small automatically (up to 256 pixels).</div>
+          <div class="grid g2 mt-md"><div>
+            <div class="field">${UI.select.html({ id: 'cmk', options: tpl.map(t => [t.key, t.name]), value: cm.key })}</div>
+            <div class="field"><label>Subject</label><input type="text" id="cs" autocomplete="off"></div>
+            <div class="field"><label>Heading</label><input type="text" id="ct" autocomplete="off"></div>
+            <div class="field"><label>Body</label><textarea id="cb" rows="9"></textarea><div class="hint">A blank line starts a new paragraph. Keep {{message}} where the receipt details should appear.</div></div>
+            <div class="field"><label>Insert a detail</label><div class="row wrap" id="cph"></div></div>
+            <div class="hint danger-text" id="cprob"></div>
+            <div class="row mt-md"><button class="btn secondary" id="creset" type="button">Back to default wording</button></div></div>
+            <div><div class="sub mb-sm" id="csub"></div><iframe class="mail-frame" id="cfr" title="Email preview" sandbox=""></iframe><div class="hint">Shown with sample details. Updates as you type.</div></div></div></div>` : ''}
         <div class="card mt-lg"><h3>Discounts</h3><div class="sub">Quick sale lets you take a % off a single device or the whole order. Administrators can give any discount. Set the most a Standard user may give in total on one sale.</div>
           <div class="field mt-md"><label>Most a Standard user can discount (%)</label><input type="number" id="dc" min="0" max="100" step="1" value="${esc(cfg.discount.maxStandardPct)}"></div>
           <p class="hint">This limit is checked in the app when the sale is completed. Because your data is encrypted, the server cannot enforce it, so treat it as a guard rail for honest mistakes rather than a security control.</p></div>
@@ -82,7 +106,22 @@
       const mp = main.querySelector('#mp'), mtls = main.querySelector('#mtls'), mphint = main.querySelector('#mphint');
       const syncTls = () => { if (mtls.checked) { mp.value = 465; mp.disabled = true; mphint.textContent = 'Fixed at 465 while TLS from the start is on.'; } else { mp.disabled = false; if (Number(mp.value) === 465 || !mp.value) mp.value = 587; mphint.textContent = 'Usually 587.'; } };
       mtls.addEventListener('change', syncTls); syncTls();
-      main.querySelector('#mtest').addEventListener('click', (e) => UI.busy(e.currentTarget, async () => { const m = mailBody(); try { await A.api('POST', '/receipt-email/test', { smtp: { ...m, fromName: m.fromName || A.me.businessName } }); toast(`Test email sent to ${A.me.email || 'you'}`); } catch (err) { toast(err.message, true); } }));
+      main.querySelector('#mtest').addEventListener('click', (e) => UI.busy(e.currentTarget, async () => { const m = mailBody(); try { await A.api('POST', '/receipt-email/test', { smtp: { ...m, fromName: m.fromName || A.me.businessName }, wording: cfg.mail.wording.own_mail_test || undefined, logo: cfg.mail.logo || undefined }); toast(`Test email sent to ${A.me.email || 'you'}`); } catch (err) { toast(err.message, true); } }));
+      if (tpl) {
+        const tp = () => tpl.find(t => t.key === cm.key), wd = () => cfg.mail.wording[cm.key] || tp().current, qq = (id) => main.querySelector('#' + id);
+        const fill = () => { const w = wd(); qq('cs').value = w.subject; qq('ct').value = w.title; qq('cb').value = w.body; qq('cph').innerHTML = tp().placeholders.map(p => `<button type="button" class="btn secondary small" data-cph="${esc(p.key)}" title="${esc(p.label)}">{{${esc(p.key)}}}</button>`).join(''); qq('creset').disabled = !cfg.mail.wording[cm.key]; };
+        const preview = async () => { const mine = ++cm.seq; try { const r = await A.api('POST', '/receipt-email/preview', { key: cm.key, wording: { subject: qq('cs').value, title: qq('ct').value, body: qq('cb').value }, logo: cfg.mail.logo || undefined }); if (mine !== cm.seq) return; qq('csub').textContent = `Subject: ${r.subject}`; qq('cprob').innerHTML = r.problems.map(x => `<div>${esc(x)}</div>`).join(''); qq('cfr').src = `/api/app/receipt-email/preview/${encodeURIComponent(r.token)}`; } catch (er) { if (mine === cm.seq) toast(er.message, true); } };
+        let timer; const soon = () => { clearTimeout(timer); timer = setTimeout(preview, 250); };
+        const edited = () => { const w = { subject: qq('cs').value, title: qq('ct').value, body: qq('cb').value }, d = tp().current; if (w.subject === d.subject && w.title === d.title && w.body === d.body) delete cfg.mail.wording[cm.key]; else cfg.mail.wording[cm.key] = w; qq('creset').disabled = !cfg.mail.wording[cm.key]; soon(); };
+        let focus = 'cb'; for (const id of ['cs', 'ct', 'cb']) { qq(id).addEventListener('input', edited); qq(id).addEventListener('focus', () => { focus = id; }); }
+        main.querySelector('#cph').addEventListener('click', (e) => { const b = e.target.closest('[data-cph]'); if (!b) return; const el = qq(focus), tag = `{{${b.dataset.cph}}}`, a = el.selectionStart ?? el.value.length, z = el.selectionEnd ?? a; el.value = el.value.slice(0, a) + tag + el.value.slice(z); el.focus(); el.setSelectionRange(a + tag.length, a + tag.length); edited(); });
+        qq('cmk').addEventListener('change', (e) => { cm.key = UI.select.value(e.target); fill(); preview(); });
+        qq('creset').addEventListener('click', () => { delete cfg.mail.wording[cm.key]; fill(); preview(); });
+        qq('clpick').addEventListener('click', () => qq('clfile').click());
+        qq('clrm').addEventListener('click', () => { cfg.mail.logo = ''; draw(); });
+        qq('clfile').addEventListener('change', async (e) => { const f = e.target.files[0]; if (!f) return; try { cfg.mail.logo = await A.shrinkLogo(f); draw(); } catch (er) { toast(er.message, true); } });
+        fill(); preview();
+      }
       q('[data-k=sl]').forEach(e => e.addEventListener('input', () => { cfg.steps[e.dataset.i].label = e.value; }));
       q('[data-k=sr]').forEach(e => e.addEventListener('change', () => { cfg.steps[e.dataset.i].required = e.checked; }));
       q('[data-k=ech]').forEach(b => b.addEventListener('click', async () => {
@@ -160,7 +199,7 @@
         if (wl.some(x => !x)) return toast('Every warranty period needs a name.', true); if (new Set(wl).size !== wl.length) return toast('Two warranty periods have the same name.', true);
         if (cfg.unlock.mode === 'stay' && !(cfg.unlock.idleMin >= 1 && cfg.unlock.idleMin <= 1440)) return toast('Enter an idle lock time from 1 to 1440 minutes.', true);
         const dcap = Number(cfg.discount.maxStandardPct); if (!(dcap >= 0 && dcap <= 100)) return toast('Enter a discount limit from 0 to 100.', true);
-        const mail = mailBody(); if (mail.enabled && (!mail.host || !mail.fromAddress)) return toast('Enter the mail server and a From address, or turn off sending from your own mail server.', true);
+        const mail = { ...mailBody(), wording: cfg.mail.wording, logo: cfg.mail.logo }; if (mail.enabled && (!mail.host || !mail.fromAddress)) return toast('Enter the mail server and a From address, or turn off sending from your own mail server.', true);
         try { await S.saveConfig({ ...S.config(), mail, discount: { maxStandardPct: dcap }, unlock: { mode: cfg.unlock.mode, idleMin: cfg.unlock.idleMin || 30 }, warranty: { default: cfg.warranty.default, periods: cfg.warranty.periods.map(x => ({ ...x, label: x.label.trim() })) }, tests: { enabled: cfg.tests.enabled }, fields: cfg.fields.map(f => ({ ...f, label: f.label.trim() })), steps: cfg.steps.map(s => ({ ...s, label: s.label.trim() })) }); await A.vault.policy(); toast('Settings saved'); } catch (er) { toast(er.message, true); }
       }));
     };

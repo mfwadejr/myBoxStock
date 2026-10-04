@@ -51,6 +51,7 @@ app.use((req, res, next) => { // security headers; style-src has no 'unsafe-inli
 });
 app.use(firewallMiddleware);
 app.use('/api/app/vault', express.json({ limit: '4mb' })); // encrypted records can be sent in large batches
+app.use('/api/app/receipt-email', express.json({ limit: '400kb' })); // a receipt can carry the reseller's small logo
 app.use(express.json({ limit: '100kb' }));
 app.use('/api', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 app.use('/api/host', hostRouter(db));

@@ -16,6 +16,8 @@ export const MSG = {
   ACCOUNT_CLOSING_LOCKED: 'This account is closing, so changes are paused. An Administrator can restore it.',
   NOT_CLOSING: 'This account is not closing.',
   ACCOUNT_READ_ONLY: 'This account is read-only because its trial or paid period has ended. Please contact support to continue.',
+  MAIL_WORDING_BAD: 'The message wording is not valid.',
+  MAIL_LOGO_BAD: 'The logo must be a PNG, JPEG, GIF or WebP picture no larger than 150 KB.',
   MAIL_OWN_BAD: 'Check your mail server details: a server name and a valid From address are needed.',
   MAIL_OWN_PORT: 'Use port 587 (or 25 or 2525), or port 465 with “Use TLS from the start” turned on.',
   MAIL_OWN_PRIVATE: 'That mail server is on a private network, which this site cannot reach. Use your mail provider’s public server name.',

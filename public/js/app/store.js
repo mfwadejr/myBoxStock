@@ -72,7 +72,7 @@
       { key: 'upgrade', label: 'Code / firmware upgraded (if needed)', required: false, details: [{ key: 'launcher', label: 'Launcher', type: 'fromto' }, { key: 'firmware', label: 'Firmware', type: 'fromto' }] },
     ],
     tests: { enabled: true },
-    mail: { enabled: false, host: '', port: 587, secure: false, user: '', pass: '', fromName: '', fromAddress: '' },
+    mail: { enabled: false, host: '', port: 587, secure: false, user: '', pass: '', fromName: '', fromAddress: '', wording: {}, logo: '' },
   };
   S.CONFIG_ID = CONFIG_ID;
   S.defaults = () => JSON.parse(JSON.stringify(DEFAULTS));

@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.17.0] - 2026-10-04
+
+### Added
+- **Customer emails card in the reseller's Settings.** Edit the subject, heading and body of the receipt email and of the test email, with a live preview that follows your typing. Emails show your own business logo and name instead of myBoxStock's, with a "Sent by {business}." footer. "Back to default wording" restores the standard text. The wording and logo are saved encrypted in the account data; the server never keeps them.
+
 ## [0.16.3] - 2026-10-04
 
 ### Changed

@@ -58,7 +58,15 @@ test('own mail server: refused while private, then used once and never stored; c
   const ok = await new Promise((res) => { relay.once('error', () => res(false)); relay.listen(2525, '127.0.0.1', () => res(true)); });
   if (ok) {
     x = await c.req('POST', '/api/app/receipt-email', { ...body, smtp: { ...smtpCfg, port: 2525 } }); assert.equal(x.status, 200); assert.equal(x.data.via, 'own');
-    const m = got.find(g => g.startsWith('OWN') && /Total: \$77\.00/.test(g)); assert.ok(m, 'delivered through the reseller\'s own server'); assert.match(m, /From: "?Own Co"? <sales@own\.example>/); assert.match(m, /Content-ID/i, 'the logo is attached so it shows in the email');
+    const m = got.find(g => g.startsWith('OWN') && /Total: \$77\.00/.test(g)); assert.ok(m, 'delivered through the reseller\'s own server'); assert.match(m, /From: "?Own Co"? <sales@own\.example>/); assert.doesNotMatch(m, /Content-ID/i, 'no logo chosen: nothing attached'); assert.match(m, /Sent by Own Co/); assert.doesNotMatch(m, /activity on your myBoxStock account/, 'customers do not see the site footer');
+    // the reseller's own wording and logo
+    const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+    x = await c.req('POST', '/api/app/receipt-email', { ...body, smtp: { ...smtpCfg, port: 2525 }, logo: 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=' }); assert.equal(x.data.code, 'MAIL_LOGO_BAD', 'only real pictures are accepted as a logo');
+    x = await c.req('POST', '/api/app/receipt-email', { ...body, smtp: { ...smtpCfg, port: 2525 }, wording: { subject: 'Hi', title: 'Thanks for shopping', body: 'No details here' } }); assert.equal(x.status, 400); assert.equal(x.data.code, 'MAIL_WORDING_BAD', 'the receipt details must stay in the wording');
+    x = await c.req('POST', '/api/app/receipt-email', { ...body, smtp: { ...smtpCfg, port: 2525 }, logo: PNG, wording: { subject: 'Your receipt from {{business}}', title: 'Thanks for shopping', body: 'Thanks!\n\n{{message}}' } }); assert.equal(x.status, 200);
+    const mm = got.filter(g => g.startsWith('OWN')).at(-1); assert.match(mm, /Content-ID/i, 'the reseller logo is attached'); assert.match(mm, /Thanks for shopping/); assert.match(mm, /Subject: Your receipt from Own Co/);
+    const pv = await c.req('POST', '/api/app/receipt-email/preview', { key: 'receipt', wording: { title: 'Preview heading' }, logo: PNG }); assert.equal(pv.status, 200); assert.ok(pv.data.token);
+    const hr = await fetch(srv.base + '/api/app/receipt-email/preview/' + pv.data.token, { headers: { Cookie: Object.entries(c.jar).map(([k, v]) => `${k}=${v}`).join('; ') } }), html = await hr.text(); assert.match(html, /Preview heading/); assert.match(html, /data:image\/png;base64/); assert.match(hr.headers.get('content-security-policy'), /default-src 'none'/);
     x = await c.req('POST', '/api/app/receipt-email/test', { smtp: { ...smtpCfg, port: 2525 } }); assert.equal(x.status, 200, 'the test email goes to the signed-in person');
     assert.ok(got.some(g => g.startsWith('OWN') && /Test from Own Co/.test(g)));
     const { DatabaseSync } = await import('node:sqlite'); const d = new DatabaseSync(path.join(srv.dir, 'myboxstock.db')); d.exec('PRAGMA busy_timeout = 5000'); await sleep(600);

@@ -94,11 +94,12 @@ const linkify = (html) => html.replace(/https?:\/\/[^\s<]+/g, (u) => `<a href="$
 const fillHtml = (str, vars) => linkify(esc(str).replace(/\{\{(\w+)\}\}/g, (_, k) => { const v = esc(vars[k] ?? ''); return PLACEHOLDERS[k]?.bold && v ? `<b>${v}</b>` : v; }));
 const paragraphs = (body) => body.replace(/\r/g, '').trim().split(/\n{2,}/);
 const btn = (href, label) => `<p><a style="${S.button}" href="${esc(href)}">${esc(label)}</a></p>`;
-const wrap = (title, inner) => `<!doctype html><html><body style="${S.body}"><div style="${S.card}"><div align="center" style="${S.header}"><img src="cid:${LOGO_CID}" width="56" height="56" alt="myBoxStock" style="${S.logo}"><div style="${S.brand}">myBoxStock</div></div><h1 style="${S.title}">${esc(title)}</h1>${inner}</div><div style="${S.footer}">You are receiving this because of activity on your myBoxStock account.<br>Please do not reply to this message.</div></body></html>`;
+// brand (optional) = { name, logo: bool } for messages a reseller sends to their own customers: their name, their logo (if any) and no site footer.
+const wrap = (title, inner, brand) => `<!doctype html><html><body style="${S.body}"><div style="${S.card}"><div align="center" style="${S.header}">${brand ? (brand.logo ? `<img src="cid:${LOGO_CID}" width="56" height="56" alt="${esc(brand.name)}" style="${S.logo}">` : '') + `<div style="${S.brand}">${esc(brand.name)}</div>` : `<img src="cid:${LOGO_CID}" width="56" height="56" alt="myBoxStock" style="${S.logo}"><div style="${S.brand}">myBoxStock</div>`}</div><h1 style="${S.title}">${esc(title)}</h1>${inner}</div><div style="${S.footer}">${brand ? `Sent by ${esc(brand.name)}.` : 'You are receiving this because of activity on your myBoxStock account.<br>Please do not reply to this message.'}</div></body></html>`;
 
-export function render(key, vars, override) {
+export function render(key, vars, override, brand) {
   const t = TEMPLATES[key], w = wording(key, override), url = t.button ? String(vars[t.button.to] || '') : '';
   const html = paragraphs(w.body).map(p => `<p>${fillHtml(p, vars).replace(/\n/g, '<br>')}</p>`).join('') + (url ? btn(url, w.buttonLabel) : '');
-  const text = `${w.title}\n\n${fillText(w.body.replace(/\r/g, '').trim(), vars)}\n\n${url ? `${w.buttonLabel}: ${url}\n\n` : ''}— myBoxStock`;
-  return { subject: fillText(w.subject, vars).replace(/\s*\n\s*/g, ' ').trim(), text, html: wrap(w.title, html) };
+  const text = `${w.title}\n\n${fillText(w.body.replace(/\r/g, '').trim(), vars)}\n\n${url ? `${w.buttonLabel}: ${url}\n\n` : ''}— ${brand ? brand.name : 'myBoxStock'}`;
+  return { subject: fillText(w.subject, vars).replace(/\s*\n\s*/g, ' ').trim(), text, html: wrap(w.title, html, brand) };
 }
