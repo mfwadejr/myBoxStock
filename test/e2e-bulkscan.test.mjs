@@ -23,12 +23,18 @@ test('browser: scanned "UID" label is removed; bulk scan adds a batch and reject
     assert.equal(await page.inputValue('#f_uid'), '273D00000019D128', 'label removed after scan');
     await page.click('[data-cancel]');
     await page.click('#bulk'); await page.fill('#make_new', 'Acme'); await page.fill('#model_new', 'Box'); await page.fill('#cost', '10'); await page.fill('#price', '25');
-    for (const c of ['UID A1', 'UID B2', 'a1']) { await page.fill('#scanbox', c); await page.press('#scanbox', 'Enter'); }
-    assert.match(await page.textContent('#bmsg'), /already scanned/);
+    const scan = async (v) => { await page.fill('#scanbox', v); await page.press('#scanbox', 'Enter'); };
+    for (const v of ['UID A1', 'SN S1', 'MAC 00:11']) await scan(v);
+    for (const v of ['UID B2', 'SN S2']) await scan(v); await scan('');
+    await scan('a1'); assert.match(await page.textContent('#bmsg'), /already scanned/);
     assert.equal(await page.locator('#blist .chip').count(), 2);
+    assert.equal(await page.locator('.sheet #f_uid').count(), 0, 'identifiers are scanned, not shared fields');
+    assert.equal(await page.locator('.sheet #blist .chip').first().textContent().then(t => t.includes('A1') && t.includes('S1')), true);
     await page.click('#bsave'); await page.waitForSelector('tr.click');
     assert.equal(await page.locator('tbody tr.click').count(), 2);
     const text = await page.locator('tbody').first().textContent(); assert.ok(text.includes('A1') && text.includes('B2') && !text.includes('UID'));
+    await page.locator('tbody tr.click').first().click(); await page.waitForSelector('#f_serial');
+    assert.ok(['S1', 'S2'].includes(await page.inputValue('#f_serial')), 'serial number was saved');
     assert.deepEqual(errors, []);
   } finally { await br.close(); await srv.stop(); }
 });

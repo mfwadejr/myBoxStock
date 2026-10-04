@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.15.2] - 2026-10-04
+
+### Fixed
+- **Bulk scan now captures every identifier you track**, not only the first. For each device it asks for UID, then Serial number, then MAC address (whatever you have switched on), pressing Enter after each. Enter on an empty box skips one a device does not have. Repeats are refused, and a number that is already in stock is refused too. The scanned devices show as a list before you press Save.
+
 ## [0.15.1] - 2026-10-04
 
 ### Added
