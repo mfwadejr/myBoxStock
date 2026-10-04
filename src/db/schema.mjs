@@ -65,7 +65,7 @@ export const INDEXES = [
 
 // Order matters when copying between databases (parents before children).
 export const COPY_ORDER = ['settings', 'host_admins', 'accounts', 'billing_events', 'account_users', 'sign_in_history', 'account_keys', 'account_recovery', 'account_roles', 'inventory_items', 'records',
-  'firewall_rules', 'mail_queue', 'event_log', 'password_resets', 'sessions', 'admin_links'];
+  'firewall_rules', 'mail_queue', 'event_log', 'password_resets', 'sessions', 'admin_links', 'email_confirmations'];
 
 // Versioned migrations. Each runs once, in order, and is recorded in schema_migrations.
 // Fresh installs run all of them; existing installs run only the ones they are missing. Never edit an applied migration — add a new one.
@@ -121,6 +121,14 @@ const MIGRATIONS = [
     // Host Console access now has its own rule kind. Anything that was an enabled "allow" rule keeps working by getting a host twin.
     const rows = await db.all("SELECT cidr, port, note FROM firewall_rules WHERE kind = 'allow' AND enabled = 1");
     for (const r of rows) await db.run('INSERT INTO firewall_rules (id, kind, cidr, port, note, enabled, created_at) VALUES (?,?,?,?,?,1,?)', [newId(), 'host', r.cidr, r.port, r.note, Date.now()]);
+  } },
+  { id: 9, name: 'email confirmation', up: async (db) => {
+    // Soft verification: people who already had an account are never held back, only people who join from now on.
+    await db.exec('ALTER TABLE account_users ADD COLUMN email_verified_at BIGINT');
+    await db.exec(`CREATE TABLE email_confirmations (token_hash ${s(64)} PRIMARY KEY, user_id ${id} NOT NULL, email ${s()} NOT NULL, expires_at BIGINT NOT NULL, used INTEGER NOT NULL DEFAULT 0, created_at BIGINT NOT NULL)`);
+    await db.exec('CREATE INDEX idx_email_conf_user ON email_confirmations (user_id, created_at)');
+    await db.exec('ALTER TABLE account_users ADD COLUMN email_grandfathered INTEGER NOT NULL DEFAULT 0');
+    await db.exec('UPDATE account_users SET email_grandfathered = 1');
   } },
 ];
 

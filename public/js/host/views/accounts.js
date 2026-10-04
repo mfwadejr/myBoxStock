@@ -24,7 +24,7 @@
 
   async function accountSheet(id, refresh) {
     const d = await Host.api('GET', `/accounts/${id}`), a = d.account;
-    const rows = d.users.map(u => `<div class="setting"><div><div class="setting-title">${esc(u.username)} <span class="chip">${esc(u.role)}</span> ${u.totp_enabled ? '<span class="chip green">2FA</span>' : ''} ${u.disabled ? '<span class="chip red">disabled</span>' : ''}</div>
+    const rows = d.users.map(u => `<div class="setting"><div><div class="setting-title">${esc(u.username)} <span class="chip">${esc(u.role)}</span> ${u.totp_enabled ? '<span class="chip green">2FA</span>' : ''} ${u.disabled ? '<span class="chip red">disabled</span>' : ''} ${u.email ? (u.email_verified_at ? '<span class="chip green">Verified</span>' : '<span class="chip amber">Not verified</span>') : ''}</div>
       <div class="setting-desc">${esc(u.login)} · last sign-in ${fmt.ago(u.last_login)}</div></div><button class="btn secondary small" data-u="${u.id}">Manage</button></div>`).join('');
     await sheet(`<div class="row spread"><h2>${esc(a.business_name)}</h2><span class="chip ${a.status === 'active' ? 'green' : 'red'}">${esc(a.status)}</span></div>
       <p class="muted"><span class="mono">${esc(a.account_code)}</span> · created ${fmt.date(a.created_at)}</p>
@@ -57,6 +57,8 @@
     await sheet(`<h2>${esc(u.username)}</h2><p class="muted mono">${esc(u.login)}</p>
       <div class="stack mt-lg">
         <button class="btn secondary" id="link" ${u.email ? '' : 'disabled'}>Email a password reset link</button>
+        <button class="btn secondary" id="vr" ${u.email && !u.email_verified_at ? '' : 'disabled'}>Resend the confirmation email</button>
+        <button class="btn secondary" id="mv" ${u.email && !u.email_verified_at ? '' : 'disabled'}>Mark email as confirmed</button>
         <button class="btn secondary" id="tmp">Set a temporary password</button>
         <button class="btn secondary" id="mfa" ${u.totp_enabled ? '' : 'disabled'}>Reset two-factor authentication</button>
         <button class="btn ${u.disabled ? 'secondary' : 'danger'}" id="dis">${u.disabled ? 'Enable sign-in' : 'Disable sign-in'}</button>
@@ -64,6 +66,12 @@
       <div class="actions"><button class="btn" data-cancel>Back</button></div>`, { onMount: (el, close) => {
         const act = (sel, fn) => el.querySelector(sel).addEventListener('click', (e) => busy(e.currentTarget, async () => { try { await fn(); } catch (er) { toast(er.message, true); } }));
         act('#link', async () => { await Host.api('POST', `/accounts/${a.id}/users/${u.id}/reset-link`); toast('Reset link queued for ' + u.email); });
+        act('#vr', async () => { await Host.api('POST', `/accounts/${a.id}/users/${u.id}/verify-resend`); toast('Confirmation email queued for ' + u.email); });
+        act('#mv', async () => {
+          close(); const ok = await sheet(`<h2>Mark email as confirmed</h2><p class="sub">Use this only when you have checked it another way. It is recorded in the log with your reason.</p><div class="field mt-md"><label>Reason</label><input type="text" id="rs" placeholder="e.g. confirmed by phone"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Mark as confirmed</button></div>`,
+            { onMount: (el, cl) => el.querySelector('#go').addEventListener('click', async () => { try { await Host.api('POST', `/accounts/${a.id}/users/${u.id}/mark-verified`, { reason: el.querySelector('#rs').value }); cl(true); } catch (er) { toast(er.message, true); } }) });
+          if (ok) toast('Marked as confirmed'); back?.();
+        });
         act('#tmp', async () => {
           const r = await Host.api('POST', `/accounts/${a.id}/users/${u.id}/temp-password`); close();
           await sheet(`<h2>Temporary password</h2><p class="muted">Share this securely with ${esc(u.username)}. They must change it at next sign-in, and it is shown only now.</p><div class="codeblock mt-md">${esc(r.tempPassword)}</div><div class="actions"><button class="btn" data-cancel>Done</button></div>`);

@@ -10,6 +10,7 @@ import { enqueueMail, processQueue } from '../../services/mail/index.mjs';
 import { config } from '../../core/config.mjs';
 import { fail } from '../../core/messages.mjs';
 import { billingState } from '../../services/billing/state.mjs';
+import { sendConfirmation } from '../../services/verify/index.mjs';
 import { setPlan } from '../../services/billing/index.mjs';
 
 export function accountsRoutes(db) {
@@ -31,7 +32,7 @@ export function accountsRoutes(db) {
 
   r.get('/:id', async (req, res) => {
     const a = await getAccount(req.params.id); if (!a) return fail(res, 404, 'NOT_FOUND');
-    const users = await db.all('SELECT id, username, login, email, role, disabled, totp_enabled, must_change, created_at, last_login FROM account_users WHERE account_id = ? ORDER BY created_at', [a.id]);
+    const users = await db.all('SELECT id, username, login, email, email_verified_at, role, disabled, totp_enabled, must_change, created_at, last_login FROM account_users WHERE account_id = ? ORDER BY created_at', [a.id]);
     const events = await db.all("SELECT ts, actor, event, message FROM event_log WHERE account_id = ? AND area IN ('auth','accounts') ORDER BY ts DESC LIMIT 25", [a.id]);
     const history = await db.all('SELECT ts, kind, from_plan, to_plan, actor, note FROM billing_events WHERE account_id = ? ORDER BY ts DESC LIMIT 25', [a.id]);
     // What the Host can know about stored data: whether it is encrypted and how many opaque records exist. Never what they contain.
@@ -112,6 +113,20 @@ export function accountsRoutes(db) {
     await enqueueMail(db, u.email, 'password_reset', { name: u.username, username: u.username, accountCode: (await db.get('SELECT account_code FROM accounts WHERE id = ?', [u.account_id]))?.account_code || '', link: `${config.publicUrl}/app/#/reset/${raw}` }); processQueue(db).catch(() => {});
     A(req, 'info', 'user.reset_link_sent', `Password reset link emailed to ${u.login}`, { id: u.account_id }, { login: u.login });
     res.json({ ok: true });
+  });
+  r.post('/:id/users/:uid/verify-resend', async (req, res) => {
+    const u = await userOf(req); if (!u) return fail(res, 404, 'NOT_FOUND');
+    if (!u.email) return res.status(400).json({ error: 'This user has no email address on file.' });
+    const a = await db.get('SELECT account_code FROM accounts WHERE id = ?', [u.account_id]);
+    const s = await sendConfirmation(db, u, u.email, { accountCode: a?.account_code, ip: null });
+    if (!s.sent) return res.status(s.reason === 'mail_off' ? 400 : 429).json({ error: s.reason === 'mail_off' ? 'Email is not set up, so nothing can be sent.' : s.reason === 'too_soon' ? 'One was sent a moment ago. Wait a minute.' : 'Daily limit reached for this person.' });
+    A(req, 'info', 'user.verify_resent', `Confirmation email re-sent to ${u.login}`, { id: u.account_id }, { login: u.login }); res.json({ ok: true });
+  });
+  r.post('/:id/users/:uid/mark-verified', async (req, res) => {
+    const u = await userOf(req); if (!u) return fail(res, 404, 'NOT_FOUND');
+    const reason = String(req.body?.reason || '').trim(); if (reason.length < 3) return res.status(400).json({ error: 'Say why (a few words), so the log explains it.' });
+    await db.run('UPDATE account_users SET email_verified_at = ? WHERE id = ?', [Date.now(), u.id]);
+    A(req, 'warn', 'user.marked_verified', `Email for ${u.login} marked as confirmed by a Host administrator: ${reason.slice(0, 200)}`, { id: u.account_id }, { login: u.login, reason: reason.slice(0, 200) }); res.json({ ok: true });
   });
   r.post('/:id/users/:uid/temp-password', async (req, res) => {
     const u = await userOf(req); if (!u) return fail(res, 404, 'NOT_FOUND');

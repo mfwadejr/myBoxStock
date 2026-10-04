@@ -10,6 +10,7 @@ import { config } from '../../core/config.mjs';
 import { DEFAULT_ROLES } from './context.mjs';
 import { trialDays, recordEvent } from '../../services/billing/index.mjs';
 import { dropKeys } from '../../services/vault/keys.mjs';
+import { sendConfirmation, confirmWith, isHeld } from '../../services/verify/index.mjs';
 import { DAY } from '../../services/billing/state.mjs';
 
 export function publicRoutes(db) {
@@ -37,6 +38,7 @@ export function publicRoutes(db) {
     log('tenant', 'info', 'account.created', `New account (Reseller ID ${code}) created by ${login} with a ${days}-day free trial`, { actor: login, accountId, ip, data: { code, trialDays: days } });
     log('accounts', 'info', 'trial.started', `Account ${code} signed up — ${days}-day free trial until ${new Date(trialEnds).toISOString().slice(0, 10)}`, { actor: 'system', accountId, ip, data: { code, trialDays: days, trialEnds } });
     await enqueueMail(db, email.trim(), 'welcome', { name: username, accountCode: code, username: username.toLowerCase(), login, url: `${config.publicUrl}/app/`, trialLine: `Your free trial runs for ${days} days (until ${new Date(trialEnds).toISOString().slice(0, 10)}).` }); processQueue(db).catch(() => {});
+    await sendConfirmation(db, { id: userId, username: username.toLowerCase(), login, account_id: accountId, email: email.trim() }, email.trim(), { accountCode: code, ip });
     res.json({ ok: true, accountCode: code, resellerId: code, username: username.toLowerCase(), login, trialDays: days });
   });
 
@@ -46,11 +48,13 @@ export function publicRoutes(db) {
   const resetLink = async (u) => { const raw = token(32); await db.run('INSERT INTO password_resets (token_hash, realm, subject_id, expires_at, used) VALUES (?,?,?,?,0)', [sha256(raw), 'app', u.id, Date.now() + 3600e3]); return `${config.publicUrl}/app/#/reset/${raw}`; };
   r.post('/forgot', async (req, res) => {
     const ip = normalizeIp(req.ip), who = String(req.body.email || req.body.login || '').trim().toLowerCase();
-    const cols = 'u.id, u.account_id, u.username, u.email, u.disabled, a.business_name, a.account_code', from = 'FROM account_users u JOIN accounts a ON a.id = u.account_id';
+    const cols = 'u.id, u.account_id, u.username, u.email, u.email_verified_at, u.created_at, u.disabled, a.business_name, a.account_code', from = 'FROM account_users u JOIN accounts a ON a.id = u.account_id';
     const rows = !who ? [] : req.body.email
       ? await db.all(`SELECT ${cols} ${from} WHERE LOWER(u.email) = ? AND a.status = 'active' ORDER BY a.business_name`, [who])
       : await db.all(`SELECT ${cols} ${from} WHERE u.login = ? AND a.status = 'active'`, [who]);
-    const usable = rows.filter(u => u.email && !u.disabled);
+    const held = []; for (const u of rows) if (u.email && !u.disabled && await isHeld(db, u)) held.push(u.id);
+    const usable = rows.filter(u => u.email && !u.disabled && !held.includes(u.id));
+    if (held.length) log('auth', 'warn', 'reset.held', `Password reset by email held back for ${held.length} account(s): the email address is not confirmed yet`, { actor: who, ip, data: { realm: 'app' } });
     if (usable.length) {
       const items = []; for (const u of usable) items.push({ u, link: await resetLink(u) });
       const to = usable[0].email;
@@ -59,6 +63,12 @@ export function publicRoutes(db) {
       processQueue(db).catch(() => {});
       log('auth', 'info', 'reset.requested', `Password reset link sent for ${usable.length} account(s) on one mailbox`, { actor: who, accountId: usable[0].account_id, ip, data: { realm: 'app', accounts: usable.map(u => u.account_code) } });
     } else log('auth', 'warn', 'reset.ignored', `Password reset requested for "${who}" — ${!rows.length ? 'no such user' : 'no email on file or user disabled'}`, { actor: who, ip, data: { realm: 'app' } });
+    res.json({ ok: true });
+  });
+  r.post('/confirm-email', async (req, res) => {
+    const row = await confirmWith(db, req.body.token);
+    if (!row) { log('auth', 'warn', 'email.confirm_invalid', 'Invalid or expired email confirmation link used', { ip: normalizeIp(req.ip) }); return res.status(400).json({ error: 'This confirmation link has expired. Sign in and ask for a new one.' }); }
+    log('auth', 'info', 'email.confirmed', 'Email address confirmed from an emailed link', { ip: normalizeIp(req.ip), data: { userId: row.user_id } });
     res.json({ ok: true });
   });
   r.post('/reset', async (req, res) => {

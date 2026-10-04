@@ -24,6 +24,7 @@
     }
     try { cfg = await AccountApp.api('GET', '/public-config'); } catch {}
     const m = location.hash.match(/^#\/reset\/(.+)$/); if (m) return resetScreen(m[1]);
+    const cf = location.hash.match(/^#\/confirm\/(.+)$/); if (cf) return confirmScreen(cf[1]);
     try { const r = await AccountApp.api('GET', '/me'); UI.setCsrf(r.csrf); AccountApp.me = r.user; AccountApp.vault.state = r.vault; if (r.mfaPending) return mfaScreen(); if (r.mustChange) return changePwScreen(); if (!await AccountApp.vault.gate(r, AccountApp.pw)) return; AccountApp.pw = null; await AccountApp.store.load(); await AccountApp.vault.policy(); return shell(); }
     catch (e) { if (location.hash === '#/signup' && cfg.signupsEnabled) signupScreen(); else loginScreen(); if (e && e.status !== 401) toast(e.message || 'Sign-in could not finish. Please try again.', true); }
   }
@@ -72,6 +73,12 @@
     root.querySelector('#bk').addEventListener('click', (e) => { e.preventDefault(); loginScreen(); });
     onSubmit('#f', async () => { await AccountApp.api('POST', '/forgot', { email: val('#l') }); toast('If that email is on an account, a link is on its way.'); loginScreen(); });
   }
+  async function confirmScreen(tok) {
+    let ok = true; try { await AccountApp.api('POST', '/confirm-email', { token: tok }); } catch (e) { ok = false; }
+    history.replaceState(null, '', '/app/');
+    authShell(ok ? `<h1>Email confirmed</h1><p class="lead">Thank you. Your email address is confirmed.</p><button class="btn block" id="go">Continue</button>` : `<h1>Link not valid</h1><p class="lead">This confirmation link has expired or was already used. Sign in and ask for a new one from the banner at the top of Home.</p><button class="btn block" id="go">Continue</button>`);
+    root.querySelector('#go').addEventListener('click', () => boot());
+  }
   function resetScreen(tok) {
     authShell(`<h1>New password</h1><p class="lead">Choose a new password for your account.</p><form id="f"><div class="field"><input type="password" id="p" autocomplete="new-password" required><div class="hint">At least 10 characters with letters and numbers.</div></div><button class="btn block">Save password</button></form>`);
     onSubmit('#f', async () => { await AccountApp.api('POST', '/reset', { token: tok, password: val('#p') }); history.replaceState(null, '', '/app/'); toast('Password updated — sign in'); loginScreen(); });
@@ -90,11 +97,17 @@
     root.querySelector('#out').addEventListener('click', () => AccountApp.signOut());
     window.removeEventListener('hashchange', AccountApp.route); window.addEventListener('hashchange', AccountApp.route); AccountApp.route();
   }
+  // Soft email confirmation: a banner on Home and Security until the address is confirmed.
+  function emailBanner(main) {
+    const me = AccountApp.me; if (!me.emailBanner) return;
+    main.insertAdjacentHTML('afterbegin', `<div class="banner blue row spread wrap mb-lg" id="eb"><span>Confirm your email address${me.emailHeld ? ' to use password reset by email and add people to your team' : ''}. We sent a link to ${esc(me.email)}.</span><button class="btn secondary small" id="ebr">Send it again</button></div>`);
+    main.querySelector('#ebr').addEventListener('click', async (e) => { try { await AccountApp.api('POST', '/email/resend'); toast('Sent. Check your inbox.'); } catch (er) { toast(er.message, true); } });
+  }
   AccountApp.route = async () => {
     const k = (location.hash.replace(/^#\//, '') || 'home').split('/')[0], key = AccountApp.views[k] ? k : 'home';
     root.querySelectorAll('.side a').forEach(a => a.classList.toggle('active', a.dataset.k === key));
     const main = root.querySelector('#main'); if (!main) return;
-    try { await AccountApp.fresh(); await AccountApp.views[key](main); } catch (e) { if (e.status === 401) return boot(); swap(main, `<div class="card"><p class="banner red">${esc(e.message)}</p></div>`); }
+    try { await AccountApp.fresh(); await AccountApp.views[key](main); if (key === 'home' || key === 'security') emailBanner(main); } catch (e) { if (e.status === 401) return boot(); swap(main, `<div class="card"><p class="banner red">${esc(e.message)}</p></div>`); }
   };
   AccountApp.boot = boot;
   boot();

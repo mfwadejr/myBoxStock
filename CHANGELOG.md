@@ -3,6 +3,18 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.12.0] - 2026-10-04
+
+### Added
+- **Confirm your email.** New accounts (and people added to a team with an email address) get a message with a "Confirm my email" button, valid for 24 hours. The account works straight away. Until the address is confirmed, a blue banner on Home and Security offers to send the message again, and two things wait: password reset by email, and adding people to the team (Administrators only). Sending again is limited to once a minute and five a day per person.
+- **Change email address** (Security). The new address only replaces the old one once the link sent to the new mailbox is clicked; it needs the password.
+- **Host Console:** each person shows Verified or Not verified, with "Resend the confirmation email" and "Mark email as confirmed". Marking needs a reason and is written to the log.
+- New message "Confirm your email" in the Messages editor.
+- Migration 9 adds the confirmation records.
+
+### Changed
+- Nothing is sent and nothing is held back while outbound email is not set up. People whose accounts existed before this version are never held back (they still see the banner). Each confirmation counts toward your mail relay's daily limit.
+
 ## [0.11.0] - 2026-10-04
 
 ### Added

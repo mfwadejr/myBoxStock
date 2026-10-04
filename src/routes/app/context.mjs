@@ -1,4 +1,5 @@
 // ROUTES / app / context — loading the signed-in account user, permissions, and tenant-area logging.
+import { isHeld, mailReady } from '../../services/verify/index.mjs';
 import { log } from '../../logging/logger.mjs';
 import { normalizeIp } from '../../security/firewall/ip.mjs';
 import { fullPath } from '../../core/http.mjs';
@@ -18,11 +19,13 @@ export async function loadUser(db, s) {
   const role = await db.get('SELECT perms FROM account_roles WHERE account_id = ? AND name = ?', [u.account_id, u.role]);
   u.perms = role ? JSON.parse(role.perms) : [];
   u.billing = billingState(u);
+  u.email_held = await isHeld(db, u); u.verify_available = await mailReady(db);
   u.host_linked = !!u.host_link_allowed && !!await db.get('SELECT id FROM admin_links WHERE user_id = ?', [u.id]);
   return u;
 }
 export const publicUser = (u) => ({ id: u.id, username: u.username, login: u.login, label: u.login, email: u.email, role: u.role, perms: u.perms,
   accountCode: u.account_code, businessName: u.business_name, totpEnabled: !!u.totp_enabled, hostLinked: !!u.host_linked, hostLinkAllowed: !!u.host_link_allowed,
+  emailVerified: !!u.email_verified_at, emailBanner: !!u.email && !u.email_verified_at && !!u.verify_available, emailHeld: !!u.email_held,
   billing: { state: u.billing.state, endsAt: u.billing.endsAt, daysLeft: u.billing.daysLeft, canWrite: u.billing.canWrite } });
 
 // tenantLog(req, event, message, data) — activity in the `tenant` area. Pass ids and event names only, never business data.

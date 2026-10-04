@@ -6,6 +6,8 @@ import { destroyAllFor } from '../../auth/session.mjs';
 import { validKeys, saveKeys, vaultEnabled } from '../../services/vault/keys.mjs';
 import { fail } from '../../core/messages.mjs';
 import { newId } from '../../core/ids.mjs';
+import { sendConfirmation } from '../../services/verify/index.mjs';
+import { normalizeIp } from '../../security/firewall/ip.mjs';
 
 export function usersRoutes(db) {
   const r = express.Router();
@@ -14,6 +16,7 @@ export function usersRoutes(db) {
     (SELECT COUNT(*) FROM sessions x WHERE x.realm = 'app' AND x.subject_id = account_users.id AND x.mfa_pending = 0 AND x.expires_at > ?) AS active_sessions
     FROM account_users WHERE account_id = ? ORDER BY created_at`, [Date.now(), req.subject.account_id])));
   r.post('/', need('users.manage'), async (req, res) => {
+    if (req.subject.email_held) return res.status(403).json({ error: 'Confirm your own email address first (use the link we emailed you), then you can add people.', code: 'EMAIL_NOT_CONFIRMED' });
     const { username, email, role, password } = req.body;
     if (!/^[a-z0-9._-]{3,30}$/i.test(username || '')) return res.status(400).json({ error: 'Username: 3–30 letters, numbers, . _ -' });
     const bad = passwordProblem(password); if (bad) return res.status(400).json({ error: bad });
@@ -26,6 +29,7 @@ export function usersRoutes(db) {
     await db.run('INSERT INTO account_users (id, account_id, login, username, email, role, pw_hash, must_change, created_at) VALUES (?,?,?,?,?,?,?,1,?)', [id, req.subject.account_id, login, username.toLowerCase(), email || null, role, hashPassword(password), Date.now()]);
     // In an encrypted account the Administrator's browser wraps the account key under the new person's temporary password.
     if (encrypted) await saveKeys(db, { id, account_id: req.subject.account_id }, req.body.keys);
+    if (email) await sendConfirmation(db, { id, username: username.toLowerCase(), login, account_id: req.subject.account_id, email }, email, { accountCode: req.subject.account_code, ip: normalizeIp(req.ip) });
     tenantLog(req, 'user.created', `${req.subject.login} added ${login} as ${role}`, { userId: id, role });
     res.json({ ok: true, login });
   });
