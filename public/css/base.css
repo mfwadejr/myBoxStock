@@ -21,6 +21,9 @@ input[type=text], input[type=password], input[type=email], input[type=tel], inpu
   background: var(--color-surface); color: var(--color-text); font: inherit;
   transition: border-color var(--dur-base), box-shadow var(--dur-base); appearance: none; -webkit-appearance: none;
 }
+/* Safari/Chrome add their own inner padding to date boxes; remove it so the text lines up with every other box. */
+input[type=date] { display: block; min-width: 0; }
+input[type=date]::-webkit-datetime-edit, input[type=date]::-webkit-datetime-edit-fields-wrapper { padding: 0; }
 input:focus, textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: var(--focus-ring); }
 .switch input:focus-visible + i { box-shadow: var(--focus-ring); }
 

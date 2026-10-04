@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.9.4] - 2026-10-04
+
+### Fixed
+- **Date boxes now match the other entry boxes.** Date received sits in the same grid and width as Cost and Selling price, and the browser's extra inner padding on date boxes is removed so the text lines up (Safari and Chrome).
+
 ## [0.9.3] - 2026-10-04
 
 ### Added
