@@ -3,6 +3,16 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.9.2] - 2026-10-04
+
+### Added
+- **Host administrators can be edited.** Host Console → Security → Host administrators now has an Edit button: name, email and cell number (a contact detail only). Everyone can edit their own; the Owner can edit anyone. The table shows each person's contact details.
+- **Owner marker.** The first administrator created (normally `admin`) is shown with an Owner chip. The Owner manages the others.
+- **Owner-only support actions** in the Edit window: Reset two-factor (they are signed out and told by email), Set temporary password (shown once; they must change it at next sign-in) and Sign out everywhere. All are written to the log.
+
+### Changed
+- Adding and deleting administrators is now Owner-only. Helpers can still edit their own details.
+
 ## [0.9.1] - 2026-10-04
 
 ### Fixed

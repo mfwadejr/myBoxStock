@@ -103,6 +103,10 @@ const MIGRATIONS = [
       id ${s(64)} PRIMARY KEY, account_id ${id} NOT NULL, type ${s(20)} NOT NULL, blob TEXT NOT NULL, rev INTEGER NOT NULL DEFAULT 1, created_at BIGINT NOT NULL, updated_at BIGINT NOT NULL)`);
     await db.exec('CREATE INDEX idx_records_account ON records (account_id, type)');
   } },
+  { id: 5, name: 'host administrator contact details', up: async (db) => {
+    await db.exec(`ALTER TABLE host_admins ADD COLUMN display_name ${s(100)}`);
+    await db.exec(`ALTER TABLE host_admins ADD COLUMN cell ${s(40)}`);
+  } },
 ];
 
 export async function migrate(db) {

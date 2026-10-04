@@ -15,7 +15,7 @@ a { color: var(--color-primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
 label { display: block; font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-text-muted); margin-bottom: var(--space-xs); }
 
-input[type=text], input[type=password], input[type=email], input[type=number], input[type=date], input[type=search], textarea {
+input[type=text], input[type=password], input[type=email], input[type=tel], input[type=number], input[type=date], input[type=search], textarea {
   width: 100%; height: var(--control-h); padding: 0 var(--field-padding-x);
   border: var(--border-strong); border-radius: var(--radius-md);
   background: var(--color-surface); color: var(--color-text); font: inherit;
