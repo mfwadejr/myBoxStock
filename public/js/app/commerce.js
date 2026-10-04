@@ -5,7 +5,16 @@
 
   // ---- the account's tracked fields and test checklist (set up under Settings) ----
   C.fields = () => AccountApp.store.config().fields.filter(f => f.enabled);
-  C.steps = () => AccountApp.store.config().steps;
+  C.testsOn = () => AccountApp.store.config().tests.enabled;
+  C.steps = () => C.testsOn() ? AccountApp.store.config().steps : []; // switched off in Settings = no steps anywhere; nothing is deleted
+  // Dates typed in forms are plain YYYY-MM-DD; shown and compared at midday so time zones never shift the day.
+  C.dateMs = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || '') ? new Date(`${s}T12:00:00`).getTime() : 0;
+  C.dateStr = (t) => { const d = new Date(t || Date.now()); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  C.receivedMs = (d) => C.dateMs(d.receivedOn) || d.addedAt || 0;
+  C.testedMs = (d) => C.dateMs(d.testedOn) || Object.values(d.checks || {})[0]?.at || 0;
+  // Extra items under a step. Values live in d.checkVals = { stepKey: { itemKey: text | { from, to } } } and are kept even when the step is unticked.
+  C.detailText = (it, v) => it.type === 'fromto' ? (v?.from || v?.to ? `${v.from || '?'} → ${v.to || '?'}` : '') : String(v || '');
+  C.detailRows = (st, d) => (st.details || []).map(it => ({ label: it.label, value: C.detailText(it, d.checkVals?.[st.key]?.[it.key]) })).filter(x => x.value);
   C.getVal = (d, f) => (f.core ? d[f.key] : d.custom?.[f.key]) ?? '';
   C.setVal = (d, f, v) => { if (f.core) d[f.key] = v; else d.custom = { ...(d.custom || {}), [f.key]: v }; };
   C.showVal = (f, v) => f.type === 'bool' ? (v === true || v === 'yes' ? 'Yes' : v === false || v === 'no' ? 'No' : '') : String(v ?? '');
@@ -27,7 +36,7 @@
   C.testState = (d) => { const steps = C.steps(), done = steps.filter(s => d.checks?.[s.key]); return { done: done.length, total: steps.length, missingRequired: steps.filter(s => s.required && !d.checks?.[s.key]) }; };
   C.testChip = (d) => { const t = C.testState(d); if (!t.total) return ''; return t.done === t.total ? '<span class="chip green">Tested</span>' : t.done ? `<span class="chip amber">Tested ${t.done}/${t.total}</span>` : '<span class="chip gray">Not tested</span>'; };
   // What gets copied into the sale so the record stays as it was, even if the setup changes later.
-  C.inspectionSnapshot = (d) => ({ steps: C.steps().map(s => { const c = d.checks?.[s.key]; return { label: s.label, done: !!c, by: c?.by || '', at: c?.at || 0 }; }), notes: d.testNotes || '' });
+  C.inspectionSnapshot = (d) => !C.steps().length ? null : ({ steps: C.steps().map(s => { const c = d.checks?.[s.key]; return { label: s.label, done: !!c, by: c?.by || '', at: c?.at || 0, details: c ? C.detailRows(s, d) : [] }; }), testedOn: C.testedMs(d), by: Object.values(d.checks || {})[0]?.by || '', notes: d.testNotes || '' });
   C.fieldSnapshot = (d) => C.fields().filter(f => f.onSale).map(f => ({ label: f.label, value: C.showVal(f, C.getVal(d, f)) })).filter(x => x.value !== '');
 
   C.STATUS = { available: ['green', 'Available'], reserved: ['blue', 'Reserved'], sold: ['gray', 'Sold'], returned: ['amber', 'Returned'], damaged: ['red', 'Damaged'], archived: ['gray', 'Archived'] };
@@ -83,18 +92,20 @@
   C.deviceName = (d) => [d.make, d.model].filter(Boolean).join(' ');
   C.itemLabel = (it) => [C.deviceName(it), it.uid || it.serial || it.mac || it.fields?.[0]?.value || Object.values(it.custom || {}).find(Boolean)].filter(Boolean).join(' · ') || 'Device';
 
-  const stepLine = (st) => `${st.done ? '✓' : '—'} ${st.label}${st.done && st.at ? ` (${F().day(st.at)}${st.by ? ', ' + st.by : ''})` : ''}`;
+  // Older sales stored a date per step; newer ones store one "tested on" date for the whole record.
+  const stepLine = (st, rec) => `${st.done ? '✓' : '—'} ${st.label}${st.done && st.at && !rec.testedOn ? ` (${F().day(st.at)}${st.by ? ', ' + st.by : ''})` : ''}${(st.details || []).length ? ': ' + st.details.map(x => `${x.label} ${x.value}`).join('; ') : ''}`;
+  const recHead = (rec) => `Test record${rec.testedOn ? ` — tested ${F().day(rec.testedOn)}${rec.by ? ', ' + rec.by : ''}` : ''}`;
   C.receiptText = (sale, withTests = false) => {
     const d = sale.data, me = AccountApp.me, lines = [`${me.businessName}`, `Receipt ${d.no}`, F().when(d.ts), d.customerName ? `Customer: ${d.customerName}` : 'Walk-in customer', ''];
     for (const it of d.items) {
       lines.push(`${C.itemLabel(it)}  ${F().money(it.price)}${it.pct ? ` (${it.pct}% off ${F().money(it.listPrice)})` : ''}`); for (const x of it.fields || []) lines.push(`   ${x.label}: ${x.value}`);
-      if (withTests && it.inspection) { lines.push('   Test record:'); for (const st of it.inspection.steps) lines.push(`    ${stepLine(st)}`); if (it.inspection.notes) lines.push(`    Notes: ${it.inspection.notes}`); }
+      if (withTests && it.inspection) { lines.push(`   ${recHead(it.inspection)}:`); for (const st of it.inspection.steps) lines.push(`    ${stepLine(st, it.inspection)}`); if (it.inspection.notes) lines.push(`    Notes: ${it.inspection.notes}`); }
     }
     if (d.orderPct) lines.push('', `Subtotal: ${F().money(d.subtotal)}`, `Order discount ${d.orderPct}%: -${F().money(d.orderOff)}`);
     lines.push('', `Total: ${F().money(d.total)}`, `Paid by: ${C.paymentLabel(d.payment)}`, C.warrantyLine(d)); if (d.notes) lines.push('', d.notes); lines.push('', 'Thank you!'); return lines.join('\n');
   };
   C.hasTests = (sale) => sale.data.items.some(it => it.inspection?.steps?.length);
-  const testHtml = (it) => it.inspection?.steps?.length ? `<div class="test-record"><div class="strong text-sm">Test record</div>${it.inspection.steps.map(st => `<div class="text-sm ${st.done ? '' : 'faint'}">${esc(stepLine(st))}</div>`).join('')}${it.inspection.notes ? `<div class="text-sm mt-xs">${esc(it.inspection.notes)}</div>` : ''}</div>` : '';
+  const testHtml = (it) => it.inspection?.steps?.length ? `<div class="test-record"><div class="strong text-sm">${esc(recHead(it.inspection))}</div>${it.inspection.steps.map(st => `<div class="text-sm ${st.done ? '' : 'faint'}">${esc(stepLine(st, it.inspection))}</div>`).join('')}${it.inspection.notes ? `<div class="text-sm mt-xs">${esc(it.inspection.notes)}</div>` : ''}</div>` : '';
   const receiptHtml = (sale, withTests) => { const d = sale.data;
     return `<div class="receipt"><img class="receipt-logo" src="/assets/logo-512.png" alt="" width="512" height="512"><h2>${esc(AccountApp.me.businessName)}</h2><div class="sub center">Receipt ${esc(d.no)} · ${esc(F().when(d.ts))}</div>${d.voided ? '<p class="banner red center mt-md">This sale was voided.</p>' : ''}
       <p class="center mt-md">${d.customerName ? `Customer: <b>${esc(d.customerName)}</b>` : 'Walk-in customer'}</p>

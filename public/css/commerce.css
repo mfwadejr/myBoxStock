@@ -51,8 +51,10 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .check-row input[type=text], .step-row input[type=text] { height: var(--control-h-md); }
 .check-row .row { gap: var(--space-sm); }
 .check-row .chip, .check-row .type-btn { flex: none; width: var(--chip-type-w); justify-content: center; }
-.step-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--col-req-w) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); }
+.step-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--chip-type-w) var(--col-req-w) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); }
 .tests { margin-top: var(--space-md); padding: var(--space-md) var(--space-lg); border-radius: var(--radius-md); background: var(--color-wash-faint); border: var(--border-default); }
+.test-items { margin-left: var(--space-2xl); }
+.test-items .field { margin-bottom: var(--space-sm); }
 .tests .check { padding: var(--space-3xs) var(--space-0); }
 .recovery-key { font-family: var(--font-mono); font-size: var(--text-lg); line-height: var(--leading-code); text-align: center; word-break: break-all; user-select: all; background: var(--color-code-bg); border: var(--border-strong); border-radius: var(--radius-md); padding: var(--space-lg); margin: var(--space-lg) var(--space-0); }
 .recovery-key b { display: inline-block; width: 4.5ch; font-weight: var(--weight-semibold); }

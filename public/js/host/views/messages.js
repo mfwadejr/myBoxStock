@@ -34,7 +34,7 @@
     const draw = () => {
       const t = cur(), c = t.current, need = t.placeholders.filter(p => p.required);
       swap(pane, `<div class="grid g2">
-        <div class="card"><h3>Message</h3>
+        <div class="card"><h3>Message</h3><div class="hint mb-md">These messages are global wording, in English only. Every account receives the same text.</div>
           <div class="field">${UI.select.html({ id: 'mk', options: options(), value: st.key })}</div>
           <div class="field"><label>Subject</label><input type="text" id="sub" value="${esc(c.subject)}" autocomplete="off"></div>
           <div class="field"><label>Heading</label><input type="text" id="ttl" value="${esc(c.title)}" autocomplete="off"></div>

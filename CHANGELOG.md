@@ -3,6 +3,18 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.9.3] - 2026-10-04
+
+### Added
+- **Test checklist details.** In Settings → Test checklist every step has a Details button for extra items: Text, From → To (two boxes) or a Choice from a list. They appear, indented, under the step when it is ticked in Add/Edit device, and are copied onto the sale and its receipt. Items are always optional. The default "Code / firmware upgraded" step now has Launcher and Firmware (From → To), including on existing accounts that have not renamed it.
+- **One "Tested on" date for the whole test record.** Defaults to today and can be changed, so devices can be entered now and tested later. "Mark all done" uses it. The sale, receipt and test section show the date and who recorded it.
+- **"Use a test checklist" switch** in Settings. Off hides the test record in Add/Edit device, the Tests column, the Quick sale check, receipts and CSV files. Nothing recorded is deleted.
+- **Date received** on every device (defaults to today, editable). It is in CSV import and export, and stock is ordered by it, oldest first, when adding by quantity. Existing devices use the date they were added.
+- The Host Console Email → Messages tab now says the messages are global wording, in English only.
+
+### Changed
+- Test steps no longer show a date per tick; the single "Tested on" date replaces it (older sales keep what they recorded).
+
 ## [0.9.2] - 2026-10-04
 
 ### Added

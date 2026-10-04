@@ -12,7 +12,7 @@
 
   // "Add by quantity": choose a model and how many; the oldest available units of that model are added.
   C.pickQuantity = ({ exclude = [] } = {}) => {
-    const pool = C.availableStock(exclude).sort((a, b) => (a.data.addedAt || 0) - (b.data.addedAt || 0)), counts = C.modelCounts(pool);
+    const pool = C.availableStock(exclude).sort((a, b) => C.receivedMs(a.data) - C.receivedMs(b.data)), counts = C.modelCounts(pool);
     if (!counts.length) return Promise.resolve(null);
     const opts = counts.map(([m, n]) => [m, `${modelName(m)} · ${n} available`]);
     return sheet(`<h2>Add by quantity</h2><p class="muted">Adds the oldest available units of a model. You can remove any of them from the sale afterwards.</p><div class="field mt-md"><label>Model</label>${UI.select.html({ id: 'm', options: opts, value: opts[0][0] })}</div><div class="field"><label>How many</label><input type="number" id="n" min="1" step="1" value="1"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="ok">Add to sale</button></div>`, { onMount: (el, close) => {

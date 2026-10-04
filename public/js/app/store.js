@@ -69,11 +69,14 @@
       { key: 'batteries', label: 'Batteries installed in remote', required: false },
       { key: 'remote', label: 'Remote tested', required: false },
       { key: 'device', label: 'Device tested', required: false },
-      { key: 'upgrade', label: 'Code / firmware upgraded (if needed)', required: false },
+      { key: 'upgrade', label: 'Code / firmware upgraded (if needed)', required: false, details: [{ key: 'launcher', label: 'Launcher', type: 'fromto' }, { key: 'firmware', label: 'Firmware', type: 'fromto' }] },
     ],
+    tests: { enabled: true },
   };
   S.CONFIG_ID = CONFIG_ID;
   S.defaults = () => JSON.parse(JSON.stringify(DEFAULTS));
-  S.config = () => { const c = S.get('config', CONFIG_ID)?.data; if (!(c && Array.isArray(c.fields) && Array.isArray(c.steps))) return S.defaults(); return { ...c, warranty: c.warranty?.periods ? c.warranty : S.defaults().warranty, unlock: { ...S.defaults().unlock, ...(c.unlock || {}) }, discount: { ...S.defaults().discount, ...(c.discount || {}) }, catalog: { makes: Array.isArray(c.catalog?.makes) ? c.catalog.makes : [] } }; };
+  // Existing accounts: the default firmware step gains Launcher and Firmware (From → To) until the Administrator changes it.
+  const upgraded = (steps) => steps.map(st => Array.isArray(st.details) ? st : (st.key === 'upgrade' && st.label === DEFAULTS.steps[4].label ? { ...st, details: JSON.parse(JSON.stringify(DEFAULTS.steps[4].details)) } : { ...st, details: [] }));
+  S.config = () => { const c = S.get('config', CONFIG_ID)?.data; if (!(c && Array.isArray(c.fields) && Array.isArray(c.steps))) return S.defaults(); return { ...c, steps: upgraded(c.steps), tests: { enabled: c.tests?.enabled !== false }, warranty: c.warranty?.periods ? c.warranty : S.defaults().warranty, unlock: { ...S.defaults().unlock, ...(c.unlock || {}) }, discount: { ...S.defaults().discount, ...(c.discount || {}) }, catalog: { makes: Array.isArray(c.catalog?.makes) ? c.catalog.makes : [] } }; };
   S.saveConfig = (cfg) => S.commit({ puts: [{ type: 'config', id: CONFIG_ID, data: cfg }] });
 })();

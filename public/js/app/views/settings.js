@@ -6,7 +6,7 @@
 
   A.views.settings = async (main) => {
     if (!A.can('users.manage')) return swap(main, '<div class="page-head"><h1>Settings</h1></div><div class="card"><div class="empty">Only Administrators can change these settings.</div></div>');
-    const cfg = S.defaults(), saved = S.config(); cfg.fields = JSON.parse(JSON.stringify(saved.fields)); cfg.steps = JSON.parse(JSON.stringify(saved.steps)); cfg.warranty = JSON.parse(JSON.stringify(saved.warranty)); cfg.unlock = { ...saved.unlock }; cfg.discount = { ...saved.discount };
+    const cfg = S.defaults(), saved = S.config(); cfg.fields = JSON.parse(JSON.stringify(saved.fields)); cfg.steps = JSON.parse(JSON.stringify(saved.steps)); cfg.tests = { ...saved.tests }; cfg.warranty = JSON.parse(JSON.stringify(saved.warranty)); cfg.unlock = { ...saved.unlock }; cfg.discount = { ...saved.discount };
     const usedKeys = new Set(S.all('sale').map(e => e.data.warranty?.key).filter(Boolean));
     const chk = (k, on, i) => `<label class="check"><input type="checkbox" data-k="${k}" data-i="${i}" ${on ? 'checked' : ''}></label>`;
 
@@ -51,8 +51,10 @@
         <div class="card mt-lg"><h3>Discounts</h3><div class="sub">Quick sale lets you take a % off a single device or the whole order. Administrators can give any discount. Set the most a Standard user may give in total on one sale.</div>
           <div class="field mt-md"><label>Most a Standard user can discount (%)</label><input type="number" id="dc" min="0" max="100" step="1" value="${esc(cfg.discount.maxStandardPct)}"></div>
           <p class="hint">This limit is checked in the app when the sale is completed. Because your data is encrypted, the server cannot enforce it, so treat it as a guard rail for honest mistakes rather than a security control.</p></div>
-        <div class="card mt-lg"><div class="row spread wrap"><div><h3>Test checklist</h3><div class="sub mb-0">Steps you perform on each device. When you tick them in Inventory, who and when is recorded and copied into the sale, so you can show what was done if a customer says it did not work.</div></div><button class="btn secondary" id="adds">Add a step</button></div>
-          <div class="mt-md">${cfg.steps.length ? cfg.steps.map((st, i) => `<div class="step-row"><input type="text" data-k="sl" data-i="${i}" value="${esc(st.label)}" aria-label="Step"><label class="check"><input type="checkbox" data-k="sr" data-i="${i}" ${st.required ? 'checked' : ''}><span class="text-sm">Required before sale</span></label><button type="button" class="icon-btn" data-k="rms" data-i="${i}" aria-label="Remove step" title="Remove">✕</button></div>`).join('') : '<div class="empty">No steps. Add the checks you do on each device.</div>'}</div></div>`);
+        <div class="card mt-lg"><div class="row spread wrap"><div><h3>Test checklist</h3><div class="sub mb-0">Steps you perform on each device. When you tick them in Inventory, who and when is recorded and copied into the sale, so you can show what was done if a customer says it did not work.</div></div><button class="btn secondary" id="adds" ${cfg.tests.enabled ? '' : 'disabled'}>Add a step</button></div>
+          <label class="check mt-md"><input type="checkbox" id="ten" ${cfg.tests.enabled ? 'checked' : ''}><span>Use a test checklist</span></label>
+          <div class="hint">Turn this off if you do not test devices. The test record is then hidden in Inventory, Quick sale, receipts and CSV files. Nothing already recorded is deleted.</div>
+          <div class="mt-md" ${cfg.tests.enabled ? '' : 'hidden'}>${cfg.steps.length ? cfg.steps.map((st, i) => `<div class="step-row"><input type="text" data-k="sl" data-i="${i}" value="${esc(st.label)}" aria-label="Step"><button type="button" class="btn secondary small type-btn" data-k="sdt" data-i="${i}" title="Extra items under this step">Details (${(st.details || []).length})</button><label class="check"><input type="checkbox" data-k="sr" data-i="${i}" ${st.required ? 'checked' : ''}><span class="text-sm">Required before sale</span></label><button type="button" class="icon-btn" data-k="rms" data-i="${i}" aria-label="Remove step" title="Remove">✕</button></div>`).join('') : '<div class="empty">No steps. Add the checks you do on each device.</div>'}</div></div>`);
       const q = (s) => main.querySelectorAll(s);
       q('[data-k=fl]').forEach(e => e.addEventListener('input', () => { cfg.fields[e.dataset.i].label = e.value; }));
       for (const [cls, k] of [['[data-k=fe]', 'enabled'], ['[data-k=fk]', 'lookup'], ['[data-k=fu]', 'unique'], ['[data-k=fs]', 'onSale']]) q(cls).forEach(e => e.addEventListener('change', () => { cfg.fields[e.dataset.i][k] = e.checked; }));
@@ -90,8 +92,28 @@
         }) });
         if (p) { cfg.warranty.periods.push(p); draw(); }
       });
+      main.querySelector('#ten').addEventListener('change', (e) => { cfg.tests.enabled = e.target.checked; draw(); });
+      // Details: extra items shown under a step when it is ticked (text, From → To, or a choice from a list).
+      q('[data-k=sdt]').forEach(b => b.addEventListener('click', async () => {
+        const st = cfg.steps[Number(b.dataset.i)], list = JSON.parse(JSON.stringify(st.details || []));
+        const TYPES3 = [['text', 'Text'], ['fromto', 'From → To'], ['choice', 'Choice from a list']];
+        const rows = () => list.length ? list.map((it, n) => `<div class="field"><input type="text" data-d="l" data-n="${n}" value="${esc(it.label)}" aria-label="Item name" placeholder="Item name" autocomplete="off"><div class="grid g2 mt-sm">${UI.select.html({ id: 'dt' + n, options: TYPES3, value: it.type })}<button type="button" class="btn secondary" data-d="rm" data-n="${n}">Remove item</button></div>${it.type === 'choice' ? `<input type="text" class="mt-sm" data-d="o" data-n="${n}" value="${esc((it.options || []).join(', '))}" placeholder="Choices, separated by commas" aria-label="Choices" autocomplete="off">` : ''}</div>`).join('') : '<div class="empty">No extra items.</div>';
+        await sheet(`<h2>Details for “${esc(st.label.trim() || 'this step')}”</h2><p class="sub">Extra items to fill in when this step is ticked, for example Launcher or Firmware as From → To. They are optional, even if the step is required before sale.</p><div id="dl" class="mt-md">${rows()}</div><div class="actions split"><button class="btn secondary" id="da">Add an item</button><div class="row"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Save</button></div></div>`, { onMount: (el, close) => {
+          const sync = () => el.querySelectorAll('[data-d=l]').forEach(i => { list[i.dataset.n].label = i.value; }), syncO = () => el.querySelectorAll('[data-d=o]').forEach(i => { list[i.dataset.n].options = i.value.split(',').map(x => x.trim()).filter(Boolean); });
+          const paint = () => { sync(); syncO(); el.querySelector('#dl').innerHTML = rows(); wire(); };
+          const wire = () => { el.querySelectorAll('[data-d=rm]').forEach(x => x.addEventListener('click', () => { sync(); list.splice(Number(x.dataset.n), 1); paint(); }));
+            list.forEach((it, n) => el.querySelector('#dt' + n).addEventListener('change', (e) => { it.type = UI.select.value(e.target); if (it.type === 'choice' && !it.options) it.options = []; paint(); })); };
+          wire();
+          el.querySelector('#da').addEventListener('click', () => { sync(); syncO(); list.push({ key: 'i' + Vault.newId().slice(0, 7), label: '', type: 'text' }); paint(); });
+          el.querySelector('#go').addEventListener('click', () => { sync(); syncO(); const names = list.map(x => x.label.trim().toLowerCase());
+            if (names.some(x => !x)) return toast('Every item needs a name.', true); if (new Set(names).size !== names.length) return toast('Two items have the same name.', true);
+            if (list.some(x => x.type === 'choice' && !(x.options || []).length)) return toast('Enter at least one choice.', true);
+            st.details = list.map(x => ({ ...x, label: x.label.trim(), options: x.type === 'choice' ? x.options : undefined })); close(true); });
+        } });
+        draw();
+      }));
       q('[data-k=rms]').forEach(b => b.addEventListener('click', () => { cfg.steps.splice(Number(b.dataset.i), 1); draw(); }));
-      main.querySelector('#adds').addEventListener('click', () => { cfg.steps.push({ key: Vault.newId().slice(0, 8), label: '', required: false }); draw(); main.querySelectorAll('[data-k=sl]')[cfg.steps.length - 1].focus(); });
+      main.querySelector('#adds').addEventListener('click', () => { cfg.steps.push({ key: Vault.newId().slice(0, 8), label: '', required: false, details: [] }); draw(); main.querySelectorAll('[data-k=sl]')[cfg.steps.length - 1].focus(); });
       main.querySelector('#addf').addEventListener('click', async () => {
         const f = await sheet(`<h2>Add a detail</h2><div class="field mt-md"><label>Name</label><input type="text" id="n" placeholder="For example: State, Firmware version, Remote model"></div><div class="field"><label>Type</label>${UI.select.html({ id: 't', options: TYPES })}</div><div class="field" id="ow" hidden><label>Choices (separated by commas)</label><input type="text" id="o" placeholder="Good, Fair, Poor"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Add</button></div>`, { onMount: (el, close) => {
           el.querySelector('#t').addEventListener('change', () => { el.querySelector('#ow').hidden = UI.select.value(el.querySelector('#t')) !== 'choice'; });
@@ -112,7 +134,7 @@
         if (wl.some(x => !x)) return toast('Every warranty period needs a name.', true); if (new Set(wl).size !== wl.length) return toast('Two warranty periods have the same name.', true);
         if (cfg.unlock.mode === 'stay' && !(cfg.unlock.idleMin >= 1 && cfg.unlock.idleMin <= 1440)) return toast('Enter an idle lock time from 1 to 1440 minutes.', true);
         const dcap = Number(cfg.discount.maxStandardPct); if (!(dcap >= 0 && dcap <= 100)) return toast('Enter a discount limit from 0 to 100.', true);
-        try { await S.saveConfig({ ...S.config(), discount: { maxStandardPct: dcap }, unlock: { mode: cfg.unlock.mode, idleMin: cfg.unlock.idleMin || 30 }, warranty: { default: cfg.warranty.default, periods: cfg.warranty.periods.map(x => ({ ...x, label: x.label.trim() })) }, fields: cfg.fields.map(f => ({ ...f, label: f.label.trim() })), steps: cfg.steps.map(s => ({ ...s, label: s.label.trim() })) }); await A.vault.policy(); toast('Settings saved'); } catch (er) { toast(er.message, true); }
+        try { await S.saveConfig({ ...S.config(), discount: { maxStandardPct: dcap }, unlock: { mode: cfg.unlock.mode, idleMin: cfg.unlock.idleMin || 30 }, warranty: { default: cfg.warranty.default, periods: cfg.warranty.periods.map(x => ({ ...x, label: x.label.trim() })) }, tests: { enabled: cfg.tests.enabled }, fields: cfg.fields.map(f => ({ ...f, label: f.label.trim() })), steps: cfg.steps.map(s => ({ ...s, label: s.label.trim() })) }); await A.vault.policy(); toast('Settings saved'); } catch (er) { toast(er.message, true); }
       }));
     };
     draw();
