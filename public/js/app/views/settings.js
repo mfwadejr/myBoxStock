@@ -54,15 +54,15 @@
         <div class="card mt-lg"><h3>Email sending</h3><div class="sub">Receipts (and later newsletters) can go out from your own mail server, so they come from your address and do not use the site’s shared sender. Leave it off to use the site’s sender, with replies going to your email address.</div>
           <div class="setting mt-md"><div><div class="setting-title">Send from my own mail server</div><div class="setting-desc">Your mail provider’s details (Gmail, Outlook, your web host, an email service…).</div></div><label class="switch"><input type="checkbox" id="mon" ${cfg.mail.enabled ? 'checked' : ''}><i></i></label></div>
           <div id="mbox" ${cfg.mail.enabled ? '' : 'hidden'}>
-            <div class="grid g2"><div class="field"><label>Mail server</label><input type="text" id="mh" value="${esc(cfg.mail.host)}" placeholder="smtp.example.com" autocapitalize="none" spellcheck="false"></div>
-              <div class="field"><label>Port</label><input type="number" id="mp" min="1" max="65535" value="${esc(cfg.mail.port)}"></div>
-              <div class="field"><label>User name</label><input type="text" id="mu" value="${esc(cfg.mail.user)}" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
-              <div class="field"><label>Password</label><input type="password" id="mw" value="${esc(cfg.mail.pass)}" autocomplete="new-password"></div>
-              <div class="field"><label>From name</label><input type="text" id="mfn" value="${esc(cfg.mail.fromName)}" placeholder="${esc(A.me.businessName)}"></div>
-              <div class="field"><label>From address</label><input type="email" id="mfa" value="${esc(cfg.mail.fromAddress)}" placeholder="sales@yourbusiness.com" autocapitalize="none"></div></div>
-            <label class="check mt-sm"><input type="checkbox" id="mtls" ${cfg.mail.secure ? 'checked' : ''}><span>Use TLS from the start of the connection (port 465). Leave off for port 587.</span></label>
+            <div class="grid g2"><div class="field"><label>From name</label><input type="text" id="mfn" value="${esc(cfg.mail.fromName)}" placeholder="${esc(A.me.businessName)}"></div>
+              <div class="field"><label>From address</label><input type="email" id="mfa" value="${esc(cfg.mail.fromAddress)}" placeholder="sales@yourbusiness.com" autocapitalize="none"></div>
+              <div class="field"><label>SMTP host</label><input type="text" id="mh" value="${esc(cfg.mail.host)}" placeholder="smtp.example.com" autocapitalize="none" spellcheck="false"></div>
+              <div class="field"><label>Port</label><input type="number" id="mp" min="1" max="65535" value="${cfg.mail.secure ? 465 : cfg.mail.port === 465 ? 587 : esc(cfg.mail.port)}" ${cfg.mail.secure ? 'disabled' : ''}><div class="hint" id="mphint"></div></div>
+              <div class="field"><label>Username</label><input type="text" id="mu" value="${esc(cfg.mail.user)}" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
+              <div class="field"><label>Password</label><input type="password" id="mw" value="${esc(cfg.mail.pass)}" autocomplete="new-password"></div></div>
+            <div class="setting"><div><div class="setting-title">Use TLS from the start of the connection (port 465)</div><div class="setting-desc">Leave off for port 587, which upgrades to TLS automatically.</div></div><label class="switch"><input type="checkbox" id="mtls" ${cfg.mail.secure ? 'checked' : ''}><i></i></label></div>
             <div class="row mt-md"><button class="btn secondary" id="mtest" type="button">Send a test email to me</button></div>
-            <p class="hint">These details are saved encrypted with the rest of your account data. When you send, they pass through the site once to reach your mail server and are not stored, logged or queued there. Anyone on your team who can send receipts can use them, so give your Administrator role only to people you trust with this.</p>
+            <p class="hint">These details are saved encrypted with the rest of your account data. When you send, they pass through the site once to reach your mail server and are not stored, logged or queued there. Anyone on your team who can send receipts can use them, so give your Administrator role only to people you trust with this. Press Save changes at the top of the page to keep them.</p>
           </div></div>
         <div class="card mt-lg"><h3>Discounts</h3><div class="sub">Quick sale lets you take a % off a single device or the whole order. Administrators can give any discount. Set the most a Standard user may give in total on one sale.</div>
           <div class="field mt-md"><label>Most a Standard user can discount (%)</label><input type="number" id="dc" min="0" max="100" step="1" value="${esc(cfg.discount.maxStandardPct)}"></div>
@@ -79,6 +79,9 @@
       for (const [cls, k] of [['[data-k=fe]', 'enabled'], ['[data-k=fk]', 'lookup'], ['[data-k=fu]', 'unique'], ['[data-k=fs]', 'onSale']]) q(cls).forEach(e => e.addEventListener('change', () => { cfg.fields[e.dataset.i][k] = e.checked; }));
       const mailBody = () => ({ enabled: main.querySelector('#mon').checked, host: main.querySelector('#mh').value.trim(), port: Number(main.querySelector('#mp').value) || 587, secure: main.querySelector('#mtls').checked, user: main.querySelector('#mu').value.trim(), pass: main.querySelector('#mw').value, fromName: main.querySelector('#mfn').value.trim(), fromAddress: main.querySelector('#mfa').value.trim() });
       main.querySelector('#mon').addEventListener('change', (e) => { main.querySelector('#mbox').hidden = !e.target.checked; });
+      const mp = main.querySelector('#mp'), mtls = main.querySelector('#mtls'), mphint = main.querySelector('#mphint');
+      const syncTls = () => { if (mtls.checked) { mp.value = 465; mp.disabled = true; mphint.textContent = 'Fixed at 465 while TLS from the start is on.'; } else { mp.disabled = false; if (Number(mp.value) === 465 || !mp.value) mp.value = 587; mphint.textContent = 'Usually 587.'; } };
+      mtls.addEventListener('change', syncTls); syncTls();
       main.querySelector('#mtest').addEventListener('click', (e) => UI.busy(e.currentTarget, async () => { const m = mailBody(); try { await A.api('POST', '/receipt-email/test', { smtp: { ...m, fromName: m.fromName || A.me.businessName } }); toast(`Test email sent to ${A.me.email || 'you'}`); } catch (err) { toast(err.message, true); } }));
       q('[data-k=sl]').forEach(e => e.addEventListener('input', () => { cfg.steps[e.dataset.i].label = e.value; }));
       q('[data-k=sr]').forEach(e => e.addEventListener('change', () => { cfg.steps[e.dataset.i].required = e.checked; }));

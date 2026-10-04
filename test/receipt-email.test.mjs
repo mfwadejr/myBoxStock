@@ -58,7 +58,7 @@ test('own mail server: refused while private, then used once and never stored; c
   const ok = await new Promise((res) => { relay.once('error', () => res(false)); relay.listen(2525, '127.0.0.1', () => res(true)); });
   if (ok) {
     x = await c.req('POST', '/api/app/receipt-email', { ...body, smtp: { ...smtpCfg, port: 2525 } }); assert.equal(x.status, 200); assert.equal(x.data.via, 'own');
-    const m = got.find(g => g.startsWith('OWN') && /Total: \$77\.00/.test(g)); assert.ok(m, 'delivered through the reseller\'s own server'); assert.match(m, /From: "?Own Co"? <sales@own\.example>/);
+    const m = got.find(g => g.startsWith('OWN') && /Total: \$77\.00/.test(g)); assert.ok(m, 'delivered through the reseller\'s own server'); assert.match(m, /From: "?Own Co"? <sales@own\.example>/); assert.match(m, /Content-ID/i, 'the logo is attached so it shows in the email');
     x = await c.req('POST', '/api/app/receipt-email/test', { smtp: { ...smtpCfg, port: 2525 } }); assert.equal(x.status, 200, 'the test email goes to the signed-in person');
     assert.ok(got.some(g => g.startsWith('OWN') && /Test from Own Co/.test(g)));
     const { DatabaseSync } = await import('node:sqlite'); const d = new DatabaseSync(path.join(srv.dir, 'myboxstock.db')); d.exec('PRAGMA busy_timeout = 5000'); await sleep(600);

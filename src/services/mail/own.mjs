@@ -4,6 +4,11 @@ import dns from 'node:dns/promises';
 import net from 'node:net';
 import nodemailer from 'nodemailer';
 import { config } from '../../core/config.mjs';
+import { LOGO_CID } from './theme.mjs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const LOGO_FILE = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'public', 'assets', 'logo-email.png');
 
 export const OWN_PORTS = [25, 465, 587, 2525];
 const EMAIL = /^[^@\s,;<>"]+@[^@\s,;<>"]+\.[^@\s,;<>"]+$/;
@@ -29,7 +34,7 @@ export async function checkOwnSmtp(s = {}) {
 
 export async function sendOwn(smtp, { to, subject, text, html }) {
   const t = nodemailer.createTransport({ host: smtp.host, port: smtp.port, secure: smtp.secure, auth: smtp.user ? { user: smtp.user, pass: smtp.pass } : undefined, connectionTimeout: 15000, greetingTimeout: 15000, socketTimeout: 30000 });
-  try { await t.sendMail({ from: smtp.fromName ? `"${smtp.fromName}" <${smtp.fromAddress}>` : smtp.fromAddress, to, subject, text, html }); } finally { t.close(); }
+  try { await t.sendMail({ from: smtp.fromName ? `"${smtp.fromName}" <${smtp.fromAddress}>` : smtp.fromAddress, to, subject, text, html, attachments: [{ filename: 'myboxstock.png', path: LOGO_FILE, cid: LOGO_CID }] }); } finally { t.close(); }
 }
 // Which of our messages fits what the mail server said.
 export const ownErrorCode = (e) => e?.code === 'EAUTH' || /535|auth/i.test(String(e?.response || '')) ? 'MAIL_OWN_AUTH' : ['ECONNECTION', 'ETIMEDOUT', 'ESOCKET', 'ENOTFOUND', 'ECONNREFUSED', 'EDNS'].includes(e?.code) ? 'MAIL_OWN_CONNECT' : 'MAIL_OWN_REFUSED';

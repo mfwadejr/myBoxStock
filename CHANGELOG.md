@@ -3,6 +3,17 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.16.3] - 2026-10-04
+
+### Changed
+- **Email sending (reseller Settings) now matches the Host Console's layout:** From name, From address, SMTP host, Port, Username, Password, then the TLS switch. Turning on "Use TLS from the start of the connection" sets the port to 465 and locks the box; turning it off unlocks it and returns it to 587.
+
+### Added
+- **Date received in Bulk scan.** Set once for the whole batch (today by default).
+
+### Fixed
+- The logo was missing from emails sent through a reseller's own mail server (the test email and receipts). It is attached now, the same as the site's own emails.
+
 ## [0.16.2] - 2026-10-04
 
 ### Fixed

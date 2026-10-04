@@ -22,7 +22,7 @@ test('browser: scanned "UID" label is removed; bulk scan adds a batch and reject
     await page.click('#add'); await page.fill('#f_uid', 'UID 273D00000019D128'); await page.fill('#make_new', 'Acme'); await page.fill('#model_new', 'Box'); await page.locator('#f_uid').blur();
     assert.equal(await page.inputValue('#f_uid'), '273D00000019D128', 'label removed after scan');
     await page.click('[data-cancel]');
-    await page.click('#bulk'); await page.fill('#make_new', 'Acme'); await page.fill('#model_new', 'Box'); await page.fill('#cost', '10'); await page.fill('#price', '25');
+    await page.click('#bulk'); await page.fill('#make_new', 'Acme'); await page.fill('#model_new', 'Box'); await page.fill('#cost', '10'); await page.fill('#price', '25'); await page.fill('#recv', '2026-01-15');
     const scan = async (v) => { await page.fill('#scanbox', v); await page.press('#scanbox', 'Enter'); };
     // default: only the UID is scanned, one Enter per device, with the scanner's "UID" label removed
     assert.equal(await page.locator('[data-id=uid]').isChecked(), true); assert.equal(await page.locator('[data-id=serial]').isChecked(), false);
@@ -45,6 +45,9 @@ test('browser: scanned "UID" label is removed; bulk scan adds a batch and reject
     await page.click('#bsave'); await page.waitForSelector('tr.click');
     assert.equal(await page.locator('tbody tr.click').count(), 5);
     const text = await page.locator('tbody').first().textContent(); assert.ok(text.includes('273D00000019D0E3') && text.includes('B2') && text.includes('C3') && !text.includes('UID'));
+    await page.locator('tbody tr.click').first().click(); await page.waitForSelector('#recv');
+    assert.equal(await page.inputValue('#recv'), '2026-01-15', 'the bulk date received was saved');
+    await page.click('.sheet [data-cancel]');
     const cs = await page.evaluate(() => ['UID', 'UID\n273D00000019D128', 'UID273D00000019D128', 'UID: 273D00000019D128', 'SN 12345', 'Serial number', 'MAC 00:11:22', 'SN-98765', '273D00000019D128'].map(v => AccountApp.commerce.cleanScan(v)));
     assert.deepEqual(cs, ['', '273D00000019D128', '273D00000019D128', '273D00000019D128', '12345', '', '00:11:22', 'SN-98765', '273D00000019D128']);
     assert.deepEqual(errors, []);
