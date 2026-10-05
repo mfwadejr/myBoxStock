@@ -16,9 +16,10 @@
 
   A.views.settings = async (main) => {
     if (!A.can('users.manage')) return swap(main, '<div class="page-head"><h1>Settings</h1></div><div class="card"><div class="empty">Only Administrators can change these settings.</div></div>');
-    const cfg = S.defaults(), saved = S.config(); cfg.fields = JSON.parse(JSON.stringify(saved.fields)); cfg.steps = JSON.parse(JSON.stringify(saved.steps)); cfg.tests = { ...saved.tests }; cfg.warranty = JSON.parse(JSON.stringify(saved.warranty)); cfg.unlock = { ...saved.unlock }; cfg.discount = { ...saved.discount }; cfg.mail = JSON.parse(JSON.stringify(saved.mail));
+    const cfg = S.defaults(), saved = S.config(); cfg.fields = JSON.parse(JSON.stringify(saved.fields)); cfg.steps = JSON.parse(JSON.stringify(saved.steps)); cfg.tests = { ...saved.tests }; cfg.warranty = JSON.parse(JSON.stringify(saved.warranty)); cfg.payments = JSON.parse(JSON.stringify(saved.payments)); cfg.unlock = { ...saved.unlock }; cfg.discount = { ...saved.discount }; cfg.mail = JSON.parse(JSON.stringify(saved.mail));
     let tpl = null; try { tpl = (await A.api('GET', '/receipt-email/templates')).templates; } catch { tpl = null; }
     const cm = { key: 'receipt', seq: 0 };
+    const usedPay = new Set(S.all('sale').map(e => e.data.payment).filter(Boolean));
     const usedKeys = new Set(S.all('sale').map(e => e.data.warranty?.key).filter(Boolean));
     const chk = (k, on, i) => { const idOnly = (k === 'fk' || k === 'fu') && cfg.fields[i].type && cfg.fields[i].type !== 'text'; return `<label class="check"><input type="checkbox" data-k="${k}" data-i="${i}" ${on && !idOnly ? 'checked' : ''} ${idOnly ? 'disabled' : ''}></label>`; };
 
@@ -57,6 +58,8 @@
           <p class="hint mt-md">Make, model, cost, selling price, status and notes are always available. Turning a detail off, or removing it, hides it but keeps what was entered.</p></div>
         <div class="card mt-lg"><div class="row spread wrap"><div><h3>Warranty periods</h3><div class="sub mb-0">The choices offered at Quick sale. The chosen period is saved on each sale, so changing this list never alters past sales. A period that has been used on a sale can be archived but not removed.</div></div><button class="btn secondary" id="addw">Add a period</button></div>
           <div class="mt-md">${cfg.warranty.periods.map((p, i) => `<div class="war-row"><input type="text" data-k="wl" data-i="${i}" value="${esc(p.label)}" aria-label="Name"><span class="chip gray nowrap">${esc(p.amount ? C.periodLabel(p) : 'No cover')}</span>${cfg.warranty.default === p.key ? '<span class="chip green nowrap">Default</span>' : `<button type="button" class="btn secondary small" data-k="wd" data-i="${i}" ${p.archived ? 'disabled' : ''}>Make default</button>`}<button type="button" class="btn secondary small" data-k="wa" data-i="${i}" ${cfg.warranty.default === p.key ? 'disabled' : ''}>${p.archived ? 'Restore' : 'Archive'}</button>${usedKeys.has(p.key) || p.key === 'none' ? '<span class="icon-slot"></span>' : `<button type="button" class="icon-btn" data-k="wr" data-i="${i}" aria-label="Remove ${esc(p.label)}" title="Remove">✕</button>`}${moveBtns('mvw', i, cfg.warranty.periods.length)}</div>`).join('')}</div></div>
+        <div class="card mt-lg"><div class="row spread wrap"><div><h3>Payment methods</h3><div class="sub mb-0">The "Paid by" choices at Quick sale. Each sale keeps the name it was sold under, so renaming never alters past receipts. A method that has been used on a sale can be archived but not removed.</div></div><button class="btn secondary" id="addp">Add a method</button></div>
+          <div class="mt-md">${cfg.payments.methods.map((p, i) => `<div class="pay-row"><input type="text" data-k="pl" data-i="${i}" value="${esc(p.label)}" aria-label="Name" maxlength="40">${cfg.payments.default === p.key ? '<span class="chip green nowrap">Default</span>' : `<button type="button" class="btn secondary small" data-k="pd" data-i="${i}" ${p.archived ? 'disabled' : ''}>Make default</button>`}<button type="button" class="btn secondary small" data-k="pa" data-i="${i}" ${cfg.payments.default === p.key ? 'disabled' : ''}>${p.archived ? 'Restore' : 'Archive'}</button>${usedPay.has(p.key) || cfg.payments.methods.length < 2 ? '<span class="icon-slot"></span>' : `<button type="button" class="icon-btn" data-k="pr" data-i="${i}" aria-label="Remove ${esc(p.label)}" title="Remove">✕</button>`}${moveBtns('mvp', i, cfg.payments.methods.length)}</div>`).join('')}</div></div>
         <div class="card mt-lg"><div class="row spread wrap"><div><h3>Makes and models</h3><div class="sub mb-0">The lists offered when you add a device. They are built from your devices; add names here ahead of time, rename them, or merge two spellings of the same name. Changes here are saved straight away and update the devices that use them. Past sales keep the name they were sold under.</div></div><button class="btn secondary" id="addmk">Add a make</button></div>
           <div class="mt-md" id="catlist">${catHtml()}</div></div>
         <div class="card mt-lg"><h3>Unlock behaviour</h3><div class="sub">Your data is encrypted in the browser. This decides what happens when someone on your team refreshes the page. It applies to everyone on the account.</div>
@@ -98,6 +101,7 @@
       const q = (s) => main.querySelectorAll(s);
       q('[data-k=mvf]').forEach(b => b.addEventListener('click', () => shift(cfg.fields, b)));
       q('[data-k=mvs]').forEach(b => b.addEventListener('click', () => shift(cfg.steps, b)));
+      q('[data-k=mvp]').forEach(b => b.addEventListener('click', () => shift(cfg.payments.methods, b)));
       q('[data-k=mvw]').forEach(b => b.addEventListener('click', () => shift(cfg.warranty.periods, b)));
       q('[data-k=fl]').forEach(e => e.addEventListener('input', () => { cfg.fields[e.dataset.i].label = e.value; }));
       for (const [cls, k] of [['[data-k=fe]', 'enabled'], ['[data-k=fk]', 'lookup'], ['[data-k=fu]', 'unique'], ['[data-k=fs]', 'onSale']]) q(cls).forEach(e => e.addEventListener('change', () => { cfg.fields[e.dataset.i][k] = e.checked; }));
@@ -148,6 +152,11 @@
       q('[data-k=wd]').forEach(b => b.addEventListener('click', () => { cfg.warranty.default = cfg.warranty.periods[b.dataset.i].key; draw(); }));
       q('[data-k=wa]').forEach(b => b.addEventListener('click', () => { const p = cfg.warranty.periods[b.dataset.i]; p.archived = !p.archived; draw(); }));
       q('[data-k=wr]').forEach(b => b.addEventListener('click', () => { cfg.warranty.periods.splice(Number(b.dataset.i), 1); draw(); }));
+      q('[data-k=pl]').forEach(e => e.addEventListener('input', () => { cfg.payments.methods[e.dataset.i].label = e.value; }));
+      q('[data-k=pd]').forEach(b => b.addEventListener('click', () => { cfg.payments.default = cfg.payments.methods[b.dataset.i].key; draw(); }));
+      q('[data-k=pa]').forEach(b => b.addEventListener('click', () => { const p = cfg.payments.methods[b.dataset.i]; p.archived = !p.archived; draw(); }));
+      q('[data-k=pr]').forEach(b => b.addEventListener('click', () => { cfg.payments.methods.splice(Number(b.dataset.i), 1); draw(); }));
+      main.querySelector('#addp').addEventListener('click', () => { cfg.payments.methods.push({ key: 'p' + Vault.newId().slice(0, 7), label: '' }); draw(); const ins = q('[data-k=pl]'); ins[ins.length - 1]?.focus(); });
       main.querySelector('#addw').addEventListener('click', async () => {
         const p = await sheet(`<h2>Add a warranty period</h2><div class="grid g2 mt-md"><div class="field"><label>Length</label><input type="number" id="a" min="1" max="120" step="1" value="6"></div><div class="field"><label>Unit</label>${UI.select.html({ id: 'u', options: C.WARRANTY_UNITS, value: 'months' })}</div></div><div class="field"><label>Name (optional)</label><input type="text" id="n" placeholder="Shown at Quick sale, for example 6 months"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Add</button></div>`, { onMount: (el, close) => el.querySelector('#go').addEventListener('click', () => {
           const amount = Math.floor(Number(el.querySelector('#a').value)), unit = UI.select.value(el.querySelector('#u'));
@@ -197,10 +206,12 @@
         if (!cfg.fields.some(f => f.enabled && f.lookup)) return toast('Turn on at least one detail to look up in Quick sale.', true);
         const wl = cfg.warranty.periods.map(x => x.label.trim().toLowerCase());
         if (wl.some(x => !x)) return toast('Every warranty period needs a name.', true); if (new Set(wl).size !== wl.length) return toast('Two warranty periods have the same name.', true);
+        const pl = cfg.payments.methods.map(x => x.label.trim().toLowerCase());
+        if (pl.some(x => !x)) return toast('Every payment method needs a name.', true); if (new Set(pl).size !== pl.length) return toast('Two payment methods have the same name.', true);
         if (cfg.unlock.mode === 'stay' && !(cfg.unlock.idleMin >= 1 && cfg.unlock.idleMin <= 1440)) return toast('Enter an idle lock time from 1 to 1440 minutes.', true);
         const dcap = Number(cfg.discount.maxStandardPct); if (!(dcap >= 0 && dcap <= 100)) return toast('Enter a discount limit from 0 to 100.', true);
         const mail = { ...mailBody(), wording: cfg.mail.wording, logo: cfg.mail.logo }; if (mail.enabled && (!mail.host || !mail.fromAddress)) return toast('Enter the mail server and a From address, or turn off sending from your own mail server.', true);
-        try { await S.saveConfig({ ...S.config(), mail, discount: { maxStandardPct: dcap }, unlock: { mode: cfg.unlock.mode, idleMin: cfg.unlock.idleMin || 30 }, warranty: { default: cfg.warranty.default, periods: cfg.warranty.periods.map(x => ({ ...x, label: x.label.trim() })) }, tests: { enabled: cfg.tests.enabled }, fields: cfg.fields.map(f => ({ ...f, label: f.label.trim() })), steps: cfg.steps.map(s => ({ ...s, label: s.label.trim() })) }); await A.vault.policy(); toast('Settings saved'); } catch (er) { toast(er.message, true); }
+        try { await S.saveConfig({ ...S.config(), mail, discount: { maxStandardPct: dcap }, unlock: { mode: cfg.unlock.mode, idleMin: cfg.unlock.idleMin || 30 }, payments: { default: cfg.payments.default, methods: cfg.payments.methods.map(x => ({ ...x, label: x.label.trim() })) }, warranty: { default: cfg.warranty.default, periods: cfg.warranty.periods.map(x => ({ ...x, label: x.label.trim() })) }, tests: { enabled: cfg.tests.enabled }, fields: cfg.fields.map(f => ({ ...f, label: f.label.trim() })), steps: cfg.steps.map(s => ({ ...s, label: s.label.trim() })) }); await A.vault.policy(); toast('Settings saved'); } catch (er) { toast(er.message, true); }
       }));
     };
     draw();

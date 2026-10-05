@@ -46,8 +46,12 @@
 
   C.STATUS = { available: ['green', 'Available'], reserved: ['blue', 'Reserved'], sold: ['gray', 'Sold'], returned: ['amber', 'Returned'], damaged: ['red', 'Damaged'], archived: ['gray', 'Archived'] };
   C.statusChip = (s) => { const [c, l] = C.STATUS[s] || ['gray', s]; return `<span class="chip ${c}">${esc(l)}</span>`; };
-  C.PAYMENTS = [['cash', 'Cash'], ['card', 'Card'], ['transfer', 'Bank transfer'], ['other', 'Other']];
-  C.paymentLabel = (v) => (C.PAYMENTS.find(p => p[0] === v) || [, v || '—'])[1];
+  // "Paid by" choices are the reseller's own list (Settings > Payment methods). A sale keeps the name it was sold under.
+  C.paymentMethods = () => AccountApp.store.config().payments.methods;
+  C.paymentOptions = () => C.paymentMethods().filter(p => !p.archived).map(p => [p.key, p.label]);
+  C.paymentDefault = () => { const w = AccountApp.store.config().payments; return w.methods.some(p => p.key === w.default && !p.archived) ? w.default : (w.methods.find(p => !p.archived)?.key || ''); };
+  C.paymentLabel = (v) => (C.paymentMethods().find(p => p.key === v) || { label: v || '—' }).label;
+  C.paymentOf = (d) => d.paymentLabel || C.paymentLabel(d.payment);
   C.download = (name, text, type = 'text/csv') => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
 
   // ---- CSV (done in the browser; the server never sees the file) ----
@@ -107,7 +111,7 @@
       if (withTests && it.inspection) { lines.push(`   ${recHead(it.inspection)}:`); for (const st of it.inspection.steps) lines.push(`    ${stepLine(st, it.inspection)}`); if (it.inspection.notes) lines.push(`    Notes: ${it.inspection.notes}`); }
     }
     if (d.orderPct) lines.push('', `Subtotal: ${F().money(d.subtotal)}`, `Order discount ${d.orderPct}%: -${F().money(d.orderOff)}`);
-    lines.push('', `Total: ${F().money(d.total)}`, `Paid by: ${C.paymentLabel(d.payment)}`, C.warrantyLine(d)); if (d.notes) lines.push('', d.notes); lines.push('', 'Thank you!'); return lines.join('\n');
+    lines.push('', `Total: ${F().money(d.total)}`, `Paid by: ${C.paymentOf(d)}`, C.warrantyLine(d)); if (d.notes) lines.push('', d.notes); lines.push('', 'Thank you!'); return lines.join('\n');
   };
   // The reseller's own mail server details (saved in Settings), or null to use the site's shared sender.
   C.ownMail = () => { const m = AccountApp.store.config().mail; return m?.enabled && m.host && m.fromAddress ? { host: m.host, port: m.port, secure: !!m.secure, user: m.user, pass: m.pass, fromName: m.fromName || AccountApp.me.businessName, fromAddress: m.fromAddress } : null; };
@@ -119,7 +123,7 @@
     return `<div class="receipt"><img class="receipt-logo" src="/assets/logo-512.png" alt="" width="512" height="512"><h2>${esc(AccountApp.me.businessName)}</h2><div class="sub center">Receipt ${esc(d.no)} · ${esc(F().when(d.ts))}</div>${d.voided ? '<p class="banner red center mt-md">This sale was voided.</p>' : ''}
       <p class="center mt-md">${d.customerName ? `Customer: <b>${esc(d.customerName)}</b>` : 'Walk-in customer'}</p>
       <table><tbody>${d.items.map(it => `<tr><td><div>${esc(C.itemLabel(it))}</div>${it.pct ? `<div class="sub text-sm">${esc(it.pct)}% off</div>` : ''}${(it.fields || []).length ? `<div class="sub text-sm">${it.fields.map(x => `${esc(x.label)}: ${esc(x.value)}`).join(' · ')}</div>` : ''}${withTests ? testHtml(it) : ''}</td><td class="right nowrap">${it.pct ? `<div class="sub text-sm strike">${esc(F().money(it.listPrice))}</div>` : ''}<div>${esc(F().money(it.price))}</div></td></tr>`).join('')}</tbody></table>
-      ${d.orderPct ? `<div class="line-sub"><span>Subtotal</span><span>${esc(F().money(d.subtotal))}</span></div><div class="line-sub"><span>Order discount ${esc(d.orderPct)}%</span><span>−${esc(F().money(d.orderOff))}</span></div>` : ''}<div class="line-total"><span>Total</span><span>${esc(F().money(d.total))}</span></div><p class="sub center mt-md">Paid by ${esc(C.paymentLabel(d.payment))}</p><p class="center mt-sm">${esc(C.warrantyLine(d))}</p>${d.notes ? `<p class="center mt-md">${esc(d.notes)}</p>` : ''}<p class="sub center mt-lg">Thank you!</p></div>`; };
+      ${d.orderPct ? `<div class="line-sub"><span>Subtotal</span><span>${esc(F().money(d.subtotal))}</span></div><div class="line-sub"><span>Order discount ${esc(d.orderPct)}%</span><span>−${esc(F().money(d.orderOff))}</span></div>` : ''}<div class="line-total"><span>Total</span><span>${esc(F().money(d.total))}</span></div><p class="sub center mt-md">Paid by ${esc(C.paymentOf(d))}</p><p class="center mt-sm">${esc(C.warrantyLine(d))}</p>${d.notes ? `<p class="center mt-md">${esc(d.notes)}</p>` : ''}<p class="sub center mt-lg">Thank you!</p></div>`; };
 
   // Receipt sheet: print, email (sent by the server and not kept, or opened in the person's own mail app), void.
   C.showReceipt = async (sale, { canVoid = true } = {}) => {

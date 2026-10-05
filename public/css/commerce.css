@@ -38,6 +38,8 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .check-row .check, .check-row .icon-btn { justify-self: center; justify-content: center; }
 .check-head span:not(:first-child) { text-align: center; }
 .check-row, .step-row { max-width: var(--config-w); }
+.pay-row input[type=text] { height: var(--control-h-md); }
+.pay-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--col-war-w) var(--col-war-w) var(--control-h-md) var(--move-w); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); max-width: var(--config-w); }
 .war-row input[type=text] { height: var(--control-h-md); }
 .war-row .chip { justify-content: center; }
 .war-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--chip-type-w) var(--col-war-w) var(--col-war-w) var(--control-h-md) var(--move-w); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); max-width: var(--config-w); }

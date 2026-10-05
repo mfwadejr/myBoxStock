@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.17.3] - 2026-10-04
+
+### Added
+- **Payment methods list in Settings.** The "Paid by" choices at Quick sale are now yours to edit: rename, add, reorder, archive, remove (when never used on a sale) and pick the default. Each sale keeps the name it was sold under, so changing the list never alters past receipts.
+
 ## [0.17.2] - 2026-10-04
 
 ### Fixed
