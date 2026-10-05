@@ -3,6 +3,24 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.19.0] - 2026-10-05
+
+### Added
+- **Full documentation, built in.** A **Documentation** link in the menu of both the reseller app and the Host Console. Each has its own set (14 reseller pages, 19 Host pages) with how-to steps and the reasons behind each feature, and a search box that searches that set. Pages are plain Markdown files in `content/docs/` (title, summary, keywords, order, what each page covers). Tests check that every menu item has a page, every page is well formed with working links, and that search finds each page. The reseller set states plainly that customers own their data and are responsible for it, for their recovery key and for their own exports.
+- **Works on phones and tablets.** The whole site (reseller app, Host Console, sign-in and sign-up) was reworked for iPhone, iPad, Android and desktop screens. On phones and tablets the menu is a bar at the bottom (Home, Quick sale, Inventory and Customers, with a **More** sheet for the rest and Sign out; the Host Console has Overview, Alerts, Accounts and Logs). Tables become labelled cards on phones, pop-ups rise from the bottom, buttons and fields are at least 44px, fields are 16px so iPhones do not zoom in, the top bar is compact, safe areas (notch and home bar) are respected, landscape phones get a slim bar, and in Quick sale the total and **Complete sale** stay in view. All of it lives in `public/css/responsive.css` using the standard tokens. A test opens every page at twelve common sizes (iPhone SE to Pro Max, landscape, Android, iPad, iPad Pro, laptop, desktop) and checks for sideways scrolling, the right menu, touch sizes and cards.
+- **Alerts (Host Console).** The server watches itself every five minutes: email failing or stuck, the scheduled backup failing, a burst of failed sign-ins, storage almost full, database errors, and trials ending within three days. Each problem is one alert with a counter, shown in a red banner across the Host Console, and the Owner is emailed once per problem (not per repeat). Alerts clear by themselves, and can be set aside. Never reads anything inside an account.
+- **Email health.** A Health tab on the Email page: last successful send, failures in the last 24 hours and 7 days, queue size and age, and the last failure with the receiving server's reason.
+- **Updates page.** The running version, when it started, what the last update did (versions and database changes), errors since start, and an optional release address (for GitHub, the latest-release address) checked once a day, with an alert when a newer version exists.
+- **Audit trail page.** A searchable record of what each Host administrator did to settings and accounts: who, what, when and from where.
+- **Onboarding page.** A setup funnel with counts (account created, email confirmed, first sign-in, recovery key saved, plan started) and a row per account showing where it stopped. Server-visible facts only.
+- **Two-factor is now required for every Host helper administrator.** A helper without it sees a set-up screen after signing in and cannot use the console until it is on. The Owner is exempt so nobody can be locked out of their own server; the Owner can reset a helper's two-factor.
+
+### Changed
+- Firewall: the on/off switch in each rule row lines up with its address and Remove button (the shared switch no longer inherits a stray bottom margin). "Address rules" is now **Site-wide blocking and rate-limit exceptions**, with the buttons **Block this address** and **Skip rate limits**, the chips "blocked" and "skips limits", and the empty message "Nothing blocked. Everyone is subject to the normal rate limits."
+- Date and time boxes in forms share one width, so Date received and Tested on match. The Tested on hint says "different day".
+- `reset-host-admin` prints the Owner's real username instead of always "admin".
+- New database migration 13 (alerts table).
+
 ## [0.18.2] - 2026-10-05
 
 ### Added

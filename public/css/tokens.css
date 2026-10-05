@@ -128,6 +128,11 @@
   --shadow-segment: 0 1px 4px var(--color-shadow-3);
 
   /* ---- component sizes ---- */
+  --tap-min: 44px;            /* smallest comfortable touch target (Apple and Google guidance) */
+  --text-input-touch: 16px;   /* iPhones zoom the page when a field is smaller than this */
+  --tabbar-h: 56px;
+  --tabbar-icon: 24px;
+  --sheet-max-h-phone: 92dvh;
   --control-h-sm: 32px;
   --control-h-md: 40px;
   --control-h: 44px;

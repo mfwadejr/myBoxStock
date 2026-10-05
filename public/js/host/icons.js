@@ -12,7 +12,12 @@ window.Host = window.Host || { views: {} };
     firewall: svg('<path d="M12 3 4.5 6v5.5c0 4.4 3.1 8 7.5 9.5 4.4-1.5 7.5-5.1 7.5-9.5V6z"/>'),
     security: svg('<rect x="4" y="10.5" width="16" height="10" rx="3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>'),
     settings: svg('<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/>'),
+    alerts: svg('<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 21a2 2 0 0 0 4 0"/>'),
+    onboarding: svg('<path d="M4 6h16M7 12h10M10 18h4"/>'),
+    audit: svg('<path d="M9 11.5 11 13.5 15.5 9"/><rect x="4" y="3.5" width="16" height="17" rx="3"/>'),
+    updates: svg('<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 20h14"/>'),
+    docs: svg('<path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3"/>'),
     logs: svg('<path d="M7 3.5h8l4 4V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 6 20V5a1.5 1.5 0 0 1 1-1.4z"/><path d="M9 12h6M9 16h6"/>'),
   };
-  Host.nav = [['overview', 'Overview'], ['accounts', 'Accounts'], ['pipeline', 'Pipeline'], ['plans', 'Plans'], ['backups', 'Backups'], ['email', 'Email'], ['firewall', 'Firewall'], ['security', 'Security'], ['settings', 'Settings'], ['logs', 'Logs']];
+  Host.nav = [['overview', 'Overview'], ['alerts', 'Alerts'], ['accounts', 'Accounts'], ['pipeline', 'Pipeline'], ['onboarding', 'Onboarding'], ['plans', 'Plans'], ['backups', 'Backups'], ['email', 'Email'], ['firewall', 'Firewall'], ['security', 'Security'], ['settings', 'Settings'], ['logs', 'Logs'], ['audit', 'Audit trail'], ['updates', 'Updates'], ['docs', 'Documentation']];
 })();

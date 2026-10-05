@@ -31,5 +31,6 @@
 .maxw-sm { max-width: var(--width-sm); } .maxw-md { max-width: var(--width-md); } .maxw-lg { max-width: var(--width-lg); }
 .justify-between { justify-content: space-between; }
 .qr-center { margin: var(--space-xl) auto; width: var(--qr-w); }
+.row-end { justify-content: flex-end; }
 .switch-sm { transform: scale(var(--scale-small-switch)); display: inline-block; }
 .pad-y-sm { padding: var(--space-sm) var(--space-0); }

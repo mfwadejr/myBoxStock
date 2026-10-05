@@ -21,7 +21,8 @@
     const cm = { key: 'receipt', seq: 0 };
     const usedPay = new Set(S.all('sale').map(e => e.data.payment).filter(Boolean));
     const usedKeys = new Set(S.all('sale').map(e => e.data.warranty?.key).filter(Boolean));
-    const chk = (k, on, i) => { const idOnly = (k === 'fk' || k === 'fu') && cfg.fields[i].type && cfg.fields[i].type !== 'text'; return `<label class="check"><input type="checkbox" data-k="${k}" data-i="${i}" ${on && !idOnly ? 'checked' : ''} ${idOnly ? 'disabled' : ''}></label>`; };
+    const CHK_LABEL = { fe: 'Track', fk: 'Look up in sale', fu: 'Must be unique', fs: 'On sale record' }; // shown beside the box on phones, where the column headings are hidden
+    const chk = (k, on, i) => { const idOnly = (k === 'fk' || k === 'fu') && cfg.fields[i].type && cfg.fields[i].type !== 'text'; return `<label class="check"><input type="checkbox" data-k="${k}" data-i="${i}" ${on && !idOnly ? 'checked' : ''} ${idOnly ? 'disabled' : ''}><span class="check-text">${esc(CHK_LABEL[k] || '')}</span></label>`; };
 
     const K = C.catalog, key = K.key;
     const variantNote = (x) => x.variants.length > 1 ? `<div class="hint">Also entered as ${x.variants.filter(v => v !== x.name).map(esc).join(', ')}. Use Rename or merge to combine them.</div>` : '';

@@ -17,6 +17,18 @@ export function mailRoutes(db) {
   r.get('/', async (req, res) => res.json({ settings: await getMailSettings(db),
     queue: await db.all(QUEUE_SQL) }));
 
+  // Email health: is mail getting out? Counts and times only; no message content.
+  r.get('/health', async (req, res) => {
+    const now = Date.now(), H = 3600e3, n = async (sql, a = []) => Number((await db.get(sql, a)).n);
+    const settings = await getMailSettings(db), lastSent = await db.get("SELECT sent_at FROM mail_queue WHERE status = 'sent' ORDER BY sent_at DESC LIMIT 1"), lastFail = await db.get("SELECT created_at, last_error FROM mail_queue WHERE status = 'failed' ORDER BY created_at DESC LIMIT 1");
+    const oldest = await db.get("SELECT created_at FROM mail_queue WHERE status = 'queued' ORDER BY created_at LIMIT 1");
+    res.json({ enabled: !!settings.enabled, mode: settings.mode, fromAddress: settings.fromAddress,
+      lastSentAt: lastSent?.sent_at ? Number(lastSent.sent_at) : null, lastFailureAt: lastFail ? Number(lastFail.created_at) : null, lastError: lastFail?.last_error || '',
+      sent24h: await n("SELECT COUNT(*) AS n FROM mail_queue WHERE status = 'sent' AND sent_at > ?", [now - 24 * H]), failed24h: await n("SELECT COUNT(*) AS n FROM mail_queue WHERE status = 'failed' AND created_at > ?", [now - 24 * H]),
+      sent7d: await n("SELECT COUNT(*) AS n FROM mail_queue WHERE status = 'sent' AND sent_at > ?", [now - 168 * H]), failed7d: await n("SELECT COUNT(*) AS n FROM mail_queue WHERE status = 'failed' AND created_at > ?", [now - 168 * H]),
+      queued: await n("SELECT COUNT(*) AS n FROM mail_queue WHERE status = 'queued'"), oldestQueuedAt: oldest ? Number(oldest.created_at) : null });
+  });
+
   // ---- message wording (Messages tab) ----
   const info = (key, saved) => { const t = TEMPLATES[key], d = defaultsOf(t), cur = wording(key, saved[key]);
     return { key, group: t.group, name: t.name, hasButton: !!t.button, defaults: d, current: cur, custom: EDITABLE.some(k => cur[k] !== d[k]),

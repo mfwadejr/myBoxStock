@@ -65,7 +65,7 @@ export const INDEXES = [
 
 // Order matters when copying between databases (parents before children).
 export const COPY_ORDER = ['settings', 'host_admins', 'accounts', 'billing_events', 'account_users', 'sign_in_history', 'account_keys', 'account_recovery', 'account_roles', 'inventory_items', 'records',
-  'firewall_rules', 'mail_queue', 'event_log', 'password_resets', 'sessions', 'admin_links', 'email_confirmations', 'billing_receipts', 'receipt_mail_usage'];
+  'firewall_rules', 'mail_queue', 'event_log', 'password_resets', 'sessions', 'admin_links', 'email_confirmations', 'billing_receipts', 'receipt_mail_usage', 'alerts'];
 
 // Versioned migrations. Each runs once, in order, and is recorded in schema_migrations.
 // Fresh installs run all of them; existing installs run only the ones they are missing. Never edit an applied migration — add a new one.
@@ -142,6 +142,12 @@ const MIGRATIONS = [
   { id: 12, name: 'daily count of receipts emailed per account', up: async (db) => {
     // Only a count per day: no address, no content (receipts are relayed, never stored).
     await db.exec(`CREATE TABLE receipt_mail_usage (account_id ${id} NOT NULL, day ${s(10)} NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (account_id, day))`);
+  } },
+  { id: 13, name: 'Host alerts', up: async (db) => {
+    // Server-side problems only (email, backups, sign-in floods, disk, trials). Never anything from inside an account.
+    await db.exec(`CREATE TABLE alerts (id ${id} PRIMARY KEY, kind ${s(40)} NOT NULL, dedupe_key ${s(120)} NOT NULL, level ${s(10)} NOT NULL, title ${s()} NOT NULL, detail ${s(600)},
+      first_at BIGINT NOT NULL, last_at BIGINT NOT NULL, occurrences INTEGER NOT NULL DEFAULT 1, status ${s(12)} NOT NULL, resolved_at BIGINT, emailed_at BIGINT)`);
+    await db.exec('CREATE INDEX idx_alerts_status ON alerts (status, last_at)');
   } },
 ];
 

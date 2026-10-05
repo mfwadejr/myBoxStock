@@ -25,6 +25,8 @@ export const PLACEHOLDERS = {
   message: { label: 'Receipt', sample: 'Alex Boxes\nReceipt S-20261004-7K2Q\nTotal: $40.00' },
   url: { label: 'Link', sample: 'https://app.myboxstock.com/app/' },
   link: { label: 'Link', sample: 'https://app.myboxstock.com/app/#/reset/example' },
+  title: { label: 'Alert headline', sample: 'Email is not being delivered', bold: true },
+  detail: { label: 'What was found', sample: '3 messages failed in the last 24 hours. Open Email, then Health.' },
 };
 
 // group = how the Messages editor groups them; vars = placeholders offered; required = ones the wording must keep; button = { label, to: placeholder holding the address }.
@@ -62,6 +64,9 @@ export const TEMPLATES = {
   backup_failed: { group: 'System', name: 'Backup failed', title: 'A scheduled backup did not complete', subject: 'myBoxStock: the scheduled backup did not complete',
     body: 'The scheduled full-site backup did not complete.\n\nTime: {{when}}\nProblem: {{error}}\n\nOpen the Host Console, Backups page, to check it and run one by hand.',
     vars: ['when', 'error'], required: ['when', 'error'] },
+  host_alert: { group: 'System', name: 'Host alert', title: 'The server needs a look', subject: 'myBoxStock alert: {{title}}',
+    body: 'The server found a problem.\n\n{{title}}\n\n{{detail}}\n\nTime: {{when}}\n\nOpen the Host Console, Alerts page, for the full list. You get one email per problem, not one per repeat.',
+    vars: ['title', 'detail', 'when'], required: ['title'] },
   receipt: { group: 'Customer', name: 'Receipt', title: 'Your receipt', subject: 'Receipt {{receiptNo}} from {{business}}',
     body: '{{message}}', vars: ['business', 'receiptNo', 'message'], required: ['message'] },
   sale_voided: { group: 'Customer', name: 'Sale voided', title: 'Your sale was cancelled', subject: 'Receipt {{receiptNo}} from {{business}} was cancelled',

@@ -2,6 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { totpCode } from '../src/auth/totp.mjs';
 import { startServer, Client } from './helpers.mjs';
 
 const exe = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium';
@@ -14,6 +15,7 @@ test('browser: Owner chip, edit details, support actions only for the Owner', { 
   await owner.req('POST', '/api/host/login', { login: 'admin', password: srv.hostPw }); await owner.req('POST', '/api/host/change-password', { current: srv.hostPw, next: STRONG });
   await owner.req('POST', '/api/host/admins', { username: 'helper', email: 'helper@example.com', password: 'Temp0rarySecret!' });
   await helper.req('POST', '/api/host/login', { login: 'helper', password: 'Temp0rarySecret!' }); await helper.req('POST', '/api/host/change-password', { current: 'Temp0rarySecret!', next: HELPER });
+  { const s = await helper.req('POST', '/api/host/totp/setup'); await helper.req('POST', '/api/host/totp/enable', { code: totpCode(s.data.secret) }); } // helpers must have two-factor on before using the console
   const br = await (pw.chromium || pw.default.chromium).launch({ executablePath: exe });
   const open = async (client) => { const ctx = await br.newContext({ viewport: { width: 1400, height: 1000 } }); await ctx.addCookies(Object.entries(client.jar).map(([name, value]) => ({ name, value, url: srv.base }))); const page = await ctx.newPage(); page.on('pageerror', e => errors.push(e.message)); await page.goto(srv.base + '/host/#/security'); await page.waitForSelector('[data-edit]'); return page; };
   const errors = [];

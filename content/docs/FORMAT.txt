@@ -1,0 +1,13 @@
+Documentation pages (Markdown subset). One file per page in content/docs/reseller/ or content/docs/host/, named NN-slug.md.
+
+Header (required, first lines):
+---
+title: Inventory
+summary: One or two plain sentences saying what this page helps you do.
+keywords: comma, separated, words people might type when they look for this
+order: 3
+covers: nav:inventory, Add item, Date received, Tested on   (every menu key as nav:<key>, plus every button, field, tab and setting the page explains)
+---
+
+Body: ## and ### headings, paragraphs, "- " bullets, "1. " numbered steps, "> " tip/note box, **bold**, `code`, and links [text](#/docs/slug).
+No HTML, no images, no other Markdown. Links only to #/docs/<slug>.

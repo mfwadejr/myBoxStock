@@ -87,12 +87,15 @@
   const billingChip = (b) => b.state === 'trial' ? `<span class="chip blue">Free trial · ${b.daysLeft} day${b.daysLeft === 1 ? '' : 's'} left</span>`
     : !b.canWrite ? '<span class="chip red">Trial ended — read-only</span>' : '';
   // [key, label, permission needed to see it]
-  const NAV = [['home', 'Home', null], ['sell', 'Quick sale', 'sales.write'], ['inventory', 'Inventory', 'inventory.read'], ['customers', 'Customers', 'customers.read'], ['sales', 'Sales', 'sales.read'], ['team', 'Team', 'users.manage'], ['settings', 'Settings', 'users.manage'], ['activity', 'Activity', 'users.manage'], ['security', 'Security', null]];
+  const NAV = [['home', 'Home', null], ['sell', 'Quick sale', 'sales.write'], ['inventory', 'Inventory', 'inventory.read'], ['customers', 'Customers', 'customers.read'], ['sales', 'Sales', 'sales.read'], ['team', 'Team', 'users.manage'], ['settings', 'Settings', 'users.manage'], ['activity', 'Activity', 'users.manage'], ['security', 'Security', null], ['docs', 'Documentation', null]];
+  const PRIMARY = ['home', 'sell', 'inventory', 'customers']; // the phone tab bar; everything else is under More
+  const visibleNav = () => NAV.filter(([, , p]) => !p || AccountApp.can(p)).map(([k, l]) => [k, l]);
   AccountApp.showShell = () => shell();
   function shell() {
     const me = AccountApp.me;
-    root.innerHTML = `<header class="topbar"><div class="brand"><a class="brand-link" href="#/home" aria-label="Home"><img class="brand-mark" src="/assets/logo-512.png" alt="myBoxStock" width="512" height="512"></a>${esc(me.businessName)}</div><div class="grow"></div>${me.hostLinked ? '<span id="swh"></span>' : ''}${billingChip(me.billing)}<span class="muted text-sm">${esc(me.username)} · ${esc(me.role)}</span><button class="btn secondary small" id="out">Sign out</button></header>
-      <div class="shell"><nav class="side">${NAV.filter(([, , p]) => !p || AccountApp.can(p)).map(([k, l]) => `<a href="#/${k}" data-k="${k}"><span>${l}</span></a>`).join('')}</nav><main class="main" id="main"></main></div>`;
+    root.innerHTML = `<header class="topbar"><div class="brand"><a class="brand-link" href="#/home" aria-label="Home"><img class="brand-mark" src="/assets/logo-512.png" alt="myBoxStock" width="512" height="512"></a><span class="brand-name">${esc(me.businessName)}</span></div><div class="grow"></div>${me.hostLinked ? '<span id="swh"></span>' : ''}${billingChip(me.billing)}<span class="muted text-sm hide-phone">${esc(me.username)} · ${esc(me.role)}</span><button class="btn secondary small hide-phone" id="out">Sign out</button></header>
+      <div class="shell"><nav class="side">${visibleNav().map(([k, l]) => `<a href="#/${k}" data-k="${k}">${AccountApp.icons[k] || ''}<span>${l}</span></a>`).join('')}</nav><main class="main" id="main"></main></div>${UI.tabbar.html(visibleNav(), PRIMARY, AccountApp.icons)}`;
+    UI.tabbar.bind(root, visibleNav(), PRIMARY, AccountApp.icons, { head: `<p class="sub">${esc(me.username)} · ${esc(me.role)}</p>`, foot: '<div class="actions"><button class="btn secondary" id="outm">Sign out</button></div>', mount: (el, close) => el.querySelector('#outm').addEventListener('click', () => { close(null); AccountApp.signOut(); }) });
     if (me.hostLinked) UI.select.switcher(root.querySelector('#swh'), { value: 'me', options: [['me', `Reseller · ${me.businessName}`], ['host', 'Site admin']], pick: (v) => { if (v === 'host') window.open('/host/', '_blank', 'noopener'); } });
     root.querySelector('#out').addEventListener('click', () => AccountApp.signOut());
     window.removeEventListener('hashchange', AccountApp.route); window.addEventListener('hashchange', AccountApp.route); AccountApp.route();
@@ -120,7 +123,7 @@
   }
   AccountApp.route = async () => {
     const k = (location.hash.replace(/^#\//, '') || 'home').split('/')[0], key = AccountApp.views[k] ? k : 'home';
-    root.querySelectorAll('.side a').forEach(a => a.classList.toggle('active', a.dataset.k === key));
+    UI.tabbar.mark(root, key, PRIMARY);
     const main = root.querySelector('#main'); if (!main) return;
     try { await AccountApp.fresh(); if (Date.now() - annAt > 120000) { annAt = Date.now(); AccountApp.announcement = (await AccountApp.api('GET', '/announcement')).announcement; } await AccountApp.views[key](main); if (key === 'home' || key === 'security') emailBanner(main); closingBanner(main); announcementBanner(main); } catch (e) { if (e.status === 401) return boot(); swap(main, `<div class="card"><p class="banner red">${esc(e.message)}</p></div>`); }
   };

@@ -12,7 +12,8 @@ export async function runCli(cmd) {
   if (cmd === 'reset-host-admin') {
     const db = await initDb(); attachLogDb(db);
     const pw = await ensureHostAdmin(db, { reset: true });
-    console.log(`\nHost admin reset. Username: admin\nTemporary password: ${pw}\nTwo-factor was cleared; you must change the password at next sign-in.\n`);
+    const owner = await db.get('SELECT username FROM host_admins ORDER BY created_at, id LIMIT 1');
+    console.log(`\nHost admin reset. Username: ${owner?.username || 'admin'}\nTemporary password: ${pw}\nTwo-factor was cleared; you must change the password at next sign-in.\n`);
     await closeLogs(); await db.close(); return true;
   }
   if (cmd === 'reset-server-options') {

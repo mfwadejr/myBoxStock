@@ -9,11 +9,22 @@
   let tab = 'delivery';
   Host.views.email = async (main) => {
     swap(main, `${Host.head('Email', 'Outbound only — for password resets, welcome messages and security notices. This server never receives mail.')}
-      <div class="seg mb-lg" id="etabs" role="tablist"><button type="button" data-t="delivery" class="${tab === 'delivery' ? 'on' : ''}">Delivery</button><button type="button" data-t="messages" class="${tab === 'messages' ? 'on' : ''}">Messages</button></div><div id="pane"></div>`);
-    const show = async () => { main.querySelectorAll('#etabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab)); const pane = main.querySelector('#pane'); try { await (tab === 'messages' ? Host.emailMessages(pane) : delivery(pane)); } catch (er) { toast(er.message, true); } };
+      <div class="seg mb-lg" id="etabs" role="tablist"><button type="button" data-t="delivery" class="${tab === 'delivery' ? 'on' : ''}">Delivery</button><button type="button" data-t="messages" class="${tab === 'messages' ? 'on' : ''}">Messages</button><button type="button" data-t="health" class="${tab === 'health' ? 'on' : ''}">Health</button></div><div id="pane"></div>`);
+    const show = async () => { main.querySelectorAll('#etabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab)); const pane = main.querySelector('#pane'); try { await (tab === 'messages' ? Host.emailMessages(pane) : tab === 'health' ? health(pane) : delivery(pane)); } catch (er) { toast(er.message, true); } };
     main.querySelectorAll('#etabs button').forEach(b => b.addEventListener('click', () => { if (tab !== b.dataset.t) { tab = b.dataset.t; show(); } }));
     show();
   };
+
+  // Health tab: is mail getting out? Times and counts only.
+  async function health(main) {
+    const h = await Host.api('GET', '/mail/health'), ok = h.enabled && !h.failed24h && !(h.oldestQueuedAt && Date.now() - h.oldestQueuedAt > 30 * 60e3);
+    swap(main, `<div class="card"><div class="row spread wrap"><div><h3>Is email getting out?</h3><div class="sub mb-0">${h.enabled ? `Sending ${h.mode === 'smtp' ? 'through your SMTP relay' : 'directly to recipients'} from ${esc(h.fromAddress || 'no address set')}.` : 'Sending is turned off on the Delivery tab.'}</div></div><span class="chip ${ok ? 'green' : 'red'}">${ok ? 'Working' : 'Needs a look'}</span></div></div>
+      <div class="grid g4"><div class="card stat"><div class="stat-label">Last successful send</div><div class="stat-value small">${h.lastSentAt ? esc(fmt.ago(h.lastSentAt)) : 'never'}</div></div>
+        <div class="card stat"><div class="stat-label">Failed, last 24 hours</div><div class="stat-value">${h.failed24h}</div><div class="stat-note">${h.sent24h} sent</div></div>
+        <div class="card stat"><div class="stat-label">Failed, last 7 days</div><div class="stat-value">${h.failed7d}</div><div class="stat-note">${h.sent7d} sent</div></div>
+        <div class="card stat"><div class="stat-label">Waiting to send</div><div class="stat-value">${h.queued}</div><div class="stat-note">${h.oldestQueuedAt ? `oldest ${esc(fmt.ago(h.oldestQueuedAt))}` : 'queue is empty'}</div></div></div>
+      ${h.lastFailureAt ? `<div class="card"><h3>Last failure</h3><div class="sub">${esc(fmt.ago(h.lastFailureAt))}. A message that fails five times is given up on; the receiving server’s refusal (a bounce) is shown here.</div><div class="hint danger-text">${esc(h.lastError)}</div></div>` : '<div class="card"><h3>No failures</h3><div class="sub mb-0">Nothing has failed recently.</div></div>'}`);
+  }
 
   async function delivery(main) {
     const d = await Host.api('GET', '/mail'), m = d.settings;

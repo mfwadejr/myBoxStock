@@ -19,6 +19,11 @@ test('the first administrator is the Owner; only the Owner can add others', asyn
   let rows = await list(owner); assert.equal(rows.length, 1); assert.equal(rows[0].owner, true); assert.equal(rows[0].username, 'admin');
   assert.equal((await owner.req('POST', '/api/host/admins', { username: 'helper', email: 'helper@example.com', password: 'Temp0rarySecret!' })).status, 200);
   helper = await signIn('helper', 'Temp0rarySecret!', HELPER);
+  assert.equal((await helper.req('GET', '/api/host/dashboard')).status, 403, 'a helper without two-factor cannot use the console');
+  assert.equal((await helper.req('GET', '/api/host/dashboard')).data.code, 'MFA_SETUP_REQUIRED');
+  const setup = await helper.req('POST', '/api/host/totp/setup'); assert.equal((await helper.req('POST', '/api/host/totp/enable', { code: totpCode(setup.data.secret) })).status, 200);
+  assert.equal((await helper.req('GET', '/api/host/dashboard')).status, 200, 'and can once two-factor is on');
+  assert.equal((await owner.req('GET', '/api/host/dashboard')).status, 200, 'the Owner is never held back');
   rows = await list(owner); assert.equal(rows.find(a => a.username === 'helper').owner, false);
   assert.equal((await helper.req('POST', '/api/host/admins', { username: 'third', password: 'Temp0rarySecret!' })).status, 403, 'a helper cannot add administrators');
 });
@@ -38,7 +43,6 @@ test('edit details: your own, or anyone\'s as Owner; helpers cannot edit others;
 
 test('Owner-only support actions: reset two-factor, temporary password, sign out, delete', async () => {
   const h = (await list(owner)).find(a => a.username === 'helper'), o = (await list(owner)).find(a => a.owner);
-  const setup = await helper.req('POST', '/api/host/totp/setup'); assert.equal((await helper.req('POST', '/api/host/totp/enable', { code: totpCode(setup.data.secret) })).status, 200);
   assert.equal((await list(owner)).find(a => a.id === h.id).totp_enabled, 1);
   for (const [m, p] of [['POST', 'reset-mfa'], ['POST', 'temp-password'], ['POST', 'sign-out']]) assert.equal((await helper.req(m, `/api/host/admins/${o.id}/${p}`)).status, 403, `a helper cannot ${p}`);
   assert.equal((await helper.req('DELETE', `/api/host/admins/${o.id}`, { confirm: 'admin' })).status, 403);
@@ -62,9 +66,9 @@ test('sign out everywhere and delete (with typed confirmation); the last adminis
   // give the helper a known password and an open session
   const tmp = (await owner.req('POST', `/api/host/admins/${h.id}/temp-password`)).data.tempPassword;
   const hc = await signIn('helper', tmp, HELPER); const hc2 = await signIn('helper', HELPER);
-  assert.equal((await hc2.req('GET', '/api/host/dashboard')).status, 200);
+  assert.equal((await hc2.req('GET', '/api/host/me')).status, 200);
   assert.equal((await owner.req('POST', `/api/host/admins/${h.id}/sign-out`)).status, 200);
-  assert.equal((await hc2.req('GET', '/api/host/dashboard')).status, 401, 'signed out everywhere'); void hc;
+  assert.equal((await hc2.req('GET', '/api/host/me')).status, 401, 'signed out everywhere'); void hc;
   assert.equal((await owner.req('DELETE', `/api/host/admins/${h.id}`, { confirm: 'wrong' })).status, 400);
   assert.equal((await owner.req('DELETE', `/api/host/admins/${h.id}`, { confirm: 'helper' })).status, 200);
   assert.equal((await list(owner)).length, 1);

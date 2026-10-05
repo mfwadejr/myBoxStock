@@ -18,6 +18,8 @@ import { sweepExpired } from './src/services/billing/index.mjs';
 import { purgeSignInHistory } from './src/services/signins/index.mjs';
 import { hostRouter } from './src/routes/host/index.mjs';
 import { appRouter } from './src/routes/app/index.mjs';
+import { startAlertWorker } from './src/services/alerts/index.mjs';
+import { recordStartup, startUpdateWorker } from './src/services/updates/index.mjs';
 import { cloudflareAddress } from './src/security/cloudflare-middleware.mjs';
 
 if (await runCli(process.argv[2])) process.exit(process.exitCode || 0);
@@ -31,6 +33,7 @@ attachLogDb(db);
 const firstPw = await ensureHostAdmin(db);
 await loadFirewall(db);
 startMailWorker(db); startBackupScheduler(db);
+await recordStartup(db); startAlertWorker(db); startUpdateWorker(db);
 sweepExpired(db).catch(() => {});
 sweepClosing(db).catch((e) => E.error('closing.sweep', e.message));
 setInterval(() => sweepClosing(db).catch((e) => E.error('closing.sweep', e.message)), config.closingSweepMs).unref();

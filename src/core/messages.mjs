@@ -5,6 +5,7 @@ export const MSG = {
   NOT_SIGNED_IN: 'Your session has ended. Please sign in again.',
   CSRF_BAD: 'This page is out of date. Refresh the page and try again.',
   PASSWORD_CHANGE_REQUIRED: 'You need to choose a new password before continuing.',
+  MFA_SETUP_REQUIRED: 'Set up two-factor authentication before using the Host Console.',
   PERMISSION_DENIED: 'Your user type does not allow this action.',
   LOGIN_MISSING_FIELDS: 'Enter your sign-in and password.',
   LOGIN_INVALID: 'Incorrect sign-in or password.',

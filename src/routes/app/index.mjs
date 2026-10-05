@@ -11,6 +11,7 @@ import { emailRoutes } from './email.mjs';
 import { receiptRoutes } from './receipts.mjs';
 import { accountRoutes } from './account.mjs';
 import { hostLinkRoutes } from './hostlink.mjs';
+import { docsRoutes } from '../docs.mjs';
 import { loadUser } from './context.mjs';
 import { log } from '../../logging/logger.mjs';
 import { fullPath } from '../../core/http.mjs';
@@ -30,6 +31,7 @@ export function appRouter(db) {
     log('tenant', 'warn', 'account.closing_locked', `${req.subject.login} tried ${req.method} ${fullPath(req)} but the account is closing`, { actor: req.subject.login, accountId: req.subject.account_id });
     fail(res, 423, 'ACCOUNT_CLOSING_LOCKED');
   });
+  r.use('/docs', docsRoutes('reseller'));
   r.get('/announcement', async (req, res) => res.json({ announcement: await activeAnnouncement(db) }));
   r.use('/account', accountRoutes(db)); // closing is allowed even when a trial has ended
   // Ended trials and paid periods are read-only: viewing still works, changes are refused (data is never deleted).

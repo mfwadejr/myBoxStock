@@ -1,0 +1,164 @@
+---
+title: Getting started
+summary: What myBoxStock is, how to create your account, sign in, save your recovery key, find your way around the menu, and what to do in your first hour.
+keywords: start, begin, sign up, create account, register, reseller id, username, password, sign in, log in, new device, recovery key, menu, roles, administrator, standard, view, checklist, first steps, documentation, search help, confirm email, trial
+order: 1
+covers: nav:docs, Documentation, Search the documentation, Create account, Sign in, Reseller ID, Username, Password, Business name, Email, Forgot password, Send link, Back to sign in, Two-factor code, Verify, Choose a new password, Update password, Unlock your data, Unlock, Use your recovery key, Restore access, Turn on encryption, Save your recovery key, Download, Print, I have saved my recovery key somewhere safe, Continue, Continue to sign in, Send it again, Sign out, Free trial, Trial ended, Restore account, Close, menu tour, roles, first-hour checklist
+---
+
+## What myBoxStock is
+
+myBoxStock is a web app for people who buy and resell streaming boxes. It keeps track of three things for you: what you have on the shelf (your inventory), who you sell to (your customers), and what you have sold (your sales and receipts). It also records the checks you do on each device before it leaves, and the warranty you give with each sale.
+
+You use it in an ordinary web browser, on a computer, a tablet or a phone. There is nothing to install. You and your staff all sign in to the same account, and everybody sees the same up-to-date information.
+
+### Why your data is private
+
+Everything about your business that you type in, such as devices, costs, prices, customers, sales and settings, is scrambled (encrypted) inside your own browser before it is sent anywhere. It is scrambled with a key that belongs to your account. The people who run this site, and your site administrator, only ever hold the scrambled version and cannot read it.
+
+That privacy comes with a responsibility that is yours alone. You own your data, and you are 100 percent responsible for it, for your recovery key, and for keeping your own exports. Nobody at the site can recover your data for you if the key and every password are lost. Please read [Your data, your responsibility](#/docs/your-data-your-responsibility) and [Security](#/docs/security) early on.
+
+## Creating your account
+
+If your site accepts new sign-ups, the sign-in page has two tabs at the top, **Sign in** and **Create account**. (If you see no tabs, sign-ups are closed right now and you will need an invitation from someone who already has an account.)
+
+1. Open the **Create account** tab. The page tells you how long the free trial lasts, and that no card is needed.
+2. Type your **Business name**. This is shown at the top of every page and on every receipt.
+3. Type your **Email**. Use an address you can read. It is used for your welcome message, for confirming your address, and for resetting your password.
+4. Choose a **Username**. Use 3 to 30 letters, numbers, dots, underscores or hyphens. Capital letters do not matter.
+5. Choose a **Password**. It needs at least 10 characters, with both letters and numbers.
+6. Press **Create account**.
+
+The next screen says **You're all set** and shows your **Reseller ID** in large type. It looks like three parts joined by hyphens, for example `amber-fox-4271`. We also email it to you. Write it down. Press **Continue to sign in**.
+
+### What the Reseller ID is, and why you need it
+
+Many businesses use myBoxStock at the same time, and two of them might both choose the username `sam`. The Reseller ID tells the app which business you mean. To sign in you give three things: the Reseller ID, your username and your password. Your Reseller ID is the same for everyone in your business, so your staff use the same one with their own usernames.
+
+> Tip: Keep your Reseller ID in a place the whole team can find, such as a note in your shop. If someone forgets it, an Administrator in your business can tell them, and it is in the welcome email.
+
+### Confirming your email
+
+Soon after sign-up you will receive an email with a confirmation link. Click it. A banner on Home and Security reminds you until your address is confirmed. If the message did not arrive, press **Send it again** in that banner. Until you confirm, two things are held back: resetting a forgotten password by email, and adding people to your team. Confirming takes a few seconds and saves trouble later.
+
+## Signing in
+
+1. Go to your site's `/app/` address.
+2. Make sure the **Sign in** tab is selected.
+3. Type your **Reseller ID**, your **Username** and your **Password**, then press **Sign in**.
+
+The browser remembers your Reseller ID (never your password) after the first time, so next time you only type your username and password. If you clicked a link that already includes your username, it is filled in for you too.
+
+### Signing in on a new device
+
+On a new phone, a new computer, or after clearing your browser data, the Reseller ID box will be empty. Type it in once and the browser will remember it again. Your data does not live on the device; it is fetched and unscrambled in the browser after you sign in with your password. So any device you trust works.
+
+### Two-factor code
+
+If you or an Administrator turned on two-factor sign-in for your username, you will see a **Two-factor code** screen after your password. Type the 6-digit code from your authenticator app, or one of your recovery codes, and press **Verify**. Setting this up is covered in [Security](#/docs/security).
+
+### Temporary passwords
+
+If an Administrator created your login, your first password may be a temporary one. You will see **Choose a new password**. Type the **Current password**, then the **New password** (at least 10 characters with letters and numbers) and press **Update password**.
+
+### Forgot your password
+
+1. On the sign-in page press **Forgot password?**.
+2. Type the **Email** address on your account and press **Send link**. We email a reset link for each account that uses that address. For privacy the app gives the same reply whether or not the address is known.
+3. Open the link, choose a new password and press **Save password**.
+4. Sign in again.
+
+Use **Back** or **Back to sign in** if you change your mind.
+
+> Important: resetting a password does not by itself bring back access to your encrypted data. Your data unlocks with your password, and a reset password does not know the account key. After a reset you may be asked to use your recovery key (see below), or an Administrator can restore your access. This is the most common point where people get stuck, which is why the recovery key matters so much.
+
+## The recovery key, first run
+
+The first time an Administrator signs in to a brand new account, the app asks for your password once more and shows **Turn on encryption** (press **Turn on**). Right after that you see **Save your recovery key**.
+
+The recovery key is a long code split into groups. It is the only way to get your data back if everybody on the account forgets their passwords. We cannot see it and cannot recover it for you.
+
+1. Press **Download** to save it as a text file, and/or **Print** to print it.
+2. Put the file or the paper somewhere safe and separate from your computer, for example a locked drawer or a password manager.
+3. Tick **I have saved my recovery key somewhere safe**.
+4. Press **Continue**. The button stays disabled until you tick the box.
+
+If a recovery key was created but you never confirmed it, the app will show it again at your next sign-in until you confirm it.
+
+### Unlocking your data
+
+Even when you are signed in, your data must be unlocked on the device with your password. Usually this happens by itself at sign-in. If you see **Unlock your data**, type your password and press **Unlock**. This appears, for example, after a browser refresh, depending on the unlock behaviour your Administrator chose in [Settings](#/docs/settings).
+
+If your password no longer opens your data, choose **Forgot it? Use your recovery key**. On **Use your recovery key**, type the recovery key and your current password, then press **Restore access**. From then on your data unlocks with that password. No recovery key? Ask an Administrator in your account to reset your access.
+
+Some new team members see **Almost ready**: an Administrator must sign in once to turn on encryption before anyone else can use the account.
+
+## The menu tour
+
+Your menu lists the places in the app. What you see depends on your user type, so a person with fewer permissions sees a shorter menu. The name of your business, your username and your user type are shown at the top, with a **Sign out** button. During a trial, a small note shows the days left; when a trial has ended you will see **Trial ended** and the account becomes read-only (see [Plans, trials and billing](#/docs/plans-trials-billing)).
+
+- **Home**: the day-to-day picture. Devices available, what sold this month, revenue, profit, low-stock warnings and recent sales. See [Home](#/docs/home).
+- **Quick sale**: ring up a sale in a few taps, with receipt, discount and warranty. See [Quick sale](#/docs/quick-sale).
+- **Inventory**: every device you own, with costs, prices, test records and stock levels. See [Inventory](#/docs/inventory).
+- **Customers**: the people you sell to and what they bought. See [Customers](#/docs/customers).
+- **Sales**: every receipt, with totals and filters. See [Sales](#/docs/sales).
+- **Team**: add people and choose what they can do. Administrators only. See [Team](#/docs/team).
+- **Settings**: choose which details you track, the test checklist, warranties, payment methods and more. Administrators only. See [Settings](#/docs/settings).
+- **Activity**: a record of who did what in the account. Administrators only. See [Activity](#/docs/activity).
+- **Security**: your password, two-factor sign-in, your recovery key and exports. Everybody has this. See [Security](#/docs/security).
+- **Documentation**: this help. Everybody has this.
+
+Some accounts also show a small switcher near the top for people who also work as site administrators; it only appears if your site administrator has linked it.
+
+### Other banners you may see
+
+- A blue banner asking you to confirm your email address.
+- A banner from your site administrator with an announcement. Press **Close** to hide it; it returns only if the message changes.
+- A red banner saying the account is closing and will be erased on a date. Until then it is read-only. An Administrator can press **Restore account** to bring it back.
+- A red banner on Home saying some records could not be opened with your key. Sign out and in again; if it continues, contact support.
+
+## Roles in one paragraph
+
+Every person in your business has a user type. An **Administrator** can do everything, including Team, Settings and Activity. A **Standard** user can work with inventory, customers and sales (look, add, change, record sales) but cannot manage people or settings, and their discounts are limited to a percentage set by an Administrator. A **View** user can look at inventory, sales and customers but cannot change anything. Everybody can use Security and Documentation. Details are in [Team](#/docs/team).
+
+## Your first-hour checklist
+
+1. Create your account, write down your Reseller ID, and confirm your email.
+2. Save your recovery key and put it somewhere safe (and tell one other trusted person where it is).
+3. Open [Settings](#/docs/settings) and decide which device details you track. UID, Serial number and MAC address are scannable identifiers; Condition and Supplier are also there. Turn off what you do not need.
+4. In Settings, check the Warranty periods and Payment methods match how you really trade.
+5. Decide on your test checklist, and whether devices must be tested before they can be sold.
+6. Add a few devices in [Inventory](#/docs/inventory), either one at a time with **Add device**, in a batch with **Bulk scan**, or from a spreadsheet with **Import CSV**.
+7. Add your regular customers in [Customers](#/docs/customers), or simply create them as you sell.
+8. Record a practice sale in [Quick sale](#/docs/quick-sale), look at the receipt, and void it from [Sales](#/docs/sales) if it was only a test.
+9. If other people will help, add them in [Team](#/docs/team) with the right user type.
+10. Do your first export from [Security](#/docs/security) and keep it somewhere you control.
+
+## Using this Documentation
+
+Choose **Documentation** in the menu. You will see the list of topics as cards. Click a card to open the page. Inside a page, the topic list is shown so you can jump to another page, and the buttons at the bottom take you to the previous or next topic.
+
+To search, click the search box labelled **Search the documentation** and type at least two letters. Results appear as you type. You can type a menu name (such as Inventory), a setting (such as warranty), or a question (such as how do I void a sale). Pick a result to open it. If nothing is found, try fewer or different words.
+
+> Tip: if you are stuck on a problem, try [Troubleshooting and FAQ](#/docs/troubleshooting-faq). For unfamiliar words, see the [Glossary](#/docs/glossary).
+
+## Common mistakes
+
+- Losing the Reseller ID. Keep it with your recovery key.
+- Skipping the recovery key. If everybody forgets their passwords, nobody can reopen the data.
+- Sharing one login between staff. Give each person their own username so [Activity](#/docs/activity) and test records show who did what.
+- Using a throwaway email address, then being unable to reset a password.
+- Assuming the site can fix lost data. It cannot; read [Your data, your responsibility](#/docs/your-data-your-responsibility).
+
+## Using myBoxStock on a phone or tablet
+
+Most resellers make sales from a phone, so the whole app is built to work well on iPhones, iPads, Android phones and tablets as well as laptops and desktops. The screen adjusts to its size; you do not need a separate app.
+
+- On a phone or tablet, the main pages (Home, Quick sale, Inventory and Customers) are in a bar along the bottom of the screen, within easy reach of your thumb. Tap **More** to reach Sales, Team, Settings, Activity, Security and Documentation, and to sign out.
+- On a laptop or desktop the same pages are listed down the side of the screen.
+- Lists such as Inventory, Sales and Customers turn into one card per item on a phone, with each detail labelled, so there is no sideways scrolling. Tap a card to open it.
+- Forms and pop-ups slide up from the bottom of a phone screen. Buttons and fields are large enough to tap comfortably, and text in fields is big enough that the phone does not zoom in when you tap one.
+- In Quick sale, the total and the **Complete sale** button stay in view as you scroll the form on a phone.
+- Turning the phone sideways works too. The bottom bar slims down so there is more room for the page.
+
+> Tip: you can add myBoxStock to your phone's home screen from the browser's share or menu button, so it opens like an app.
