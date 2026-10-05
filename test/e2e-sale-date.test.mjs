@@ -25,7 +25,9 @@ test('browser: date sold on Quick sale, tidy customer purchases', { skip, timeou
     await page.fill('#scan', 'T-1'); await page.press('#scan', 'Enter'); await page.waitForSelector('.cart-line');
     await page.click('[data-mode=new]'); await page.fill('#nn', 'Karen Badders'); await page.fill('#np', '301-514-0873');
     await page.fill('#sd', '2026-09-15'); await page.click('#done'); await page.waitForSelector('.receipt');
-    assert.match(await page.textContent('.receipt'), /S-20260915-/, 'the receipt number follows the date sold');
+    assert.match(await page.textContent('.receipt'), /S-20260915-[A-Z0-9]{5}\b/, 'the receipt number follows the date sold and has 5 random characters');
+    const uniq = await page.evaluate(() => { const C = AccountApp.commerce, S = AccountApp.store, real = crypto.getRandomValues.bind(crypto), taken = S.all('sale')[0].data.no.split('-')[2]; let calls = 0; crypto.getRandomValues = (a) => { calls++; if (calls === 1) { const idx = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; a.set([...taken].map(ch => idx.indexOf(ch))); return a; } return real(a); }; const no = C.newReceiptNo(AccountApp.store.all('sale')[0].data.ts); crypto.getRandomValues = real; return { no, first: S.all('sale')[0].data.no, calls, n: S.all('sale').length }; });
+    assert.notEqual(uniq.no, uniq.first, 'a number already used is never handed out again'); assert.ok(uniq.calls >= 2, 'it drew again after the clash ' + JSON.stringify(uniq));
     const sale = await page.evaluate(() => { const s = AccountApp.store.all('sale')[0].data; return { day: AccountApp.commerce.dateStr(s.ts), ws: AccountApp.commerce.dateStr(s.warranty.start) }; });
     assert.equal(sale.day, '2026-09-15'); await page.click('[data-cancel]');
     await page.evaluate(() => { location.hash = '#/customers'; }); await page.waitForSelector('tr.click'); await page.click('tr.click'); await page.waitForSelector('.buy-row');

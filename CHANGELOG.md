@@ -3,6 +3,17 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.17.5] - 2026-10-04
+
+### Changed
+- **Receipt numbers are harder to repeat.** The random part is now 5 letters/digits (was 4), drawn evenly from the browser's secure random source, and a number already used by a saved sale is never handed out again. Format is unchanged: `S-` + sale date + random part.
+
+### Fixed
+- **Host Overview "Signed in now" overstated who was online.** It counted every sign-in still valid (they last 14 days, one per browser or login). It now counts different people who used the app in the last 15 minutes.
+
+### Added
+- The Sales list marks a receipt with a "Same number" tag if two sales ever share one (possible only when two devices sell at the same moment).
+
 ## [0.17.4] - 2026-10-04
 
 ### Added

@@ -13,7 +13,8 @@ export function dashboardRoutes(db) {
   r.get('/', async (req, res) => {
     const [acc, usr, act] = await Promise.all([
       db.get('SELECT COUNT(*) AS n FROM accounts'), db.get('SELECT COUNT(*) AS n FROM account_users'),
-      db.get("SELECT COUNT(*) AS n FROM sessions WHERE realm = 'app' AND mfa_pending = 0 AND expires_at > ?", [Date.now()]),
+      // "Signed in now" = different people who used the app in the last 15 minutes (a sign-in itself lasts 14 days, so counting open sign-ins overstates it).
+      db.get("SELECT COUNT(DISTINCT subject_id) AS n FROM sessions WHERE realm = 'app' AND mfa_pending = 0 AND expires_at > ? AND COALESCE(last_seen, created_at) > ?", [Date.now(), Date.now() - 15 * 60e3]),
     ]);
     const byStatus = await db.all('SELECT status, COUNT(*) AS n FROM accounts GROUP BY status'), mailQ = await db.all('SELECT status, COUNT(*) AS n FROM mail_queue GROUP BY status');
     const plans = { trial: 0, free: 0, paid: 0, expired: 0, endingSoon: 0 }, now = Date.now();

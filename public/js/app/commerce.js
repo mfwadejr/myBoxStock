@@ -96,7 +96,9 @@
   C.overCap = (lines, orderPct) => { const t = C.saleTotals(lines, orderPct); return t.list > 0 && (t.saved / t.list) * 100 > C.discountCap() + 0.05; };
 
   // ---- sales helpers ----
-  C.newReceiptNo = (ts) => `S-${F().ymd(ts || Date.now())}-${Vault.newId().replace(/[-_]/g, '').slice(0, 4).toUpperCase()}`;
+  // Receipt number: S- + sale date + 5 random letters/digits (uniform, from the browser's secure random source). A number already used by any saved sale is never reused.
+  const RN = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', rnPart = (n) => { let out = ''; while (out.length < n) for (const b of crypto.getRandomValues(new Uint8Array(n * 2))) if (b < 252 && out.length < n) out += RN[b % 36]; return out; };
+  C.newReceiptNo = (ts) => { const taken = new Set(AccountApp.store.all('sale').map(e => e.data.no)); let no; do no = `S-${F().ymd(ts || Date.now())}-${rnPart(5)}`; while (taken.has(no)); return no; };
   C.salesOf = (customerId) => AccountApp.store.all('sale').filter(s => !s.data.voided && s.data.customerId === customerId);
   C.deviceName = (d) => [d.make, d.model].filter(Boolean).join(' ');
   C.itemLabel = (it) => [C.deviceName(it), it.uid || it.serial || it.mac || it.fields?.[0]?.value || Object.values(it.custom || {}).find(Boolean)].filter(Boolean).join(' · ') || 'Device';

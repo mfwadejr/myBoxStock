@@ -21,7 +21,7 @@
         <div class="grid g4">
           <div class="card stat"><div class="stat-label">Accounts</div><div class="stat-value">${d.accounts}</div><div class="stat-note">${d.accountsByStatus.suspended || 0} suspended</div></div>
           <div class="card stat"><div class="stat-label">Users</div><div class="stat-value">${d.users}</div><div class="stat-note">across all accounts</div></div>
-          <div class="card stat"><div class="stat-label">Signed in now</div><div class="stat-value">${d.activeSessions}</div><div class="stat-note">active sessions</div></div>
+          <div class="card stat"><div class="stat-label">Signed in now</div><div class="stat-value">${d.activeSessions}</div><div class="stat-note">people active in the last 15 minutes</div></div>
           <div class="card stat"><div class="stat-label">Database</div><div class="stat-value small">${esc(d.database.label)}</div><div class="stat-note">${d.dbFileSize != null ? fmt.bytes(d.dbFileSize) : 'external server'}</div></div>
         </div>
         ${(() => { const b = d.backup, ok = b.status.lastOk, bad = b.status.lastFail && (!ok || b.status.lastFail.at > ok.at), stale = ok && Date.now() - ok.at > (b.full.frequency === 'weekly' ? 8 : 2) * 86400000;
