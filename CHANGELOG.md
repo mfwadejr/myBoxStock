@@ -3,6 +3,14 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.17.4] - 2026-10-04
+
+### Added
+- **Date sold on Quick sale.** Defaults to today; pick an earlier date to enter a past sale (future dates are refused). The sale, its warranty start and its receipt number all follow that date.
+
+### Fixed
+- **The Purchases list in a customer record was cramped and ran off the edge.** Each purchase is now one tidy row: receipt number, date and item count, warranty status, and total.
+
 ## [0.17.3] - 2026-10-04
 
 ### Added

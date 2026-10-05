@@ -96,7 +96,7 @@
   C.overCap = (lines, orderPct) => { const t = C.saleTotals(lines, orderPct); return t.list > 0 && (t.saved / t.list) * 100 > C.discountCap() + 0.05; };
 
   // ---- sales helpers ----
-  C.newReceiptNo = () => `S-${F().ymd(Date.now())}-${Vault.newId().replace(/[-_]/g, '').slice(0, 4).toUpperCase()}`;
+  C.newReceiptNo = (ts) => `S-${F().ymd(ts || Date.now())}-${Vault.newId().replace(/[-_]/g, '').slice(0, 4).toUpperCase()}`;
   C.salesOf = (customerId) => AccountApp.store.all('sale').filter(s => !s.data.voided && s.data.customerId === customerId);
   C.deviceName = (d) => [d.make, d.model].filter(Boolean).join(' ');
   C.itemLabel = (it) => [C.deviceName(it), it.uid || it.serial || it.mac || it.fields?.[0]?.value || Object.values(it.custom || {}).find(Boolean)].filter(Boolean).join(' · ') || 'Device';
