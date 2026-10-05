@@ -11,20 +11,26 @@
   const healthChips = (a) => [a.encrypted && !a.recovery_saved ? '<span class="chip amber">No recovery key</span>' : '', !a.encrypted ? '<span class="chip">Not encrypted</span>' : '', !a.admins_2fa ? '<span class="chip">2FA off</span>' : '', a.unverified ? '<span class="chip amber">Email not verified</span>' : ''].filter(Boolean).join(' ') || '<span class="chip green">Good</span>';
 
   Host.views.accounts = async (main) => {
-    let q = '', plan = '', health = '';
-    const load = async () => {
-      const rows = await Host.api('GET', '/accounts?q=' + encodeURIComponent(q) + '&plan=' + encodeURIComponent(plan) + '&health=' + encodeURIComponent(health));
-      main.querySelector('#tbl').innerHTML = rows.length ? `<table><thead><tr><th>Business</th><th>Reseller ID</th><th>Owner</th><th>Users</th><th>Plan</th><th>Status</th><th>Health</th><th>Last sign-in</th></tr></thead><tbody>${rows.map(a => `
-        <tr class="click" data-id="${a.id}"><td><b>${esc(a.business_name)}</b></td><td class="mono">${esc(a.account_code)}</td><td class="muted">${esc(a.owner_email)}</td><td>${a.user_count}</td><td>${planChip(a.billing)}</td>
-        <td>${a.closing_at ? `<span class="chip red">Closing, erases ${fmt.date(a.closing_at)}</span>` : `<span class="chip ${a.status === 'active' ? 'green' : 'red'}">${esc(a.status)}</span>`}</td><td>${healthChips(a)}</td><td class="muted">${a.last_login ? fmt.ago(a.last_login) : 'never'}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No accounts yet.</div>';
+    let q = '', plan = '', health = '', page = 1, size = 25, rows = [];
+    // The server returns every match (up to 500); the table shows one page of them. Searching or filtering goes back to page 1.
+    const draw = () => {
+      const pg = UI.pager(main.querySelector('#pg'), { page, size, total: rows.length, change: (n) => { page = n.page; size = n.size; draw(); } }); page = pg.page;
+      const shown = rows.slice(pg.from, pg.to);
+      main.querySelector('#tbl').innerHTML = shown.length ? `<table><thead><tr><th>Business</th><th>Reseller ID</th><th>Owner</th><th>Users</th><th>Plan</th><th>Status</th><th>Health</th><th>Last sign-in</th></tr></thead><tbody>${shown.map(a => `
+        <tr class="click" data-id="${a.id}"><td><b>${esc(a.business_name)}</b></td><td class="ident">${esc(a.account_code)}</td><td class="muted">${esc(a.owner_email)}</td><td>${a.user_count}</td><td>${planChip(a.billing)}</td>
+        <td>${a.closing_at ? `<span class="chip red">Closing, erases ${fmt.date(a.closing_at)}</span>` : `<span class="chip ${a.status === 'active' ? 'green' : 'red'}">${esc(a.status)}</span>`}</td><td>${healthChips(a)}</td><td class="muted">${a.last_login ? fmt.ago(a.last_login) : 'never'}</td></tr>`).join('')}</tbody></table>` : `<div class="empty">${rows.length ? 'No accounts on this page.' : 'No accounts match.'}</div>`;
+    };
+    const load = async (reset) => {
+      rows = await Host.api('GET', '/accounts?q=' + encodeURIComponent(q) + '&plan=' + encodeURIComponent(plan) + '&health=' + encodeURIComponent(health));
+      if (reset) page = 1; draw();
     };
     swap(main, `${Host.head('Accounts', 'Support tools for signed-up businesses. Their inventory, sales and customers are private and never shown here.')}
       <div class="card"><div class="row wrap"><div class="field grow"><input type="search" id="q" placeholder="Search by business, Reseller ID or email"></div>
         <div class="field">${UI.select.html({ id: 'pf', options: [['', 'All plans'], ['trial', 'On trial'], ['free', 'Free (comped)'], ['paid', 'Paid'], ['expired', 'Ended / read-only']] })}</div>
-        <div class="field">${UI.select.html({ id: 'hf', options: [['', 'Any health'], ['no_recovery', 'No recovery key saved'], ['no_2fa', 'No two-factor'], ['unverified', 'Email not verified'], ['inactive30', 'Inactive 30 days'], ['not_encrypted', 'Encryption not set up'], ['closing', 'Closing'], ['suspended', 'Suspended']] })}</div></div><div class="tablewrap" id="tbl"></div></div>`);
-    let t; main.querySelector('#q').addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => { q = e.target.value; load(); }, 250); });
-    main.querySelector('#pf').addEventListener('change', (e) => { plan = UI.select.value(e.target); load(); });
-    main.querySelector('#hf').addEventListener('change', (e) => { health = UI.select.value(e.target); load(); });
+        <div class="field">${UI.select.html({ id: 'hf', options: [['', 'Any health'], ['no_recovery', 'No recovery key saved'], ['no_2fa', 'No two-factor'], ['unverified', 'Email not verified'], ['inactive30', 'Inactive 30 days'], ['not_encrypted', 'Encryption not set up'], ['closing', 'Closing'], ['suspended', 'Suspended']] })}</div></div><div class="tablewrap" id="tbl"></div><div id="pg"></div></div>`);
+    let t; main.querySelector('#q').addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => { q = e.target.value; load(true); }, 250); });
+    main.querySelector('#pf').addEventListener('change', (e) => { plan = UI.select.value(e.target); load(true); });
+    main.querySelector('#hf').addEventListener('change', (e) => { health = UI.select.value(e.target); load(true); });
     main.querySelector('#tbl').addEventListener('click', (e) => { const tr = e.target.closest('tr[data-id]'); if (tr) accountSheet(tr.dataset.id, load); });
     await load();
   };
@@ -34,7 +40,7 @@
     const rows = d.users.map(u => `<div class="setting"><div><div class="setting-title">${esc(u.username)} <span class="chip">${esc(u.role)}</span> ${u.totp_enabled ? '<span class="chip green">2FA</span>' : ''} ${u.disabled ? '<span class="chip red">disabled</span>' : ''} ${u.email ? (u.email_verified_at ? '<span class="chip green">Verified</span>' : '<span class="chip amber">Not verified</span>') : ''}</div>
       <div class="setting-desc">${esc(u.login)} · last sign-in ${fmt.ago(u.last_login)}</div></div><button class="btn secondary small" data-u="${u.id}">Manage</button></div>`).join('');
     await sheet(`<div class="row spread"><h2>${esc(a.business_name)}</h2><span class="chip ${a.status === 'active' ? 'green' : 'red'}">${esc(a.status)}</span></div>
-      <p class="muted"><span class="mono">${esc(a.account_code)}</span> · created ${fmt.date(a.created_at)}</p>
+      <p class="muted"><span class="ident">${esc(a.account_code)}</span> · created ${fmt.date(a.created_at)}</p>
       ${a.closing_at ? `<div class="banner red row spread wrap my-md"><span>Closing: erases on ${fmt.date(a.closing_at)}.</span><button class="btn secondary small" id="unclose">Restore</button></div>` : ''}
       <div class="banner blue my-md">You can help with sign-in and security. Business data is not visible to host administrators.</div>
       <h3 class="mt-sm">Data</h3>
@@ -49,7 +55,7 @@
         <div class="row">${a.plan === 'trial' ? '<button class="btn secondary small" id="ext">Extend trial</button>' : ''}<button class="btn secondary small" id="sus">${a.status === 'active' ? 'Suspend' : 'Reactivate'}</button></div></div>
       <h3 class="mt-sm">Receipts</h3>
       <div class="setting"><div><div class="setting-title">Money received</div><div class="setting-desc">${d.receipts.length ? '' : 'None recorded yet. '}Write down a payment received outside the app. Online payments can fill this in later.</div></div><button class="btn secondary small" id="rcp">Record a receipt</button></div>
-      ${d.receipts.map(x => `<div class="setting"><div><div class="setting-title mono">${esc((x.amount_cents / 100).toFixed(2))} ${esc(x.currency)}</div><div class="setting-desc">${fmt.date(x.ts)} · ${esc(x.method || 'payment')}${x.reference ? ` · ${esc(x.reference)}` : ''}${x.period_end ? ` · paid through ${fmt.date(x.period_end)}` : ''}${x.note ? ` — ${esc(x.note)}` : ''} · ${esc(x.actor || '')}</div></div><button class="btn danger small" data-rr="${x.id}">Remove</button></div>`).join('')}
+      ${d.receipts.map(x => `<div class="setting"><div><div class="setting-title tab-num">${esc((x.amount_cents / 100).toFixed(2))} ${esc(x.currency)}</div><div class="setting-desc">${fmt.date(x.ts)} · ${esc(x.method || 'payment')}${x.reference ? ` · ${esc(x.reference)}` : ''}${x.period_end ? ` · paid through ${fmt.date(x.period_end)}` : ''}${x.note ? ` — ${esc(x.note)}` : ''} · ${esc(x.actor || '')}</div></div><button class="btn danger small" data-rr="${x.id}">Remove</button></div>`).join('')}
       <h3 class="mt-sm">Support history</h3>
       ${d.support.length ? d.support.slice(0, 15).map(s => `<div class="setting-desc">${fmt.date(s.ts)} · ${esc(s.actor || 'system')} · ${esc(s.event.replace(/[._]/g, ' '))}${s.reason ? ` — ${esc(s.reason)}` : ''}</div>`).join('') : '<div class="setting-desc">Nothing yet.</div>'}
       <h3 class="mt-sm">Site admin linking</h3>
@@ -74,7 +80,7 @@
   }
 
   async function userSheet(a, u, back) {
-    await sheet(`<h2>${esc(u.username)}</h2><p class="muted mono">${esc(u.login)}</p>
+    await sheet(`<h2>${esc(u.username)}</h2><p class="muted">${esc(u.login)}</p>
       <div class="stack mt-lg">
         <button class="btn secondary" id="link" ${u.email ? '' : 'disabled'}>Email a password reset link</button>
         <button class="btn secondary" id="vr" ${u.email && !u.email_verified_at ? '' : 'disabled'}>Resend the confirmation email</button>
@@ -111,7 +117,7 @@
   }
 
   async function receiptSheet(a, back) {
-    await sheet(`<h2>Record a receipt</h2><p class="muted">${esc(a.business_name)} · <span class="mono">${esc(a.account_code)}</span></p>
+    await sheet(`<h2>Record a receipt</h2><p class="muted">${esc(a.business_name)} · <span class="ident">${esc(a.account_code)}</span></p>
       <div class="grid g2 mt-md"><div class="field"><label>Amount received</label><input type="text" id="am" inputmode="decimal" placeholder="29.00"></div><div class="field"><label>Currency</label><input type="text" id="cu" value="USD" maxlength="3"></div></div>
       <div class="grid g2"><div class="field"><label>How it was paid</label><input type="text" id="me" placeholder="Bank transfer" maxlength="40"></div><div class="field"><label>Reference</label><input type="text" id="re" placeholder="Invoice or transfer number" maxlength="120"></div></div>
       <div class="field"><label>Paid through (optional)</label><input type="date" id="pt"><label class="check mt-sm"><input type="checkbox" id="ap"> Also set the plan to Paid through that date</label></div>
@@ -127,7 +133,7 @@
 
   // Change plan: free (comped), trial (start / extend), paid. Everything is recorded in the account's plan history.
   async function planSheet(a, back, { extend = false } = {}) {
-    await sheet(`<h2>Change plan</h2><p class="muted">${esc(a.business_name)} · <span class="mono">${esc(a.account_code)}</span></p>
+    await sheet(`<h2>Change plan</h2><p class="muted">${esc(a.business_name)} · <span class="ident">${esc(a.account_code)}</span></p>
       <div class="field mt-md"><label>Plan</label>${UI.select.html({ id: 'pl', value: extend ? 'trial' : ['free', 'trial', 'paid'].includes(a.plan) ? a.plan : 'free', options: [['free', 'Free — comped, never expires'], ['trial', 'Free trial'], ['paid', 'Paid']] })}</div>
       <div class="field" id="f-days"><label>Trial length (days)</label><input type="number" id="days" min="1" max="730" value="14"><label class="check mt-sm"><input type="checkbox" id="ext" ${extend ? 'checked' : ''}> Add to the current end date instead of starting today</label></div>
       <div class="field" id="f-until"><label>Paid through (optional)</label><input type="date" id="until"><div class="hint">Leave empty for no end date.</div></div>

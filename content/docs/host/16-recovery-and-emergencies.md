@@ -1,9 +1,9 @@
 ---
 title: Recovery and emergencies
 summary: Calm, step-by-step help for the bad days: locked out of the Host Console, lost password, lost two-factor, restoring from a backup, a full disk, and email that has stopped, with the exact commands and where to run them.
-keywords: recovery, emergency, locked out, lockout, reset-host-admin, reset-server-options, HOST_ALLOW_ANY, lost password, forgot password, lost two-factor, lost authenticator, recovery code, owner, restore backup, restore-bundle, disk full, storage full, email stopped, docker exec, docker compose exec, not found, 404, secret.key, proxy
+keywords: decrypt-backup, offsite copy, lost server, safety copy, bans survive restart, recovery, emergency, locked out, lockout, reset-host-admin, reset-server-options, HOST_ALLOW_ANY, lost password, forgot password, lost two-factor, lost authenticator, recovery code, owner, restore backup, restore-bundle, disk full, storage full, email stopped, docker exec, docker compose exec, not found, 404, secret.key, proxy
 order: 16
-covers: reset-host-admin, reset-server-options, HOST_ALLOW_ANY, restore-bundle, BACKUP_PASSPHRASE, --force, docker exec, docker compose exec, locked out, allow-list, proxy setting, lost admin password, lost two-factor, Owner reset two-factor, restoring from backup, disk full, email stops
+covers: decrypt-backup, offsite copy, safety copy, Test restore, Restore, /data/backup, TRUST_PROXY fallback, restore announcement, reset-host-admin, reset-server-options, HOST_ALLOW_ANY, restore-bundle, BACKUP_PASSPHRASE, --force, docker exec, docker compose exec, locked out, allow-list, proxy setting, lost admin password, lost two-factor, Owner reset two-factor, restoring from backup, disk full, email stops
 ---
 
 ## First, breathe
@@ -59,7 +59,7 @@ It prints: "Saved server options (proxy count, secure cookies, log detail, ...) 
 
 What this does: it forgets every option saved on the **Server options** card of Settings (secure cookies, mail servers on private networks, Cloudflare, proxy count, log detail and log retention). The values set in the container's environment apply again. Nothing else is touched: not your accounts, not the firewall list, not your administrators.
 
-After that, check the container's own `TRUST_PROXY` setting (for example `TRUST_PROXY: "1"` behind one reverse proxy) and set it to match your setup. Then you can sign in and re-apply sensible options from Settings.
+After that, check the container's own `TRUST_PROXY` setting (for example `TRUST_PROXY: "1"` behind one reverse proxy) and set it to match your setup. The container variable is the fallback: once the saved options are cleared, it is what the site uses. A value like `loopback` is fine too, and shows in Settings as "Custom (set by the container: loopback)". Then you can sign in and re-apply sensible options from Settings.
 
 ### Secure cookies is on but you are using http
 
@@ -67,13 +67,20 @@ If **Secure cookies** is on and you reach the console over plain `http://`, the 
 
 ### Locked or banned after too many tries
 
-These protections clear themselves, and they clear faster than you expect:
+These protections clear themselves, but a restart does not clear them:
 
-- A username is locked for 15 minutes after six wrong passwords in a row.
+- A username is locked for 15 minutes after six wrong passwords or codes in a row.
 - An address that tries to sign in more than 10 times in five minutes gets "too many attempts" until the window passes.
 - Repeated violations lead to a temporary ban (15 minutes by default).
 
-All three are held in the server's memory, so **restarting the container clears them at once**: `docker compose restart myboxstock`. If a "Block this address" rule is the problem, connect from a different network (for example mobile data), sign in, and remove the rule in Firewall.
+Lockouts and bans are saved in the database and still apply after a restart or an update. **Restarting the container no longer clears them.** The request counters (the 10 attempts in five minutes) are the only part that starts again from zero after a restart.
+
+What to do:
+
+1. **Wait.** A lockout and the default ban both end after 15 minutes.
+2. **Lift a ban.** If an address is banned and you can sign in from another address (for example mobile data), open [Firewall](#/docs/firewall) and press **Lift** next to it.
+3. **A "Block this address" rule** is not a ban and never ends by itself. Connect from a different network, sign in, and remove the rule in Firewall.
+4. If you are the Owner and cannot sign in at all, `reset-host-admin` gives you a new temporary password, but an active lockout on the name still has to run out. Wait up to 15 minutes, then sign in.
 
 ## Lost admin password
 
@@ -130,48 +137,77 @@ If it is the Owner's two-factor and no Owner is available, there is no one in th
 
 ## Restoring from a backup
 
-Use a restore when data was damaged or lost, or after a failed update that changed the database. Read [Backups](#/docs/backups) first for how to make them. There are two situations.
+Use a restore when data was damaged or lost, or after a failed update that changed the database. Read [Backups](#/docs/backups) first for how backups are made. A restore puts the **whole site** back to the moment of the backup. Everyone is signed out, and anything entered since is lost. You cannot restore one reseller on their own.
+
+Pick the situation that fits.
 
 ### The server is working and you can sign in
 
-1. Open **Backups**.
-2. Find the file you want in the list. A plain database snapshot (`.db`) and a full-site backup (`.mbsbak`) each have a **Restore** button.
-3. Press it. For a full-site backup you also enter its passphrase. Type `RESTORE` to confirm.
-4. The server first makes a safety copy of what it has now, then restarts to apply the backup. The console reloads in a few seconds.
+1. Open **Backups** and find the file. Local files on the **Frequent snapshots**, **Full-site backups** and **Safety copies** tabs have a **Restore** button. If you are unsure, press **Test restore** on the row first: it opens the file in a scratch copy, checks it and deletes the copy.
+2. Press **Restore**. The sheet names the file, shows when it was taken in UTC and your own time, and how long ago. Read it. Anything entered after that time will be lost.
+3. For a full-site `.mbsbak` file, type its **Backup passphrase**. Type `RESTORE` to confirm and press **Restore**.
+4. A safety copy of the site as it is now is taken first (it appears on the **Safety copies** tab). Then the site restarts, and the console reloads in a few seconds.
+5. After the restart the site posts a red announcement to every customer: "The site was restored from a backup taken ... UTC. Sales or changes made after that time may be missing. Please check your recent activity." Clear it in [Settings](#/docs/settings) when it is no longer needed.
+6. Tell your resellers. Those with a newer backup file of their own can recover recent work with **Add what is missing** on their Backup and restore page (see [Support and diagnostics](#/docs/support-and-diagnostics)).
 
-This relies on the container being set to restart itself (the standard compose file has `restart: unless-stopped`). Without it, the server would stop and stay stopped. Restoring is only offered for SQLite. With PostgreSQL or MariaDB you load the dump yourself with the database's own tools.
+This relies on the container being set to restart itself (the standard compose file has `restart: unless-stopped`). Without it, the server would stop and stay stopped. Restoring from the page is offered for SQLite only. With PostgreSQL or MariaDB you load the dump yourself with the database's own tools.
 
-### The server is new, empty, or you cannot sign in
+If it was the wrong backup, restore the safety copy from the **Safety copies** tab. It brings you back to where you were before.
 
-Use the command line. You need the full-site backup file (`.mbsbak`) and its passphrase.
+### You only have an offsite copy
 
-1. Put the file in the data folder's `backups` subfolder (for the standard setup, `./data/backups/` on the host appears as `/data/backups/` in the container).
+Offsite copies (files ending `.mbsenc`) are encrypted and have no Restore button. To use one:
+
+1. Download it from the **Offsite copies** tab, or fetch it from the destination yourself.
+2. Decrypt it on a machine that has the program. Run `BACKUP_PASSPHRASE='your passphrase' node server.mjs decrypt-backup myboxstock-offsite-....db.mbsenc restored.db`. The passphrase is the one saved on the Full-site backups tab. A wrong one is refused and nothing is written.
+3. Put `restored.db` into the backup folder, `/data/backup`. It then shows in **Frequent snapshots**. Press **Test restore**, then **Restore**.
+
+An offsite copy is a snapshot, so it does not contain `secret.key`. Restoring it on the same server is fine. On a new server with a different key, two-factor secrets, the saved mail password, saved destination passwords and the saved passphrase cannot be read. People set up two-factor again and you re-enter the passwords.
+
+### The server is lost, new, empty, or you cannot sign in
+
+Use the command line and a full-site backup (`.mbsbak`), which includes the key. You need the file and its passphrase. If the file is only on a destination, download it first, or mount the NAS where you can reach it.
+
+1. Put the file in the data folder's `backup` subfolder (`./data/backup/` on the host is `/data/backup/` in the container). Files in the older `backups` folder also still work.
 2. If you are replacing a working server, stop it first: `docker compose stop`.
 3. Run, with your own file name and passphrase:
 
-   `docker compose run --rm -e BACKUP_PASSPHRASE='your passphrase' myboxstock node server.mjs restore-bundle --file /data/backups/myboxstock-fullsite-2026-10-05-03-00-00.mbsbak`
+   `docker compose run --rm -e BACKUP_PASSPHRASE='your passphrase' myboxstock node server.mjs restore-bundle --file /data/backup/myboxstock-fullsite-2026-10-05-03-00-00.mbsbak`
 
 4. If it says "This server already has data. Use --force to replace it", add `--force` at the end. The current database is kept next to the new one as a copy.
 5. Start the server: `docker compose up -d`. Everyone can sign in as before.
 
 On success it says "Restored a sqlite backup made ... Start the server". For a PostgreSQL or MariaDB backup it places `restored-dump.sql` in the data folder for you to load with `psql` or `mysql`.
 
-Wrong passphrase or damaged file gives "Wrong passphrase, or the backup file is damaged", and nothing is changed.
+A wrong passphrase or a damaged file gives "Wrong passphrase, or the backup file is damaged", and nothing is changed.
 
-> Plain `.db` snapshots do **not** contain the encryption key (`secret.key`). On the same server that is fine. To move to a new server, use a full-site backup, which includes the key.
+> The `restore-bundle` command does not post the "site was restored" announcement to customers. Write your own notice in Settings.
 
-Everything created after the backup was made is not in it. After a restore, confirm that with a quick look at Overview.
+### A lost server with only snapshots
+
+If you have only plain snapshots or offsite copies and the server's `secret.key` (or your `APP_SECRET` value) is gone, you can still restore the database, but two-factor secrets, the saved mail password and saved destination passwords are lost. A copy of `secret.key` kept safely away from the server avoids this. Full-site backups hold the key, so they are the better choice for rebuilding.
+
+### Looking inside a full-site file without restoring it
+
+`decrypt-backup` also opens a full-site `.mbsbak` file. It writes only the database out of it, not the key. Use it only to look at the data. To rebuild a server use `restore-bundle`.
 
 ### If the encryption key is lost
 
 The key (the `secret.key` file in the data folder, or the `APP_SECRET` value if you set one) protects two-factor secrets and the saved email password. Without it, nobody's two-factor codes can be checked and the mail password cannot be read. Restore a full-site backup (it contains the key) or put the original key back. If you can only recover the database, re-enter the SMTP password on the Email screen and have people set up two-factor again.
 
+### After any restore
+
+1. Open Overview and check the accounts and version look right.
+2. Check the Backups page: run **Take a snapshot now** so you have a fresh copy of the restored state.
+3. Clear the restore announcement when the time is right.
+4. Remember that other things are put back too, including bans and lockouts that were in the database at that moment.
+
 ## Disk full
 
 The Alerts screen raises "Storage is almost full" at 90 percent, and the Overview meters turn amber then red. At 100 percent the database cannot write and backups fail.
 
-1. Find what is big. In the data folder, `du -sh data/*` shows it. The usual culprits are the `backups` folder and the `logs` folder.
-2. **Backups**: download the ones you want to keep to another computer, then delete old ones from the Backups screen. Lower the number of copies kept in the schedule, and use the off-box folder for the long-term copies.
+1. Find what is big. In the data folder, `du -sh data/*` shows it. The usual culprits are the `backup` folder (and the older `backups` folder if you have one) and the `logs` folder.
+2. **Backups**: download the ones you want to keep to another computer, then delete old ones from the Backups page. Keep fewer copies or take them less often (the thinning numbers and the interval on each tab), and send long-term copies to a destination. The cost line on the Backups page shows how much your settings will use.
 3. **Logs**: shorten **Keep the activity log (days)** in [Settings](#/docs/settings), and lower `LOG_MAX_MB` or `LOG_FILES` if the log files are the problem. The files rotate by size, so they are bounded.
 4. **More room**: enlarge the disk or move the data folder to a bigger drive, then point the volume at it.
 5. Do not delete `myboxstock.db`, the matching `-wal` and `-shm` files, or `secret.key`.

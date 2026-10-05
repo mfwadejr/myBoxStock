@@ -30,7 +30,9 @@
     const id = `f_${f.key}`;
     if (f.type === 'choice') return UI.select.html({ id, options: [['', '—'], ...(f.options || []).map(o => [o, o])], value: v || (f.core && f.key === 'cond' ? f.options?.[0] : '') });
     if (f.type === 'bool') return UI.select.html({ id, options: [['', '—'], ['yes', 'Yes'], ['no', 'No']], value: v === true ? 'yes' : v === false ? 'no' : '' });
-    return `<input type="${f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}" id="${id}" value="${esc(v ?? '')}" autocomplete="off"${f.lookup || f.unique ? ' data-scan' : ''}${f.type === 'number' ? ' step="any"' : ''}>`;
+    const input = `<input type="${f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}" id="${id}" value="${esc(v ?? '')}" autocomplete="off"${f.lookup || f.unique ? ' data-scan' : ''}${f.type === 'number' ? ' step="any"' : ''}${(f.lookup || f.unique) && f.type !== 'number' && f.type !== 'date' ? ` data-scanlabel="${esc(f.label)}"${f.core && f.key === 'mac' ? ' data-scanmode="mac"' : ''}` : ''}>`;
+    // Scannable text fields get a camera button inside the box (the phone scanner; a hardware scanner still types into the field as before).
+    return (f.lookup || f.unique) && f.type !== 'number' && f.type !== 'date' && AccountApp.scanner ? `<div class="scanfield">${input}${AccountApp.scanner.button('Scan ' + f.label + ' with the camera')}</div>` : input;
   };
   C.readInput = (el, f) => {
     const n = el.querySelector(`#f_${f.key}`); if (!n) return '';

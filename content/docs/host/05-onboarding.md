@@ -1,9 +1,9 @@
 ---
 title: Onboarding
 summary: See how far each new account gets through setup (created, email confirmed, first sign-in, recovery key saved, plan started) and use it to find the people who need help.
-keywords: onboarding, setup funnel, new accounts, stuck, stopped at, email confirmed, first sign-in, recovery key, plan started, last 30 days, last 90 days, all time, nudge, activation
+keywords: onboarding, load more, long lists, setup funnel, new accounts, stuck, stopped at, email confirmed, first sign-in, recovery key, plan started, last 30 days, last 90 days, all time, nudge, activation
 order: 5
-covers: nav:onboarding, Last 30 days, Last 90 days, All time, Setup funnel, Account created, Email confirmed, First sign-in, Recovery key saved, Plan started, Account by account, Business, Reseller ID, Age, Email, Signed in, Recovery key, Plan, Stopped at, done, not yet, finished
+covers: nav:onboarding, Last 30 days, Last 90 days, All time, Setup funnel, Account created, Email confirmed, First sign-in, Recovery key saved, Plan started, Account by account, Business, Reseller ID, Age, Email, Signed in, Recovery key, Plan, Stopped at, done, not yet, finished, Load more, Showing N of M accounts
 ---
 
 ## What this page is for
@@ -63,6 +63,10 @@ The second card is a table, newest first. The description says "Stopped at" is t
 Each of the four step columns shows a green chip saying **done** or a plain chip saying **not yet**.
 
 If no accounts were created in the chosen range you will see "No accounts in this period."
+
+### Long lists
+
+The **Account by account** table can be long. On tablets and computers it scrolls inside a box of its own, about 640 pixels tall, with a line such as "Showing 100 of 180 accounts" and a **Load more** button that adds 100 more. On phones there is no box: the rows become cards and the page scrolls. The range menu stays above, so a new choice reloads the list from the top.
 
 ### Example
 

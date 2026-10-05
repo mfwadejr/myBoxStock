@@ -1,147 +1,303 @@
 ---
 title: Backups
-summary: Set up automatic and full-site backups, keep copies off the server, and know exactly how to restore one when you need it.
-keywords: backup, backups, restore, full-site, passphrase, off-box, retention, verify, mbsbak, disaster, copy, snapshot, pre-restore
+summary: How the Backups page protects the server: frequent snapshots, offsite copies, full-site backups and safety copies, where they go, how to set up each kind of destination, how to test and restore one, and how much space it all uses.
+keywords: backup, backups, restore, snapshot, offsite, off-site, full-site, safety copy, destination, thinning, retention, passphrase, encryption, decrypt-backup, mbsenc, mbsbak, restore-bundle, NAS, SMB, S3, Backblaze, Wasabi, Cloudflare R2, Amazon S3, MinIO, SFTP, WebDAV, NFS, Docker volume, test connection, test restore, cost, disk space, nightly, verify, disaster
 order: 7
-covers: nav:backups, Automatic daily backup, Hour (UTC), Keep, Save, Scheduled full-site backups, How often, Every night, Once a week, Weekly copy is taken on, Backup runs on, Keep daily copies, Keep weekly copies, Off-box folder (optional), Backup passphrase, Email Host administrators if a backup fails, Run one now, Backup files, Full-site backup, Back up now, Download, Restore, Delete, Create backup, Type RESTORE to confirm, Last good backup, restore-bundle
+covers: nav:backups, Status strip, Last backup, Next run, Offsite copy, Space used, At these settings you will hold about, Frequent snapshots, Offsite copies, Full-site backups, Safety copies, Destinations, Take a snapshot now, Send one now, Run one now, Take a snapshot every, Send a copy every, Send them to, Also send them to, Keep every copy for (hours), Then one an hour for (hours), Then one a day for (days), Then one a week for (weeks), Also keep a plain copy every night, Nightly hour (UTC), Keep nightly copies, Are snapshots protected, Snapshots on this server, Copies held at the destinations, How often, Every night, Once a week, Weekly copy is taken on, Backup runs on, Hour (UTC), Keep daily copies, Keep weekly copies, Extra folder (optional), Backup passphrase, Email Host administrators if a backup fails, Make one with a new passphrase, Create backup, Remove safety copies older than (days), Always keep the newest, Add a destination, Edit destination, Change folder, Backup folder on this server, Folder path, Test connection, Use this destination, Name, Type, Folder or mounted NAS, Windows / NAS share (SMB), S3-compatible storage, SFTP (SSH) server, WebDAV, Server, Share name, Folder on the share (optional), User name, Domain (optional), Endpoint, Region, Bucket, Folder prefix (optional), Access key, Secret key, Use path-style addresses, Port, Folder, Password, Private key (optional), Key passphrase (optional), WebDAV address, Server identity pinned, Download, Restore, Test restore, Delete, Restore this backup, Type RESTORE to confirm, Load more, Showing, decrypt-backup, restore-bundle, .mbsenc, .mbsbak, /data/backup, /data/backups, thinning, safety copy, offsite copy, snapshot, destination, How much will it use
 ---
 
 ## What this page is for
 
-A backup is a saved copy of your whole platform database at one moment. If a disk fails, a server is lost or an update goes wrong, a backup is how you get back. Every customer account lives in one database, so one good backup protects all of them and one missing backup risks all of them. The **Backups** page is where you set how often copies are made, how many are kept, where they go, and where you restore one.
+A backup is a saved copy of your whole platform database at one moment. If a disk fails, a server is lost or an update goes wrong, a backup is how you get back. Every customer account lives in one database, so one good backup protects all of them, and one missing backup puts all of them at risk.
 
-> Customers own their business data and are responsible for their own exports and recovery key. Your backups are the safety net for the platform. They cannot recover a customer's lost password or recovery key, and you cannot open them to read customer records.
+The **Backups** page is where you decide how often copies are made, how many are kept, where they are sent, and where you test and restore them.
 
-## What a backup contains
+> Customers own their business data. It is encrypted in their own browser, so your backups only hold it in encrypted form and you cannot read it. A backup of the server cannot recover a customer's lost password or recovery key. Customers also keep their own backup files (see [Support and diagnostics](#/docs/support-and-diagnostics) for how that fits with yours).
 
-Two different kinds of file can appear in the **Backup files** list.
+## The four kinds of backup
 
-### Database backups
+Think of the page as four layers. Each one answers a different "what if".
 
-These are plain copies of the platform database: a `.db` file on the default SQLite engine, or a `.sql` file made with `pg_dump` or `mysqldump` on PostgreSQL or MariaDB. They hold accounts, users, plans, Host administrators, settings, logs, the email queue and alerts, plus customer business data in encrypted form, protected by keys only the customer can unlock. You cannot read that data, and neither can anyone who steals the file. They do **not** hold the server's own encryption key (`secret.key`), which protects two-factor secrets, the SMTP password and the saved backup passphrase.
+- **Frequent snapshots**: small copies of the database, taken every few minutes and kept on this server. They answer "someone changed something an hour ago and I want it back".
+- **Offsite copies**: a snapshot that is compressed, encrypted and sent to another place. They answer "this server or its disk is gone".
+- **Full-site backups**: one passphrase-protected file with the database and the server's encryption key. They answer "I must rebuild the whole thing on a new server".
+- **Safety copies**: taken for you just before every restore, so a restore can itself be undone.
 
-> A plain database file is not passphrase-protected. It exposes account names, email addresses and administrator password hashes, so treat it as sensitive.
+Each kind has its own tab, its own list of files and its own settings. A fifth tab, **Destinations**, holds the places that copies can be sent to.
 
-### Full-site backups
+## The status strip
 
-A full-site backup is one `.mbsbak` file holding the database, the server's encryption key and a note of when and on which version it was made, all encrypted with a passphrase you choose. Use it to move servers or recover from losing the machine: with the passphrase it brings everyone back exactly as they were, including passwords, two-factor, plans and settings. Without the passphrase nobody can open it, including you. Keep the passphrase away from the server.
+Above the tabs, four tiles and one line tell you at a glance whether things are fine.
 
-## Why backups need to be off the server
+- **Last backup**: how long ago the newest good backup finished, what kind it was, and whether it was verified (opened and checked after it was written).
+- **Next run**: when the next scheduled backup is due and which kind it is. It says "Nothing scheduled" when everything is off.
+- **Offsite copy**: "Yes" and where it went and when, or "No". It says "Nothing leaves this server yet" until you set a destination, and "Set up, none sent yet" until the first copy goes out.
+- **Space used**: how much disk the backups take on this server, and how much is free.
 
-Backups are written to a `backups` folder inside the data folder, which in the standard Docker setup is the `data` folder beside your compose file: the same disk as the live database. If that disk fails or the machine is lost, the backups go with it. A copy kept **off-box** lives on a different device, such as a network drive or a mounted USB drive. It is the most useful thing you can do on this page, because a backup next to the thing it protects only guards against mistakes, not disasters.
+If a kind of backup is failing, a red banner under the tiles says which one and why. The line underneath is the **cost line**, for example "At these settings you will hold about 2.4 GB here and 3.1 GB away from this server and upload about 180 MB a day." It turns red and adds a warning if the settings would not fit in the free disk. Read the section "How much will it use" below.
 
-## Automatic daily backup
+## Where the files go
 
-This is the simple, always-available safety net. It makes a plain database backup once a day.
+New backups are written to `/data/backup`, which is the `backup` folder inside the data folder you already mount into the container. You do not have to add anything for this to work.
 
-1. Open **Backups** from the menu.
-2. In the card **Automatic daily backup**, use the switch to turn it on or off. It is on by default.
-3. Set **Hour (UTC)**, a whole number from 0 to 23. The backup is taken during that hour, in UTC (Coordinated Universal Time), not your local time. If you live in New York, 3 UTC is late in the evening the day before.
-4. Set **Keep**, the number of automatic copies to hold on to, from 1 to 365. The default is 14.
-5. Click **Save**. A short message says "Schedule saved".
+Older versions used `/data/backups` (with an s). Those files are still listed, can be downloaded, restored and deleted exactly where they sit. Nothing is moved.
 
-Why it exists: it needs no passphrase and no setup, so something is always being saved. Why the hour matters: pick a quiet time for your customers, since making a backup uses some disk and processor.
+You can point the default at another folder: on the **Destinations** tab, press **Change folder** on the **This server** card, type a full path in **Folder path** and press **Save**. Leave it empty to go back to `/data/backup`. The server checks it can write there before it saves.
 
-Only copies made by this schedule are removed when the count goes past **Keep**. Backups you make by hand are never deleted automatically.
+### The file lists
 
-> The server has to be running during the chosen hour. If it is switched off or restarting at that time, that day's automatic backup is skipped.
+Each tab lists its files, newest first: the file name, when it was taken, what kind it is and its size. On tablets and computers the list scrolls inside a box of its own, with a line such as "Showing 25 of 140" and a **Load more** button that adds the next 25. On phones the page itself scrolls and the rows become cards. Each row has **Download**, and on local files also **Restore**, **Test restore** and **Delete**. Delete asks you to confirm and cannot be undone.
 
-## Scheduled full-site backups
+## Frequent snapshots
 
-This card makes full-site (`.mbsbak`) backups on its own, protected by a passphrase, and checks every one of them after writing it. For a hosted service this is the card to set up first.
+Open the **Frequent snapshots** tab. It is on by default.
 
-### The status line
+- The switch next to the heading turns snapshots on or off.
+- **Take a snapshot every** offers 5 minutes up to a day. The default is 15 minutes.
+- A snapshot is taken with the database's own online backup, so nobody waits and sales keep being saved while it runs. Each one is checked after it is written.
+- The default folder is private to the app: files are readable only by the app's own user.
+- **Take a snapshot now** makes one straight away, for example before an update.
 
-Above the settings you see one line. If a scheduled backup has worked, it reads like "Last good backup: date, file name, size, verified, copied to /backups" or "no off-box copy". If the most recent attempt failed, the line turns red and shows when it failed and why. If nothing has completed yet it says so. The Overview page also shows the last good backup.
+### How long snapshots are kept: thinning
 
-### Every field and switch
+Keeping a copy every 15 minutes forever would fill the disk. So copies are thinned as they get older. Four numbers control it:
 
-- **The switch next to the heading** turns scheduled full-site backups on or off. It cannot be turned on until a passphrase has been saved.
-- **How often** has two choices. **Every night** makes a daily copy each night. **Once a week** makes just one copy a week.
-- **Weekly copy is taken on** (it is labelled **Backup runs on** when How often is **Once a week**) is the day of the week, Sunday to Saturday. With **Every night**, a second copy marked as weekly is also kept on this day, so you have older restore points. With **Once a week**, it is the day the single backup runs.
-- **Hour (UTC)** is the hour of the day, 0 to 23, in UTC.
-- **Keep daily copies** is how many nightly files to keep, 1 to 90. Default 14.
-- **Keep weekly copies** is how many weekly files to keep, 1 to 52. Default 8.
-- **Off-box folder (optional)** is a full folder path such as `/backups` that lives outside the data folder. It must start with a slash, otherwise saving is refused. If the folder does not exist yet, the server creates it.
-- **Backup passphrase** needs at least 12 characters. Once saved the box shows "Saved - leave blank to keep it". Type a new passphrase only when you want to change it.
-- **Email Host administrators if a backup fails** is a switch, on by default.
-- **Save** stores all of these settings.
-- **Run one now** saves what you have typed and immediately makes one backup, so you can see it work. A message says "Backup finished and verified", or shows the reason it failed.
+- **Keep every copy for (hours)**: default 24. Every snapshot in the last day is kept.
+- **Then one an hour for (hours)**: default 48. For the next two days only one per hour is kept.
+- **Then one a day for (days)**: default 14.
+- **Then one a week for (weeks)**: default 8.
 
-### Setting it up, step by step
+With the defaults that is about 166 files and a fine-grained history for the last day, then a thinner one going back about ten weeks. The card says how many files your numbers will keep. Files you made by hand and safety copies are never thinned. Thinning is also applied to offsite copies at the destination.
 
-1. Choose a passphrase of 12 or more characters. A phrase of four or five unrelated words is easy to remember and hard to guess. Write it down and store it away from the server, for example in a password manager.
-2. Type it into **Backup passphrase**.
-3. Choose **How often**, the weekday, and the **Hour (UTC)**.
-4. Decide how many copies to keep. Fourteen daily and eight weekly is a sensible start: it gives you two weeks of nightly points and about two months of weekly ones.
-5. In **Off-box folder (optional)**, enter the path of a mounted drive or share. In Docker, add a volume to the compose file first, for example mapping a NAS folder to `/backups`, then enter `/backups`.
-6. Turn the switch on, leave the failure email switch on, and click **Save**.
-7. Click **Run one now** and wait for "Backup finished and verified". Then look at the status line: it should say verified and name your off-box folder.
+### The nightly plain copy
 
-### What happens on each run
+The older nightly database backup now lives on this tab. **Also keep a plain copy every night** turns it on, **Nightly hour (UTC)** sets the hour (0 to 23, in UTC, not your local time) and **Keep nightly copies** sets how many to keep (1 to 365).
 
-The server snapshots the database, packs it with the encryption key, encrypts the bundle with your passphrase, then immediately reopens the finished file to check it (the key is present and the database passes its integrity check). If it is a weekly day, a weekly copy is made. If an off-box folder is set, the file is copied there and its size compared with the original; a mismatch counts as a failure. Finally, files beyond your **Keep** numbers are removed in both places. File names carry the date and time and the word `daily` or `weekly`. Full-site backups you make by hand carry neither word and are never removed automatically.
+### Are snapshots protected?
 
-### Scheduling details
+The card **Are snapshots protected?** answers it honestly. A snapshot in this server's own folder is a plain database file, not locked with a passphrase.
 
-The schedule makes at most one attempt a day and does not retry on its own. After fixing a problem, use **Run one now** at once. Verification proves the file opens and the database inside is sound; it does not restore it, so see "Testing a restore" below.
+- Passwords inside it are hashed, not readable.
+- Two-factor secrets, the saved mail password and saved destination passwords are sealed with the server's own key, `secret.key`, which is not inside a snapshot.
+- Customers' inventory, customers and sales are encrypted in the customers' browsers, so they are unreadable here too.
+- Account names, email addresses and plan details are readable. Keep the folder private.
 
-### When a backup fails
+> A plain snapshot is good protection against mistakes and a damaged database. It is not meant to leave the server. Anything that leaves the default folder is encrypted first (see "Encryption" below).
 
-Two things happen. If **Email Host administrators if a backup fails** is on, every Host administrator who has an email address gets a "Backup failed" message with the time and the reason. And an alert called "The scheduled backup is failing" appears on the Alerts page and in the red banner, and the Owner is emailed once about it (see [Alerts](#/docs/alerts)). The alert clears by itself after the next good backup.
+## Offsite copies
 
-Common causes: a full disk (see the storage alert), an off-box drive that is not mounted, a path that does not exist or is not writable, or a saved passphrase that can no longer be read because the server's encryption key was changed.
+Open the **Offsite copies** tab. It is off until you have a destination.
 
-## Backup files
+Every time it runs, the server takes a fresh snapshot, compresses it, encrypts it with your backup passphrase and uploads it. The file is named `myboxstock-offsite-` followed by the date and time and ends in `.db.mbsenc`.
 
-The **Backup files** card lists every backup file in the data folder, newest first.
+- The switch turns offsite copies on or off.
+- **Send a copy every** offers 15 minutes up to a day. The default is every hour.
+- **Send them to** lists your turned-on destinations. Tick one or more. The built-in **This server** destination is not offered here, because the point is to leave the server.
+- The same four thinning numbers apply, and the server tidies the destination for you.
+- **Send one now** makes and uploads one straight away.
 
-- **File** is the file name.
-- **Created** is when the file was made.
-- **Size** is how large it is.
-- On each row, **Download** saves a copy to your computer, **Restore** starts a restore (shown for full-site `.mbsbak` files and SQLite `.db` files only), and **Delete** removes the file after a confirmation.
+You cannot turn offsite copies on until you have chosen at least one destination, that destination is turned on, and a backup passphrase is saved.
 
-### Making a backup by hand
+The list **Copies held at the destinations** shows what is stored out there, with **Download** and **Delete** on each row. There is no **Restore** button on an offsite copy, on purpose: it is encrypted, so you first decrypt it by hand. See "Restoring an offsite copy" below.
 
-- **Back up now** makes a plain database backup straight away. Use it before anything risky, such as an update (see [Updates](#/docs/updates)).
-- **Full-site backup** asks for a **Backup passphrase** (at least 12 characters, not stored for this manual kind) and a **Create backup** button. The file then appears in the list.
+## Full-site backups
 
-Every download is written to the activity log. Download the `.mbsbak` file, or let the off-box folder take it, so a copy always exists away from the live server.
+Open the **Full-site backups** tab. This is the backup you need to rebuild on a new server, because it also holds `secret.key`.
 
-## Restoring a backup
+A full-site backup is one `.mbsbak` file with the database, the key and a note of when and on which version it was made, all encrypted with your passphrase. With the passphrase it brings everyone back as they were, including passwords, two-factor, plans and settings. Without the passphrase nobody can open it, including you.
 
-Restoring replaces the live database with the one in the backup. Every customer is returned to the moment the backup was made. Anything they did after that moment is gone from the platform. That is why a restore is a serious step, and why customers keeping their own exports is part of the arrangement.
+### Every field
 
-### How a restore works
+- **The switch** turns scheduled full-site backups on or off. It cannot be on until a passphrase has been saved.
+- **How often**: **Every night** or **Once a week**.
+- **Weekly copy is taken on** (called **Backup runs on** when How often is Once a week): the weekday. With Every night, a second copy marked weekly is also kept on this day.
+- **Hour (UTC)**: 0 to 23.
+- **Keep daily copies**: 1 to 90, default 14. **Keep weekly copies**: 1 to 52, default 8.
+- **Extra folder (optional)**: a full path outside the data folder, such as a mounted NAS, where each file is also copied.
+- **Also send them to**: tick destinations. The file is already encrypted, so it is sent as it is.
+- **Backup passphrase**: at least 12 characters. Once saved the box says "Saved, leave blank to keep it".
+- **Email Host administrators if a backup fails**: on by default.
+- **Save**, **Run one now** (saves your settings and makes a backup), and **Make one with a new passphrase** (a one-off backup with a passphrase you type, which is not stored; its button is **Create backup**).
 
-A restore is staged, then applied when the server restarts. The server never swaps a database underneath live traffic. The steps below are what you do and what the server does.
+Each backup is opened and checked after it is written. If a destination is set, the upload is checked too, and old files beyond your keep numbers are removed in each place.
 
-1. In **Backup files**, find the file and click **Restore**.
-2. For a `.mbsbak` file, type the **Backup passphrase**. The server checks it first, before anything else happens. A wrong passphrase stops the restore with the message "Wrong passphrase, or the backup file is damaged."
-3. Type the word `RESTORE` in the confirmation box. This is the **Type RESTORE to confirm** field for full-site files, or the confirmation prompt for database files.
-4. Click **Restore**. The server first saves the current database as a "pre-restore" backup, so you can undo the restore. It then places the chosen file in a waiting spot and restarts itself.
-5. The page says it is restoring and reloads after a few seconds. On the way back up, the server swaps in the restored database (and, for a full-site backup, the encryption key). Everyone is signed out and must sign in again.
+### Choosing a passphrase
 
-> The restart depends on your container being set to restart automatically. The standard compose file uses `restart: unless-stopped` and says this is required. Without it, the app would stop and stay stopped after a restore.
+The same passphrase protects the full-site files and everything sent to a destination. It is kept sealed on this server so backups can run by themselves.
 
-### Database restore versus full-site restore
+1. Choose at least 12 characters. Four or five unrelated words are easy to remember and hard to guess.
+2. Write it down and keep it away from the server, for example in a password manager.
+3. Do not change it casually. Older files still need the passphrase they were made with.
 
-- A **database** restore (`.db`) puts the database back and keeps the current encryption key. Use it on the same server to roll back in time.
-- A **full-site** restore (`.mbsbak`) puts back the database and its matching key. The previous key is saved in the backups folder as `secret-pre-restore-...`. Use it after a disaster.
-- On PostgreSQL or MariaDB there is no console restore; load the dump with `psql` or `mysql`.
+> If you lose the server and the passphrase, your encrypted backups cannot be opened by anyone. There is no recovery.
+
+## Safety copies
+
+The **Safety copies** tab holds the copies the server takes just before each restore. They are plain database files in the backup folder, shown in the list as "Before a restore".
+
+- **Remove safety copies older than (days)**: default 30.
+- **Always keep the newest**: default 5 copies, however old.
+
+If a restore turns out to be the wrong one, restore the safety copy to get back to where you were.
+
+## Destinations
+
+A destination is a place that copies can be sent. Open the **Destinations** tab. The first card, **This server**, is built in and is the default folder. Press **Add a destination** for the others.
+
+Every destination has the same sheet. Give it a **Name**, choose the **Type**, fill in the fields for that type and leave **Use this destination** on. Press **Save**. Then press **Test connection** on its card.
+
+> Saved passwords and keys are sealed on the server. The page only ever shows "saved". When you edit a destination, leave a password box empty to keep the saved one.
+
+A destination other than the default folder cannot be turned on until a backup passphrase is set.
+
+### Test connection
+
+**Test connection** writes a small file to the destination, reads it back and deletes it. The result appears under the card in plain words. The card also remembers "Last test: worked" or "failed" with the time. Always test after saving, and again after you change anything on the other side such as a password.
+
+### The five types
+
+- **Folder or mounted NAS**: one field, **Folder path**, a full path inside the container such as `/backups`.
+- **Windows / NAS share (SMB)**: **Server**, **Share name**, **Folder on the share (optional)**, **User name**, **Domain (optional)** and **Password**.
+- **S3-compatible storage**: **Endpoint**, **Region**, **Bucket**, **Folder prefix (optional)**, **Access key**, **Secret key** and **Use path-style addresses**.
+- **SFTP (SSH) server**: **Server**, **Port**, **User name**, **Folder**, **Password** or a **Private key (optional)** with a **Key passphrase (optional)**.
+- **WebDAV**: **WebDAV address**, **User name**, **Folder (optional)** and **Password**.
+
+### Setting up a folder or a NAS mounted through Docker
+
+This is the most dependable way to reach a NAS, because Docker does the mounting. The compose file has ready-made, commented examples.
+
+1. Open `docker-compose.yml`. Under `volumes:` of the service, uncomment the line `- nas-backups:/backups`.
+2. At the bottom, uncomment the block for your NAS: the NFS block, or the SMB/CIFS block. Change the address, share path, user name and password to yours.
+3. Run `docker compose up -d` to re-create the container.
+4. In the Host Console, open **Backups**, then **Destinations**, then **Add a destination**.
+5. Choose **Folder or mounted NAS**, give it a name such as "Office NAS" and type `/backups` in **Folder path**.
+6. Press **Save**, then **Test connection**.
+
+If the test says the folder is not writable, check the share's permissions on the NAS for the user you mapped.
+
+### Setting up a Windows or NAS share (SMB) directly
+
+No Docker mounting is needed. The image includes the `smbclient` program (the package `samba-client`), and the server talks to the share itself.
+
+1. On the NAS, create a share and a user that may write to it.
+2. Add a destination of type **Windows / NAS share (SMB)**.
+3. Enter **Server** (a name or address such as `nas.local`), **Share name**, optionally **Folder on the share (optional)** such as `backups/myboxstock`, **User name**, **Domain (optional)** and **Password**.
+4. Save, then **Test connection**.
+
+The password is written to a short-lived private file only while a transfer runs and is removed afterwards.
+
+### Setting up S3-compatible storage
+
+This covers Backblaze B2, Wasabi, Cloudflare R2, Amazon S3 and MinIO.
+
+1. At your provider, create a bucket and an access key that may read, write and delete in it.
+2. Add a destination of type **S3-compatible storage**.
+3. **Endpoint**: the provider's address, such as `https://s3.us-west-004.backblazeb2.com`. Leave it empty for Amazon S3.
+4. **Region**: for example `us-east-1`. **Bucket**: the bucket name. **Folder prefix (optional)**: a name such as `myboxstock` to keep your files together.
+5. Enter the **Access key** and **Secret key**.
+6. Turn on **Use path-style addresses** only for MinIO and a few others that need it.
+7. Save, then **Test connection**.
+
+### Setting up SFTP
+
+1. Make sure the remote machine runs an SSH server and you have a user with a folder to write to.
+2. Add a destination of type **SFTP (SSH) server**. Enter **Server**, **Port** (22 unless you changed it), **User name** and **Folder**.
+3. Enter a **Password**, or paste a **Private key (optional)** (and a **Key passphrase (optional)** if the key has one).
+4. Save, then press **Test connection**. On the first successful test the card records the server's identity and shows "Server identity pinned".
+5. From then on, every connection must match that identity.
+
+If the server is rebuilt on purpose, its identity changes and the test says the identity is not the one that was saved. Remove the destination and add it again. If you did not rebuild it, do not ignore the warning: someone may be pretending to be your server. Changing the server name or port forgets the saved identity, and the next successful test records the new one.
+
+### Setting up WebDAV
+
+1. Find your WebDAV address. For Nextcloud it looks like `https://cloud.example.com/remote.php/dav/files/me`.
+2. Add a destination of type **WebDAV**. Enter the **WebDAV address**, **User name**, an optional **Folder (optional)** such as `backups`, and the **Password** (many services want an app password).
+3. Save, then **Test connection**.
+
+### Changing or removing a destination
+
+Press **Edit** to change one, use its switch to turn it off and on, or **Delete** to remove it. Removing a destination stops new copies going there. Files already there are left in place.
+
+## Encryption of everything that leaves the folder
+
+Everything sent anywhere other than the default folder is compressed and encrypted first, with AES-256 in small chunks, using a key made from your backup passphrase. A changed or cut-short file is refused when you open it. Files end in `.mbsenc`. Full-site `.mbsbak` files are already encrypted, so they go as they are.
+
+### Decrypting by hand
+
+`BACKUP_PASSPHRASE='your passphrase' node server.mjs decrypt-backup <file.mbsenc or file.mbsbak> <output-file>`
+
+An `.mbsenc` file becomes a plain `.db` file (or a `.sql` dump on PostgreSQL or MariaDB). For an `.mbsbak` file it writes just the database out of it. Run it inside the container, or anywhere you have the program and Node 22.
+
+## Restoring
+
+Restoring replaces the live database with the one in the backup. Everyone goes back to the moment it was taken. Anything entered since is lost. That is why customers' own backup files matter, and why you should only restore when you need to.
+
+### Restoring from the page
+
+1. Open **Backups** and the tab that holds the file.
+2. Press **Restore** on its row. (Offsite copies have no Restore button.)
+3. The sheet **Restore this backup?** names the file, shows the exact time it was taken in UTC and your own time, and how long ago that was. It repeats that anything entered after it will be lost, that a safety copy is taken first, and that the site restarts.
+4. For a full-site `.mbsbak` file, type the **Backup passphrase**.
+5. Type `RESTORE` in **Type RESTORE to confirm**. The Restore button stays off until you do.
+6. Press **Restore**. The console reloads after a few seconds. Everyone is signed out.
+
+The restart relies on the container being set to restart itself. The standard compose file has `restart: unless-stopped`. Restoring from the page is offered for SQLite only. With PostgreSQL or MariaDB you load the dump yourself.
+
+### What customers see afterwards
+
+When the site starts again it posts an announcement banner to every customer, at the important (red) level: "The site was restored from a backup taken YYYY-MM-DD HH:MM UTC. Sales or changes made after that time may be missing. Please check your recent activity."
+
+It stays until you clear it in [Settings](#/docs/settings) under Announcement banner, like any announcement. Restores made with the `restore-bundle` command on the server do not post it, so write your own notice if you want one.
+
+Resellers can recover their own recent work if they have a newer backup file of their own: in their app, **Backup and restore**, then **Add what is missing**. That brings back records the restored site no longer has without overwriting anything.
+
+### How a restore affects what resellers have
+
+A restore puts the whole database back, including every account's state at that moment. You cannot restore one reseller on their own from a full-site or snapshot backup, and you cannot see inside their data. A reseller's own `.mbsbackup` file is the only way to bring back one account's work from a later moment than your backup. Resellers' own safety copies (kept for 7 days in their restore points) live inside the database too, so they go back with it.
+
+### Test restore
+
+A backup you have never opened is a hope, not a plan. **Test restore** on any local file opens it in a scratch copy, checks it and deletes the copy. It never touches live data.
+
+1. Press **Test restore** on a row.
+2. For a `.mbsbak` file, type the passphrase, or leave it empty to use the saved one.
+3. Press **Run test**.
+4. Read the result: a pass or fail message, and a line for each check such as "The database passes its integrity check" and "Accounts and users can be read" with the counts.
+
+For a full-site file it also checks that the passphrase opens it and that the key is inside. For a PostgreSQL or MariaDB dump it can only check that the file is complete. Offsite copies must be decrypted first.
+
+### Restoring an offsite copy
+
+1. Download the `.mbsenc` file from the **Offsite copies** tab, or fetch it from the destination.
+2. Decrypt it with `decrypt-backup` (above) into a `.db` file.
+3. Put the `.db` file in the backup folder (`/data/backup`). It then appears in **Frequent snapshots**, where **Test restore** and **Restore** work.
+
+An offsite copy is a snapshot, so it does not hold `secret.key`. On the same server that is fine. On a new server with a different key, two-factor secrets, the saved mail password, saved destination passwords and the saved passphrase cannot be read: people set up two-factor again and you type the passwords again. To rebuild a lost server completely, use a full-site backup. See [Recovery and emergencies](#/docs/recovery-and-emergencies).
 
 ### Moving to a new server
 
-Make a full-site backup, download the `.mbsbak` file and keep the passphrase. On the new, empty server run `BACKUP_PASSPHRASE='your passphrase' node server.mjs restore-bundle --file yourfile.mbsbak` (in Docker, inside the container before first start), then start it. The command refuses if the server already holds data unless you add `--force`, which keeps the current database as a copy. For PostgreSQL or MariaDB backups it leaves `restored-dump.sql` in the data folder to load with `psql` or `mysql`.
+Make a full-site backup, keep the file and the passphrase. On the new, empty server run `BACKUP_PASSPHRASE='your passphrase' node server.mjs restore-bundle --file yourfile.mbsbak` before first start, then start it. The command refuses if the server already has data unless you add `--force`, which keeps the current database as a copy.
 
-## Testing a restore
+## How much will it use
 
-A backup you have never restored is a hope, not a plan. The automatic check proves the file opens, but only a real restore proves your passphrase, your off-box copy and your procedure.
+The cost line works it out from the real size of your database, assuming no compression, so the real figure is usually lower.
 
-1. On a spare computer or second container with an empty data folder (never the live server), copy a recent `.mbsbak` file from your off-box folder.
-2. Run the `restore-bundle` command above with your passphrase.
-3. Start that copy, sign in at its `/host/` address and check Accounts shows the expected accounts. You will not see inside any customer's data, which is the point.
-4. Shut it down and delete its files. It holds real email addresses, so keep it off the internet and do not let it send mail.
+- Local space is: files held by frequent snapshots, plus full-site files, plus a few safety copies.
+- Remote space is: files held at each destination.
+- Upload per day is: how many copies are sent a day times their size, for every destination.
 
-Do this when you first set up, after any change to the passphrase or off-box location, and every few months. Related: [Alerts](#/docs/alerts), [Recovery and emergencies](#/docs/recovery-and-emergencies), [Running the server](#/docs/running-the-server).
+A rough example: a 50 MB database, snapshots every 15 minutes with the default thinning (about 166 files) is about 8 GB on this server. Offsite copies every hour with the same thinning go to the destination: also about 8 GB there, and 1.2 GB uploaded a day. If that is too much, make copies less often, shorten the thinning numbers, or send only full-site backups away.
 
+Check the cost line after every change. If it turns red, the settings will not fit in the free space on this server.
+
+## When a backup fails
+
+A failed snapshot, offsite copy or full-site backup is logged, written to the [Audit trail](#/docs/audit-trail), shown as a red banner on this page, and raises the alert "The scheduled backup is failing" at once (see [Alerts](#/docs/alerts)). A failed upload to a destination counts the same way. The Owner is emailed once, and with **Email Host administrators if a backup fails** on, every administrator with an address is emailed for a full-site failure. The alert clears itself after the next good backup.
+
+Common causes: a full disk, a NAS that is not mounted, a changed password, a passphrase that cannot be read because the server's key changed, or an SFTP identity that changed.
+
+## What gets recorded
+
+Every backup action is written to the [Audit trail](#/docs/audit-trail) with who did it, and never with a password: runs, restores, downloads, deletes, test restores, destinations saved, tested or removed, and settings saved. See [Troubleshooting and FAQ](#/docs/troubleshooting-faq) for help with specific messages.
+
+Related: [Recovery and emergencies](#/docs/recovery-and-emergencies), [Running the server](#/docs/running-the-server) and [Updates](#/docs/updates).

@@ -26,7 +26,8 @@ export async function applyRuntime(db, app) {
 
 export async function runtimeStatus(db) {
   const saved = await savedOf(db);
-  return Object.fromEntries(Object.keys(SPEC).map(k => [k, { value: k in saved ? saved[k] : ENV[k], saved: k in saved, env: ENV[k] }]));
+  // `custom` (proxy count only): the effective value is something the menu cannot show (e.g. "loopback" or "10.0.0.0/8" set by the container).
+  return Object.fromEntries(Object.keys(SPEC).map(k => [k, { value: k in saved ? saved[k] : ENV[k], saved: k in saved, env: ENV[k], ...(k === 'trustProxy' ? { custom: !PROXY.includes(String(k in saved ? saved[k] : ENV[k])) } : {}) }]));
 }
 
 // body: { key: value | null }  (null = go back to the server's environment value). Returns an error message or '' when saved.
@@ -35,6 +36,8 @@ export async function saveRuntime(db, app, body, { secure }) {
   for (const [k, v] of Object.entries(body || {})) {
     const spec = SPEC[k]; if (!spec) continue;
     if (v === null) { delete saved[k]; changed.push(k); continue; }
+    // Sending back the value that is already in force (e.g. a custom proxy setting from the container) is not a change: leave it untouched.
+    if (k === 'trustProxy' && String(v) === String(k in saved ? saved[k] : ENV[k])) continue;
     const bad = spec.check(v); if (bad) return bad;
     if (k === 'secureCookies' && spec.norm(v) && !secure) return 'You are not using https right now, so turning this on would stop you signing in. Open the Host Console through your https address first.';
     saved[k] = spec.norm(v); changed.push(k);

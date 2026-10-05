@@ -1,9 +1,9 @@
 ---
 title: Logs
 summary: How to read, filter, search and export the server's activity log, where the log files live on disk, how long they are kept, and what is never written to them.
-keywords: logs, log, activity log, areas, level, debug, info, warn, error, quick filters, problems today, failed sign-ins, lockouts and bans, search, raw, json, export csv, export json, load more, log files, jsonl, retention, redacted, http log, tenant, troubleshooting
+keywords: feed box, showing n of m, scrolling box, logs, log, activity log, areas, level, debug, info, warn, error, quick filters, problems today, failed sign-ins, lockouts and bans, search, raw, json, export csv, export json, load more, log files, jsonl, retention, redacted, http log, tenant, troubleshooting
 order: 13
-covers: nav:logs, area filter, All areas, auth, security, host, accounts, backup, mail, system, database, error, level filter, All levels, debug, info, warn, Last hour, Last 24 hours, Last 7 days, Last 30 days, All time, Custom dates, From, To, Search messages events people IP addresses Reseller IDs, Problems today, Failed sign-ins, Lockouts and bans, Errors, Clear filters, raw, Load more, Export CSV, Export JSON, LOG_DIR, LOG_LEVEL, LOG_MAX_MB, LOG_FILES, LOG_RETENTION_DAYS, LOG_CONSOLE
+covers: nav:logs, area filter, All areas, auth, security, host, accounts, backup, mail, system, database, error, level filter, All levels, debug, info, warn, Last hour, Last 24 hours, Last 7 days, Last 30 days, All time, Custom dates, From, To, Search messages events people IP addresses Reseller IDs, Problems today, Failed sign-ins, Lockouts and bans, Errors, Clear filters, raw, Load more, Showing N of M entries, feed box, Export CSV, Export JSON, LOG_DIR, LOG_LEVEL, LOG_MAX_MB, LOG_FILES, LOG_RETENTION_DAYS, LOG_CONSOLE
 ---
 
 ## What the Logs screen is
@@ -18,7 +18,7 @@ Use it when you want to know what the server has been doing and why. Typical que
 - Did an email fail, and what was the reason?
 - Why did the server restart?
 
-Logs is about the platform itself. It never contains a customer's inventory, sales or customer list, because the Host cannot see those and the server does not write them down. A related but different screen, the [Audit trail](#/docs/audit-trail), lists only what Host administrators did.
+Logs is about the platform itself. It never contains a customer's inventory, sales or customer list, because the Host cannot see those and the server does not write them down. A related but different screen, the [Audit trail](#/docs/audit-trail), lists what Host administrators did and who signed in to the Host Console. Everything in the Audit trail is also in Logs, but Logs has much more: it is the place for troubleshooting, and the Audit trail is the place for accountability.
 
 ## How an entry looks
 
@@ -100,7 +100,7 @@ Your current filters are saved in the address of the page, so you can bookmark a
 
 ## Reading the list and loading more
 
-The newest entries come first. Up to 100 are loaded at a time. The line under the list says, for example, "Showing 100 entries - more available". Press **Load more** to add the next 100 below. Paging does not skip or repeat entries even if new ones arrive while you read. If nothing matches, the screen says "No matching entries. Try a wider time range or clear the filters." That usually means the range is too short or the search is too specific.
+The newest entries come first. On tablets and computers the list scrolls inside a box of its own, about 640 pixels tall, so the filters stay in view above it and the export buttons stay below it. On phones there is no box: the page itself scrolls. Up to 100 entries are loaded at a time. The line under the list says, for example, "Showing 100 of 4210 entries". Press **Load more** to add the next 100 below. Paging does not skip or repeat entries even if new ones arrive while you read. If nothing matches, the screen says "No matching entries. Try a wider time range or clear the filters." That usually means the range is too short or the search is too specific.
 
 ## Exporting
 
@@ -177,4 +177,4 @@ Backup passphrases are never logged either.
 1. Open **Logs** and press **Lockouts and bans**.
 2. Find the person or address in the results, or type it into the search box.
 3. Press **raw** on the entry to read the reason and counts.
-4. If an address was banned, open [Firewall](#/docs/firewall) to lift the ban. If it was a person's sign-in lockout, it clears itself after 15 minutes, or you can reset their password from Accounts.
+4. If an address was banned, open [Firewall](#/docs/firewall) to lift the ban. If it was a person's sign-in lockout, it clears itself after 15 minutes. Restarting the server does not clear it: lockouts and bans are saved and come back after a restart. Setting a new password from Accounts does not lift an active lock either, so ask them to wait.

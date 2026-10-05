@@ -1,9 +1,9 @@
 ---
 title: Settings
 summary: Set up how myBoxStock works for your business - the details you record on each device, warranty periods, payment methods, makes and models, test checklist, discounts, locking, and your own email sending and wording.
-keywords: settings, setup, configure, fields, device details, warranty periods, payment methods, makes, models, catalog, test checklist, discount limit, standard user, unlock, auto lock, idle, smtp, own mail server, email wording, logo, receipts, customer emails, export, close account, save changes
+keywords: camera button, scan, settings, setup, configure, fields, device details, warranty periods, payment methods, makes, models, catalog, test checklist, discount limit, standard user, unlock, auto lock, idle, smtp, own mail server, email wording, logo, receipts, customer emails, export, close account, save changes
 order: 8
-covers: nav:settings, Save changes, Device details to track, Add a detail, Name, Track, Look up in sale, Must be unique, On sale record, Choices, Order, Move up, Move down, Remove, Warranty periods, Add a period, Length, Unit, Make default, Archive, Restore, Default, Payment methods, Add a method, Makes and models, Add a make, Rename or merge, Add model, Unlock behaviour, After a browser refresh, Lock automatically after, Email sending, Send from my own mail server, From name, From address, SMTP host, Port, Username, Password, Use TLS from the start of the connection, Send a test email to me, Customer emails, Choose logo, Remove logo, Subject, Heading, Body, Insert a detail, Back to default wording, Discounts, Most a Standard user can discount, Test checklist, Use a test checklist, Sell only tested devices, Add a step, Details, Required before sale, Add an item, Save choices, users.manage
+covers: nav:settings, camera button on lookup and unique details, Save changes, Device details to track, Add a detail, Name, Track, Look up in sale, Must be unique, On sale record, Choices, Order, Move up, Move down, Remove, Warranty periods, Add a period, Length, Unit, Make default, Archive, Restore, Default, Payment methods, Add a method, Makes and models, Add a make, Rename or merge, Add model, Unlock behaviour, After a browser refresh, Lock automatically after, Email sending, Send from my own mail server, From name, From address, SMTP host, Port, Username, Password, Use TLS from the start of the connection, Send a test email to me, Customer emails, Choose logo, Remove logo, Subject, Heading, Body, Insert a detail, Back to default wording, Discounts, Most a Standard user can discount, Test checklist, Use a test checklist, Sell only tested devices, Add a step, Details, Required before sale, Add an item, Save choices, users.manage
 ---
 
 ## What the Settings page is for
@@ -26,7 +26,8 @@ There is one exception. The **Makes and models** card saves each change straight
 
 - **Business name.** It is set when the account is created. This page does not change it. It is shown in the header and printed on receipts and emails.
 - **Your logo.** The logo you can choose here is for customer emails (see the Customer emails card below). The on-screen and printed receipt shows your business name.
-- **Exporting your data and closing your account.** These live on the [Security](#/docs/security) page, under "Your data": **Export everything** and **Close account**. They are explained in [Your data, your responsibility](#/docs/your-data-your-responsibility).
+- **Backups, exporting your data and closing your account.** Backups live on their own page, [Backup and restore](#/docs/backup-and-restore), which is next to Settings in the menu. **Export everything** is there and on the [Security](#/docs/security) page, where **Close account** is too. They are explained in [Your data, your responsibility](#/docs/your-data-your-responsibility).
+- **Backups do include your settings.** Your fields, test steps, warranty periods and catalog are inside a backup file, so a restore brings them back too. Team members are not in the file.
 - **People and roles.** See [Team](#/docs/team).
 
 ## Device details to track
@@ -39,7 +40,7 @@ Each row has these controls:
 
 - **Name** - a text box with the label. You can rename it. Names must be unique and cannot be blank. Next to it is the type of detail (Text, Number, Date, Yes / No, or Choice from a list). For a Choice detail it is instead a button labelled **Choices (n)**, where n is how many choices there are.
 - **Track** - tick to use this detail. Unticked details are hidden everywhere in the app but anything already entered is kept.
-- **Look up in sale** - tick if you want Quick sale to find a device by this detail. Use it for things you can scan or type to identify a box, such as UID or serial number. Only text details can be looked up.
+- **Look up in sale** - tick if you want Quick sale to find a device by this detail. Use it for things you can scan or type to identify a box, such as UID or serial number. Only text details can be looked up. A text detail that is ticked **Look up in sale** or **Must be unique** also gets a small **camera button** inside its box in Add device and Edit device, so you can scan it with your phone (see [Scanning with your phone camera](#/docs/scanning-with-your-phone)). The MAC address detail only accepts MAC-shaped codes from the camera.
 - **Must be unique** - tick to stop two devices having the same value. Great for UID and MAC address, since no two boxes should share them. Only text details can be unique.
 - **On sale record** - tick to copy this detail onto the sale and show it on the receipt. For example, ticking Serial number means the customer's receipt lists the serial number of the box they bought, which helps in warranty claims.
 - **Remove** (a cross) - removes the detail from the list. A confirmation says it stops showing in Inventory, Quick sale and new sale records, but what was already entered is kept and only hidden. It takes effect when you press **Save changes**.

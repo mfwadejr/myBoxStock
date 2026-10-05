@@ -40,21 +40,18 @@
     root.querySelector('#f').addEventListener('submit', (e) => { e.preventDefault(); busy(root.querySelector('#go'), async () => { try { await Host.api('POST', '/change-password', { current: root.querySelector('#a').value, next: root.querySelector('#b').value }); toast('Password updated'); await boot(); } catch (er) { toast(er.message, true); } }); });
   }
 
-  // Administrators who also run a reseller account (linked from inside that account) get a switch to it; refreshed on every page change so removed accounts drop out.
-  Host.refreshSwitcher = () => Host.api('GET', '/links').then(({ accounts }) => {
-    const el = root.querySelector('#swh'); if (!el) return;
-    if (!accounts.length) { el.innerHTML = ''; return; }
-    UI.select.switcher(el, { value: 'host', options: [['host', 'Site admin'], ...accounts.map(a => [a.login, `Reseller · ${a.businessName}`])], pick: (v) => window.open(`/app/#/u/${encodeURIComponent(v)}`, '_blank', 'noopener') });
-  }).catch(() => {});
+  // The account menu: name, role, linked reseller accounts (for administrators who also run one, linked from inside that account) and Sign out. The links are refreshed on every page change so removed accounts drop out.
+  const signOut = async () => { await Host.api('POST', '/logout'); Host.me = null; clearInterval(Host.timer); loginScreen(); };
+  const menuItems = (accounts) => [...(accounts.length ? [{ heading: 'Reseller accounts' }, ...accounts.map(a => ({ id: `u:${a.login}`, label: a.businessName }))] : []), { id: 'out', label: 'Sign out', sep: accounts.length > 0 }];
+  Host.refreshMenu = () => Host.api('GET', '/links').then(({ accounts }) => Host.menu?.update({ items: menuItems(accounts) })).catch(() => {});
 
   const PRIMARY = ['overview', 'alerts', 'accounts', 'logs']; // the phone tab bar; everything else is under More
   function shell() {
-    root.innerHTML = `<header class="topbar"><div class="brand"><a class="brand-link" href="#/overview" aria-label="Home"><img class="brand-mark" src="/assets/logo-512.png" alt="myBoxStock" width="512" height="512"></a>myBoxStock <span class="brand-sub">Host</span></div><div class="grow"></div><span id="swh"></span>
-      <span class="muted text-sm hide-phone">${esc(Host.me.username)}</span><button class="btn secondary small hide-phone" id="out">Sign out</button></header>
+    root.innerHTML = `<header class="topbar"><div class="brand"><a class="brand-link" href="#/overview" aria-label="Home"><img class="brand-mark" src="/assets/logo-512.png" alt="myBoxStock" width="512" height="512"></a>myBoxStock <span class="brand-sub">Host</span></div><div class="grow"></div><span id="acct"></span></header>
       <div class="shell"><nav class="side">${Host.nav.map(([k, l]) => `<a href="#/${k}" data-k="${k}">${Host.icons[k]}<span>${l}</span></a>`).join('')}</nav><main class="main" id="main"></main></div>${UI.tabbar.html(Host.nav, PRIMARY, Host.icons)}`;
-    const out = async () => { await Host.api('POST', '/logout'); Host.me = null; clearInterval(Host.timer); loginScreen(); };
-    root.querySelector('#out').addEventListener('click', out);
-    UI.tabbar.bind(root, Host.nav, PRIMARY, Host.icons, { head: `<p class="sub">${esc(Host.me.username)}</p>`, foot: '<div class="actions"><button class="btn secondary" id="outm">Sign out</button></div>', mount: (el, close) => el.querySelector('#outm').addEventListener('click', () => { close(null); out(); }) });
+    UI.tabbar.bind(root, Host.nav, PRIMARY, Host.icons);
+    Host.menu = UI.menu.mount(root.querySelector('#acct'), { name: Host.me.username, head: `<b>${esc(Host.me.username)}</b><span>Host administrator</span>`, items: menuItems([]),
+      pick: (id) => { if (id === 'out') signOut(); else if (id.startsWith('u:')) window.open(`/app/#/u/${encodeURIComponent(id.slice(2))}`, '_blank', 'noopener'); } });
     window.removeEventListener('hashchange', Host.route); window.addEventListener('hashchange', Host.route); Host.route();
   }
   // A banner at the top of every page while something needs attention (set-aside alerts do not count).
@@ -68,7 +65,7 @@
     clearInterval(Host.timer);
     const key = (location.hash.replace(/^#\//, '').split('?')[0] || 'overview').split('/')[0], k = Host.views[key] ? key : 'overview';
     UI.tabbar.mark(root, k, PRIMARY);
-    Host.refreshSwitcher();
+    Host.refreshMenu();
     const main = root.querySelector('#main'); if (!main) return;
     Host.current = k;
     try { await Host.views[k](main); Host.alertBanner(); } catch (e) { if (e.status === 401) return boot(); if (e.data?.code === 'MFA_SETUP_REQUIRED') return mfaSetupScreen(); swap(main, `<div class="card"><p class="banner red">${esc(e.message)}</p></div>`); }

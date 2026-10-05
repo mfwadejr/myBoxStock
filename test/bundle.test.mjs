@@ -30,7 +30,7 @@ test('full-site backup restores on an empty server: password and two-factor sign
   assert.equal((await host.req('POST', '/api/host/backups/bundle', { passphrase: 'short' })).status, 400);
   r = await host.req('POST', '/api/host/backups/bundle', { passphrase: PASS }); assert.equal(r.status, 200); assert.match(r.data.name, /\.mbsbak$/);
   assert.equal((await host.req('GET', '/api/host/backups')).data.backups.find(b => b.name === r.data.name).kind, 'fullsite');
-  const copy = path.join(os.tmpdir(), 'mbs-test-' + Date.now() + '.mbsbak'); fs.copyFileSync(path.join(a.dir, 'backups', r.data.name), copy);
+  const copy = path.join(os.tmpdir(), 'mbs-test-' + Date.now() + '.mbsbak'); fs.copyFileSync(path.join(a.dir, 'backup', r.data.name), copy);
   assert.ok(!fs.readFileSync(copy).includes(Buffer.from('SQLite format')), 'the database is not readable inside the file');
   a.stop();
 
@@ -61,5 +61,6 @@ test('console restore of a full-site backup replaces the database and key after 
   assert.equal((await h2.req('POST', '/api/host/login', { login: 'admin', password: PW })).status, 200);
   assert.equal((await h2.req('GET', '/api/host/accounts')).data.length, 1);
   assert.equal((await h2.req('GET', '/api/host/settings')).data.trialDays, 14, 'back to the state at backup time');
+  assert.match((await h2.req('GET', '/api/host/settings')).data.announcement.text, /The site was restored from a backup taken .* UTC\. Sales or changes made after that time may be missing/, 'everyone is told after a full-site restore too');
   b.stop();
 });

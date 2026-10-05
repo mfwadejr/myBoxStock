@@ -1,9 +1,9 @@
 ---
 title: Glossary
 summary: A to Z meanings of the words and labels you see in myBoxStock, each with a link to the page that explains more.
-keywords: glossary, meaning, definition, terms, words, what does it mean, reseller id, recovery key, administrator, standard, view, trial, read-only, void, sku, uid, mac, serial, two-factor, authenticator, export, receipt, catalog, warranty
+keywords: glossary, backup file, mbsbackup, account menu, scan box, aim line, preset, restore point, diagnostics, add what is missing, replace everything, meaning, definition, terms, words, what does it mean, reseller id, recovery key, administrator, standard, view, trial, read-only, void, sku, uid, mac, serial, two-factor, authenticator, export, receipt, catalog, warranty
 order: 14
-covers: Account, Activity, Administrator, Archive, Authenticator, Available, Bulk scan, Catalog, Cost, Customer, Date received, Discount, Disabled, Encryption, Erase, Export, Free trial, Idle lock, Import, Inventory, Look up in sale, Make, Model, Paid by, Password, Quick sale, Read-only, Receipt, Recovery code, Recovery key, Required before sale, Reseller ID, Reorder level, Reserved, Reset access, Returned, Sale, Selling price, Session, Settings, Standard, Status, Suspended, Team, Test checklist, Tested on, Trial, Two-factor, UID, Unlock, User type, Username, View, Void, Warranty, Awaiting test
+covers: Account menu, Add what is missing, Aim line, Backup file, .mbsbackup, Diagnostics, Preset, Replace everything, Restore point, Scan box, Account, Activity, Administrator, Archive, Authenticator, Available, Bulk scan, Catalog, Cost, Customer, Date received, Discount, Disabled, Encryption, Erase, Export, Free trial, Idle lock, Import, Inventory, Look up in sale, Make, Model, Paid by, Password, Quick sale, Read-only, Receipt, Recovery code, Recovery key, Required before sale, Reseller ID, Reorder level, Reserved, Reset access, Returned, Sale, Selling price, Session, Settings, Standard, Status, Suspended, Team, Test checklist, Tested on, Trial, Two-factor, UID, Unlock, User type, Username, View, Void, Warranty, Awaiting test
 ---
 
 Words are listed in alphabetical order. A word in bold inside a definition has its own entry.
@@ -12,13 +12,25 @@ Words are listed in alphabetical order. A word in bold inside a definition has i
 
 Your business's space in myBoxStock. It holds your team, your inventory, your customers and your sales, all under one **Reseller ID**. See [Getting started](#/docs/getting-started).
 
+### Account menu
+
+The button with your username at the top right of every page. It opens a small menu with your name, your user type and your business, then **Site admin** (only for accounts linked to a site administrator) and **Sign out**. It closes when you tap outside it, press Escape or choose an item. On a phone it rises from the bottom. See [Getting started](#/docs/getting-started).
+
 ### Activity
 
 A page, for Administrators, listing who signed in to the account, from where, on which device, and which devices are signed in right now. It also lets you sign people out. See [Activity](#/docs/activity).
 
+### Add what is missing
+
+The safe choice when you restore a backup file. It adds records that are in the file but not in your account, and changes nothing that is already there. Compare **Replace everything**. See [Backup and restore](#/docs/backup-and-restore).
+
 ### Administrator
 
 The user type that can do everything: manage the team, change settings, see activity, create recovery keys, export all data and close the account. An account always has at least one. See [Team](#/docs/team).
+
+### Aim line
+
+The thin line across the middle of the scan box on the camera scanner. When a screen shows several barcodes, the one nearest the aim line is the one that is read. It turns green when a code is read. See [Scanning with your phone camera](#/docs/scanning-with-your-phone).
 
 ### Archive
 
@@ -35,6 +47,10 @@ A device status meaning it is in stock and can be sold. A device marked **Return
 ### Awaiting test
 
 A status shown for a device that still has required test steps to tick when your account requires devices to be tested. It cannot be sold until the steps are done. See [Inventory](#/docs/inventory).
+
+### Backup file
+
+A file ending in `.mbsbackup` that holds a copy of your whole account, still locked with your key. You make it with **Back up now** and keep it somewhere safe. It opens only with your password or recovery key and restores only into its own account. Team members are not in it. See [Backup and restore](#/docs/backup-and-restore).
 
 ### Bulk scan
 
@@ -56,6 +72,10 @@ A person you sell to, with a name, phone, email and notes, and a list of their p
 
 The day a device came into your stock. See [Inventory](#/docs/inventory).
 
+### Diagnostics
+
+A short plain-text summary of your account's health that **Copy diagnostics** puts on your clipboard, to paste to your site's administrator. It has versions, counts and recent warnings, and never your devices, customers or sales. See [Backup and restore](#/docs/backup-and-restore).
+
 ### Disabled
 
 A person whose sign-in has been switched off by an Administrator. They cannot sign in, and are signed out everywhere, until it is switched back on. See [Team](#/docs/team).
@@ -74,7 +94,7 @@ Removes a customer's personal details (name, phone, email, notes) from their rec
 
 ### Export
 
-Downloading your data as ordinary files. **Export everything** on Security gives one file of spreadsheets and settings built in your browser; Inventory, Sales and individual customers can be exported too. See [Security](#/docs/security) and [Your data, your responsibility](#/docs/your-data-your-responsibility).
+Downloading your data as ordinary files. This is not a backup you can restore from; for that, make a **backup file**. **Export everything** on Security gives one file of spreadsheets and settings built in your browser; Inventory, Sales and individual customers can be exported too. See [Security](#/docs/security) and [Your data, your responsibility](#/docs/your-data-your-responsibility).
 
 ### Free trial
 
@@ -116,6 +136,10 @@ The payment method recorded on a sale, such as cash or card. Payment methods are
 
 Your secret for signing in. It must be at least 10 characters with letters and numbers. In an encrypted account it also protects the key to your data. See [Security](#/docs/security).
 
+### Preset (scan box size)
+
+The three sizes of the scan box on the camera scanner: **Small**, **Medium** and **Large**. Your choice is remembered on that device. See [Scanning with your phone camera](#/docs/scanning-with-your-phone).
+
 ### Quick sale
 
 The page for recording a sale in one go: scan or type devices, set prices, choose a customer, and finish. See [Quick sale](#/docs/quick-sale).
@@ -144,6 +168,10 @@ A long code shown once when encryption is turned on. It is the only way to get y
 
 A number on a model. When the available devices of that model fall to it or below, Home shows a low-stock notice. See [Inventory](#/docs/inventory).
 
+### Replace everything
+
+The stronger choice when you restore a backup file. It makes your account match the file exactly: it overwrites changed records, adds missing ones and deletes records that are not in the file. A safety copy lets you undo for 7 days. See [Backup and restore](#/docs/backup-and-restore).
+
 ### Required before sale
 
 A test step marked so that a device is not meant to be sold until it has been ticked. You can still choose to sell anyway, and the sale records what was missed. See [Settings](#/docs/settings).
@@ -160,6 +188,10 @@ An Administrator's way of helping a teammate who cannot sign in: it gives them a
 
 The code that identifies your account, for example `amber-fox-4271`. Everyone on your team signs in with the same Reseller ID and their own username. See [Getting started](#/docs/getting-started).
 
+### Restore point
+
+The safety copy the site keeps, locked, just before you restore a backup file. It lasts 7 days and is what **Undo last restore** puts back. There is only one at a time. See [Backup and restore](#/docs/backup-and-restore).
+
 ### Returned
 
 A device status for a device that came back from a customer. It can be sold again. See [Inventory](#/docs/inventory).
@@ -167,6 +199,10 @@ A device status for a device that came back from a customer. It can be sold agai
 ### Sale
 
 One transaction, with one or more devices, one customer and one receipt. See [Sales](#/docs/sales).
+
+### Scan box
+
+The bright rectangle on the camera scanner. Only the part of the picture inside it is read. See [Scanning with your phone camera](#/docs/scanning-with-your-phone).
 
 ### Selling price
 

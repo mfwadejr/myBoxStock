@@ -1,9 +1,9 @@
 ---
 title: Getting started
 summary: Sign in to the Host Console for the first time, set up two-factor, learn what each menu item is for, and work through a first-day checklist.
-keywords: first sign-in, login, temporary password, change password, two-factor, 2FA, authenticator, owner, helper administrator, menu, checklist, first day, documentation, search, host console
+keywords: account menu, name menu, first sign-in, login, temporary password, change password, two-factor, 2FA, authenticator, owner, helper administrator, menu, checklist, first day, documentation, search, host console
 order: 1
-covers: nav:docs, Username, Password, Sign in, Two-factor code, Verify, Use a different account, Set up two-factor, Sign out, Choose a new password, Current password, New password, Update password, Owner, helper administrator, Documentation search box, Site admin switcher
+covers: nav:docs, Username, Password, Sign in, Two-factor code, Verify, Use a different account, Set up two-factor, Sign out, Choose a new password, Current password, New password, Update password, Owner, helper administrator, Documentation search box, Documentation contents, Account menu, Reseller accounts, Host administrator, Sign out
 ---
 
 ## What the Host Console is
@@ -56,9 +56,17 @@ When the Owner adds a helper, the Owner chooses a starting password, and the hel
 
 > Give each person their own administrator login. Every support action is written to the log with the name of who did it, and shared logins make the [Audit trail](#/docs/audit-trail) useless.
 
-### The site switcher
+### The account menu
 
-If you also run a reseller account of your own and it has been linked, a switcher appears at the top of the console offering "Site admin" or "Reseller" followed by the business name. Choosing a reseller opens that account's app in a new browser tab. It only appears when the Owner has allowed linking for that account.
+At the top right of every page is a pill-shaped button with your name. This is the **account menu**. Click or tap it to open the menu. It closes when you click elsewhere, press Escape or choose an item. With the keyboard, the arrow keys, Home and End move through it. On a phone it rises from the bottom of the screen as a sheet.
+
+The menu has:
+
+- a header with your name and "Host administrator";
+- **Reseller accounts**, a short list of business names. This heading only appears when you also run a reseller account of your own and it has been linked to your administrator login. Choosing a business opens that account's app in a new browser tab. It only appears when the Owner has allowed linking for that account (see [Accounts](#/docs/accounts));
+- **Sign out**.
+
+There is no separate Sign out button or name label any more. Use **Sign out** from this menu on any computer that is not yours. The same menu exists in the reseller app, where it also offers a "Site admin" entry for accounts linked to a Host administrator.
 
 ## Tour of the menu
 
@@ -70,7 +78,7 @@ The menu is the same on every page. Each item opens one screen.
 - **Pipeline** shows sign-ups, trials, renewals and accounts that have gone quiet. See [Pipeline](#/docs/pipeline).
 - **Onboarding** shows how far new accounts get through setup. See [Onboarding](#/docs/onboarding).
 - **Plans** is the list of plan names, prices and limits. See [Plans](#/docs/plans).
-- **Backups** protects the server itself. See [Backups](#/docs/backups).
+- **Backups** protects the server itself: frequent snapshots, offsite copies, full-site backups and the place to restore from. See [Backups](#/docs/backups).
 - **Email** controls outgoing mail and the wording of messages. See [Email](#/docs/email).
 - **Firewall** controls who can reach the site and the Host Console. See [Firewall](#/docs/firewall).
 - **Security** is your own password, two-factor and the administrator list. See [Security](#/docs/security).
@@ -80,9 +88,11 @@ The menu is the same on every page. Each item opens one screen.
 - **Updates** tells you about new versions. See [Updates](#/docs/updates).
 - **Documentation** is this manual.
 
+There is also a page for helping resellers with their own backups and phone scanning: [Support and diagnostics](#/docs/support-and-diagnostics).
+
 If a problem needs attention, a red bar appears at the top of every page saying how many problems need a look, with a link to Alerts. Alerts you have set aside do not count.
 
-At the top right you will see your username and a **Sign out** button. Use it on any computer that is not yours.
+At the top right is the account menu described above, with your name and **Sign out**. Click the myBoxStock mark at the top left to go back to Overview.
 
 ## First-day checklist
 
@@ -90,7 +100,7 @@ Work through these once. Each one has a full page behind it.
 
 1. **Set the site address.** Open [Settings](#/docs/settings) and fill in **Site address (used for every link in an email)**, for example `https://app.example.com`, without any path. Confirmation, reset and welcome emails all link to it, and the Overview warns "Email links will not work" until it is right.
 2. **Set up email.** Open [Email](#/docs/email), connect your outgoing mail and send a test. Without it customers cannot confirm their address or reset a password by email.
-3. **Turn on backups.** Open [Backups](#/docs/backups) and set a scheduled full-site backup, ideally with a copy stored somewhere other than the server. Then read [Recovery and emergencies](#/docs/recovery-and-emergencies). Your backup covers the server; customers must still keep their own exports and recovery keys.
+3. **Check backups.** Open [Backups](#/docs/backups). Frequent snapshots are on by default. Save a backup passphrase, turn on a scheduled full-site backup, and set up a destination so a copy is kept somewhere other than the server. Then read [Recovery and emergencies](#/docs/recovery-and-emergencies). Your backup covers the server; customers must still keep their own exports and recovery keys.
 4. **Check the firewall and Host Console access.** Open [Firewall](#/docs/firewall). Decide whether the Host Console should answer only to listed addresses. Add your own address first so you do not lock yourself out.
 5. **Turn on two-factor** for yourself (above) and add helpers only if you need them.
 6. **Decide on sign-ups and trial length** in [Settings](#/docs/settings): leave **Open sign-ups** on if you want new customers, and pick the **Free trial length for new sign-ups (days)**.
@@ -101,9 +111,9 @@ Work through these once. Each one has a full page behind it.
 
 ## Using this Documentation
 
-Open **Documentation** in the menu. You will see a card for each topic. Pick one and a contents list appears beside it with the other topics, and **previous** and **next** buttons at the bottom let you read in order.
+Open **Documentation** in the menu. The page has one layout. The contents menu is on the left with every topic, and the open topic is on the right, below a search box. The first time you open it, it shows Getting started. Click another topic in the contents to read it, and use the **previous** and **next** buttons at the bottom of a topic to read in order. On a phone the contents is a compact list at the top of the page.
 
-To search, type in the box at the top that says "Search the documentation: a menu name, a setting, or a question". Searching starts after you type two letters. Results show the page and the section the words were found in, with a short extract. Try a menu name like "Firewall", a button label like "Suspend", or a plain question such as "customer forgot password". Every button and field on a screen is mentioned on its page, so searching the exact label usually lands you in the right place.
+To search, type in the box above the topic that says "Search the documentation: a menu name, a setting, or a question". Searching starts after you type two letters. Results show the page and the section the words were found in, with a short extract. Try a menu name like "Firewall", a button label like "Suspend", or a plain question such as "customer forgot password". Every button and field on a screen is mentioned on its page, so searching the exact label usually lands you in the right place.
 
 If a search finds nothing, try fewer or different words; the message reads "Nothing found".
 
@@ -119,4 +129,4 @@ When you are ready, continue to [Overview](#/docs/overview), and keep [Troublesh
 
 ## Using the Host Console on a phone or tablet
 
-The Host Console works on phones and tablets as well as laptops and desktops. On a small screen the menu moves to a bar along the bottom with Overview, Alerts, Accounts and Logs; tap **More** for every other page and to sign out. Tables turn into labelled cards so nothing scrolls sideways, and pop-ups slide up from the bottom. This is handy for checking Alerts or the Overview when you are away from your desk.
+The Host Console works on phones and tablets as well as laptops and desktops. On a small screen the menu moves to a bar along the bottom with Overview, Alerts, Accounts and Logs; tap **More** for every other page. The More sheet is only for moving around: sign out from the account menu at the top right. Tables turn into labelled cards so nothing scrolls sideways, and pop-ups slide up from the bottom. This is handy for checking Alerts or the Overview when you are away from your desk.

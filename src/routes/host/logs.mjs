@@ -46,7 +46,8 @@ export function logsRoutes(db) {
     const rows = await db.all(`${SELECT} WHERE ${where.join(' AND ')} ORDER BY e.ts DESC, e.id DESC LIMIT ${limit + 1}`, params);
     const more = rows.length > limit; if (more) rows.pop();
     if (!m) hostLog(req, 'debug', 'logs.searched', `Log search by ${req.subject.username}`, { data: f.applied });
-    res.json({ rows, next: more ? `${rows.at(-1).ts}_${rows.at(-1).id}` : null });
+    const total = m ? undefined : Number((await db.get(`SELECT COUNT(*) AS n FROM event_log e LEFT JOIN accounts a ON a.id = e.account_id WHERE ${f.where.join(' AND ')}`, f.params)).n);   // counted on the first page only
+    res.json({ rows, next: more ? `${rows.at(-1).ts}_${rows.at(-1).id}` : null, total });
   });
 
   // Download the current search (up to 5,000 rows) as CSV or JSON. Every export is itself logged.

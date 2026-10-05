@@ -9,7 +9,29 @@ services:
       SECURE_COOKIES: "1"          # set when served over HTTPS
       PUBLIC_URL: "https://boxes.example.com"
       # APP_SECRET: "long-random-string"   # optional; otherwise a key is generated in /data/secret.key
-    volumes: ["./data:/data"]
+    volumes:
+      - ./data:/data               # backups are written to /data/backup by default
+      # Send backups to a NAS: mount it here, then add a "Folder" destination in the Host Console (Backups, Destinations) with the path /backups.
+      # (Or skip mounting: the Destinations tab can also reach an SMB share, S3-compatible storage, SFTP and WebDAV directly.)
+      # - nas-backups:/backups
+
+# NAS over NFS (uncomment this block and the nas-backups line above):
+# volumes:
+#   nas-backups:
+#     driver: local
+#     driver_opts:
+#       type: nfs
+#       o: "addr=192.168.1.20,nfsvers=4,rw"
+#       device: ":/volume1/myboxstock"
+#
+# NAS over SMB / CIFS:
+# volumes:
+#   nas-backups:
+#     driver: local
+#     driver_opts:
+#       type: cifs
+#       o: "addr=192.168.1.20,username=backup,password=change-me,uid=1000,gid=1000,vers=3.0"
+#       device: "//192.168.1.20/myboxstock"
 
 # Scale-out option: PostgreSQL. Uncomment, then run `migrate-db` once (see README).
 #  myboxstock:

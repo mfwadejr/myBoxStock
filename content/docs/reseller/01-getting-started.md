@@ -1,9 +1,9 @@
 ---
 title: Getting started
 summary: What myBoxStock is, how to create your account, sign in, save your recovery key, find your way around the menu, and what to do in your first hour.
-keywords: start, begin, sign up, create account, register, reseller id, username, password, sign in, log in, new device, recovery key, menu, roles, administrator, standard, view, checklist, first steps, documentation, search help, confirm email, trial
+keywords: start, account menu, name menu, site admin, sign out, more, more sheet, contents, search help, backup, begin, sign up, create account, register, reseller id, username, password, sign in, log in, new device, recovery key, menu, roles, administrator, standard, view, checklist, first steps, documentation, search help, confirm email, trial
 order: 1
-covers: nav:docs, Documentation, Search the documentation, Create account, Sign in, Reseller ID, Username, Password, Business name, Email, Forgot password, Send link, Back to sign in, Two-factor code, Verify, Choose a new password, Update password, Unlock your data, Unlock, Use your recovery key, Restore access, Turn on encryption, Save your recovery key, Download, Print, I have saved my recovery key somewhere safe, Continue, Continue to sign in, Send it again, Sign out, Free trial, Trial ended, Restore account, Close, menu tour, roles, first-hour checklist
+covers: nav:docs, Account menu, Site admin, name menu, More sheet, Contents menu, Nothing found, Backup and restore, Back up now, Documentation, Search the documentation, Create account, Sign in, Reseller ID, Username, Password, Business name, Email, Forgot password, Send link, Back to sign in, Two-factor code, Verify, Choose a new password, Update password, Unlock your data, Unlock, Use your recovery key, Restore access, Turn on encryption, Save your recovery key, Download, Print, I have saved my recovery key somewhere safe, Continue, Continue to sign in, Send it again, Sign out, Free trial, Trial ended, Restore account, Close, menu tour, roles, first-hour checklist
 ---
 
 ## What myBoxStock is
@@ -95,7 +95,7 @@ Some new team members see **Almost ready**: an Administrator must sign in once t
 
 ## The menu tour
 
-Your menu lists the places in the app. What you see depends on your user type, so a person with fewer permissions sees a shorter menu. The name of your business, your username and your user type are shown at the top, with a **Sign out** button. During a trial, a small note shows the days left; when a trial has ended you will see **Trial ended** and the account becomes read-only (see [Plans, trials and billing](#/docs/plans-trials-billing)).
+Your menu lists the places in the app. What you see depends on your user type, so a person with fewer permissions sees a shorter menu. The top bar shows your business name, and a small note about your plan when one applies, and on the right a button with your username. That button is your **account menu** (see the next section). During a trial, a small note shows the days left; when a trial has ended you will see **Trial ended** and the account becomes read-only (see [Plans, trials and billing](#/docs/plans-trials-billing)).
 
 - **Home**: the day-to-day picture. Devices available, what sold this month, revenue, profit, low-stock warnings and recent sales. See [Home](#/docs/home).
 - **Quick sale**: ring up a sale in a few taps, with receipt, discount and warranty. See [Quick sale](#/docs/quick-sale).
@@ -104,11 +104,23 @@ Your menu lists the places in the app. What you see depends on your user type, s
 - **Sales**: every receipt, with totals and filters. See [Sales](#/docs/sales).
 - **Team**: add people and choose what they can do. Administrators only. See [Team](#/docs/team).
 - **Settings**: choose which details you track, the test checklist, warranties, payment methods and more. Administrators only. See [Settings](#/docs/settings).
-- **Activity**: a record of who did what in the account. Administrators only. See [Activity](#/docs/activity).
+- **Backup and restore**: save a backup file of your whole account and put it back if something goes wrong. Administrators only. It sits between Settings and Activity. See [Backup and restore](#/docs/backup-and-restore).
+- **Activity**: who signed in and from which devices. Administrators only. See [Activity](#/docs/activity).
 - **Security**: your password, two-factor sign-in, your recovery key and exports. Everybody has this. See [Security](#/docs/security).
 - **Documentation**: this help. Everybody has this.
 
-Some accounts also show a small switcher near the top for people who also work as site administrators; it only appears if your site administrator has linked it.
+### Your account menu
+
+The button with your username at the top right of every page opens your **account menu**.
+
+1. Click or tap the button with your username. The menu opens. On a phone it rises from the bottom of the screen like the other pop-ups.
+2. At the top it shows your name, your user type and your business name.
+3. **Site admin** appears only if your account has been linked to a site administrator (an Administrator can do that on the [Security](#/docs/security) page). It opens the site's admin console in a new tab. Most people never see it.
+4. **Sign out** ends your session on this device. It is always here, on every screen size.
+
+The menu closes when you tap outside it, press Escape, or choose an item. With a keyboard you can open it with Enter or the down arrow and move with the arrow keys, Home and End.
+
+There is no separate Sign out button in the top bar. Sign out is always in this menu.
 
 ### Other banners you may see
 
@@ -132,13 +144,18 @@ Every person in your business has a user type. An **Administrator** can do every
 7. Add your regular customers in [Customers](#/docs/customers), or simply create them as you sell.
 8. Record a practice sale in [Quick sale](#/docs/quick-sale), look at the receipt, and void it from [Sales](#/docs/sales) if it was only a test.
 9. If other people will help, add them in [Team](#/docs/team) with the right user type.
-10. Do your first export from [Security](#/docs/security) and keep it somewhere you control.
+10. Make your first backup: open [Backup and restore](#/docs/backup-and-restore), press **Back up now**, and keep the file somewhere you control. Do it again every week. Home reminds you after 7 days.
+11. If you work from a phone, try the camera button in the Serial number box in Add device. See [Scanning with your phone camera](#/docs/scanning-with-your-phone).
 
 ## Using this Documentation
 
-Choose **Documentation** in the menu. You will see the list of topics as cards. Click a card to open the page. Inside a page, the topic list is shown so you can jump to another page, and the buttons at the bottom take you to the previous or next topic.
+Choose **Documentation** in the menu. The page has one layout.
 
-To search, click the search box labelled **Search the documentation** and type at least two letters. Results appear as you type. You can type a menu name (such as Inventory), a setting (such as warranty), or a question (such as how do I void a sale). Pick a result to open it. If nothing is found, try fewer or different words.
+- On a laptop or tablet, the list of topics (the contents) is on the left. On the right, at the top, is a search box, and under it the open topic. The first time, **Getting started** opens for you.
+- On a phone, the contents is a compact list at the top of the page, with the search box and the topic below it.
+- Click a topic in the contents to open it. The buttons at the bottom of a page take you to the previous or next topic.
+
+To search, click the box labelled **Search the documentation** and type at least two letters. Results appear as you type, above the topic. Each result shows a topic name, the section and a short piece of text. You can type a menu name (such as Inventory), a button (such as Back up now), a setting (such as warranty) or a question (such as how do I void a sale). Pick a result to open it. If nothing is found you see "Nothing found. Try fewer or different words."
 
 > Tip: if you are stuck on a problem, try [Troubleshooting and FAQ](#/docs/troubleshooting-faq). For unfamiliar words, see the [Glossary](#/docs/glossary).
 
@@ -149,16 +166,19 @@ To search, click the search box labelled **Search the documentation** and type a
 - Sharing one login between staff. Give each person their own username so [Activity](#/docs/activity) and test records show who did what.
 - Using a throwaway email address, then being unable to reset a password.
 - Assuming the site can fix lost data. It cannot; read [Your data, your responsibility](#/docs/your-data-your-responsibility).
+- Never making a backup file. Press **Back up now** on [Backup and restore](#/docs/backup-and-restore) every week.
 
 ## Using myBoxStock on a phone or tablet
 
 Most resellers make sales from a phone, so the whole app is built to work well on iPhones, iPads, Android phones and tablets as well as laptops and desktops. The screen adjusts to its size; you do not need a separate app.
 
-- On a phone or tablet, the main pages (Home, Quick sale, Inventory and Customers) are in a bar along the bottom of the screen, within easy reach of your thumb. Tap **More** to reach Sales, Team, Settings, Activity, Security and Documentation, and to sign out.
+- On a phone or tablet, the main pages (Home, Quick sale, Inventory and Customers) are in a bar along the bottom of the screen, within easy reach of your thumb. Tap **More** to open a sheet with the other pages (Sales, Team, Settings, Backup and restore, Activity, Security and Documentation). The More sheet is only for moving between pages. To sign out, use your account menu at the top right.
 - On a laptop or desktop the same pages are listed down the side of the screen.
 - Lists such as Inventory, Sales and Customers turn into one card per item on a phone, with each detail labelled, so there is no sideways scrolling. Tap a card to open it.
 - Forms and pop-ups slide up from the bottom of a phone screen. Buttons and fields are large enough to tap comfortably, and text in fields is big enough that the phone does not zoom in when you tap one.
 - In Quick sale, the total and the **Complete sale** button stay in view as you scroll the form on a phone.
 - Turning the phone sideways works too. The bottom bar slims down so there is more room for the page.
+
+- Many boxes have barcodes. On a phone you can scan them with the camera instead of typing. See [Scanning with your phone camera](#/docs/scanning-with-your-phone).
 
 > Tip: you can add myBoxStock to your phone's home screen from the browser's share or menu button, so it opens like an app.

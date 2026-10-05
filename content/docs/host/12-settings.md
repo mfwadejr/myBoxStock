@@ -1,9 +1,9 @@
 ---
 title: Settings
 summary: Every option on the Host Settings screen explained: sign-ups, trial length, site address, sign-in history, the announcement banner, the server options that used to be container variables, and the safety checks that stop you locking yourself out.
-keywords: settings, site address, public url, email links, trial days, trial length, open sign-ups, signups, sign-in history, announcement, banner, maintenance notice, secure cookies, https, private mail, reverse proxy, trust proxy, proxies, cloudflare, real visitor address, log detail, log level, log retention, back to server defaults, reset, lockout guard, database engine
+keywords: custom proxy value, restore announcement, clear announcement, settings, site address, public url, email links, trial days, trial length, open sign-ups, signups, sign-in history, announcement, banner, maintenance notice, secure cookies, https, private mail, reverse proxy, trust proxy, proxies, cloudflare, real visitor address, log detail, log level, log retention, back to server defaults, reset, lockout guard, database engine
 order: 12
-covers: nav:settings, Open sign-ups, Free trial length for new sign-ups (days), Site address (used for every link in an email), Use (this address) button, Keep sign-in history (days), Save, Announcement banner, Show the banner, Message, Style, Information (blue), Heads-up (amber), Important (red), Last day to show it (optional), Save announcement, Server options, Secure cookies, Resellers' mail servers on private networks, Site is behind Cloudflare, Reverse proxy in front of the site, Log detail, Keep the activity log (days), Save server options, Back to server defaults, Database engine, Saved here, Using the server default, PUBLIC_URL, TRUST_PROXY, SECURE_COOKIES, MAIL_ALLOW_PRIVATE, CLOUDFLARE_IP, LOG_LEVEL, LOG_RETENTION_DAYS
+covers: nav:settings, Open sign-ups, Free trial length for new sign-ups (days), Site address (used for every link in an email), Use (this address) button, Keep sign-in history (days), Save, Announcement banner, Show the banner, Message, Style, Information (blue), Heads-up (amber), Important (red), Last day to show it (optional), Save announcement, Server options, Secure cookies, Resellers' mail servers on private networks, Site is behind Cloudflare, Reverse proxy in front of the site, Log detail, Keep the activity log (days), Save server options, Back to server defaults, Database engine, Saved here, Using the server default, Custom (set by the container), loopback, Show the banner off, restore notice, PUBLIC_URL, TRUST_PROXY, SECURE_COOKIES, MAIL_ALLOW_PRIVATE, CLOUDFLARE_IP, LOG_LEVEL, LOG_RETENTION_DAYS
 ---
 
 ## What this screen is for
@@ -103,7 +103,13 @@ The announcement banner lets you show one message at the top of every customer's
 4. Turn **Show the banner** on.
 5. Press **Save announcement**. You see "Announcement saved".
 
-Each customer can close the banner with its Close button. If you later change the message, the style, the last day, or turn the banner back on after it was off, the banner counts as new and appears again for people who had closed the old one. If you only change something else, people who closed it do not see it again.
+Each customer can close the banner with its Close button. After you restore a backup, the site posts a notice here by itself (see below). If you later change the message, the style, the last day, or turn the banner back on after it was off, the banner counts as new and appears again for people who had closed the old one. If you only change something else, people who closed it do not see it again.
+
+### The notice after a restore
+
+When you restore a backup from the Backups page (see [Backups](#/docs/backups)), the site starts again and turns this banner on at the **Important (red)** level, with the text: "The site was restored from a backup taken YYYY-MM-DD HH:MM UTC. Sales or changes made after that time may be missing. Please check your recent activity." If you had another announcement up, the restore notice replaces it.
+
+It stays until you take it down. When resellers have had time to check their activity, open Settings, turn **Show the banner** off (or change the **Message**) and press **Save announcement**. The restore notice is only posted for restores made from the Backups page, not for the `restore-bundle` command on the server.
 
 > Tip: set a Last day whenever you can. A maintenance notice that stays up for weeks teaches customers to ignore banners.
 
@@ -145,7 +151,15 @@ Count the servers that forward traffic to this site. If visitors go straight to 
 
 Signs you chose wrong: every visitor appears to have the same internal address in Logs, or the Firewall screen shows "Your address right now" as an internal number.
 
-> If the container sets `TRUST_PROXY` to something other than a plain number, the menu shows 1. Check before saving this card so you do not replace a deliberate setting by accident.
+### When the container sets something other than a number
+
+`TRUST_PROXY` in the container can hold more than a plain number, for example `loopback` or a list of addresses. When it does, the menu shows an extra choice that reads **Custom (set by the container: loopback)**, with the real value, and that choice is selected. Nothing is wrong. It means the container's own value is in charge.
+
+- Saving the card leaves this value alone unless you pick another option in the menu. You can change other options on the card safely.
+- If you do pick **None**, **1**, **2** or **3** and save, your choice is saved and wins over the container.
+- **Back to server defaults** puts the container's value back, and so does `reset-server-options` (see [Recovery and emergencies](#/docs/recovery-and-emergencies)). The container variable stays as the first-start value and as the fallback.
+
+There is no longer a warning about overwriting a value like this, because it cannot happen by accident.
 
 ## The lockout guard
 
@@ -166,4 +180,4 @@ This card shows which engine the server is using now (SQLite, PostgreSQL or Mari
 
 ## Everything is written down
 
-Every change you save here is recorded in the Audit trail with your name, the time and your address: sign-ups, trial length, site address, sign-in history, server options (the names of the options changed, not secret values) and the banner turning on or off. See [Audit trail](#/docs/audit-trail) if you ever need to answer "who changed that?".
+Every change you save here is recorded in the Audit trail with your name, the time and your address: sign-ups, trial length, site address, sign-in history and the banner turning on or off. For server options, the entry "Server options changed" lists only the options that really changed, each with its value before and after. Pressing Save server options without changing anything is recorded as a save with no change. See [Audit trail](#/docs/audit-trail) if you ever need to answer "who changed that?".

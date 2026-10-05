@@ -1,9 +1,9 @@
 ---
 title: Sales
 summary: Look back over every sale, filter by date, warranty and status, open and print receipts, email them again, void a sale, change a warranty and export your sales to a spreadsheet.
-keywords: sales, receipts, receipt, void, refund, cancel sale, warranty, email receipt, print receipt, export csv, revenue, profit, report, search sales, filter, date range, paid by
+keywords: paging, per page, next, previous, sales, receipts, receipt, void, refund, cancel sale, warranty, email receipt, print receipt, export csv, revenue, profit, report, search sales, filter, date range, paid by
 order: 6
-covers: nav:sales, Export CSV, Quick sale, Search sales, From, To, All warranties, In warranty, Expired, No warranty, All sales, Sold, Void, Today, 7 days, 30 days, This month, All time, Clear filters, Sales, Revenue, Profit, Devices sold, Date, Receipt, Customer, Items, Warranty, Paid by, Total, Same number, Walk-in, Include the test record, Void sale, Change warranty, Email, Print, Done, Receipt, Thank-you note, Sale voided notice, Send to, Open in my mail app, Send, sales.read, sales.write
+covers: nav:sales, 25 / 50 / 100 per page, Previous, Next, Export CSV, Quick sale, Search sales, From, To, All warranties, In warranty, Expired, No warranty, All sales, Sold, Void, Today, 7 days, 30 days, This month, All time, Clear filters, Sales, Revenue, Profit, Devices sold, Date, Receipt, Customer, Items, Warranty, Paid by, Total, Same number, Walk-in, Include the test record, Void sale, Change warranty, Email, Print, Done, Receipt, Thank-you note, Sale voided notice, Send to, Open in my mail app, Send, sales.read, sales.write
 ---
 
 ## What the Sales page is for
@@ -57,7 +57,11 @@ Each row is one sale, newest first. The columns are:
 - **Paid by** - the payment method, as it was named at the time of the sale.
 - **Total** - the amount charged after any discounts.
 
-Click a row to open its receipt. Only the first 300 matching sales are shown in the table, so if you have a very large history, narrow the dates or search to see older ones. The totals above still count every matching sale.
+Click a row to open its receipt.
+
+### Pages
+
+The list shows **25 rows per page**. Under it a line says, for example, "Showing 1–25 of 60", with a **25 / 50 / 100 per page** list and **Previous** and **Next** buttons. Choose 50 or 100 to see more at once. These controls hide when everything fits on one page of 25 or fewer. Changing the search or a filter always takes you back to page 1. There is no longer a limit on how many sales you can reach: use **Next**, or narrow the dates or search. The four boxes above count every matching sale, not just the page you are looking at. **Export CSV** also includes every matching sale, not just the current page.
 
 ## Finding sales: search and filters
 

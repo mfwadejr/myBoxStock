@@ -17,7 +17,7 @@
   Host.views.logs = async (main) => {
     const areas = await Host.api('GET', '/logs/areas');
     const f = { ...DEFAULTS, ...Object.fromEntries(new URLSearchParams(location.hash.split('?')[1] || '')) };
-    let next = null, shown = 0;
+    let next = null, shown = 0, total = null;
     const areaOpts = [['', 'All areas'], ...areas.map(a => [a.area, a.area])];
     const levelOpts = [['', 'All levels'], ['debug', 'debug'], ['info', 'info'], ['warn', 'warn'], ['error', 'error']];
     swap(main, `${Host.head('Logs', 'Every action is recorded in plain English and as raw JSON. Files are also written to the server’s log folder, one set per area.')}
@@ -27,8 +27,8 @@
         <div class="row wrap mt-md" id="custom" hidden><div class="field mb-0"><label>From</label><input type="date" id="from" value="${esc(f.from)}"></div><div class="field mb-0"><label>To</label><input type="date" id="to" value="${esc(f.to)}"></div></div>
         <div class="row wrap mt-md">${QUICK.map(([l], i) => `<button class="btn secondary small" data-quick="${i}">${esc(l)}</button>`).join('')}<button class="btn secondary small" id="clear">Clear filters</button></div>
         <div class="hint" id="hint"></div>
-        <div id="list" class="mt-md"></div>
-        <div class="row spread wrap mt-md"><span class="muted text-sm" id="count"></span><div class="row"><button class="btn secondary small" id="more" hidden>Load more</button><button class="btn secondary small" data-export="csv">Export CSV</button><button class="btn secondary small" data-export="json">Export JSON</button></div></div></div>`);
+        <div id="list" class="feed mt-md"></div><div id="more"></div>
+        <div class="row wrap mt-md"><button class="btn secondary small" data-export="csv">Export CSV</button><button class="btn secondary small" data-export="json">Export JSON</button></div></div>`);
     const el = (id) => main.querySelector(id);
 
     // Turn the filter state into the API query string (time range -> from/to in milliseconds).
@@ -41,19 +41,19 @@
       return p.toString();
     };
     const remember = () => { const p = new URLSearchParams(); for (const k of Object.keys(DEFAULTS)) if (f[k] && f[k] !== DEFAULTS[k]) p.set(k, f[k]); history.replaceState(null, '', '#/logs' + (p.size ? '?' + p : '')); };
-    const row = (r) => `<div class="log-line"><div class="log-meta"><span class="chip ${LEVEL_CHIP[r.level] || ''}">${esc(r.level)}</span><span class="chip">${esc(r.area)}</span><span class="mono">${esc(r.event)}</span><span>${fmt.dateTime(r.ts)}</span>
-      ${r.actor ? `<span>${esc(r.actor)}</span>` : ''}${r.account_code ? `<span class="mono">${esc(r.account_code)}</span>` : ''}${r.ip ? `<span class="mono">${esc(r.ip)}</span>` : ''}<button class="linkish" data-raw="${r.id}">raw</button></div>
+    const row = (r) => `<div class="log-line"><div class="log-meta"><span class="chip ${LEVEL_CHIP[r.level] || ''}">${esc(r.level)}</span><span class="chip">${esc(r.area)}</span><span class="ident">${esc(r.event)}</span><span>${fmt.dateTime(r.ts)}</span>
+      ${r.actor ? `<span>${esc(r.actor)}</span>` : ''}${r.account_code ? `<span class="ident">${esc(r.account_code)}</span>` : ''}${r.ip ? `<span class="tab-num">${esc(r.ip)}</span>` : ''}<button class="linkish" data-raw="${r.id}">raw</button></div>
       <div class="log-message">${esc(r.message)}</div><pre class="log-raw hide" id="raw-${r.id}">${esc(JSON.stringify(JSON.parse(r.raw || '{}'), null, 2))}</pre></div>`;
 
     const paint = (more) => {
       const a = areas.find(x => x.area === f.area);
       el('#hint').textContent = a ? a.description : '';
       el('#custom').hidden = f.range !== 'custom';
-      el('#more').hidden = !next; el('#count').textContent = shown ? `Showing ${shown} ${shown === 1 ? 'entry' : 'entries'}${next ? ' — more available' : ''}` : '';
+      UI.more(el('#more'), { shown, total, noun: shown === 1 ? 'entry' : 'entries', more: !!next, load: () => load(true).catch(e => toast(e.message, true)) });
     };
     const load = async (more) => {
       const d = await Host.api('GET', '/logs?' + query(more && next ? { before: next } : {}));
-      next = d.next; shown = (more ? shown : 0) + d.rows.length;
+      next = d.next; shown = (more ? shown : 0) + d.rows.length; if (!more) total = d.total;
       const html = d.rows.map(row).join('');
       if (more) el('#list').insertAdjacentHTML('beforeend', html); else el('#list').innerHTML = html || '<div class="empty">No matching entries. Try a wider time range or clear the filters.</div>';
       remember(); paint();
@@ -63,7 +63,6 @@
     for (const id of ['area', 'level', 'range']) el('#' + id).addEventListener('change', (e) => { f[id] = UI.select.value(e.target); if (id === 'area') f.event = ''; refresh(); });
     for (const id of ['from', 'to']) el('#' + id).addEventListener('change', (e) => { f[id] = e.target.value; refresh(); });
     let t; el('#q').addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => { f.q = e.target.value; refresh(); }, 300); });
-    el('#more').addEventListener('click', () => load(true).catch(e => toast(e.message, true)));
     el('#clear').addEventListener('click', () => { Object.assign(f, DEFAULTS); history.replaceState(null, '', '#/logs'); Host.route(); });
     main.querySelectorAll('[data-quick]').forEach(b => b.addEventListener('click', () => { Object.assign(f, DEFAULTS, QUICK[b.dataset.quick][1]); history.replaceState(null, '', '#/logs?' + new URLSearchParams(f)); Host.route(); }));
     main.querySelectorAll('[data-export]').forEach(b => b.addEventListener('click', async () => {

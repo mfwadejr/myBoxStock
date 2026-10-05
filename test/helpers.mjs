@@ -24,7 +24,13 @@ export async function startServer(extraEnv = {}) {
   let hostPw;
   for (let i = 0; i < 60; i++) { await sleep(200); const m = out.match(/Temporary password: (\S+)/); if (restored && out.includes('listening')) { hostPw = 'restored'; break; } if (m && out.includes('listening')) { hostPw = m[1]; break; } }
   if (!hostPw) { proc.kill(); throw new Error('server did not start: ' + out); }
-  return { dir, port, base, hostPw, env: extraEnv, logDir: path.join(dir, 'logs'), proc, stop: () => { proc.kill(); fs.rmSync(dir, { recursive: true, force: true }); } };
+  return { dir, port, base, hostPw, env: extraEnv, logDir: path.join(dir, 'logs'), proc, stop: () => { proc.kill(); fs.rmSync(dir, { recursive: true, force: true, maxRetries: 8, retryDelay: 150 }); } };   // the server may still be writing a log line as it exits
+}
+
+// Stop a server but keep its data folder, then start a new one on the same folder (a restart, as after an update). The Host password stays whatever the test set.
+export async function restartServer(srv, extraEnv = {}) {
+  const gone = new Promise(r => srv.proc.once('exit', r)); srv.proc.kill(); await gone;
+  return startServer({ ...srv.env, ...extraEnv, DATA_DIR: srv.dir });
 }
 
 export class Client {

@@ -41,6 +41,9 @@ export const MSG = {
   RECORD_CONFLICT: 'Someone else changed this just now. Reload and try again.',
   RECORD_BAD: 'That record could not be saved because it was not in the expected form.',
   RECORD_TOO_BIG: 'That record is too large to save.',
+  BACKUP_WRONG_ACCOUNT: 'This backup file belongs to a different account, so it cannot be restored here.',
+  BACKUP_BAD: 'The backup details sent were not complete. Refresh the page and try again.',
+  BACKUP_NO_RESTORE_POINT: 'There is no restore to undo. The safety copy is kept for 7 days after a restore and then removed.',
   UNKNOWN_LOG_AREA: 'That log area does not exist.',
 };
 export const fail = (res, status, code, extra = {}) => res.status(status).json({ error: MSG[code], code, ...extra });

@@ -134,3 +134,32 @@ test('the themed dropdown is the only dropdown (no native <select> anywhere)', (
   const files = [...walk(path.join(ROOT, 'public'), p => /\.(js|html)$/.test(p))];
   assert.deepEqual(files.filter(f => /<select\b/i.test(read(f))).map(rel), []);
 });
+
+test('the old .mono class is gone: identifiers use .ident, numbers use .tab-num', () => {
+  const files = [...walk(path.join(PUB, 'js'), p => p.endsWith('.js')), ...walk(PUB, p => /[\\/]index\.html$/.test(p)), ...walk(path.join(ROOT, 'src'), p => /\.(mjs|js|html)$/.test(p))];
+  const bad = [];
+  for (const f of files) {
+    const s = read(f);
+    if (/class\s*=\s*["'`][^"'`]*\bmono\b/.test(s)) bad.push(`${rel(f)}: class attribute uses mono`);
+    if (/(classList\.(add|toggle|remove|contains)\([^)]*|className\s*[+]?=\s*[^;]*)['"`]mono['"`]/.test(s)) bad.push(`${rel(f)}: classList/className uses mono`);
+  }
+  assert.deepEqual(bad, []);
+  assert.ok(!/(^|\n)\s*\.mono\b/.test(stripComments(read(path.join(PUB, 'css', 'utilities.css')))), 'utilities.css must not define .mono');
+});
+
+test('font-family only comes from the font tokens', () => {
+  const bad = [];
+  for (const f of cssFiles.filter(f => f !== tokensFile)) for (const m of stripComments(read(f)).matchAll(/font-family\s*:\s*([^;}]+)/g)) if (!/^\s*var\(--font-[a-z-]+\)\s*$/.test(m[1])) bad.push(`${rel(f)}: font-family ${m[1].trim()}`);
+  assert.deepEqual(bad, []);
+});
+
+test('native controls are styled: no textarea grip, no number spinners, no search cancel button', () => {
+  const base = stripComments(read(path.join(PUB, 'css', 'base.css')));
+  assert.match(base, /textarea\s*\{[^}]*resize:\s*none/, 'textarea must set resize: none');
+  for (const f of cssFiles) assert.deepEqual([...stripComments(read(f)).matchAll(/resize\s*:\s*([^;}]+)/g)].map(m => m[1].trim()).filter(v => v !== 'none'), [], `${rel(f)}: resize other than none`);
+  assert.match(base, /input\[type=number\][^{]*\{[^}]*appearance:\s*textfield/);
+  assert.match(base, /input\[type=number\]::-webkit-inner-spin-button[^{]*\{[^}]*-webkit-appearance:\s*none/);
+  assert.match(base, /input\[type=search\]::-webkit-search-cancel-button[^{]*\{[^}]*(-webkit-)?appearance:\s*none/);
+  assert.match(base, /\*::-webkit-scrollbar-button\s*\{\s*display:\s*none/, 'scroll bar arrows are hidden');
+  assert.match(base, /\*::-webkit-scrollbar-thumb\s*\{[^}]*var\(--color-scroll-thumb\)/);
+});

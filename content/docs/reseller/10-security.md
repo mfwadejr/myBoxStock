@@ -1,14 +1,14 @@
 ---
 title: Security
 summary: Look after your own sign-in: change your password, turn on two-factor, confirm your email, manage the recovery key, and see your own devices.
-keywords: security, password, change password, two-factor, 2FA, authenticator, recovery codes, recovery key, email, confirm email, host administrator, link, export, close account, encryption, forgot password, temporary password, unlock
+keywords: security, site admin, name menu, account menu, sign out, closing account, close account, erased, what backups keep, password, change password, two-factor, 2FA, authenticator, recovery codes, recovery key, email, confirm email, host administrator, link, export, close account, encryption, forgot password, temporary password, unlock
 order: 10
-covers: nav:security, Reseller ID, username, Two-factor authentication, Set up, Turn off, authenticator code, recovery codes, I've saved them, Email address, Change email, Send confirmation, Send it again, Password, Change password, Current password, New password, Recovery key, Create new recovery key, Download, Print, I have saved my recovery key somewhere safe, Host administrator, Link Host administrator, Remove link, Your data, Export everything, Close my account, Close account, Restore account, Encryption, Where you're signed in, Recent sign-ins, Forgot password, Unlock your data
+covers: nav:security, Site admin, name menu, account menu, Closing your account, Export everything first, Your password, Close this account, Restore account, closing account erase date, Reseller ID, username, Two-factor authentication, Set up, Turn off, authenticator code, recovery codes, I've saved them, Email address, Change email, Send confirmation, Send it again, Password, Change password, Current password, New password, Recovery key, Create new recovery key, Download, Print, I have saved my recovery key somewhere safe, Host administrator, Link Host administrator, Remove link, Your data, Export everything, Close my account, Close account, Restore account, Encryption, Where you're signed in, Recent sign-ins, Forgot password, Unlock your data
 ---
 
 ## What the Security page is for
 
-The **Security** page is where you look after your own way into the account. Every person on the team has it, whatever their role, and each person sees and changes only their own settings. A few extra cards appear for Administrators only (the recovery key, the link to a Host administrator sign-in, and the export and close-account tools). Those are marked below.
+The **Security** page is where you look after your own way into the account. Every person on the team has it, whatever their role, and each person sees and changes only their own settings. A few extra cards appear for Administrators only (the recovery key, the link to a Host administrator sign-in, and the export and close-account tools). Backups have their own page, [Backup and restore](#/docs/backup-and-restore). Those are marked below.
 
 Why it matters: your account holds your stock, your customers and your sales history. Your password and your recovery key are the only things that can open that information, and nobody else can open it for you. Spending ten minutes here once is the best protection you can give your business. For the bigger picture, read [Your data, your responsibility](#/docs/your-data-your-responsibility).
 
@@ -136,17 +136,37 @@ Do this while you can still sign in and unlock your data. If you leave it until 
 
 This card appears only to Administrators on accounts where your site administrator has allowed it. It is meant for the rare person who both runs the site and runs a reseller account.
 
-- **Link Host administrator**: opens a box asking for your **Host username**, **Host password** and a **Two-factor code** (only if your Host sign-in uses one). Click **Link**. You then get a switcher in the top bar to move between this account and the site admin console. You still sign in to each separately, and nothing from your account's data is shared with the Host side.
-- **Remove link**: after you confirm, the switcher goes away on both sides. You can link again later.
+- **Link Host administrator**: opens a box asking for your **Host username**, **Host password** and a **Two-factor code** (only if your Host sign-in uses one). Click **Link**. You then get a **Site admin** entry in your name menu at the top right (the button with your username). It opens the Site admin console in a new tab. You still sign in to each separately, and nothing from your account's data is shared with the Host side.
+- **Remove link**: after you confirm, the **Site admin** entry goes away on both sides. You can link again later.
 
-If you do not see this card, linking is not turned on for your account, and you do not need it.
+If you do not see this card, linking is not turned on for your account, and you do not need it. Accounts that are not linked have only **Sign out** in the name menu.
 
 ## Your data (Administrators)
 
 This card gives you two tools. The full explanation, with advice on routines, is in [Your data, your responsibility](#/docs/your-data-your-responsibility).
 
-- **Export everything**, with its **Export** button: builds one zip file in your browser with your spreadsheets (inventory, customers, sales, sale items) and your settings. It never passes through the server. A message says how many files were made.
-- **Close my account**, with its **Close account** button: locks the account for seven days and then erases it for good. In the box you can click **Export everything first**, then enter your password and type your Reseller ID to confirm. Until the seven days are over an Administrator can click **Restore account** in the red banner shown on every page. While it is closing, the account is read-only. Backups kept by the site may hold an encrypted copy until they expire, which cannot be opened without your password or recovery key.
+- **Export everything**, with its **Export** button: builds one zip file in your browser with your spreadsheets (inventory, customers, sales, sale items) and your settings. It never passes through the server. A message says how many files were made. The same button is also on the **Spreadsheets** card of [Backup and restore](#/docs/backup-and-restore). Anyone who has the file can read it, and you cannot restore from it. For a file you can restore from, use **Back up now** on the Backup and restore page.
+- **Close my account**, with its **Close account** button: see the next section.
+
+> Security is for your sign-in. Your safety copy of the data is the **Backup and restore** page. Make a backup file there as well as keeping your recovery key safe. You will need both to rebuild after a bad day.
+
+### Closing your account
+
+Only an Administrator can close the account. Here is exactly what happens.
+
+1. Click **Close account**. In the box "Close this account?" you can click **Export everything first**. Then type your own **Your password** and your **Reseller ID**, and click **Close account**.
+2. The account is locked straight away for **7 days**. People who are not Administrators are signed out and cannot sign in. Administrators can still sign in, but only to look around: reading, exporting and making a backup file still work, and anything that changes data is refused with "This account is closing, so changes are paused. An Administrator can restore it."
+3. An "account is closing" email with the erase date goes to the account's owner email and to the Administrator who closed it. A red banner with the date shows on every page.
+4. During the 7 days an Administrator can click **Restore account** in the red banner. The Host administrator can also bring it back for you.
+5. After the 7 days the site erases the account automatically (it checks when it starts and every hour). **There is no way back after that.** Everything is deleted: the people and their sign-in history, the devices, customers, sales and receipts, your keys and recovery key, your billing history and your restore point. An "account erased" email goes to the owner and the Administrators.
+
+What stays behind:
+
+- Plain log entries that say something happened, with the link to your account removed. They hold no business data.
+- Counts of how many receipt emails were sent.
+- **Backups the site took before the erase.** The site's own full-site and offsite backup copies still hold your encrypted account until they are cleared out. With the default settings that is at most about 8 weeks, and the site can choose a different time. They cannot be opened without your password or recovery key, and the site cannot read them anyway.
+
+> Backups you made yourself are yours. Closing the account does not touch your **.mbsbackup** files or your exports, and you can still make a backup while the account is closing. Make one first if there is any chance you will want the data later. A backup file can only be restored into the account it came from, so keep the Reseller ID with it.
 
 ## Encryption card
 
@@ -166,15 +186,17 @@ Below the cards are two tables that belong to you alone: **Where you're signed i
 For Administrators, add:
 
 5. Save the recovery key and confirm it.
-6. Export everything on a regular schedule.
+6. Make a backup file on the [Backup and restore](#/docs/backup-and-restore) page every week, and keep the file away from your device.
+7. Export everything now and then if you also want spreadsheets.
 
 ## If your plan is read-only
 
-If your trial or paid period has ended, you can still sign in, change your password, turn two-factor on or off, export your data, and close the account. Changes that count as account updates, such as changing your email, creating a new recovery key, linking or signing out devices, are refused until the plan continues. See [Plans, trials and billing](#/docs/plans-trials-billing).
+If your trial or paid period has ended, you can still sign in, change your password, turn two-factor on or off, export your data, make a backup file, and close the account. Changes that count as account updates, such as changing your email, creating a new recovery key, linking or signing out devices, are refused until the plan continues. See [Plans, trials and billing](#/docs/plans-trials-billing).
 
 ## Related pages
 
 - [Your data, your responsibility](#/docs/your-data-your-responsibility)
+- [Backup and restore](#/docs/backup-and-restore)
 - [Activity](#/docs/activity)
 - [Team](#/docs/team)
 - [Troubleshooting and FAQ](#/docs/troubleshooting-faq)

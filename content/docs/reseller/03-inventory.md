@@ -1,9 +1,9 @@
 ---
 title: Inventory
 summary: Add, scan, import, search, edit, test, archive and export every device you own, and set reorder levels so you never run out of a popular model.
-keywords: inventory, devices, stock, add device, bulk scan, barcode, scanner, uid, serial number, mac address, condition, supplier, cost, selling price, status, date received, tested on, test record, import csv, export csv, archive, delete, reorder, low stock, make, model, filter, search, awaiting test
+keywords: inventory, camera button, scan with camera, search by camera, paging, per page, 25 per page, next page, previous, small medium large, aim line, wrong barcode, scan next field, several barcodes on a label, no spinners, monospace, devices, stock, add device, bulk scan, barcode, scanner, uid, serial number, mac address, condition, supplier, cost, selling price, status, date received, tested on, test record, import csv, export csv, archive, delete, reorder, low stock, make, model, filter, search, awaiting test
 order: 3
-covers: nav:inventory, Add device, Save and add another, Save, Cancel, Close, Bulk scan, Save 0 devices, Remove last, Scan or type then Enter, What do you scan for each device, Import CSV, Import devices, Export CSV, Search, Available, All (not archived), Awaiting test, Reserved, Sold, Returned, Damaged, Archived, All models, Make, Model, Add new, UID, Serial number, MAC address, Condition, Supplier, Status, Cost, Selling price, Date received, Notes, Test record, Mark all done, Tested on, Test notes, required before sale, Stock levels, Reorder at, Low, Archive, Restore, Delete, Tests column, columns
+covers: nav:inventory, camera button, Search by camera, Scanning a detail with the camera, Bulk scan with the camera, Scan next field, 25 / 50 / 100 per page, Previous, Next, Showing 1–25, Pages, Add device, Save and add another, Save, Cancel, Close, Bulk scan, Save 0 devices, Remove last, Scan or type then Enter, What do you scan for each device, Import CSV, Import devices, Export CSV, Search, Available, All (not archived), Awaiting test, Reserved, Sold, Returned, Damaged, Archived, All models, Make, Model, Add new, UID, Serial number, MAC address, Condition, Supplier, Status, Cost, Selling price, Date received, Notes, Test record, Mark all done, Tested on, Test notes, required before sale, Stock levels, Reorder at, Low, Archive, Restore, Delete, Tests column, columns
 ---
 
 ## What Inventory is for
@@ -39,13 +39,23 @@ Each row is a device. The columns are:
 - **Tests**: a small chip, only when the test checklist is on. It reads **Tested** (all steps done), **Tested 2/5** (some done), or **Not tested**.
 - **Status**: a coloured chip.
 
-The list is sorted by **Date received**, newest first. To keep the page fast it shows the first 200 matches; if there are more, a note tells you to narrow the search. Click a row to open that device.
+The list is sorted by **Date received**, newest first. Click a row to open that device.
+
+Identifiers such as serial numbers, MAC addresses and UIDs are shown in a fixed-width (monospace) font, so similar characters like 0 and O are easy to tell apart. Prices and dates use ordinary figures that line up in columns.
+
+### Pages
+
+The list shows **25 devices per page**. Under the table a line says, for example, "Showing 1–25 of 60", with a **25 / 50 / 100 per page** list and **Previous** and **Next** buttons. Pick 50 or 100 to see more at once. The buttons hide when there are 25 or fewer devices. Every device is reachable: there is no cap. Whenever you change the search, the status filter or the model filter, you go back to page 1. **Export CSV** always exports every device, not just the page.
 
 ## Searching and filtering
 
 ### Search
 
 The search box has a placeholder that names your identifiers, for example "Search UID, Serial number, MAC address, make, model, notes". Type any part of a word and the list narrows as you type. It looks in make, model, notes and every device detail you track (including Supplier and Condition). It is not case sensitive.
+
+### Search by camera
+
+The search box has a small **camera button** at its right end. Tap it and scan the barcode on a box. The code fills the search box and the list narrows to that device. See [Scanning with your phone camera](#/docs/scanning-with-your-phone).
 
 ### Status filter
 
@@ -101,10 +111,16 @@ Your Administrator can rename these, turn them off, reorder them, or add more of
 
 > Tip: when you click into a UID, serial or MAC box and a scanner types a label such as "UID" or "SN:" before the number, the app removes the label for you when you leave the box.
 
+### Scanning a detail with the camera
+
+Each text detail that is marked **Look up in sale** or **Must be unique** (by default UID, Serial number and MAC address) has a small **camera button** inside its box, in Add device and in Edit device. Tap it, hold the phone over the barcode, and the number drops into the box. After a Serial number scan, if the MAC address box is still empty, the scanner offers **Scan MAC address** so you can read the second code without leaving the camera. The MAC box only accepts a real MAC address and writes it as `AA:BB:CC:DD:EE:FF`. The full steps, the buttons on the scanner screen and tips for good scans are on [Scanning with your phone camera](#/docs/scanning-with-your-phone).
+
+If a label has more than one barcode, make the scan box **Small** and put the barcode you want on the thin aim line in the middle. The scanner reads the code nearest that line. Always glance at the number in the box before you save.
+
 ### Status, Cost, Selling price
 
 - **Status**: normally Available. You may choose Reserved, Sold, Returned, Damaged or Archived.
-- **Cost**: what you paid, in dollars and cents. Used for Home profit and for each sale.
+- **Cost**: what you paid, in dollars and cents. Used for Home profit and for each sale. Number boxes such as Cost and Selling price have no little up and down arrows, so you simply type the amount.
 - **Selling price**: the price Quick sale starts with. You can change it on the sale.
 
 ### Date received
@@ -133,7 +149,7 @@ If **Sell only tested devices** is on, a device cannot be put in a sale until it
 
 ## Bulk scan
 
-Use **Bulk scan** when a delivery arrives and you want to enter many identical boxes quickly with a barcode scanner or keyboard. You will need at least one scannable text detail turned on in Settings (for example UID); otherwise you see a message to turn one on first.
+Use **Bulk scan** when a delivery arrives and you want to enter many identical boxes quickly with a barcode scanner, your phone camera or a keyboard. You will need at least one scannable text detail turned on in Settings (for example UID); otherwise you see a message to turn one on first.
 
 1. Press **Bulk scan**.
 2. Choose the **Make** and **Model** and fill in anything else that is the same for every box (such as Condition or Supplier), plus **Status**, **Cost**, **Selling price** and **Date received**.
@@ -148,6 +164,10 @@ Use **Bulk scan** when a delivery arrives and you want to enter many identical b
 Duplicates are caught: a value already scanned in this batch, or a unique identifier already on another device, shows a message and is not accepted. A label sent by the scanner on its own, such as "UID", is ignored.
 
 > Tip: do not turn off your scanner's Enter at the end of a scan. It is what moves you along.
+
+### Bulk scan with the camera
+
+Beside the scan box is a **camera button**. Tap it and the scanner stays open while you scan one label after another. Each code is added at once ("Got it"), then the scanner waits for a different code, so holding still does not add the same box twice. The title says which identifier comes next, for example "Scan MAC address". A serial number already in your inventory, or already in this batch, is refused with a message and the scanner stays open. Tap **Close** when you are done, then press **Save N devices**. Details are on [Scanning with your phone camera](#/docs/scanning-with-your-phone).
 
 Bulk scan leaves Notes and test steps empty. Open a device afterwards to record tests.
 
@@ -169,7 +189,7 @@ Missing columns get sensible defaults: Status Available, costs zero, Date receiv
 
 **Export CSV** downloads every device in your account as a spreadsheet file named like `inventory-20261005.csv`, with all your detail columns, Make, Model, Cost, Price, Status, Date received, Notes, and test columns. Costs are in plain numbers. It ignores the filters on the page and includes archived devices. A message says how many devices were exported.
 
-Why bother: your exports are your backup. You own your data and are responsible for it, so export regularly and keep copies somewhere you control. See [Your data, your responsibility](#/docs/your-data-your-responsibility) and [Security](#/docs/security) for "Export everything".
+Why bother: an export is a copy you can open in a spreadsheet. It is not a backup you can restore from. For that, use **Back up now** on the [Backup and restore](#/docs/backup-and-restore) page. You own your data and are responsible for it, so do both regularly and keep copies somewhere you control. See [Your data, your responsibility](#/docs/your-data-your-responsibility) and [Security](#/docs/security) for "Export everything".
 
 ## Editing a device
 
@@ -198,6 +218,9 @@ The **Stock levels** card lists every model with how many are available. Type a 
 Example: you want to keep at least four of one model. Set Reorder at to 4.
 
 ## Common mistakes
+
+- Scanning a label with several barcodes and not checking which one landed in the box. Use **Small** and the aim line, then look.
+- Cannot find a device you know you added. It may be on another page. Check "Showing 1–25 of N" and the status filter.
 
 - Typing the same make in several spellings. Pick from the list instead.
 - Forgetting Cost. Your profit on Home and Sales depends on it.

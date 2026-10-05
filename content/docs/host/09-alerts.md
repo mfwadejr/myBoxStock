@@ -1,9 +1,9 @@
 ---
 title: Alerts
 summary: Understand the problems the server finds on its own, what each alert means, when you are emailed, and how to set one aside or let it clear itself.
-keywords: alerts, alert, banner, warning, problem, email failing, backup failing, failed sign-ins, storage full, disk, database errors, trials ending, update available, set aside, check now, owner, counter
+keywords: load more, showing, offsite upload failed, alerts, alert, banner, warning, problem, email failing, backup failing, failed sign-ins, storage full, disk, database errors, trials ending, update available, set aside, check now, owner, counter
 order: 9
-covers: nav:alerts, Check now, Needs a look, Set aside, Recently cleared, seen N times, emailed, problem, warning, heads-up, Email is not being delivered, The scheduled backup is failing, Many failed sign-ins, Storage is almost full, Database problems, Trials ending soon, Version is available, red banner, Open Alerts
+covers: nav:alerts, Check now, Needs a look, Set aside, Recently cleared, seen N times, emailed, problem, warning, heads-up, Email is not being delivered, The scheduled backup is failing, Many failed sign-ins, Storage is almost full, Database problems, Trials ending soon, Version is available, red banner, Open Alerts, Load more, Showing N of M alerts
 ---
 
 ## What alerts are
@@ -39,7 +39,7 @@ Why it matters: customers cannot reset passwords and new sign-ups never get thei
 
 ### The scheduled backup is failing (problem)
 
-Raised when the most recent scheduled full-site backup failed and no good backup has been made since. The description shows the reason given. It clears itself after the next good backup. See [Backups](#/docs/backups). Remember that a failed attempt is not retried until the next day, so use **Run one now** on the Backups page after you fix the cause.
+Raised as soon as any scheduled backup fails and no good one has been made since: a frequent snapshot, an offsite copy (including a failed upload to a destination such as a NAS, S3 bucket or SFTP server), or a full-site backup. The description says which one failed and the reason given. It clears itself after the next good backup. See [Backups](#/docs/backups). A failed full-site backup is not retried until the next day, so after you fix the cause use **Run one now** on the Full-site backups tab, or **Take a snapshot now** or **Send one now** on the other tabs.
 
 ### Many failed sign-ins (warning)
 
@@ -53,7 +53,7 @@ The threshold of 20 per hour is fixed. It cannot be changed on the page.
 
 Raised when the disk holding the server's data is 90 percent full or more. The description gives the percentage. It clears when usage falls below 90 percent.
 
-Why it matters: when the disk fills, the database cannot write, backups fail, and logs stop. Free space by removing old backups you no longer need (they live in the data folder), lowering how many copies you keep, or enlarging the disk. Move backups off the box with the Off-box folder setting rather than keeping many on the live disk.
+Why it matters: when the disk fills, the database cannot write, backups fail, and logs stop. Free space by removing old backups you no longer need (they live in the data folder, by default in `/data/backup`), keeping fewer copies or taking them less often, or enlarging the disk. The cost line on the Backups page tells you how much your settings will use. Send long-term copies to a destination rather than keeping many on the live disk.
 
 ### Database problems (problem)
 
@@ -92,11 +92,13 @@ If nothing is open the section says "All clear. Nothing needs attention."
 
 ### Set aside
 
-Appears only when you have set something aside. Alerts here are hidden from the banner. The note says "Hidden from the banner. They clear by themselves when the problem is gone." Up to the latest 20 are shown.
+Appears only when you have set something aside. Alerts here are hidden from the banner. The note says "Hidden from the banner. They clear by themselves when the problem is gone." The newest 100 are shown. If there are more, a line under the list says "Showing 100 of 130" and **Load more** adds the next 100.
 
 ### Recently cleared
 
-The latest 20 problems that went away, so you can see that a problem you fixed really did clear, or spot one that keeps coming and going. It shows "Nothing cleared recently." when empty.
+The latest 100 problems that went away, so you can see that a problem you fixed really did clear, or spot one that keeps coming and going. It shows "Nothing cleared recently." when empty.
+
+Both history lists scroll inside a box of their own on tablets and computers, so a long list does not push everything else off the screen. On phones the page scrolls instead. The open alerts in **Needs a look** are not in a box, because there are only a few.
 
 ## Grouping with a counter
 

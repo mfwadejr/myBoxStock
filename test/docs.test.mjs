@@ -69,3 +69,10 @@ test('docs are served to each console, behind sign-in, and kept apart', async ()
     const login = (await boss.req('GET', '/api/host/me')).status; void login;
   } finally { await srv.stop(); }
 });
+
+test('the documentation viewer has one layout: contents menu and an open topic, no grid of topic boxes', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'public/js/shared/docs.js'), 'utf8');
+  assert.ok(src.includes('doc-toc') && src.includes('doc-layout') && src.includes('doc-main'), 'menu-driven layout');
+  assert.ok(!/grid g\d|class="card doc-hit"/.test(src), 'no grid of topic cards');
+  for (const realm of ['reseller', 'host']) assert.equal(load(realm)[0].slug, 'getting-started', `${realm}: the landing page opens Getting started`);
+});

@@ -1,7 +1,7 @@
 ---
 title: Updates
 summary: What the Updates screen shows, how to set up the release check, and the safe way to update myBoxStock yourself: back up, rebuild the container, check the result, and roll back if needed.
-keywords: updates, update, upgrade, version, running version, newest release, release address, github, releases latest, last update, errors since start, rebuild container, docker compose, zimaos, migrations, rollback, roll back, backup before update, changelog, check now
+keywords: restart keeps bans, lockouts after update, updates, update, upgrade, version, running version, newest release, release address, github, releases latest, last update, errors since start, rebuild container, docker compose, zimaos, migrations, rollback, roll back, backup before update, changelog, check now
 order: 15
 covers: nav:updates, Running version, Newest release, Last update, Health since start, Open the error log, Release address, Save, Check now, What changed, a newer version is available, you are up to date, not checked yet, not checking, clean, check the logs, database changes
 ---
@@ -16,7 +16,7 @@ The Updates screen is a dashboard for that process. It tells you what is running
 
 ### Running version
 
-The big number is the version of myBoxStock that this server is running, for example `0.18.2`. Underneath it you see:
+The big number is the version of myBoxStock that this server is running, for example `0.20.0`. Underneath it you see:
 
 - The build label, if the container was built with one (shown as "build" followed by the label). Builds made by hand may not have one.
 - When the server last started, such as "started 3 hours ago".
@@ -35,7 +35,7 @@ This card shows the newest version found at your release address. The note under
 
 ### Last update
 
-This card remembers the last time the version changed. It shows the old and the new version, for example `0.18.1 to 0.18.2`, how long ago it happened, and:
+This card remembers the last time the version changed. It shows the old and the new version, for example `0.19.0 to 0.20.0`, how long ago it happened, and:
 
 - **clean** when no unexpected errors have been recorded since the server started, or **check the logs** when some have.
 - How many database changes were applied during that start ("2 database changes"), if any.
@@ -62,7 +62,7 @@ What to type: the address of your release feed. For GitHub this has the form
 
 `https://api.github.com/repos/OWNER/REPO/releases/latest`
 
-where OWNER and REPO are the project's GitHub owner and repository names. It must begin with `https://`, have no spaces and be no longer than 300 characters. The feed is expected to answer with a version label such as `v0.18.2` in its `tag_name` (or `version`) field. That is what GitHub's "latest release" address returns.
+where OWNER and REPO are the project's GitHub owner and repository names. It must begin with `https://`, have no spaces and be no longer than 300 characters. The feed is expected to answer with a version label such as `v0.20.0` in its `tag_name` (or `version`) field. That is what GitHub's "latest release" address returns.
 
 ### Steps to turn the check on
 
@@ -95,7 +95,7 @@ The details depend on how you run the server, but the order is always the same. 
 
 1. **Read the release notes.** Note anything that says it needs action from you.
 2. **Warn your customers.** Turn on the announcement banner in [Settings](#/docs/settings), for example "The site will be offline for about five minutes at 10 PM." Pick a quiet time.
-3. **Take a backup.** Open [Backups](#/docs/backups), press **Full-site backup**, choose a passphrase of at least 12 characters and download the file. Keep it somewhere other than the server. Write the passphrase down safely; without it the backup cannot be opened. Note the current version number from the Updates screen as well.
+3. **Take a backup.** Open [Backups](#/docs/backups). On the Full-site backups tab press **Run one now** (a passphrase must already be saved) or **Make one with a new passphrase**, then download the file from the list, or let your destination take it. Keep a copy somewhere other than the server. Write the passphrase down safely; without it the backup cannot be opened. A frequent snapshot is also taken every 15 minutes by default, and **Take a snapshot now** makes one on demand. Note the current version number from the Updates screen as well.
 4. **Get the new version.** Put the new version's files where the container is built from (for example by pulling the new release into the project folder), or pick the new image if you run a published one.
 5. **Rebuild and restart the container.** In the folder containing your `docker-compose.yml`, run `docker compose up -d --build`. On ZimaOS, use the same idea in its own screens or in a terminal: rebuild or redeploy the app from the new version. The key point is that the container is recreated while the **data folder stays attached**.
 6. **Wait a minute or two,** then open the Host Console and sign in.
@@ -106,6 +106,12 @@ The details depend on how you run the server, but the order is always the same. 
 ### What happens to the database
 
 You do not run anything for the database. When the new version starts, it applies any database changes it needs, once and in order, before accepting traffic. Each one is recorded and written to the log. The Last update card shows how many were applied. They only go forward; there is no automatic way to undo them, which is why the backup in step 3 matters.
+
+Updating to 0.20.0 from 0.19.x applies two of them. One adds the table that saves sign-in lockouts and bans. The other adds each account's last backup time and the tables that hold a reseller's 7-day safety copy for their own restore. Seeing "2 database changes" on the Last update card after this update is normal.
+
+### What an update does to bans and lockouts
+
+An update restarts the server. Sign-in lockouts and IP bans are saved in the database and loaded again at start, so they are **still in force after the restart**. In earlier versions a restart cleared them. Only the per-minute request counters start again from zero, which is harmless. If you need to end a ban early, use **Lift** on the [Firewall](#/docs/firewall) page. A locked sign-in name clears itself after 15 minutes. See [Security](#/docs/security).
 
 ### Why back up first, every time
 
@@ -120,10 +126,10 @@ Think of rolling back as two separate questions: which code is running, and whic
 **If the update did apply database changes,** the older code may not understand the newer database. In that case:
 
 1. Put the previous version's files back and rebuild the container.
-2. Restore the backup you took in step 3, so the data matches the older code. On the standard setup this is the Restore button next to a backup file on the Backups screen (you type RESTORE to confirm), or the `restore-bundle` command described in [Recovery and emergencies](#/docs/recovery-and-emergencies).
+2. Restore the backup you took in step 3, so the data matches the older code. On the standard setup this is the Restore button next to a backup file on the Backups page (you type RESTORE to confirm), or the `restore-bundle` command described in [Recovery and emergencies](#/docs/recovery-and-emergencies).
 3. Check the Updates screen shows the older version and 0 errors.
 
-Be aware that restoring returns the platform to how it was at the backup. Anything that happened since (new sign-ups, plan changes, new administrators) is lost from the platform's records, so roll back soon rather than later. The restore also keeps a safety copy of what was there before.
+Be aware that restoring returns the platform to how it was at the backup. Anything that happened since (new sign-ups, plan changes, new administrators) is lost from the platform's records, so roll back soon rather than later. The restore also keeps a safety copy of what was there before, and customers see a notice that the site was restored from a backup (see [Backups](#/docs/backups)).
 
 > Tip: do not skip a lot of versions on a hunch. Updating one release at a time, reading each entry in the changelog, makes a problem easy to pin down. If you have fallen far behind, take a backup, update, and check the Updates screen as usual.
 

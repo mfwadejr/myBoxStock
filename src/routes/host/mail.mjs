@@ -6,13 +6,14 @@ import { checkSmtp } from '../../services/mail/settings.mjs';
 import { TEMPLATES, PLACEHOLDERS, EDITABLE, defaultsOf, wording, problems, render, sampleVars } from '../../services/mail/templates.mjs';
 import { getSetting, setSetting } from '../../db/settings.mjs';
 import { newId } from '../../core/ids.mjs';
+import { checkSender, cleanSelector } from '../../services/mail/sender-checks.mjs';
 
 const QUEUE_SQL = 'SELECT id, to_addr, subject, status, attempts, last_error, created_at, sent_at FROM mail_queue ORDER BY created_at DESC LIMIT 30';
 
 const draftOf = (b = {}) => Object.fromEntries(EDITABLE.map(k => [k, typeof b[k] === 'string' ? b[k] : '']));
 const previews = new Map(); // short-lived rendered drafts, so the preview frame can load them as a real page with its own security headers
 
-export function mailRoutes(db) {
+export function mailRoutes(db, { resolver } = {}) {   // resolver: the DNS client for the sender checks (tests pass a fake)
   const r = express.Router();
   r.get('/', async (req, res) => res.json({ settings: await getMailSettings(db),
     queue: await db.all(QUEUE_SQL) }));
@@ -27,6 +28,14 @@ export function mailRoutes(db) {
       sent24h: await n("SELECT COUNT(*) AS n FROM mail_queue WHERE status = 'sent' AND sent_at > ?", [now - 24 * H]), failed24h: await n("SELECT COUNT(*) AS n FROM mail_queue WHERE status = 'failed' AND created_at > ?", [now - 24 * H]),
       sent7d: await n("SELECT COUNT(*) AS n FROM mail_queue WHERE status = 'sent' AND sent_at > ?", [now - 168 * H]), failed7d: await n("SELECT COUNT(*) AS n FROM mail_queue WHERE status = 'failed' AND created_at > ?", [now - 168 * H]),
       queued: await n("SELECT COUNT(*) AS n FROM mail_queue WHERE status = 'queued'"), oldestQueuedAt: oldest ? Number(oldest.created_at) : null });
+  });
+
+  // Sender checks: SPF, DMARC and DKIM records of the From address's domain. Public DNS facts only.
+  r.get('/sender-checks', async (req, res) => {
+    const sel = String(req.query.selector || '').trim(); if (sel && !cleanSelector(sel)) return res.status(400).json({ error: 'A DKIM selector is letters, numbers, dots and dashes only (for example: default).' });
+    const result = await checkSender({ fromAddress: (await getMailSettings(db)).fromAddress, selector: sel }, resolver);
+    if (result.domain) hostLog(req, 'info', 'mail.sender_check', `Sender checks for ${result.domain}: SPF ${result.spf.status}, DMARC ${result.dmarc.status}, DKIM ${result.dkim.status}`, { area: 'mail', data: { domain: result.domain, spf: result.spf.status, dmarc: result.dmarc.status, dkim: result.dkim.status } });
+    res.json(result);
   });
 
   // ---- message wording (Messages tab) ----

@@ -5,7 +5,7 @@
     const s = await api('POST', '/totp/setup');
     const codes = await UI.sheet(`<h2>Set up two-factor</h2><p class="muted">Scan with an authenticator app (1Password, Google Authenticator, Authy…), then enter the 6-digit code.</p>
       <div class="qr qr-center">${UI.qrSvg(s.uri)}</div>
-      <p class="faint text-xs center">Can’t scan? Enter this key: <span class="mono">${esc(s.secret)}</span></p>
+      <p class="faint text-xs center">Can’t scan? Enter this key: <span class="ident">${esc(s.secret)}</span></p>
       <div class="field mt-md"><input type="text" class="codeinput" id="code" inputmode="numeric" maxlength="7" placeholder="000000" autocomplete="one-time-code"></div>
       <div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Turn on</button></div>`,
       { onMount: (el, close) => el.querySelector('#go').addEventListener('click', async () => {

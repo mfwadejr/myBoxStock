@@ -1,9 +1,9 @@
 ---
 title: Quick sale
 summary: Ring up a sale by scanning or choosing devices, setting prices and discounts, attaching a customer, picking a payment method and warranty, then printing or emailing the receipt.
-keywords: quick sale, sell, sale, checkout, till, scan, uid, browse available stock, add by quantity, discount, percent off, order discount, payment method, paid by, customer, new customer, existing customer, receipt, print, email, warranty, date sold, time sold, void, refund, cancel sale, test record
+keywords: quick sale, sell, sale, checkout, till, scan, camera, phone camera, scan serial, barcode, uid, browse available stock, add by quantity, discount, percent off, order discount, payment method, paid by, customer, new customer, existing customer, receipt, print, email, warranty, date sold, time sold, void, refund, cancel sale, test record
 order: 4
-covers: nav:sell, Scan or type, Browse available stock, Add by quantity, Available stock, Select all shown, Add to sale, model buttons, This sale, Price, % off, Remove, Customer, Existing, New, Search name phone or email, Change, Name, Phone, Email, Date sold, Time sold, Warranty, Paid by, Note (optional), % off the whole order, Subtotal before discounts, You save, Total, Complete sale, Required checks not done, Sell anyway, Receipt, Include the test record, Email, Print, Done, Send, Open in my mail app, Message, Send to, Receipt, Thank-you note, Sale voided notice, Void sale, Change warranty
+covers: nav:sell, Scan or type, Scan a serial with the phone camera, camera button, Nothing in your inventory matches, Browse available stock, Add by quantity, Available stock, Select all shown, Add to sale, model buttons, This sale, Price, % off, Remove, Customer, Existing, New, Search name phone or email, Change, Name, Phone, Email, Date sold, Time sold, Warranty, Paid by, Note (optional), % off the whole order, Subtotal before discounts, You save, Total, Complete sale, Required checks not done, Sell anyway, Receipt, Include the test record, Email, Print, Done, Send, Open in my mail app, Message, Send to, Receipt, Thank-you note, Sale voided notice, Void sale, Change warranty
 ---
 
 ## What Quick sale is for
@@ -43,15 +43,30 @@ The big box at the top says "Scan or type" followed by the names of your lookup 
 1. Scan the barcode, or type the number and press Enter.
 2. The device is added to the sale at its Selling price.
 
+A small camera button sits inside the right end of the box. Tap it to scan with your phone's camera (see below).
+
 Any label the scanner sends, such as "UID" or "SN", is stripped off. Capital letters do not matter. Which identifiers are searched is decided by the Look up in sale setting in [Settings](#/docs/settings).
 
 Under the box a message in red appears when something cannot be added:
 
-- Nothing in your inventory matches what you typed.
+- Nothing in your inventory matches what you typed. The message reads: Nothing in your inventory matches "the code".
 - The device was already sold (with the date).
 - The device is awaiting its tests and cannot be sold yet. Tick its test steps in Inventory first.
 - The device is marked Reserved, Damaged or Archived, so it is not available.
 - The device is already in this sale.
+
+### Scan a serial with the phone camera
+
+You do not need a barcode scanner. Your phone camera can read the barcode on the box or label.
+
+1. Tap the **camera button** inside the scan box. The scanner opens full screen with the title "Scan a serial to add to the sale".
+2. Hold the phone over the barcode and fit the whole code inside the bright box, with the thin line across the middle of the code. The line turns green when the code is read.
+3. The phone beeps (and buzzes where it can), the screen says "Got it", the matching device goes into **This sale**, and the scanner closes. A small message "Scanned (the number)" appears.
+4. To add another device, tap the camera button again.
+
+If nothing in your inventory matches the code, the scanner **stays open** and shows the message in red: Nothing in your inventory matches "the code". Try another label on the box, or tap **Type it instead** and type the number. The same red messages as for typing apply (already sold, awaiting test, not available, already in this sale).
+
+The scanner has more buttons, such as **Small / Medium / Large**, **Flash**, **Take a photo** and **Type it instead**. They are explained step by step on [Scanning with your phone camera](#/docs/scanning-with-your-phone). The camera works only when the site is opened over https. A hardware barcode scanner that types into the box still works exactly as before.
 
 ### Browse available stock
 

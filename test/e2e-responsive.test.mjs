@@ -24,7 +24,7 @@ const inspect = (w) => `(() => {
   const side = document.querySelector('.side'), bar = document.querySelector('.tabbar');
   out.side = !!side && vis(side); out.bar = !!bar && vis(bar);
   if (touch) {
-    for (const e of document.querySelectorAll('.main .btn, .main .select-btn, .main input:not([type=checkbox]):not([type=radio]):not([type=file]), .main .seg button, .tabbar a, .tabbar button, .topbar .btn')) {
+    for (const e of document.querySelectorAll('.main .btn, .main .select-btn, .main input:not([type=checkbox]):not([type=radio]):not([type=file]), .main .seg button, .tabbar a, .tabbar button, .topbar .btn, .menu-btn')) {
       if (!vis(e)) continue; const r = e.getBoundingClientRect(); if (r.height < 43.5) out.small.push((e.className || e.tagName) + ':' + Math.round(r.height));
     }
     for (const e of document.querySelectorAll('.main input:not([type=checkbox]):not([type=radio]):not([type=file]), .main textarea')) if (vis(e) && parseFloat(getComputedStyle(e).fontSize) < 16) out.zoomy.push(e.id || e.type);
@@ -34,6 +34,8 @@ const inspect = (w) => `(() => {
 })()`;
 // Many page loads from one address are normal here; switch the request limit off so it cannot interfere.
 const relax = async (srv) => { const c = new Client(srv.base); await c.req('POST', '/api/host/login', { login: 'admin', password: srv.hostPw }); await c.req('POST', '/api/host/change-password', { current: srv.hostPw, next: PW }); await c.req('PUT', '/api/host/firewall/limits', { enabled: false, windowSec: 60, maxRequests: 100000, authMaxAttempts: 1000, authWindowSec: 60, banAfterViolations: 1000, banMinutes: 1 }); };
+// The Documentation landing page is the same menu-driven layout as every topic: contents on the left, the first topic open, no grid of boxes.
+const docsLanding = async (page, label) => { const r = await page.evaluate(() => ({ toc: document.querySelectorAll('.doc-toc a').length, grid: document.querySelectorAll('.main .grid').length, h1: document.querySelector('.doc h1')?.textContent, active: document.querySelector('.doc-toc a.active')?.textContent, first: document.querySelector('.doc-toc a')?.textContent })); assert.ok(r.toc > 5, `${label}: contents menu is there`); assert.equal(r.grid, 0, `${label}: no grid of topic boxes`); assert.equal(r.h1, r.first, `${label}: first topic is open`); assert.equal(r.active, r.first, `${label}: it is highlighted`); };
 const wait = async (page, sel, label) => { try { await page.waitForSelector(sel, { timeout: 8000 }); } catch (e) { throw new Error(`${label}: "${sel}" never showed. The page says: ${(await page.evaluate(() => document.body.innerText).catch(() => '?')).slice(0, 300)} | ${page.url()}`); } };
 const check = (label, w, r) => {
   assert.ok(r.overflow <= 1, `${label}: the page scrolls sideways by ${r.overflow}px`);
@@ -55,7 +57,7 @@ test('browser: reseller app at phone, tablet, laptop and desktop sizes', { skip,
       await S.commit({ puts: [{ type: 'sale', data: { no: 'S-TEST-0001', ts: Date.now(), customerName: 'Zed Buyer', items: [{ make: 'Roku', model: 'Ultra', uid: 'U-1', price: 5000 }], subtotal: 5000, total: 5000, cost: 2000, payment: 'cash' } }] }); });
     for (const [name, w, h] of SIZES) {
       await page.setViewportSize({ width: w, height: h });
-      for (const k of APP) { await page.goto(srv.base + '/app/#/' + k); await wait(page, '.main h1, .main .page-head', `${name} app/${k}`); await page.waitForTimeout(250); check(`${name} (${w}x${h}) app/${k}`, w, await page.evaluate(inspect(w))); }
+      for (const k of APP) { await page.goto(srv.base + '/app/#/' + k); await wait(page, '.main h1, .main .page-head', `${name} app/${k}`); await page.waitForTimeout(250); check(`${name} (${w}x${h}) app/${k}`, w, await page.evaluate(inspect(w))); if (k === 'docs') await docsLanding(page, `${name} app/docs`); }
     }
     assert.deepEqual(errors, []);
   } finally { await br.close(); await srv.stop(); }
@@ -68,7 +70,7 @@ test('browser: Host Console at phone, tablet, laptop and desktop sizes, and the 
     await page.goto(srv.base + '/host/'); await page.waitForSelector('input'); const ins = await page.$$('input'); await ins[0].fill('admin'); await ins[1].fill(PW); await page.keyboard.press('Enter'); await page.waitForSelector('.main');
     for (const [name, w, h] of SIZES) {
       await page.setViewportSize({ width: w, height: h });
-      for (const k of HOST) { await page.goto(srv.base + '/host/#/' + k); await wait(page, '.main h1, .main .page-head', `${name} host/${k}`); await page.waitForTimeout(250); check(`${name} (${w}x${h}) host/${k}`, w, await page.evaluate(inspect(w))); }
+      for (const k of HOST) { await page.goto(srv.base + '/host/#/' + k); await wait(page, '.main h1, .main .page-head', `${name} host/${k}`); await page.waitForTimeout(250); check(`${name} (${w}x${h}) host/${k}`, w, await page.evaluate(inspect(w))); if (k === 'docs') await docsLanding(page, `${name} host/docs`); }
     }
     await page.setViewportSize({ width: 390, height: 844 }); await page.goto(srv.base + '/host/#/overview'); await page.waitForSelector('[data-more]');
     await page.click('[data-more]'); await page.waitForSelector('.sheet-menu a'); assert.ok(await page.locator('.sheet-menu a').count() >= 8, 'More lists the rest of the menu');

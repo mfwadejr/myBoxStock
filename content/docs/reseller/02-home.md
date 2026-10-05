@@ -1,9 +1,9 @@
 ---
 title: Home
 summary: Your daily dashboard: how many devices you have ready to sell, what you sold and earned this month, which models are running low, and your latest sales.
-keywords: home, dashboard, overview, stats, available devices, revenue, profit, low stock, reorder, recent sales, this month, banner, trial, read-only, receipt
+keywords: home, backup reminder, back up now, not today, site restored, dashboard, overview, stats, available devices, revenue, profit, low stock, reorder, recent sales, this month, banner, trial, read-only, receipt
 order: 2
-covers: nav:home, Quick sale, Available devices, Devices sold this month, Revenue this month, Profit this month, Low stock, Recent sales, Date, Receipt, Customer, Total, Walk-in, email confirmation banner, Send it again, announcement banner, Close, closing account banner, Restore account, records could not be opened, free trial chip, Trial ended read-only
+covers: nav:home, Backup reminder, Back up now, Not today, Your last backup was, You have not made a backup yet, site restored banner, Quick sale, Available devices, Devices sold this month, Revenue this month, Profit this month, Low stock, Recent sales, Date, Receipt, Customer, Total, Walk-in, email confirmation banner, Send it again, announcement banner, Close, closing account banner, Restore account, records could not be opened, free trial chip, Trial ended read-only
 ---
 
 ## What Home is for
@@ -79,7 +79,7 @@ If there are no sales yet the list says **No sales yet.** If you are able to add
 
 ## Banners you may see on Home
 
-Several notices can appear above the tiles. None of them need you to leave Home.
+Several notices can appear above the tiles. The backup reminder sits above the others. None of them need you to leave Home.
 
 ### Confirm your email address
 
@@ -87,7 +87,7 @@ A blue banner says "Confirm your email address" and where we sent the link. Pres
 
 ### Announcements
 
-Your site administrator can post a message for everyone, in blue, amber or red depending on how important it is. Press **Close** to hide it. It stays hidden on that browser until the message changes.
+Your site administrator can post a message for everyone, in blue, amber or red depending on how important it is. Press **Close** to hide it. It stays hidden on that browser until the message changes. After the site has to be restored from an older copy, a red message tells you: "The site was restored from a backup taken (date and time) UTC. Sales or changes made after that time may be missing. Please check your recent activity." See [Backup and restore](#/docs/backup-and-restore) for how to bring recent work back with your own backup file.
 
 ### Account closing
 
@@ -97,9 +97,18 @@ A red banner says the account is closing and gives the date it will be erased. U
 
 A red banner says that a number of records could not be opened with your key. Sign out and back in. If it continues, contact support, and make sure you have recent exports of your data.
 
+### Backup reminder (Administrators)
+
+If you are an Administrator and you have never made a backup file, or your last one is more than **7 days** old, a banner appears at the top of Home. It says "You have not made a backup yet." or "Your last backup was N days ago." It has two buttons:
+
+- **Back up now** makes the backup file straight away, the same as on [Backup and restore](#/docs/backup-and-restore). On an iPhone or iPad a sheet **Your backup is ready** appears first; tap **Save backup file** and choose **Save to Files**. The banner goes away once the file is saved.
+- **Not today** hides the banner until tomorrow. It remembers that on this device only, so it may show again on another phone or computer.
+
+The banner shows only while your newest backup is missing or older than 7 days. Other user types never see it.
+
 ### Free trial and read-only
 
-At the top of every page, a blue chip shows the days left in your free trial. When a trial or paid period ends it changes to a red chip saying **Trial ended** (read-only). In that state you can still look at your information and export it, but you cannot save changes. See [Plans, trials and billing](#/docs/plans-trials-billing).
+At the top of every page, next to your username button, a blue chip shows the days left in your free trial. When a trial or paid period ends it changes to a red chip saying **Trial ended** (read-only). In that state you can still look at your information and export it, but you cannot save changes. See [Plans, trials and billing](#/docs/plans-trials-billing).
 
 ## How to use Home day to day
 

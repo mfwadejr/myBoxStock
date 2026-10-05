@@ -47,9 +47,9 @@ export function loginRoutes(r, c) {
   });
 
   r.post('/logout', async (req, res) => {
-    const s = await readSession(db, req, realm);
+    const s = await readSession(db, req, realm), who = s ? c.who(await c.loadSubject(db, s).catch(() => null)).actor : null;
     await destroySession(db, req, res, realm);
-    if (s) L.info('logout', `Signed out (${realm})`, { ip: normalizeIp(req.ip), accountId: s.account_id, data: { realm, subjectId: s.subject_id } });
+    if (s) L.info('logout', `Signed out${who ? `: ${who}` : ''} (${realm})`, { actor: who, ip: normalizeIp(req.ip), accountId: s.account_id, data: { realm, subjectId: s.subject_id } });
     res.json({ ok: true });
   });
 

@@ -8,9 +8,11 @@ import { accessLog } from './src/logging/access-log.mjs';
 import { runCli } from './src/cli/commands.mjs';
 import { ensureHostAdmin } from './src/cli/host-admin.mjs';
 import { initDb } from './src/db/connection.mjs';
-import { applyPendingRestore, startBackupScheduler } from './src/services/backup/index.mjs';
+import { applyPendingRestore, startBackupScheduler, postRestoreAnnouncement } from './src/services/backup/index.mjs';
 import { startMailWorker } from './src/services/mail/index.mjs';
-import { loadFirewall, firewallMiddleware } from './src/security/firewall/index.mjs';
+import { loadFirewall, firewallMiddleware, restoreBans } from './src/security/firewall/index.mjs';
+import { loadBlocks, flushBlocks } from './src/security/blocks.mjs';
+import { restoreLockouts } from './src/auth/lockout.mjs';
 import { applyRuntime } from './src/services/runtime/index.mjs';
 import { purgeExpired } from './src/auth/session.mjs';
 import { sweepClosing } from './src/services/accounts/closing.mjs';
@@ -30,8 +32,10 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 if (config.dbClient === 'sqlite') applyPendingRestore(path.join(config.dataDir, 'myboxstock.db'));
 const db = await initDb();
 attachLogDb(db);
+await postRestoreAnnouncement(db).catch((e) => L.error('restore.announce_failed', `Could not post the restore notice: ${e.message}`));
 const firstPw = await ensureHostAdmin(db);
 await loadFirewall(db);
+await loadBlocks(db, { ...restoreLockouts, ...restoreBans }); // lockouts and bans survive a restart
 startMailWorker(db); startBackupScheduler(db);
 await recordStartup(db); startAlertWorker(db); startUpdateWorker(db);
 sweepExpired(db).catch(() => {});
@@ -76,7 +80,7 @@ const server = app.listen(config.port, () => {
 
 for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, async () => {
   L.info('stopping', `Received ${sig}; shutting down`);
-  server.close(); await closeLogs(); await db.close().catch(() => {}); process.exit(0);
+  server.close(); await flushBlocks(); await closeLogs(); await db.close().catch(() => {}); process.exit(0);
 });
 process.on('uncaughtException', (e) => { E.error('uncaught', e.message, { data: { stack: String(e.stack).split('\n').slice(0, 8) } }); });
 process.on('unhandledRejection', (e) => { E.error('unhandled_rejection', String(e?.message || e), { data: { stack: String(e?.stack || '').split('\n').slice(0, 8) } }); });

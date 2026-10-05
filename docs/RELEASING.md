@@ -4,8 +4,9 @@ Every version that is published must have release notes. This is enforced, not j
 
 1. Bump `version` in `package.json` (SemVer).
 2. Add a `## [x.y.z] - YYYY-MM-DD` section to the top of `CHANGELOG.md` (Added / Changed / Fixed / Security / Known limitations).
-3. `npm test` — the standards test fails if the current version has no changelog entry.
-4. Commit, then tag and push: `git tag vX.Y.Z && git push origin main --tags`.
+3. Update the built-in Documentation (`content/docs/host/` and `content/docs/reseller/`) for everything that changed, and the repo docs (`README.md`, `docs/`) where they describe it. `test/docs.test.mjs` fails if a menu item has no page or a `covers:` term is not searchable; it cannot tell you a page is out of date, so read the changelog against the pages.
+4. `npm test` — the standards test fails if the current version has no changelog entry.
+5. Commit, then tag and push: `git tag vX.Y.Z && git push origin main --tags`.
 
 What happens automatically:
 - `release.yml` checks the tag matches `package.json` and that the changelog has the entry, then creates the GitHub Release using that entry as the notes. It fails (no release) if either is missing.

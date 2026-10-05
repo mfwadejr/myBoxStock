@@ -25,7 +25,7 @@ export async function loadFirewall(db) {
   rules = await db.all('SELECT * FROM firewall_rules WHERE enabled = 1');
   L.info('loaded', `Firewall loaded: ${rules.length} active rule(s), rate limiting ${limits.enabled ? 'on' : 'off'}`, { data: { rules: rules.length, limits } });
 }
-export async function saveLimits(db, patch, actor) {
+export async function saveLimits(db, patch, actor, ip) {
   const n = (v, min, max, d) => { v = Number(v); return Number.isFinite(v) ? Math.min(max, Math.max(min, Math.round(v))) : d; };
   const before = limits;
   limits = {
@@ -35,30 +35,32 @@ export async function saveLimits(db, patch, actor) {
     hostConsoleAllowOnly: patch.hostConsoleAllowOnly === undefined ? before.hostConsoleAllowOnly : !!patch.hostConsoleAllowOnly,
   };
   await setSetting(db, 'firewall_limits', limits);
-  L.info('limits.changed', 'Rate-limit settings changed', { actor, data: { before, after: limits } });
+  L.info('limits.changed', 'Rate-limit settings changed', { actor, ip, data: { before, after: limits } });
   return limits;
 }
-export async function addRule(db, { kind, cidr, port = null, note = '' }, actor) {
+export async function addRule(db, { kind, cidr, port = null, note = '' }, actor, ip) {
   if (!['deny', 'allow', 'host'].includes(kind)) throw new Error('kind must be deny, allow or host');
   if (!validCidr(cidr)) throw new Error('Enter a valid IP address or CIDR range, e.g. 203.0.113.0/24');
   const id = newId();
   await db.run('INSERT INTO firewall_rules (id, kind, cidr, port, note, enabled, created_at) VALUES (?,?,?,?,?,1,?)', [id, kind, cidr, port ? Number(port) : null, String(note).slice(0, 200), Date.now()]);
   await loadFirewall(db);
-  L.info('rule.added', `Added ${kind} rule for ${cidr}${note ? ` (${note})` : ''}`, { actor, data: { id, kind, cidr, port, note } });
+  L.info('rule.added', `Added ${kind} rule for ${cidr}${note ? ` (${note})` : ''}`, { actor, ip, data: { id, kind, cidr, port, note } });
   return id;
 }
-export async function removeRule(db, id, actor) {
+export async function removeRule(db, id, actor, ip) {
   const r = await db.get('SELECT kind, cidr FROM firewall_rules WHERE id = ?', [id]);
   await db.run('DELETE FROM firewall_rules WHERE id = ?', [id]); await loadFirewall(db);
-  L.info('rule.removed', `Removed ${r?.kind || ''} rule for ${r?.cidr || id}`, { actor, data: { id, ...r } });
+  L.info('rule.removed', `Removed ${r?.kind || ''} rule for ${r?.cidr || id}`, { actor, ip, data: { id, ...r } });
 }
-export async function setRuleEnabled(db, id, on, actor) {
+export async function setRuleEnabled(db, id, on, actor, ip) {
+  const r = await db.get('SELECT kind, cidr FROM firewall_rules WHERE id = ?', [id]);
   await db.run('UPDATE firewall_rules SET enabled = ? WHERE id = ?', [on ? 1 : 0, id]); await loadFirewall(db);
-  L.info('rule.toggled', `Rule ${id} ${on ? 'enabled' : 'disabled'}`, { actor, data: { id, enabled: on } });
+  L.info('rule.toggled', `${r?.kind || ''} rule for ${r?.cidr || id} ${on ? 'turned on' : 'turned off'}`.trim(), { actor, ip, data: { id, ...r, before: { enabled: !on }, after: { enabled: !!on } } });
 }
 export const ruleAppliesToAppPort = (r) => !r.port || r.port === appConfig.port;
-export async function setHostAccess(db, on, actor) {
+export async function setHostAccess(db, on, actor, ip) {
+  const was = limits.hostConsoleAllowOnly;
   limits = { ...limits, hostConsoleAllowOnly: !!on }; await setSetting(db, 'firewall_limits', limits);
-  L.info('host_access.changed', `Host Console access limit turned ${on ? 'on' : 'off'}`, { actor, data: { enabled: !!on } });
+  L.info('host_access.changed', `Host Console access limit turned ${on ? 'on' : 'off'}`, { actor, ip, data: { enabled: !!on, before: { enabled: !!was }, after: { enabled: !!on } } });
   return limits;
 }

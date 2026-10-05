@@ -1,7 +1,7 @@
 ---
 title: Firewall
 summary: Control who can open the Host Console, block or exempt addresses site-wide, tune the rate limits and bans, and set up the proxy or Cloudflare options safely.
-keywords: firewall, rate limit, ban, block, allow list, cidr, ip address, host console access, 404, HOST_ALLOW_ANY, cloudflare, proxy, lockout, unban, ports, skip rate limits
+keywords: bans survive restart, unban, audit, firewall, rate limit, ban, block, allow list, cidr, ip address, host console access, 404, HOST_ALLOW_ANY, cloudflare, proxy, lockout, unban, ports, skip rate limits
 order: 10
 covers: nav:firewall, Blocked, Rate-limited, Temporary bans, Rate limiting, Requests per IP, per window (seconds), Sign-in attempts per IP, Ban after N violations, Ban length (minutes), Save, Host Console access, Your address right now, Add my address, Add rule, Note (optional), Remove, Block this address, Skip rate limits, Site-wide blocking and rate-limit exceptions, Lift, Ports in this container, HOST_ALLOW_ANY, Reverse proxy in front of the site, Site is behind Cloudflare
 ---
@@ -25,7 +25,7 @@ At the top, three tiles show how the firewall has been working.
 - **Rate-limited** is the number of requests turned away for going over a limit, since the server started.
 - **Temporary bans** is how many addresses are banned right now.
 
-The first two reset to zero whenever the server restarts, so a low number after an update does not mean nothing happened earlier.
+The first two reset to zero whenever the server restarts, so a low number after an update does not mean nothing happened earlier. The third does not reset: bans are saved and survive a restart (see "Temporary bans" below).
 
 ## How a request is judged
 
@@ -66,8 +66,9 @@ A person using the app normally makes a handful of requests a minute, so the def
 ### Things to know
 
 - Limits count per address. If an office or mobile carrier shares one address, everyone counts as one; give it a **Skip rate limits** rule or raise the numbers.
-- Counts, violation tallies and bans live in the server's memory, so a restart wipes them and lifts all bans.
-- Separately, after six wrong attempts in a row a sign-in name is locked for 15 minutes. That cannot be changed here.
+- The request counters (requests per window and sign-in attempts per window) live in the server's memory, on purpose, so a restart starts them again from zero. That is harmless, because they only cover a minute or a few minutes.
+- Bans and the count of violations that lead to a ban are different. They are saved in the database, so a restart does not lift a ban or let a banned address start fresh. An update, which restarts the server, does not either.
+- Separately, after six wrong attempts in a row a sign-in name is locked for 15 minutes. That cannot be changed here. Lockouts are also saved and survive a restart (see [Security](#/docs/security)).
 
 > Do not set **Sign-in attempts per IP** to 1 or 2. People mistype passwords.
 
@@ -146,7 +147,17 @@ Each rule shows a label ("blocked" in red, or "skips limits" in green), the addr
 
 ## Temporary bans
 
-When there are any, a **Temporary bans** card lists each banned address and the time the ban ends, with a **Lift** button. Lift ends the ban at once and clears that address's violation count. Bans end by themselves after the **Ban length (minutes)**. If a regular customer got banned by mistake, lifting the ban is the quick fix, and a **Skip rate limits** rule is the permanent one.
+When there are any, a **Temporary bans** card lists each banned address and the time the ban ends, with a **Lift** button (in other words, unban). Lift ends the ban at once and clears that address's violation count. Bans end by themselves after the **Ban length (minutes)**. If a regular customer got banned by mistake, lifting the ban is the quick fix, and a **Skip rate limits** rule is the permanent one.
+
+### Bans survive a restart
+
+An active ban is saved in the database and loaded again whenever the server starts, including the restart that follows an update. The count of violations that is leading towards a ban is kept too, for one hour after the last one. Ban length is unchanged: it is the **Ban length (minutes)** you set, 15 by default. So restarting the container is no longer a way to clear a ban. Use **Lift**.
+
+Only the request counters stay in memory. Restarting does reset those, but they do not decide who is banned.
+
+### What is recorded
+
+Every change on this page is written to the [Audit trail](#/docs/audit-trail) with who did it, when and from which address, and under the Type **Firewall and access**: a rule added, a rule changed (turned on or off), a rule removed, the rate-limit settings changed and the Host Console access limit changed. A ban created by the server is recorded as well, with the name "System", and so is a ban that an administrator lifted (under Type **Bans and lockouts**). The same events are also in [Logs](#/docs/logs), area security.
 
 ## Ports in this container
 

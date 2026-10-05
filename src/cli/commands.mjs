@@ -2,7 +2,9 @@
 import { initDb } from '../db/connection.mjs';
 import { copyDatabase } from '../db/copy.mjs';
 import { ensureHostAdmin } from './host-admin.mjs';
-import { restoreBundleToDisk } from '../services/backup/bundle.mjs';
+import fs from 'node:fs';
+import { restoreBundleToDisk, openBundle } from '../services/backup/bundle.mjs';
+import { decryptFile } from '../services/backup/crypt.mjs';
 import { clearRuntime } from '../services/runtime/index.mjs';
 import { attachLogDb, closeLogs } from '../logging/logger.mjs';
 
@@ -27,6 +29,17 @@ export async function runCli(cmd) {
     try { const m = restoreBundleToDisk(file, pass, { force: process.argv.includes('--force') }); console.log(`\nRestored a ${m.engine} backup made ${m.createdAt} (myBoxStock ${m.version}).\n${m.engine === 'sqlite' ? 'Start the server — everyone can sign in as before.' : 'The database dump is in your data folder as restored-dump.sql; load it with psql / mysql, then start the server.'}\n`); }
     catch (e) { console.error(e.message); process.exitCode = 1; }
     await closeLogs(); return true;
+  }
+  if (cmd === 'decrypt-backup') {
+    // Opens a copy that was sent away from the server (name ends in .mbsenc) into a plain database file; a .mbsbak full-site backup gives up its database the same way.
+    const [file, out] = [process.argv[3], process.argv[4]], pass = process.env.BACKUP_PASSPHRASE;
+    if (!file || !out || !pass) { console.error('Usage: BACKUP_PASSPHRASE=… node server.mjs decrypt-backup <file.mbsenc|file.mbsbak> <output-file>'); process.exitCode = 1; return true; }
+    try {
+      if (file.endsWith('.mbsbak')) { const e = openBundle(fs.readFileSync(file), pass), m = JSON.parse(e['manifest.json'].toString()); fs.writeFileSync(out, e[m.database], { mode: 0o600 }); }
+      else await decryptFile(file, out, pass);
+      console.log(`\nDecrypted to ${out}. A .db file is the SQLite database; a .sql file is a dump to load with psql / mysql.`);
+    } catch (e) { console.error(e.message); process.exitCode = 1; }
+    return true;
   }
   if (cmd === 'migrate-db') {
     const to = arg('--to');

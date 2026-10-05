@@ -11,7 +11,8 @@
 .faint { color: var(--color-text-faint); }
 .danger-text { color: var(--color-danger); }
 .success-text { color: var(--color-success); }
-.mono { font-family: var(--font-mono); font-size: var(--text-sm); }
+.ident { font-family: var(--font-mono); font-size: var(--text-ident); }   /* identifiers people check or copy: serial, MAC, receipt number, Reseller ID */
+.tab-num { font-variant-numeric: tabular-nums; }   /* numbers that line up in columns: dates, amounts, IP addresses */
 .center { text-align: center; }
 .right { text-align: right; }
 .nowrap { white-space: nowrap; }

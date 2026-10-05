@@ -1,9 +1,9 @@
 ---
 title: Troubleshooting and FAQ
 summary: Plain-language fixes for the problems people run into most, from sign-in trouble and lost keys to scanners, receipts and read-only accounts, plus answers to common questions.
-keywords: troubleshooting, help, error, cannot sign in, locked out, forgot password, lost authenticator, lost recovery key, scanner, receipt email, read-only, out of date, refresh, faq, not working, problem
+keywords: troubleshooting, camera blocked, camera busy, no camera, https, wrong barcode, mac not accepted, restore refused, this file cannot be used, account is newer than this file, undo restore, backup file size, lost recovery key backup, site restored banner, help, error, cannot sign in, locked out, forgot password, lost authenticator, lost recovery key, scanner, receipt email, read-only, out of date, refresh, faq, not working, problem
 order: 13
-covers: Incorrect sign-in or password, Too many failed attempts, Forgot password, Reset link, Two-factor code, Recovery code, Recovery key, Unlock your data, Use your recovery key, Scanner, Bulk scan, Email receipt, Read-only, Trial ended, Closing account, Out of date page, Someone else changed this, Records could not be opened, Disabled sign-in, Suspended account, Mail server settings, Reseller ID, Change password, Reset access
+covers: camera is turned off for this site, The camera only works when this site is opened over https, The camera is busy, No camera was found, Two codes are about equally close, No MAC address was found in that photo, This file cannot be used, Your account is newer than this file, There is no restore to undo, The restore did not finish, The site was restored from a backup, Copy diagnostics, Incorrect sign-in or password, Too many failed attempts, Forgot password, Reset link, Two-factor code, Recovery code, Recovery key, Unlock your data, Use your recovery key, Scanner, Bulk scan, Email receipt, Read-only, Trial ended, Closing account, Out of date page, Someone else changed this, Records could not be opened, Disabled sign-in, Suspended account, Mail server settings, Reseller ID, Change password, Reset access
 ---
 
 ## How to use this page
@@ -73,7 +73,7 @@ Administrators can look at the sign-in history on the [Activity](#/docs/activity
 
 **Cause.** An Administrator chose to close the account. It is locked straight away and will be erased 7 days after it was closed.
 
-**Fix.** If this was a mistake, ask an Administrator to sign in and press **Restore account** on the red banner at the top of any page. Until the erase date the account is read-only. If you want to keep your data, an Administrator can use **Export everything** on the [Security](#/docs/security) page while the account is still closing.
+**Fix.** If this was a mistake, ask an Administrator to sign in and press **Restore account** on the red banner at the top of any page. Until the erase date the account is read-only. If you want to keep your data, an Administrator can use **Export everything** on the [Security](#/docs/security) page, or make a backup file on [Backup and restore](#/docs/backup-and-restore), while the account is still closing. Both still work. What happens after the 7 days is explained under "How do I close my account?" below.
 
 ### "This account is closing, so changes are paused. An Administrator can restore it."
 
@@ -188,7 +188,7 @@ If you have no recovery codes either, you cannot get past the code screen on you
 
 - **You can still sign in and unlock your data.** You are fine. An Administrator opens [Security](#/docs/security) and chooses **Create new recovery key**. The old key stops working immediately, so save the new one: download it, print it, and store it somewhere other than the computer you use for work.
 - **Somebody else on your team can still unlock their data.** They can reset your access from the Team page.
-- **Nobody can unlock the data and nobody has the recovery key.** The data cannot be opened by anyone, including the hosting service and support. This is how the encryption protects you, and it is not a fault that can be fixed. You would start again with an empty account. This is why it matters to keep the recovery key and your own exports. See [Your data, your responsibility](#/docs/your-data-your-responsibility).
+- **Nobody can unlock the data and nobody has the recovery key.** The data cannot be opened by anyone, including the hosting service and support. This is how the encryption protects you, and it is not a fault that can be fixed. You would start again with an empty account. This is why it matters to keep the recovery key and your own backup file. Note that a backup file does not help here: it is locked with the same keys, so it opens only with your password or recovery key. See [Your data, your responsibility](#/docs/your-data-your-responsibility).
 
 ### "That recovery key does not match this account. Check it and try again."
 
@@ -278,6 +278,10 @@ If you have no recovery codes either, you cannot get past the code screen on you
 - If the scanner adds a label such as "UID" or "SN" before the number, or line breaks, myBoxStock removes them for you, so the box keeps only the number.
 - If scans never press Enter by themselves, your scanner may need to be set to send an Enter key after each code. Check the scanner's manual or its setup barcodes.
 
+### The camera cannot read the barcode, or reads the wrong one
+
+The camera scanner has its own set of fixes. See "Scanning with the camera" just below, and the whole guide at [Scanning with your phone camera](#/docs/scanning-with-your-phone).
+
 ### "Nothing in your inventory matches ..."
 
 **Cause.** Quick sale looks up the code in the details your Administrator has marked **Look up in sale** (for example UID, serial number or MAC). The code you scanned is not stored in any of them, may have been entered with a typo, or the device is not in Inventory yet.
@@ -315,6 +319,116 @@ If you have no recovery codes either, you cannot get past the code screen on you
 ### I made a sale by mistake
 
 **Fix.** Open the sale from [Sales](#/docs/sales) or right after finishing it, and choose **Void sale**. The devices go back to available and the sale stays in your history marked Void, so your records stay honest. A voided sale is left out of the revenue and profit totals. You can send a "Sale voided" notice to the customer from the same screen.
+
+## Scanning with the camera
+
+### The camera does not start: "The camera is turned off for this site."
+
+**Cause.** The browser's camera permission for this site was refused.
+
+**Fix.** Allow the camera when the browser asks, then tap **Try again** in the scanner. On an iPhone, open **Settings**, **Safari**, **Camera** and choose **Ask** or **Allow**, then come back and tap **Try again**. If you do not want to use the camera now, tap **Type it instead** or **Take a photo**.
+
+### "The camera only works when this site is opened over https ..."
+
+**Cause.** The page was opened through an address that does not start with `https://`, and browsers only let secure pages use the camera.
+
+**Fix.** Open the site with its secure `https://` address. If you only have an address that starts with `http://`, ask your site administrator for the right one. Typing the code or **Take a photo** still works in the meantime.
+
+### "No camera was found on this device." / "The camera is busy." / "The camera could not start."
+
+**Cause and fix.** No camera: use a device that has one, or type the code. Busy: another app or browser tab is using the camera, so close it and tap **Try again**. Could not start: tap **Try again**, and if it still fails close the browser completely and reopen it.
+
+### "This browser cannot use the camera here."
+
+**Cause.** The browser is too old or locked down. **Fix.** Update it, or open myBoxStock in Safari on iPhone or Chrome on Android. Until then use **Take a photo** or **Type it instead**.
+
+### The scanner reads the wrong barcode (for example the UID instead of the serial number)
+
+**Cause.** The label has several barcodes and the one nearest the aim line was read.
+
+**Fix.** Tap **Small** so the scan box is a thin strip, slide the phone until only the barcode you want crosses the aim line, and scan again. Always check the value in the box before you save. If two barcodes are equally close you get two big buttons: "Two codes are about equally close. Tap the one you want."
+
+### The scanner will not read at all, or takes a long time
+
+**Cause.** Usually light, distance, shake or glare.
+
+**Fix.** Add light or tap **Flash** (where it exists), hold the phone about a hand span away and steady, tilt it to move shine off the label, and fit the whole code inside the box. Try **Large** for a QR code. Or tap **Take a photo**, which uses your phone's own camera app, then read the picture. See the tips in [Scanning with your phone camera](#/docs/scanning-with-your-phone).
+
+### The MAC address will not fill in from the camera
+
+**Cause.** The MAC box accepts only a real MAC address: 12 digits or letters A to F, plain or separated by colons, dashes or dots. Any other barcode in the box, such as a serial number, is ignored there. After a **Take a photo** with no MAC in it you see "No MAC address was found in that photo."
+
+**Fix.** Make the scan box **Small** and put the MAC barcode on the aim line. If the label has the MAC only as printed text and not as a barcode, type it by hand. The camera does not read printed letters.
+
+### "No code was found in that photo." / "That photo could not be read."
+
+**Fix.** Take the photo again, closer, in good light, with the whole code filling the picture. Or tap **Type it instead**.
+
+### There is no Flash button
+
+**Cause.** The phone or browser does not let web pages use the torch. It does not on iPhone Safari. **Fix.** Use a lamp or a window.
+
+## Backup and restore
+
+### I cannot see Backup and restore in the menu
+
+**Cause.** It is for Administrators only. **Fix.** Ask an Administrator to make your backups, or to change your user type on the [Team](#/docs/team) page. On a phone it is under **More**.
+
+### I pressed Back up now, but "Last backup" did not change
+
+**Cause.** The date changes only after the file has really been saved. On an iPhone or iPad, if you close the share sheet without choosing **Save to Files**, nothing was saved.
+
+**Fix.** Press **Back up now** again, tap **Save backup file**, and choose **Save to Files** and a folder. Look in the Files app to find it.
+
+### Where did my backup file go?
+
+**Fix.** On an iPhone or iPad, open the Files app and look in the folder you chose. On Android or a computer, look in your Downloads folder. The name starts with `myboxstock-backup-` and ends in `.mbsbackup`.
+
+### How big is the backup file?
+
+It depends on how many devices, customers and sales you have. A big account makes a bigger file and takes longer, so keep the page open until you see "Backup saved." If the file is too big to email, save it to Files, a cloud folder or a USB drive.
+
+### "This file cannot be used" when I choose a file
+
+The sheet says why. Nothing was changed.
+
+- **"That file is not a myBoxStock backup."** Wrong file. You need one ending in `.mbsbackup`, not an export zip or a spreadsheet.
+- **"That backup was made by a newer version of myBoxStock."** Refresh the page (or close and reopen the tab) to load the latest version, then try again.
+- **"That backup belongs to a different account."** The message shows the Reseller ID in the file. A backup restores only into its own account. Sign in to that account, or find the right file.
+- **"That backup was made with a different key..."** This account cannot open it, for example because the account was set up again since. Use the recovery key from when the backup was made.
+- **"That backup file is damaged or incomplete."** It may not have finished downloading or copying. Use another copy.
+
+### "Your account is newer than this file"
+
+**Cause.** The newest change in your account is later than the newest change in the file, so the file is older than your work. **Fix.** Pick **Add what is missing**, which never changes what is already there, or cancel and choose a newer file. Do not pick **Replace everything** unless you really want to lose the newer work.
+
+### I restored and something is wrong. How do I undo?
+
+**Fix.** Open **Backup and restore** and press **Undo last restore**, then confirm **Undo restore**. It is there for 7 days after a restore. Before every restore the site keeps a locked safety copy for exactly this. After 7 days the button is gone and you see "There is no restore to undo. The safety copy is kept for 7 days after a restore and then removed." Only one safety copy exists, so a second restore replaces the first.
+
+### "The restore did not finish"
+
+**Cause.** The connection dropped, or the page was closed part way. **Fix.** The page puts your data back as it was and says so. Check your connection, keep the page open, and try again.
+
+### I see a banner: "The site was restored from a backup taken ..."
+
+**Cause.** The person who runs the site had to go back to an older copy. Anything you did after the time in the banner (UTC) may be missing. **Fix.** Check Sales and Inventory. If you have your own newer backup file, open **Backup and restore**, **Choose file**, and use **Add what is missing**. See [Backup and restore](#/docs/backup-and-restore).
+
+### I lost my password or my recovery key. Can a backup file help?
+
+No. The file is locked with your keys and opens only with your password or your recovery key, just like the account. If you still have a working sign-in, make a new recovery key on [Security](#/docs/security) right away and make a fresh backup. If nobody has a password or the recovery key, no backup can be opened either.
+
+### Are my team members in the backup?
+
+No. The file holds devices, customers, sales, receipts and settings, but not people, user types or sign-ins. Add people again on the [Team](#/docs/team) page if you ever rebuild.
+
+### The backup reminder keeps showing on Home
+
+It shows when you have no backup or the last one is more than 7 days old. Make one with **Back up now** and it goes. **Not today** only hides it until tomorrow on that device.
+
+### What does Copy diagnostics do?
+
+It copies a short summary (versions, plan, people counts, recent warnings) for your site's administrator. Paste it into your message when you ask for help. It never contains your devices, customers or sales. If your browser blocks copying, select the text in the box and copy it by hand.
 
 ## Receipts and email
 
@@ -382,15 +496,15 @@ No. They are encrypted in your browser before they are sent and are only opened 
 
 ### What should I keep safe?
 
-Three things: your **recovery key**, your **two-factor recovery codes** (if you use two-factor), and a recent **export** of your data. Keep them somewhere other than the computer you use every day.
+Four things: your **recovery key**, your **two-factor recovery codes** (if you use two-factor), a recent **backup file** (Backup and restore, **Back up now**), and if you like a recent **export** of your data. Keep them somewhere other than the computer you use every day.
 
 ### How do I take a copy of my data?
 
-An Administrator opens [Security](#/docs/security) and chooses **Export everything**. You get one file with spreadsheets of inventory, customers and sales plus your settings. It is built in your browser and does not pass through the site. You can also export Inventory and Sales as CSV from those pages, and export one customer from their record. Do this regularly.
+For a copy you can restore, an Administrator opens [Backup and restore](#/docs/backup-and-restore) and presses **Back up now**. For spreadsheets, choose **Export everything** there or on [Security](#/docs/security). You get one file with spreadsheets of inventory, customers and sales plus your settings. It is built in your browser and does not pass through the site. You can also export Inventory and Sales as CSV from those pages, and export one customer from their record. Do this regularly.
 
 ### Does an export protect me if I lose my keys?
 
-Yes, that is its purpose. The export is a normal set of spreadsheets that opens without any key. Keep it safe, because anyone who has it can read it.
+An export is a normal set of spreadsheets that opens without any key, so you keep your information. Keep it safe, because anyone who has it can read it. But you cannot restore from it. A **backup file** can be restored, but it is locked with your keys, so it does not help if you lose them all.
 
 ### How long does a free trial last, and what happens after?
 
@@ -398,7 +512,7 @@ The length is shown on the sign-up screen and the blue chip at the top of the pa
 
 ### Can I use it on a phone?
 
-Yes. Quick sale in particular is made to work on a phone, and you can scan with a phone or a USB or Bluetooth scanner that acts like a keyboard.
+Yes. Quick sale in particular is made to work on a phone, and you can scan barcodes with the phone's camera (see [Scanning with your phone camera](#/docs/scanning-with-your-phone)) or with a USB or Bluetooth scanner that acts like a keyboard.
 
 ### A customer asked me to delete their personal details. What do I do?
 
@@ -418,7 +532,7 @@ An Administrator can open [Activity](#/docs/activity) to see where people are si
 
 ### How do I close my account?
 
-An Administrator uses **Close account** on the [Security](#/docs/security) page, entering their password and Reseller ID. The account is locked for 7 days and then erased, with everything in it. Export first. An Administrator can restore it any time before the erase date.
+An Administrator uses **Close account** on the [Security](#/docs/security) page, entering their password and Reseller ID. The account is locked for 7 days: only Administrators can sign in, to look, export, make a backup file or restore it, and an "account is closing" email with the erase date is sent. An Administrator can restore it any time before the erase date. After that the site erases everything (people, devices, customers, sales, keys, billing history and your undo copy) and there is no way back. The site's own encrypted backups may still hold a locked copy for up to about 8 weeks with the default settings, and it cannot be opened without your keys. Backup files and exports you made yourself are yours and are not touched. Make a backup first.
 
 ### Who can I ask for more help?
 

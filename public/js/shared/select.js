@@ -44,10 +44,5 @@
   });
   // Set the shown choice from code (no change event).
   const set = (el, v) => { const w = wrap(el), o = opts(w).find(x => x.dataset.value === String(v)); if (!o) return; opts(w).forEach(x => x.setAttribute('aria-selected', String(x === o))); el.dataset.value = o.dataset.value; el.querySelector('.select-label').textContent = o.textContent; };
-  // The account switcher in the top bar: choosing another entry runs pick(value) and the dropdown goes back to showing where you are.
-  const switcher = (el, { options, value, pick }) => {
-    el.innerHTML = html({ options, value, id: 'sw' });
-    const b = el.querySelector('#sw'); b.addEventListener('change', () => { const v = b.dataset.value; set(b, value); pick(v); });
-  };
-  UI.select = { html, set, switcher, value: (el) => el.dataset.value };
+  UI.select = { html, set, value: (el) => el.dataset.value };
 })();

@@ -46,7 +46,23 @@ The login password proves identity to the server (as today, scrypt hash). The br
 ## 5. Backups
 
 - **Platform backups (Host):** the full-site backup (already built) contains the database, which now holds only ciphertext for customer data, plus the server key. Restoring it elsewhere brings every account back and customers can still unlock their data because their wrapped keys are inside.
-- **Customer backups:** customers can download an encrypted export of their own data (ciphertext + wrapped keys) and re-import it. It is useless without their password or recovery key.
+- **Customer backups:** implemented in 0.20.0 as the reseller **Backup and restore** page (Administrators only). See 5a.
+- **What the Host's own backups protect** (0.20.0): *Frequent snapshots* are plain SQLite files in `${DATA_DIR}/backup` (mode 0600). They are not passphrase-protected, so they expose what the Host can read anyway (account names, owner emails, plan and billing records, sign-in history, administrator hashes) and nothing else: customer records are ciphertext, passwords are hashed, and TOTP / SMTP / destination secrets are sealed with `secret.key`, which is not inside a snapshot. Everything that leaves that folder (*offsite copies*, `.mbsenc`) is gzipped and encrypted with the Host's backup passphrase (AES-256-GCM in 1 MiB chunks, key from scrypt, header and chunk order authenticated). *Full-site bundles* (`.mbsbak`) hold the database and `secret.key` under the same passphrase. None of these can be opened to read tenant data, and a snapshot or offsite copy restored on a server with a different `secret.key` loses the sealed secrets (two-factor, saved mail and destination passwords).
+
+## 5a. The reseller backup file and restore point
+
+File `myboxstock-backup-<reseller-id>-<yyyymmdd>.mbsbackup`, built and read in the browser (`public/js/app/backup-file.js`); the server only records the time ("last backup") and counts.
+
+- **Readable header:** format name and version, Reseller ID, time made, app version. Nothing else is readable.
+- **Records:** the account's records exactly as the server holds them, each already sealed with the account data key. The file adds no new plaintext.
+- **Sealed index (manifest):** record ids, types, revisions, counts, the newest-change time and a SHA-256 checksum of the records, sealed with the account data key (context `backup`). Opening it proves the right key and detects a damaged or truncated file.
+- **Keys:** the data key wrapped by the person's password (salt, iterations, wrapped key) and by the recovery key, so the file opens only with the password or recovery key. An offline attack on a stolen file costs the same as one on the server's copy: PBKDF2-SHA-256, 600,000 iterations.
+- **Contents:** items, models, customers, sales/receipts, settings and catalogue. **Not** users, roles or sign-ins; Team members are not in the file.
+- **Refusals:** not a backup, newer format, different Reseller ID, made with a different key, damaged or truncated.
+
+Restore offers **Add what is missing** (inserts records the account does not have; never overwrites; can bring back records deleted after the backup) or **Replace everything** (overwrites changed records, inserts missing ones, deletes records not in the file). Before either, the server copies the account's current ciphertext inside the database into a **restore point** (tables `restore_points`, `restore_point_records`, migration 15): one per account, 7 days, ciphertext only, so the Host cannot read it. Writes go in chunks; a failed restore is rolled back automatically; **Undo last restore** puts the restore point back. A Host restore of the whole site brings restore points back with the database; resellers recover newer work from their own file with **Add what is missing**. The Host cannot restore a single account from a site backup and cannot read what the file holds.
+
+**Support diagnostics.** **Copy diagnostics** produces a plain-text summary for the Host (version, device, Reseller ID, plan, role and two-factor counts, vault and recovery-key state, last backup, restore undo available, last 20 warn/error events with codes and messages, IP addresses stripped). It is built from counts and event codes only, never tenant data.
 
 ## 6. Features that change
 

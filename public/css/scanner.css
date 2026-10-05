@@ -1,0 +1,67 @@
+/* SCANNER — the phone-camera scanner: the camera button inside a field, and the full-screen scan layer. Values come from tokens.css. */
+
+/* ---- camera button inside a field ---- */
+.scanfield { position: relative; }
+.scanfield input { padding-right: var(--tap-min); }
+.scanbtn { position: absolute; top: 0; bottom: 0; right: 0; width: var(--tap-min); display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--color-text-muted); border-radius: var(--radius-md); cursor: pointer; }
+.scanbtn:hover, .scanbtn:focus-visible { color: var(--color-primary); outline: none; }
+.scanbtn .icon { width: var(--tabbar-icon); height: var(--tabbar-icon); }
+.toolbar .scanfield { flex: 1; min-width: var(--width-sm); }
+
+/* ---- the full-screen layer ---- */
+.scanner {
+  position: fixed; inset: 0; z-index: var(--z-scanner); overflow: hidden; background: var(--color-scan-bg); color: var(--color-scan-text);
+  display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; grid-template-areas: "top" "stage" "panel";
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  touch-action: none; overscroll-behavior: contain; font-size: var(--text-lead);
+}
+.scanner:focus { outline: none; }
+.scan-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: var(--color-scan-bg); }
+.scan-top { grid-area: top; position: relative; z-index: var(--z-nav); display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); padding: var(--space-md) var(--space-lg); background: var(--color-scan-glass); }
+.scan-title { font-size: var(--text-lg); font-weight: var(--weight-semibold); min-width: 0; overflow-wrap: anywhere; }
+
+.scan-stage { grid-area: stage; position: relative; z-index: var(--z-raised); display: grid; place-items: center; min-height: 0; padding: var(--space-md); pointer-events: none; }
+.scan-box { position: relative; width: min(var(--scan-box-w), var(--scan-box-max-w)); max-width: 100%; box-shadow: var(--shadow-scan-dim); }
+.scan-box.small { height: min(var(--scan-h-small), 100%); }
+.scan-box.medium { height: min(var(--scan-h-medium), 100%); }
+.scan-box.large { height: min(var(--scan-size-large), 100%); width: auto; aspect-ratio: 1 / 1; max-width: var(--scan-box-w); }
+.scan-corner { position: absolute; width: var(--scan-corner); height: var(--scan-corner); border: 0 solid var(--color-scan-text); border-radius: var(--radius-xs); }
+.scan-corner.tl { top: 0; left: 0; border-top-width: var(--scan-corner-w); border-left-width: var(--scan-corner-w); }
+.scan-corner.tr { top: 0; right: 0; border-top-width: var(--scan-corner-w); border-right-width: var(--scan-corner-w); }
+.scan-corner.bl { bottom: 0; left: 0; border-bottom-width: var(--scan-corner-w); border-left-width: var(--scan-corner-w); }
+.scan-corner.br { bottom: 0; right: 0; border-bottom-width: var(--scan-corner-w); border-right-width: var(--scan-corner-w); }
+.scan-aim { position: absolute; left: var(--scan-aim-inset); right: var(--scan-aim-inset); top: 50%; height: var(--scan-aim-h); transform: translateY(-50%); background: var(--color-scan-aim); border-radius: var(--radius-pill); }
+.scanner[data-state=got] .scan-aim { background: var(--color-scan-ok); }
+.scanner[data-state=got] .scan-corner { border-color: var(--color-scan-ok); }
+.scanner[data-state=warn] .scan-corner { border-color: var(--color-scan-warn); }
+
+.scan-panel { grid-area: panel; position: relative; z-index: var(--z-nav); display: flex; flex-direction: column; gap: var(--space-md); width: min(100%, var(--scan-panel-max-w)); justify-self: center; padding: var(--space-lg); background: var(--color-scan-glass); backdrop-filter: blur(var(--blur-md)) saturate(var(--saturate)); -webkit-backdrop-filter: blur(var(--blur-md)) saturate(var(--saturate)); border-radius: var(--radius-xl) var(--radius-xl) 0 0; touch-action: auto; overflow-y: auto; max-height: 100%; }
+.scan-hint { text-align: center; color: var(--color-scan-text-soft); font-size: var(--text-lead); }
+.scanner[data-state=got] .scan-hint { color: var(--color-scan-ok); font-weight: var(--weight-semibold); }
+.scanner[data-state=warn] .scan-hint { color: var(--color-scan-warn); }
+.scan-float { position: absolute; left: var(--space-lg); right: var(--space-lg); bottom: var(--space-md); display: flex; flex-direction: column; align-items: center; pointer-events: auto; }
+.scan-float > * { width: min(100%, var(--scan-panel-max-w)); padding: var(--space-md); border-radius: var(--radius-lg); background: var(--color-scan-glass); backdrop-filter: blur(var(--blur-md)); -webkit-backdrop-filter: blur(var(--blur-md)); }
+.scan-float > [hidden] { display: none; }
+.scan-got { display: flex; flex-direction: column; align-items: center; gap: var(--space-sm); text-align: center; }
+.scan-value { font-size: var(--text-xl); font-weight: var(--weight-semibold); overflow-wrap: anywhere; max-width: 100%; }
+.scan-choices { display: grid; gap: var(--space-sm); }
+.scan-choice { min-height: var(--control-h-xl); padding: var(--space-sm) var(--space-lg); border: 0; border-radius: var(--radius-md); background: var(--color-scan-btn); color: var(--color-scan-text); font-size: var(--text-lg); font-weight: var(--weight-semibold); overflow-wrap: anywhere; cursor: pointer; }
+.scan-choice:hover, .scan-choice:focus-visible { background: var(--color-scan-btn-hover); outline: none; }
+.scan-row { display: flex; flex-wrap: wrap; gap: var(--space-sm); justify-content: center; }
+.scan-sizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-sm); }
+.scan-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: var(--tap-min); padding: 0 var(--btn-padding-x-sm); border: 0; border-radius: var(--radius-pill); background: var(--color-scan-btn); color: var(--color-scan-text); font: inherit; font-size: var(--text-body); font-weight: var(--weight-medium); cursor: pointer; }
+.scan-btn:hover, .scan-btn:focus-visible { background: var(--color-scan-btn-hover); outline: none; }
+.scan-btn.on { background: var(--color-scan-text); color: var(--color-text); }
+.scan-btn.primary { background: var(--color-primary); color: var(--color-primary-on); }
+.scan-btn[disabled] { opacity: var(--opacity-disabled); pointer-events: none; }
+.scan-btn .icon { width: var(--icon-size); height: var(--icon-size); }
+.scan-file { display: none; }
+
+/* A phone held sideways: the controls move to a column on the right so the box keeps its room. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .scanner { grid-template-columns: 1fr var(--scan-panel-w); grid-template-rows: auto 1fr; grid-template-areas: "top panel" "stage panel"; }
+  .scan-panel { width: auto; justify-self: stretch; border-radius: var(--radius-xl) 0 0 var(--radius-xl); justify-content: center; }
+  .scan-top { padding: var(--space-sm) var(--space-lg); }
+}
+/* Tablets and computers: the same layer, with the controls centered under the picture. */
+@media (min-width: 821px) { .scan-panel { border-radius: var(--radius-xl); margin-bottom: var(--space-lg); } }

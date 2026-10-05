@@ -25,6 +25,7 @@
   .tabbar .icon { width: var(--tabbar-icon); height: var(--tabbar-icon); }
   .tabbar .active { color: var(--color-primary); }
   .shell { padding-bottom: calc(var(--tabbar-h) + var(--space-6xl) + env(safe-area-inset-bottom)); padding-left: calc(var(--space-md) + env(safe-area-inset-left)); padding-right: calc(var(--space-md) + env(safe-area-inset-right)); }
+  .menu-pop { right: var(--space-md); }
   .topbar { height: calc(var(--topbar-h) + env(safe-area-inset-top)); padding: env(safe-area-inset-top) calc(var(--space-md) + env(safe-area-inset-right)) 0 calc(var(--space-md) + env(safe-area-inset-left)); gap: var(--space-sm); }
   .version-badge { bottom: calc(var(--tabbar-h) + var(--space-md) + env(safe-area-inset-bottom)); }
   .toasts { bottom: calc(var(--tabbar-h) + var(--space-3xl) + env(safe-area-inset-bottom)); }
@@ -37,7 +38,9 @@
 
 /* ---- phones: smaller top bar, tables become cards, sheets rise from the bottom ---- */
 @media (max-width: 640px) {
-  .hide-phone { display: none; }
+  .menu-btn { max-width: var(--width-xs); }
+  .menu-scrim { display: block; position: fixed; inset: 0; z-index: var(--z-modal); background: var(--color-scrim); backdrop-filter: blur(var(--blur-sm)); -webkit-backdrop-filter: blur(var(--blur-sm)); animation: fade-in var(--dur-med) var(--ease); }
+  .menu-pop { top: auto; left: 0; right: 0; bottom: 0; width: 100%; max-width: none; max-height: var(--sheet-max-h-phone); padding: var(--space-sm) var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom)); border: 0; border-radius: var(--radius-xl) var(--radius-xl) 0 0; animation: rise-in var(--dur-med) var(--ease); }
   .page-head { margin-bottom: var(--space-lg); }
   .card { padding: var(--space-lg); }
   .tablewrap { margin: 0; padding: 0; overflow: visible; }
@@ -84,3 +87,5 @@
   .tabbar a, .tabbar button { min-height: var(--tap-min); flex-direction: row; justify-content: center; gap: var(--space-sm); }
   .shell { padding-bottom: calc(var(--tap-min) + var(--space-4xl)); }
 }
+
+@media (max-width: 640px) { .feed { max-height: none; overflow-y: visible; } }   /* phones: the page scrolls, not a box inside it */

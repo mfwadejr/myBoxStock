@@ -1,9 +1,9 @@
 ---
 title: Accounts
 summary: Find a customer account, check its health, and use the support tools: suspend, reset passwords and two-factor, temporary passwords, plan changes, receipts, closing and erasing.
-keywords: accounts, search, customer, support, suspend, reactivate, reset password, temporary password, two-factor reset, 2FA, confirm email, resend, mark confirmed, sign out everywhere, disable sign-in, delete user, delete account, closing, restore, erase, plan, extend trial, receipt, support history, host link, health filter, recovery key
+keywords: accounts, paging, per page, page size, search, customer, support, suspend, reactivate, reset password, temporary password, two-factor reset, 2FA, confirm email, resend, mark confirmed, sign out everywhere, disable sign-in, delete user, delete account, closing, restore, erase, plan, extend trial, receipt, support history, host link, health filter, recovery key
 order: 3
-covers: nav:accounts, Search by business Reseller ID or email, All plans, On trial, Free (comped), Paid, Ended / read-only, Any health, No recovery key saved, No two-factor, Email not verified, Inactive 30 days, Encryption not set up, Closing, Suspended, Business, Reseller ID, Owner, Users, Plan, Status, Health, Last sign-in, Account sheet, Change plan, Extend trial, Suspend, Reactivate, Record a receipt, Remove receipt, Plan history, Support history, Allow this account to link a Host administrator, People, Manage, Delete, Restore, Email a password reset link, Resend the confirmation email, Mark as confirmed, Set a temporary password, Reset two-factor authentication, Sign out everywhere, Disable sign-in, Enable sign-in, Delete this user, Reason
+covers: nav:accounts, Search by business Reseller ID or email, All plans, On trial, Free (comped), Paid, Ended / read-only, Any health, No recovery key saved, No two-factor, Email not verified, Inactive 30 days, Encryption not set up, Closing, Suspended, Business, Reseller ID, Owner, Users, Plan, Status, Health, Last sign-in, Showing, 25 per page, 50 per page, 100 per page, Previous, Next, Account sheet, Change plan, Extend trial, Suspend, Reactivate, Record a receipt, Remove receipt, Plan history, Support history, Allow this account to link a Host administrator, People, Manage, Delete, Restore, Email a password reset link, Resend the confirmation email, Mark as confirmed, Set a temporary password, Reset two-factor authentication, Sign out everywhere, Disable sign-in, Enable sign-in, Delete this user, Reason
 ---
 
 ## What this page is for
@@ -16,7 +16,7 @@ It is just as important to know what is not here. You will never see a customer'
 
 ## The account list
 
-Open **Accounts**. Under the heading is the reminder that inventory, sales and customers are private. The list shows up to 500 accounts, newest first.
+Open **Accounts**. Under the heading is the reminder that inventory, sales and customers are private. The list is newest first and works in pages.
 
 ### Searching
 
@@ -62,6 +62,10 @@ You can combine search, plan and health. Use **Closing** at the start of each we
 
 Click any row to open that account's sheet.
 
+### Paging
+
+The list shows 25 accounts at a time. Under it a line says, for example, "Showing 1-25 of 60". A drop-down on the right changes the page size to **25 per page**, **50 per page** or **100 per page**, and **Previous** and **Next** move between pages. When there are 25 accounts or fewer, these controls are hidden. Typing in the search box or changing either filter takes you back to page 1. The server returns at most 500 matches for one search, so use the search box and the filters to narrow a very large list rather than paging to the end.
+
 ## The account sheet
 
 The sheet is a pop-up with these sections from top to bottom. Press **Done** to close it.
@@ -105,7 +109,7 @@ Lists up to the 15 most recent actions Host administrators took on this account,
 
 ### Site admin linking
 
-A switch labelled "Allow this account to link a Host administrator". When on, the Link option appears in that account's own Security page, so someone who both runs the site and a reseller account can switch between the two. It is off by default. Only the Owner administrator can change it; for everyone else the switch is greyed out. Turning it off removes existing links. Why you might use it: you run a reseller account yourself and want a quick switch. Otherwise leave it off.
+A switch labelled "Allow this account to link a Host administrator". When on, the Link option appears in that account's own Security page, so someone who both runs the site and a reseller account can move between the two. Once linked, the account appears under Reseller accounts in your Host Console account menu, and the reseller app's account menu has a Site admin entry that opens the Host Console in a new tab. It is off by default. Only the Owner administrator can change it; for everyone else the switch is greyed out. Turning it off removes existing links. Why you might use it: you run a reseller account yourself and want a quick switch. Otherwise leave it off.
 
 ### People
 
@@ -141,12 +145,32 @@ All of these ask for a **Reason** except Resend the confirmation email and Delet
 
 ## Closing, restoring and erasing
 
-There are two ways an account ends.
+There are two ways an account ends. Read this section carefully, because customers ask about it.
 
-1. **The customer closes it.** From their own app, an Administrator starts closing. The account locks for 7 days (staff are signed out; Administrators can still look around and export) and then the server erases it automatically. During those 7 days you see "Closing, erases" with a date in the list and a **Restore** button in the sheet. Press **Restore** to cancel closing if the customer asks you to; it does not need a reason prompt.
-2. **You delete it.** The red **Delete** button asks you to type the account's Reseller ID and then erases the account, its people, keys and records at once. It cannot be undone and the system keeps no copy. A backup of the server may still contain it, so see [Backups](#/docs/backups).
+### 1. The customer closes it
 
-> Erasing is permanent for the customer's data. Because the data belongs to them, they should have exported it first. Only erase early when the customer has asked you to or when you have a clear reason, and write it down.
+An Administrator of the account closes it in the reseller app by typing their own password and the Reseller ID. The account then locks for **7 days**:
+
+- Everyone who is not an Administrator is signed out and refused if they try to sign in (the message says the account is closing).
+- Administrators can still sign in, but read-only. Changes are refused. They can still read, export and make a backup file.
+- An "account is closing" email with the date of the erase goes to the owner email and to the person who closed it.
+- In your list the account shows a red "Closing, erases" with the date. Use the **Closing** health filter to see them all, and check it at the start of each week.
+
+During the 7 days, an Administrator of the account can restore it in the reseller app, or you can open the account sheet and press **Restore** in the red closing bar. Restore cancels the closing at once. It does not ask for a reason.
+
+After the 7 days the server erases the account. It checks when it starts and then every hour. **There is no restore after the erase.** Everything of the account is deleted together in one step: sessions, password resets, confirmations, links to Host administrators, the encrypted records and stock items, keys, recovery data, roles, users, billing events and receipts, sign-in history, restore points and the account itself. An "account erased" email goes to the owner and the Administrators.
+
+### 2. You delete it
+
+The red **Delete** button asks you to type the account's Reseller ID and then erases the account at once, with the same result as above and without the 7 days. No "account erased" email is sent when you delete an account yourself, so tell the customer. It cannot be undone. Only erase early when the customer has asked you to or you have a clear reason, and write it down.
+
+### What stays after an erase
+
+- **Log entries.** The activity log keeps its entries, but the link to the account is removed in the database copy, so they no longer point to it. Log files on disk keep their text.
+- **Receipt email counts.** The numbers of receipt emails sent (used for limits) are kept.
+- **Your backups.** Any backup taken before the erase still holds the account in its encrypted form: full-site backups, snapshots and offsite copies, until they are removed by their keep settings. With the defaults that is at most about 8 weeks, and the numbers are yours to change under [Backups](#/docs/backups). If someone asks you to remove their data completely, shorten the keep settings or delete those older files too.
+
+> Erasing is permanent for the customer's data. Because the data belongs to them, they should have exported it first. Their data was encrypted in their own browser, so you could not read it even in a backup.
 
 ## What you can and cannot see
 

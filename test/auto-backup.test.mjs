@@ -32,7 +32,7 @@ test('settings: a passphrase is required, must be long enough, and the off-box f
 test('run now: a verified backup is written, copied off-box, and shown as the last good backup', { skip: !sqlite && 'verification opens the SQLite file' }, async () => {
   const r = await host.req('POST', '/api/host/backups/full/run'); assert.equal(r.status, 200, JSON.stringify(r.data));
   assert.equal(r.data.verified, true); assert.equal(r.data.offbox, off); assert.ok(r.data.accounts >= 1);
-  assert.equal(files(path.join(srv.dir, 'backups'), 'daily').length, 1); assert.equal(files(off, 'daily').length, 1);
+  assert.equal(files(path.join(srv.dir, 'backup'), 'daily').length, 1); assert.equal(files(off, 'daily').length, 1);
   const st = (await host.req('GET', '/api/host/dashboard')).data.backup; assert.equal(st.status.lastOk.name, r.data.name); assert.equal(st.full.enabled, true);
   const log = fs.readFileSync(path.join(srv.logDir, 'backup', 'backup.log'), 'utf8'); assert.match(log, /done and verified/); assert.ok(!log.includes(PASS), 'the passphrase is never logged');
 });
@@ -40,7 +40,7 @@ test('run now: a verified backup is written, copied off-box, and shown as the la
 test('retention keeps only the newest daily copies, here and off-box', { skip: !sqlite && 'verification opens the SQLite file' }, async () => {
   await save({ keepDaily: 2, offboxDir: off });
   for (let i = 0; i < 3; i++) { await sleep(1100); assert.equal((await host.req('POST', '/api/host/backups/full/run')).status, 200); }
-  assert.equal(files(path.join(srv.dir, 'backups'), 'daily').length, 2); assert.equal(files(off, 'daily').length, 2);
+  assert.equal(files(path.join(srv.dir, 'backup'), 'daily').length, 2); assert.equal(files(off, 'daily').length, 2);
 });
 
 test('restore: a scheduled backup from the off-box folder brings the site back on a fresh data folder', { skip: !sqlite && 'SQLite-only restore path' }, async () => {

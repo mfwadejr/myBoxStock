@@ -10,9 +10,12 @@ import { areaLogger } from '../../logging/logger.mjs';
 import { createBundle, openBundle, MIN_PASSPHRASE } from './bundle.mjs';
 import { backupDir, deleteBackup } from './files.mjs';
 import { enqueueMail, processQueue } from '../mail/index.mjs';
+import { enabledDestinations, uploadVerified, clientFor } from './destinations/index.mjs';
+import { pruneRemoteCount, raiseFailing } from './runner.mjs';
+import { audit } from './audit.mjs';
 
 const L = areaLogger('backup');
-export const DEFAULT_FULL = { enabled: false, frequency: 'nightly', hourUtc: 3, weekday: 0, keepDaily: 14, keepWeekly: 8, offboxDir: '', passphrase: '', emailOnFailure: true };
+export const DEFAULT_FULL = { enabled: false, frequency: 'nightly', hourUtc: 3, weekday: 0, keepDaily: 14, keepWeekly: 8, offboxDir: '', destinationIds: [], passphrase: '', emailOnFailure: true };
 const clamp = (v, lo, hi, d) => Math.min(hi, Math.max(lo, Math.floor(Number(v)) || d));
 
 export async function getFullConfig(db, { reveal = false } = {}) {
@@ -27,7 +30,7 @@ export async function saveFullConfig(db, p, actor) {
   const cur = await getFullConfig(db), raw = { ...DEFAULT_FULL, ...(await getSetting(db, 'backup_full', {})) };
   const next = {
     enabled: !!p.enabled, frequency: p.frequency === 'weekly' ? 'weekly' : 'nightly', hourUtc: clamp(p.hourUtc, 0, 23, 3), weekday: clamp(p.weekday, 0, 6, 0),
-    keepDaily: clamp(p.keepDaily, 1, 90, 14), keepWeekly: clamp(p.keepWeekly, 1, 52, 8), offboxDir: String(p.offboxDir || '').trim().slice(0, 300), emailOnFailure: p.emailOnFailure !== false,
+    keepDaily: clamp(p.keepDaily, 1, 90, 14), keepWeekly: clamp(p.keepWeekly, 1, 52, 8), offboxDir: String(p.offboxDir || '').trim().slice(0, 300), destinationIds: p.destinationIds === undefined ? raw.destinationIds || [] : [...new Set((Array.isArray(p.destinationIds) ? p.destinationIds : []).map(String).filter(x => x !== 'local'))], emailOnFailure: p.emailOnFailure !== false,
     passphrase: raw.passphrase,
   };
   if (typeof p.passphrase === 'string' && p.passphrase) {
@@ -36,6 +39,7 @@ export async function saveFullConfig(db, p, actor) {
   }
   if (next.enabled && !next.passphrase) throw new Error('Choose a backup passphrase before turning scheduled backups on.');
   if (next.offboxDir && !path.isAbsolute(next.offboxDir)) throw new Error('The off-box folder must be a full path, for example /backups.');
+  if (next.destinationIds.length && (await enabledDestinations(db, next.destinationIds)).length !== next.destinationIds.length) throw new Error('One of the chosen destinations is turned off or no longer exists.');
   await setSetting(db, 'backup_full', next);
   L.info('full.saved', `Scheduled full-site backups: ${next.enabled ? `${next.frequency}${next.frequency === 'weekly' ? ' (day ' + next.weekday + ')' : ''} at ${next.hourUtc}:00 UTC, keep ${next.keepDaily} daily / ${next.keepWeekly} weekly, off-box ${next.offboxDir || 'not set'}` : 'off'}`, { actor, data: { ...next, passphrase: undefined, passphraseChanged: !!p.passphrase } });
   return { ...cur, ...next, passphrase: undefined, hasPassphrase: !!next.passphrase };
@@ -91,14 +95,21 @@ export async function runFullBackup(db, trigger = 'scheduled', actor = 'schedule
       for (const n of [name, weeklyName].filter(Boolean)) { const dest = path.join(cfg.offboxDir, n); fs.copyFileSync(path.join(backupDir(), n), dest); if (fs.statSync(dest).size !== size) throw new Error(`The copy in ${cfg.offboxDir} is not the same size as the original.`); }
       prune(cfg.offboxDir, 'daily', cfg.keepDaily); prune(cfg.offboxDir, 'weekly', cfg.keepWeekly); offbox = cfg.offboxDir;
     }
+    const sent = [];
+    for (const d of await enabledDestinations(db, cfg.destinationIds)) { // the file is already encrypted by its passphrase; each upload is checked before anything local is trimmed
+      for (const n of [name, weeklyName].filter(Boolean)) await uploadVerified(db, d, path.join(backupDir(), n), n);
+      await pruneRemoteCount(clientFor(d), 'daily', cfg.keepDaily); await pruneRemoteCount(clientFor(d), 'weekly', cfg.keepWeekly); sent.push(d.name);
+    }
     prune(backupDir(), 'daily', cfg.keepDaily); prune(backupDir(), 'weekly', cfg.keepWeekly);
-    status.lastOk = { name, at: Date.now(), size, verified: true, accounts: v.accounts ?? null, engine: v.engine, offbox, trigger };
+    status.lastOk = { name, at: Date.now(), size, verified: true, accounts: v.accounts ?? null, engine: v.engine, offbox, destinations: sent, trigger };
+    audit('backup.run', `Full-site backup ${name} made and verified (${trigger})`, { actor, data: { tier: 'full', name, size, trigger, ok: true, destinations: sent } });
     L.info('full.ok', `Scheduled full-site backup ${name} done and verified (${(size / 1024).toFixed(0)} KB, ${Date.now() - t0} ms${offbox ? ', copied to ' + offbox : ', no off-box copy'})`, { actor, data: { name, size, offbox, trigger, ms: Date.now() - t0 } });
     await setSetting(db, 'backup_full_status', status); return { ok: true, ...status.lastOk };
   } catch (e) {
     status.lastFail = { at: Date.now(), error: String(e.message).slice(0, 400), trigger };
+    audit('backup.run', `Full-site backup failed (${trigger}): ${String(e.message).slice(0, 300)}`, { actor, level: 'error', data: { tier: 'full', trigger, ok: false } });
     L.error('full.failed', `Scheduled full-site backup failed: ${e.message}`, { actor, data: { error: e.message, trigger } });
-    await setSetting(db, 'backup_full_status', status); await notifyFailure(db, cfg, e.message); return { ok: false, error: e.message };
+    await setSetting(db, 'backup_full_status', status); await raiseFailing(db, 'The full-site backup is failing', e.message); await notifyFailure(db, cfg, e.message); return { ok: false, error: e.message };
   }
 }
 

@@ -5,7 +5,7 @@ import { newId } from '../../core/ids.mjs';
 import { areaLogger } from '../../logging/logger.mjs';
 import { getSetting } from '../../db/settings.mjs';
 import { enqueueMail, processQueue } from '../mail/index.mjs';
-import { getFullStatus } from '../backup/index.mjs';
+import { getFullStatus, getTierStatus, tierFailing } from '../backup/index.mjs';
 import { snapshot } from '../system/metrics.mjs';
 import { billingState, DAY } from '../billing/state.mjs';
 
@@ -35,10 +35,15 @@ export async function resolve(db, key) {
 }
 export const dismiss = (db, id) => db.run("UPDATE alerts SET status = 'dismissed' WHERE id = ? AND status = 'open'", [id]);
 export const openCount = async (db) => Number((await db.get("SELECT COUNT(*) AS n FROM alerts WHERE status = 'open'")).n);
+const CHUNK = 100;
+// Alerts that were set aside or cleared are history: the newest 100 come with the list, `more` gets the next 100.
+const history = (db, status, order, offset = 0) => db.all(`SELECT * FROM alerts WHERE status = ? ORDER BY ${order} DESC LIMIT ${CHUNK} OFFSET ?`, [status, offset]);
+export const more = async (db, status, offset) => (status === 'resolved' || status === 'dismissed') ? history(db, status, status === 'resolved' ? 'resolved_at' : 'last_at', Math.max(0, Number(offset) || 0)) : [];
 export const list = async (db) => ({
   open: await db.all("SELECT * FROM alerts WHERE status IN ('open') ORDER BY last_at DESC"),
-  quiet: await db.all("SELECT * FROM alerts WHERE status = 'dismissed' ORDER BY last_at DESC LIMIT 20"),
-  recent: await db.all("SELECT * FROM alerts WHERE status = 'resolved' ORDER BY resolved_at DESC LIMIT 20"),
+  quiet: await history(db, 'dismissed', 'last_at'),
+  recent: await history(db, 'resolved', 'resolved_at'),
+  totals: { quiet: Number((await db.get("SELECT COUNT(*) AS n FROM alerts WHERE status = 'dismissed'")).n), recent: Number((await db.get("SELECT COUNT(*) AS n FROM alerts WHERE status = 'resolved'")).n) },
 });
 
 // One pass over every check. Each check either raises (condition true) or clears (condition gone).
@@ -53,8 +58,9 @@ export async function evaluate(db) {
     detail: `${failed} message${failed === 1 ? '' : 's'} failed in the last 24 hours and ${stuck} ${stuck === 1 ? 'has' : 'have'} waited over 30 minutes.${lastErr ? ` Last problem: ${lastErr}` : ''} Open Email, then Health.` });
 
   // Backups: the newest scheduled full-site backup failed.
-  const st = await getFullStatus(db), bad = st.lastFail && (!st.lastOk || st.lastFail.at > st.lastOk.at);
-  await set(!!bad, { kind: 'backup.failing', level: 'error', title: 'The scheduled backup is failing', detail: bad ? `The last attempt failed: ${String(st.lastFail.error || 'unknown problem').slice(0, 300)}` : '' });
+  const st = await getFullStatus(db), ts = await getTierStatus(db), bad = st.lastFail && (!st.lastOk || st.lastFail.at > st.lastOk.at);
+  const tierBad = ['frequent', 'offsite'].find(t => tierFailing(ts[t])); // snapshots and offsite copies (see services/backup/runner.mjs)
+  await set(!!bad || !!tierBad, { kind: 'backup.failing', level: 'error', title: 'The scheduled backup is failing', detail: bad ? `The last attempt failed: ${String(st.lastFail.error || 'unknown problem').slice(0, 300)}` : tierBad ? `The last ${tierBad === 'frequent' ? 'snapshot' : 'offsite copy'} failed: ${String(ts[tierBad].lastFail.error || 'unknown problem').slice(0, 300)}` : '' });
 
   // Sign-ins: a burst of failed, refused or wrong-code attempts.
   const n = Number((await db.get("SELECT COUNT(*) AS n FROM event_log WHERE area = 'auth' AND event IN ('login.failed','login.blocked','mfa.failed') AND ts > ?", [now - HOUR])).n);

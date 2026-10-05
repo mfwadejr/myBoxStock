@@ -34,7 +34,7 @@ A free plan is a complimentary account that never expires. Your site administrat
 
 ## The chip in the top bar
 
-At the top of every page you can see your business name, a small coloured label (when one applies), your username and role, and a **Sign out** button. The small coloured label is the plan chip.
+At the top of every page you can see your business name, a small coloured label (when one applies) and a button with your username. That button opens your account menu (your role, your business, **Sign out**; see [Getting started](#/docs/getting-started)). The small coloured label is the plan chip.
 
 - **Free trial · N days left** (blue): you are on a trial. N counts down each day. When it is one day it says "1 day left". Use it as a reminder to decide before it runs out.
 - **Trial ended — read-only** (red): your trial or your paid period has ended and the account is now read-only.

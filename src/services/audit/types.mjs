@@ -1,0 +1,50 @@
+// SERVICES / audit-types — which log events make up the audit trail. To add a kind of entry, add one row here (and nothing else).
+// A row: { group, label, area, events: [...], hostRealm? }. hostRealm limits sign-in events to the Host Console (never reseller sign-ins).
+// The first group, 'actions', is every event in the host and accounts areas that has a named administrator (settings, accounts, admins...).
+export const ACTION_AREAS = ['host', 'accounts'];
+
+export const AUDIT_GROUPS = [
+  { id: 'actions', label: 'Settings and accounts' },
+  { id: 'firewall', label: 'Firewall and access' },
+  { id: 'blocks', label: 'Bans and lockouts' },
+  { id: 'signins', label: 'Host Console sign-ins' },
+  { id: 'twofactor', label: 'Two-factor' },
+  { id: 'backups', label: 'Backups' },
+];
+
+export const AUDIT_TYPES = [
+  { group: 'firewall', label: 'Firewall rule added', area: 'security', events: ['rule.added'] },
+  { group: 'firewall', label: 'Firewall rule changed', area: 'security', events: ['rule.toggled'] },
+  { group: 'firewall', label: 'Firewall rule removed', area: 'security', events: ['rule.removed'] },
+  { group: 'firewall', label: 'Rate-limit settings changed', area: 'security', events: ['limits.changed'] },
+  { group: 'firewall', label: 'Host Console access limit changed', area: 'security', events: ['host_access.changed'] },
+  { group: 'blocks', label: 'Ban created', area: 'security', events: ['ban.created'] },
+  { group: 'blocks', label: 'Ban lifted', area: 'security', events: ['ban.lifted'] },
+  { group: 'blocks', label: 'Host Console sign-in locked', area: 'auth', events: ['lockout.started'], hostRealm: true },
+  { group: 'signins', label: 'Host Console sign-in', area: 'auth', events: ['login.ok'], hostRealm: true },
+  { group: 'signins', label: 'Host Console failed sign-in', area: 'auth', events: ['login.failed', 'login.blocked', 'mfa.failed'], hostRealm: true },
+  { group: 'signins', label: 'Host Console sign-out', area: 'auth', events: ['logout'], hostRealm: true },
+  { group: 'twofactor', label: 'Two-factor turned on', area: 'auth', events: ['mfa.enabled'], hostRealm: true },
+  { group: 'twofactor', label: 'Two-factor turned off', area: 'auth', events: ['mfa.disabled'], hostRealm: true },
+  { group: 'twofactor', label: 'Two-factor recovery code used', area: 'auth', events: ['mfa.recovery_used'], hostRealm: true },
+  { group: 'backups', label: 'Backup made', area: 'host', events: ['backup.run'] },
+  { group: 'backups', label: 'Backup restored', area: 'host', events: ['backup.restore'] },
+  { group: 'backups', label: 'Backup downloaded', area: 'host', events: ['backup.download'] },
+  { group: 'backups', label: 'Backup deleted', area: 'host', events: ['backup.delete'] },
+  { group: 'backups', label: 'Backup test restore', area: 'host', events: ['backup.test_restore'] },
+  { group: 'backups', label: 'Backup destination saved', area: 'host', events: ['backup.destination_saved'] },
+  { group: 'backups', label: 'Backup destination removed', area: 'host', events: ['backup.destination_deleted'] },
+  { group: 'backups', label: 'Backup destination tested', area: 'host', events: ['backup.destination_test'] },
+  { group: 'backups', label: 'Backup settings changed', area: 'host', events: ['backup.settings_saved'] },
+];
+
+// SQL for "this event row belongs to the audit trail" (optionally only one group). Parameters are returned in order.
+export function auditScope(group = '') {
+  const parts = [], params = [];
+  if (!group || group === 'actions') { parts.push(`(e.area IN (${ACTION_AREAS.map(() => '?').join(',')}) AND e.actor IS NOT NULL AND e.actor <> '' AND e.event NOT LIKE 'backup.%')`); params.push(...ACTION_AREAS); }
+  for (const t of AUDIT_TYPES.filter(x => !group || x.group === group)) {
+    parts.push(`(e.area = ? AND e.event IN (${t.events.map(() => '?').join(',')})${t.hostRealm ? ` AND e.raw LIKE '%"realm":"host"%'` : ''})`); params.push(t.area, ...t.events);
+  }
+  return { sql: parts.length ? `(${parts.join(' OR ')})` : '1 = 0', params };
+}
+export const labelOf = (area, event) => AUDIT_TYPES.find(t => t.area === area && t.events.includes(event))?.label || '';

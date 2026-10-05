@@ -1,14 +1,14 @@
 ---
 title: Audit trail
-summary: A plain record of what each Host administrator did, when, and from where. This page explains what appears in it, how it differs from Logs, and how to use it to answer "who changed that?".
-keywords: audit trail, audit, who changed, who did this, administrator actions, accountability, history, support history, settings changed, suspended, reset password, everyone, actor filter, search, load more
+summary: A plain record of what each Host administrator did and who signed in to the Host Console: settings, accounts, firewall rules, bans, sign-ins and two-factor changes. This page explains every kind of entry, how it differs from Logs, and how to answer "who changed that?".
+keywords: type filter, system, firewall changes, bans, lockouts, sign-ins, two-factor, audit trail, audit, who changed, who did this, administrator actions, accountability, history, support history, settings changed, suspended, reset password, everyone, actor filter, search, load more
 order: 14
-covers: nav:audit, Everyone, actor filter, Last 24 hours, Last 7 days, Last 30 days, All time, Search actions people addresses Reseller IDs, Load more
+covers: nav:audit, Everyone, All kinds of entry, Type filter, Settings and accounts, Firewall and access, Bans and lockouts, Host Console sign-ins, Two-factor, System, Firewall rule added, Firewall rule changed, Firewall rule removed, Rate-limit settings changed, Host Console access limit changed, Ban created, Ban lifted, Host Console sign-in locked, Host Console sign-in, Host Console failed sign-in, Host Console sign-out, Two-factor turned on, Two-factor turned off, Two-factor recovery code used, Showing N of M actions, actor filter, Last 24 hours, Last 7 days, Last 30 days, All time, Search actions people addresses Reseller IDs, Load more
 ---
 
 ## What the Audit trail is
 
-The Audit trail is a short, readable list of the things Host administrators did. Each line says who did it, what they did, when, from which address, and, when it concerns a customer, which Reseller ID it was about.
+The Audit trail is a readable list of the things Host administrators did and of who got into the Host Console. Each line says who did it, what they did, when, from which address, and, when it concerns a customer, which Reseller ID it was about.
 
 Think of it as the answer to a single question: **who changed that?** If a setting is different from yesterday, an account is suddenly suspended, or an administrator's two-factor was reset, this is the screen that tells you which administrator did it and when.
 
@@ -16,50 +16,68 @@ The page deliberately shows only the Host side of the house. It never includes a
 
 ## What counts as an audit entry
 
-An entry appears here when it passes all of these tests:
+The Audit trail is built from the same stored log as the [Logs](#/docs/logs) screen. An entry appears here when it is one of these two kinds.
 
-1. It was recorded in the **host** area or the **accounts** area of the log. The host area holds Host Console actions. The accounts area holds the support actions an administrator takes on a customer's account.
-2. It has a name attached as the actor. Lines with no name at all are left out. Server events that carry no name (such as starting or stopping) therefore do not appear.
-3. It is not a debug-level line. Fine technical detail is left out.
+1. **An action by a named administrator** in the **host** or **accounts** area of the log: settings, accounts, administrators, plans, email, backups and so on. The entry has a name attached. Lines with no name are left out.
+2. **A security event that is on the list of audited events**: firewall changes, bans, lockouts, Host Console sign-ins and two-factor changes (below). These appear even when no person is attached, in which case the name shows as **System**.
 
-Examples of what you will find:
+Debug-level lines are never shown.
 
-- Settings saved: sign-ups opened or closed, trial length changed, site address changed, sign-in history period changed, server options changed (it lists which options, not secret values), the announcement banner turned on or off.
-- Administrators: a new administrator added, details edited, two-factor reset, temporary password set, signed out everywhere, an administrator deleted.
-- Support actions on customer accounts: reset links sent, temporary passwords set, two-factor reset, users signed out or deleted, an email marked as verified, an account suspended, restored or deleted, a payment receipt recorded or removed. These support actions require the administrator to type a short reason, and the reason is kept with the entry.
-- Plan changes saved from the Plans screen.
-- Backups: a backup downloaded, or a restore requested.
-- Email: wording of a message changed or reset, a test email sent, failed messages sent back to the queue.
-- Alerts: an alert set aside.
-- Updates: the release address saved or a check for a new release run.
-- Logs: a log export (the fact that it was exported and how many entries, not the contents).
-- Removing a link between a Host administrator and a reseller account.
+### Everything you will find
 
-Because the Audit trail is built from the same stored log as the [Logs](#/docs/logs) screen, it follows the same retention rules. If you set the activity log to be kept for 90 days, audit entries older than 90 days are gone.
+**Settings and accounts** (the first group of entries):
+
+- Settings saved: sign-ups opened or closed, trial length, site address, sign-in history period, the announcement banner on or off, and server option changes. A server option entry lists only what changed, with the value before and after.
+- Administrators: added, edited, two-factor reset, temporary password set, signed out everywhere, deleted.
+- Support actions on a customer's account: reset links sent, temporary passwords set, two-factor reset, users signed out, disabled or deleted, an email marked as confirmed, an account suspended, restored or deleted, a receipt recorded or removed. The reason the administrator typed is kept with the entry.
+- Plan changes.
+- Backups: a backup or snapshot run (scheduled or by hand, by the name "scheduler" when it ran by itself), a restore, a download, a delete, a test restore, a destination saved, tested or removed, and backup settings saved. None of them contain a password or key.
+- Email: wording changed or reset, a test sent, failed messages resent.
+- Alerts set aside, release address saved, a log export, a link to a reseller account removed.
+
+**Firewall and access:**
+
+- Firewall rule added, Firewall rule changed (turned on or off) and Firewall rule removed.
+- Rate-limit settings changed.
+- Host Console access limit changed.
+
+**Bans and lockouts:**
+
+- Ban created. The server creates bans by itself when an address breaks the limits too often, so the name shows **System**.
+- Ban lifted, with the administrator who lifted it.
+- Host Console sign-in locked: a Host Console sign-in name was locked for 15 minutes after six wrong attempts.
+
+**Host Console sign-ins:**
+
+- Host Console sign-in, Host Console failed sign-in and Host Console sign-out.
+
+**Two-factor:**
+
+- Two-factor turned on, Two-factor turned off and Two-factor recovery code used.
+
+Each entry says who, what, when and from which address. Reseller sign-ins never appear here, and neither does anything from inside a reseller's account. Only your own console's sign-ins are listed.
+
+Because the Audit trail follows the same retention rules as Logs, if you set the activity log to be kept for 90 days, audit entries older than 90 days are gone.
 
 ## What is not in the Audit trail
 
-Some changes you might expect to see here are recorded in other areas of the log instead. Knowing this saves a lot of head-scratching:
-
-- **Firewall changes** (rate limits, address rules, the Host Console access list, lifting a ban) are written to the security area. Search for them in Logs by choosing the area **security**.
-- **The backup files themselves** (creating, deleting, scheduling) are written to the backup area. Downloads and restore requests do appear in the Audit trail, but the "backup created" lines are in Logs under **backup**.
-- **Sign-ins, failed sign-ins and lockouts** are in the auth area, not here. They are about people trying to get in, not about administrators changing things.
-- **Server events** such as starting, stopping, disk warnings and updates applied have no person behind them, so they are in Logs under **system**.
+- **Everything else the server does**: server start and stop, disk warnings, updates applied and other events with no person behind them. They are in Logs under **system**.
+- **Backup files being created, thinned or deleted by the schedule** are in Logs under **backup**. The Audit trail shows the runs and the actions people took.
+- **Reseller sign-ins and failed sign-ins.** They are about customers, not about the Host, and are in Logs only (area auth).
 - **Customers' own activity** is not visible to the Host at all.
+- **Changes made directly on the server**, such as editing the container's settings, leave no audit line.
 
-A good habit: check the Audit trail first for "an administrator did something", and check Logs when the change was to the firewall, to backups or to the server.
+A good habit: check the Audit trail first for "an administrator did something" or "who got into the console", and check Logs when you need the full story.
 
 ## How it differs from Logs
 
-| | Audit trail | Logs |
-|---|---|---|
-| Question it answers | Who changed that? | What has the server been doing? |
-| Contents | Only actions by Host administrators (host and accounts areas, with a named person) | Every area except customer activity and web requests |
-| Levels | Info, warn and error only | Debug through error |
-| Detail | One line each: person, time, address, Reseller ID, action name, message | The same plus a "raw" technical copy, level and area labels |
-| Filters | Person, time range, search | Area, level, time range, search, quick filters |
-| Export | None | CSV and JSON |
-| Typical reader | The Owner checking on the team | Anyone troubleshooting a problem |
+- **Question it answers.** Audit trail: who changed that? Logs: what has the server been doing?
+- **Contents.** Audit trail: actions by Host administrators, plus firewall, ban, lockout, Host Console sign-in and two-factor entries. Logs: every area except customer activity and web requests.
+- **Levels.** Audit trail: info, warn and error only. Logs: debug through error.
+- **Detail.** Audit trail: one line each, with a friendly label. Logs: the same plus a raw technical copy, level and area labels.
+- **Filters.** Audit trail: person, type, time range, search. Logs: area, level, time range, search, quick filters.
+- **Export.** Audit trail: none. Logs: CSV and JSON.
+- **Typical reader.** Audit trail: the Owner checking on the team. Logs: anyone troubleshooting.
 
 If you only remember one thing: Audit trail is for accountability, Logs is for troubleshooting.
 
@@ -71,30 +89,42 @@ Each line shows:
 - The administrator's username, in bold.
 - The Reseller ID, if the action was about a customer's account.
 - The address the administrator was connecting from.
-- A label with the action name, such as `settings.site_url` or `user.temp_password`.
+- A label in plain words, such as "Firewall rule added" or "Host Console failed sign-in". Hover over the label to see the raw event code, such as `rule.added`. Entries that have no friendly label show the code itself.
+- Where the person is missing, the name shows as **System**. That is a change the server made on its own, such as a ban created automatically.
 - A message in full sentences, such as "Site address for email links set to https://boxes.example.com".
 
-Newest entries are first. Up to 100 are loaded at a time. The line below the list shows how many are on screen, for example "Showing 100 actions - more available", and the **Load more** button adds the next 100. When nothing matches, the list says "Nothing matches. Try a wider time range."
+Newest entries are first. On tablets and computers the list scrolls inside a box of its own, about 640 pixels tall, with the filters staying above it. On phones the page scrolls instead. Up to 100 entries are loaded at a time. The line below the list shows how many are on screen, for example "Showing 100 of 480 actions", and the **Load more** button adds the next 100. When nothing matches, the list says "Nothing matches. Try a wider time range."
 
 Entries are only read, never edited. There is no way to delete or change an audit line from the Host Console.
 
 ## The filters
 
-There are three controls above the list.
+There are four controls above the list: the person, the type, the time range and a search box.
 
 ### Person filter
 
 The first menu starts at **Everyone**. It lists every username that has an entry in the log (up to 200 of them), alphabetically. Choose one name to see only what that person did. Names are matched without regard to capital letters. A person who never did anything auditable does not appear in the menu.
 
+### Type
+
+The second menu starts at **All kinds of entry**. It narrows the list to one group:
+
+- **Settings and accounts**: what administrators changed (settings, accounts, plans, email, administrators).
+- **Firewall and access**: firewall rules, rate-limit settings and the Host Console access limit.
+- **Bans and lockouts**: bans created and lifted, and Host Console sign-ins that were locked.
+- **Host Console sign-ins**: successful and failed sign-ins and sign-outs.
+- **Two-factor**: turned on, turned off and recovery codes used.
+- **Backups**: backups made (by hand or by the schedule, shown as "scheduler"), restores, downloads, deletions, test restores, destinations saved, tested or removed, and backup settings changes.
+
 ### Time range
 
-The second menu has four choices: **Last 24 hours**, **Last 7 days**, **Last 30 days** (the starting choice) and **All time**. "All time" means everything still kept; it cannot go back further than your log retention period.
+The third menu has four choices: **Last 24 hours**, **Last 7 days**, **Last 30 days** (the starting choice) and **All time**. "All time" means everything still kept; it cannot go back further than your log retention period.
 
 ### Search
 
-The search box ("Search actions, people, addresses, Reseller IDs") looks through the message, the action name, the administrator's name, the address and the Reseller ID. It is not case sensitive and runs shortly after you stop typing. It matches parts of words.
+The search box ("Search actions, people, addresses, Reseller IDs") looks through the message, the event code, the administrator's name, the address and the Reseller ID. It is not case sensitive and runs shortly after you stop typing. It matches parts of words.
 
-Combine the controls. For example, pick a person, choose All time, and type a Reseller ID to see everything that person did to one customer.
+Combine the controls. For example, pick a person, choose All time, and type a Reseller ID to see everything that person did to one customer. Or choose the type **Host Console sign-ins** and the last 24 hours to see who has been signing in.
 
 ## How to answer "who changed that?"
 
@@ -120,7 +150,17 @@ Combine the controls. For example, pick a person, choose All time, and type a Re
 
 ### Example 4: a firewall rule is blocking someone
 
-The Audit trail will not show it. Open [Logs](#/docs/logs), choose the area **security**, and search for the address. The log line says who added the rule and when.
+1. Choose the type **Firewall and access**.
+2. Type the address in the search box.
+3. Read who added, changed or removed the rule, and when.
+
+### Example 5: a ban you did not expect
+
+Choose the type **Bans and lockouts**. "Ban created" by **System** means the server banned the address after too many violations. "Ban lifted" shows which administrator ended it. A "Host Console sign-in locked" line shows a sign-in name that was locked for 15 minutes.
+
+### Example 6: did anyone else sign in to the Host Console?
+
+Choose the type **Host Console sign-ins**. Look for sign-ins from addresses you do not recognise, and a run of "Host Console failed sign-in" lines. Check the **Two-factor** type for two-factor that was turned off or a recovery code that was used.
 
 ## Tips for using it well
 
@@ -134,6 +174,6 @@ The Audit trail will not show it. Open [Logs](#/docs/logs), choose the area **se
 ## Common mistakes
 
 - Looking only at the default Last 30 days. An old change needs All time.
-- Expecting firewall changes or sign-in failures here. They live in Logs.
+- Expecting reseller sign-ins here. Only Host Console sign-ins are listed.
 - Forgetting the command line. Running `reset-host-admin` on the server is recorded here too, but with the actor shown as `cli` instead of a person's username, because nobody signed in to the console to do it. A `cli` entry means someone with access to the server itself did it. Other changes made directly on the server, such as editing the container's settings, leave no audit line at all.
 - Treating the Audit trail as proof of what a customer did. It records only Host administrators.

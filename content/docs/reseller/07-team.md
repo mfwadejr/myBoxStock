@@ -1,9 +1,9 @@
 ---
 title: Team
 summary: Give your staff their own sign-ins, choose what each person is allowed to do, reset a forgotten password, and switch off or remove someone who has left.
-keywords: team, staff, users, add person, employees, roles, administrator, standard, view, permissions, reset access, reset password, disable, enable, delete user, 2FA, sign out, last sign-in, temporary password, email confirmation
+keywords: team, staff, users, add person, employees, roles, administrator, standard, view, permissions, reset access, reset password, disable, enable, delete user, 2FA, sign out, account menu, backup, last sign-in, temporary password, email confirmation
 order: 7
-covers: nav:team, Add person, Username, Email (optional), Role, Temporary password, Add, Cancel, Role, 2FA, Last sign-in, From IP, Signed in on, Reset access, New temporary password, Reset, Delete, Disable, Enable, Administrator, Standard, View, users.manage, Reseller ID
+covers: nav:team, Team members are not in the backup, Sign out in the account menu, Add person, Username, Email (optional), Role, Temporary password, Add, Cancel, Role, 2FA, Last sign-in, From IP, Signed in on, Reset access, New temporary password, Reset, Delete, Disable, Enable, Administrator, Standard, View, users.manage, Reseller ID
 ---
 
 ## What the Team page is for
@@ -53,7 +53,7 @@ For everyday staff. A Standard user can:
 - record sales on **Quick sale** and see **Sales**, including voiding a sale,
 - see and change **Customers**.
 
-A Standard user cannot open **Team**, **Settings** or **Activity**, cannot change a warranty on an existing sale, cannot export everything or close the account, and can only give discounts up to the limit you set in [Settings](#/docs/settings) (the default is 10 percent of a sale).
+A Standard user cannot open **Team**, **Settings**, **Backup and restore** or **Activity**, cannot change a warranty on an existing sale, cannot make or restore a backup, export everything or close the account, and can only give discounts up to the limit you set in [Settings](#/docs/settings) (the default is 10 percent of a sale).
 
 ### View
 
@@ -154,7 +154,11 @@ Rules:
 
 ## Signing people out
 
-You do not need a separate "sign out" button. People are signed out of every device automatically when you press **Disable**, **Reset access** or **Delete**. The **Signed in on** column shows how many devices a person is currently using, so you can see the effect. Each person can also sign themselves out at any time with the **Sign out** button in the app's header.
+There is no sign-out button on the Team page. People are signed out of every device automatically when you press **Disable**, **Reset access** or **Delete**. The **Signed in on** column shows how many devices a person is currently using, so you can see the effect. Each person can also sign themselves out at any time. Tap or click your username at the top right to open the account menu, then choose **Sign out**. (On a phone the menu rises from the bottom of the screen. The **More** sheet is only for moving between pages, so Sign out is not there.)
+
+## Team members and backups
+
+A backup file made on the [Backup and restore](#/docs/backup-and-restore) page does **not** contain your team: not the people, not their user types, not their passwords or sign-in history. Restoring a backup never adds, removes or changes a person. If you ever have to start a new account, add your people again on this page. Write down who has which user type somewhere safe.
 
 ## Practical advice
 

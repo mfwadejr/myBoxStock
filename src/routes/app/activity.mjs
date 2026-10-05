@@ -4,6 +4,7 @@ import { need, tenantLog } from './context.mjs';
 import { describeDevice } from '../../services/signins/device.mjs';
 import { sessionId } from '../../services/signins/index.mjs';
 
+const CHUNK = 100;   // rows per request
 const SID = /^[0-9a-f]{16}$/;
 const HIST = 'id, login, ts, result, reason, ip, device, new_ip, attempts';
 const shapeHistory = (rows) => rows.map((x) => ({ ...x, ts: Number(x.ts), newIp: !!Number(x.new_ip), attempts: Number(x.attempts), new_ip: undefined }));
@@ -15,9 +16,9 @@ export function activityRoutes(db) {
 
   r.get('/me', async (req, res) => {
     const before = Number(req.query.before) || Date.now() + 1;
-    const rows = await db.all(`SELECT ${HIST} FROM sign_in_history WHERE user_id = ? AND account_id = ? AND ts < ? ORDER BY ts DESC LIMIT 51`, [req.subject.id, req.subject.account_id, before]);
-    const more = rows.length > 50;
-    res.json({ history: shapeHistory(rows.slice(0, 50)), more, sessions: await sessionsFor('s.subject_id = ? AND s.account_id = ?', [req.subject.id, req.subject.account_id], req.session.token_hash) });
+    const rows = await db.all(`SELECT ${HIST} FROM sign_in_history WHERE user_id = ? AND account_id = ? AND ts < ? ORDER BY ts DESC LIMIT ${CHUNK + 1}`, [req.subject.id, req.subject.account_id, before]);
+    const more = rows.length > CHUNK, total = req.query.before ? undefined : Number((await db.get('SELECT COUNT(*) AS n FROM sign_in_history WHERE user_id = ? AND account_id = ?', [req.subject.id, req.subject.account_id])).n);
+    res.json({ history: shapeHistory(rows.slice(0, CHUNK)), more, total, sessions: await sessionsFor('s.subject_id = ? AND s.account_id = ?', [req.subject.id, req.subject.account_id], req.session.token_hash) });
   });
   r.post('/sessions/:sid/revoke', async (req, res) => {
     if (!SID.test(req.params.sid)) return res.status(400).json({ error: 'Bad session id.' });
@@ -27,8 +28,9 @@ export function activityRoutes(db) {
   });
   r.get('/team', need('users.manage'), async (req, res) => {
     const before = Number(req.query.before) || Date.now() + 1;
-    const rows = await db.all(`SELECT ${HIST} FROM sign_in_history WHERE account_id = ? AND ts < ? ORDER BY ts DESC LIMIT 51`, [req.subject.account_id, before]);
-    res.json({ history: shapeHistory(rows.slice(0, 50)), more: rows.length > 50, sessions: await sessionsFor('s.account_id = ?', [req.subject.account_id], req.session.token_hash) });
+    const rows = await db.all(`SELECT ${HIST} FROM sign_in_history WHERE account_id = ? AND ts < ? ORDER BY ts DESC LIMIT ${CHUNK + 1}`, [req.subject.account_id, before]);
+    const total = req.query.before ? undefined : Number((await db.get('SELECT COUNT(*) AS n FROM sign_in_history WHERE account_id = ?', [req.subject.account_id])).n);
+    res.json({ history: shapeHistory(rows.slice(0, CHUNK)), more: rows.length > CHUNK, total, sessions: await sessionsFor('s.account_id = ?', [req.subject.account_id], req.session.token_hash) });
   });
   r.post('/team/sessions/:sid/revoke', need('users.manage'), async (req, res) => {
     if (!SID.test(req.params.sid)) return res.status(400).json({ error: 'Bad session id.' });

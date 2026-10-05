@@ -11,7 +11,7 @@ export const EMAIL_THEME = {
   '--color-primary-on': '#ffffff',
   '--radius-lg': '18px',
   '--radius-pill': '999px',
-  '--font-sans': '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif',
+  '--font-sans': '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif',
 };
 const T = EMAIL_THEME, font = T['--font-sans'].replace(/"/g, "'");
 export const emailStyles = {

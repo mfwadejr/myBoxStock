@@ -16,7 +16,7 @@ The page refreshes itself every 10 seconds while you keep it open, so you can le
 
 ## The heading line
 
-Under the page title you see the server's host name, how long it has been running ("up" followed by a duration) and the app version, for example `v0.18.2`. Why it matters:
+Under the page title you see the server's host name, how long it has been running ("up" followed by a duration) and the app version, for example `v0.20.0`. Why it matters:
 
 - A very short uptime that you did not expect means the server restarted, perhaps after an update, a crash or a power cut. Check [Logs](#/docs/logs) and [Alerts](#/docs/alerts).
 - The version tells you what you are running when you compare it to the [Updates](#/docs/updates) page.
@@ -46,7 +46,7 @@ This appears when you have asked for a restore from [Backups](#/docs/backups) an
 
 ## The Backups card
 
-This card tells you whether your own full-site backup is working. It shows:
+This card tells you whether your scheduled full-site backup is working. It shows:
 
 - the last good full-site backup, how long ago it finished, its size, that it was verified, and whether it was copied off-box (to a place outside the server) or not;
 - if the latest attempt failed, a red line with the reason.
@@ -60,7 +60,9 @@ A coloured label on the right sums it up:
 
 Why you care: a backup that quietly stopped is the classic way servers lose everything. Treat red as urgent. See [Backups](#/docs/backups). Remember this is a backup of the server. It does not replace the customers' own exports.
 
-> "No off-box copy" means the backup lives on the same machine as the server. If that machine's disk dies, the backup dies with it. Add an off-box folder under Backups.
+> "No off-box copy" means the backup lives on the same machine as the server. If that machine's disk dies, the backup dies with it. Choose a destination under Backups so a copy is sent away.
+
+This card follows the full-site backup only. The Backups page has more: its status strip also shows the newest snapshot or offsite copy, when the next run is due, how much space is used, and a red banner when frequent snapshots or offsite copies fail. A failing snapshot or offsite copy also raises an alert, so the red bar appears even though this card may still say Healthy.
 
 ## The Plans card
 
@@ -87,7 +89,7 @@ Three cards show the machine's resources. Each has a big percentage, a bar that 
 ## Server and Protection cards
 
 - **Server** shows the operating system, the Node version (the engine the app runs on) and the processor model. It is mostly for support conversations: tell whoever helps you these.
-- **Protection** counts firewall activity since the server last started: **blocked** requests, **rate-limited** requests (people who asked too fast and were slowed), and **banned now** (addresses currently refused). Next to them is the mail summary: how many messages were sent and queued, plus a red count of failed ones if any.
+- **Protection** counts firewall activity since the server last started: **blocked** requests, **rate-limited** requests (people who asked too fast and were slowed), and **banned now** (addresses currently refused). The blocked and rate-limited counts start again from zero after a restart, but bans do not: an active ban is saved and is still in force after a restart or an update, so **banned now** can be above zero straight after the server starts. Next to them is the mail summary: how many messages were sent and queued, plus a red count of failed ones if any.
 
 What is normal: a public website attracts bots, so some blocked and rate-limited requests are expected. A sudden large jump may mean someone is hammering the site; open [Firewall](#/docs/firewall) and [Logs](#/docs/logs) to see from where.
 

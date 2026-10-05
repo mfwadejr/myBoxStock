@@ -1,9 +1,9 @@
 ---
 title: Troubleshooting and FAQ
 summary: Problems you are likely to meet as the Host, grouped by symptom, with the cause, the fix and where to read more. Ends with a general FAQ.
-keywords: troubleshooting, problem, error, not found, locked out, blocked, proxy, email not arriving, resend, confirmation link, backup failed, restore, trial, read-only, two-factor, recovery, FAQ, help
+keywords: test connection, sftp identity, restore notice, lockouts persist, camera, scanning, diagnostics, destination, troubleshooting, problem, error, not found, locked out, blocked, proxy, email not arriving, resend, confirmation link, backup failed, restore, trial, read-only, two-factor, recovery, FAQ, help
 order: 18
-covers: Not Found, host_console.blocked, Reverse proxy in front of the site, Site is behind Cloudflare, Resend, Resend all failed, Site address, Health tab, Send a test, Run one now, Restore, Extend trial, Change plan, Set up two-factor, reset-host-admin, reset-server-options, HOST_ALLOW_ANY, Mark email as confirmed, Email a password reset link, Reset two-factor authentication, Recovery key
+covers: Not Found, host_console.blocked, Reverse proxy in front of the site, Site is behind Cloudflare, Resend, Resend all failed, Site address, Health tab, Send a test, Run one now, Restore, Extend trial, Change plan, Set up two-factor, reset-host-admin, reset-server-options, HOST_ALLOW_ANY, Mark email as confirmed, Email a password reset link, Reset two-factor authentication, Recovery key, Test connection, Take a snapshot now, Send one now, Lift, Copy diagnostics, Try again, decrypt-backup, SFTP identity, Server identity pinned, restore notice, Backup is failing
 ---
 
 ## How to use this page
@@ -62,7 +62,7 @@ If the wrong setting has locked you out, use `node server.mjs reset-server-optio
 
 **Cause.** Either the limits are too tight for your traffic, or (more often) every visitor shares one address because of the proxy problem above.
 
-**Fix.** Fix the proxy count first. If it is correct, raise **Requests per IP** or **Sign-in attempts per IP** on the Firewall page. The defaults are 300 requests per 60 seconds and 10 sign-in attempts per 300 seconds, with a 15 minute ban after 5 violations. A trusted address, such as an office with many staff behind one connection, can be added with **Skip rate limits**. Banned addresses are listed on the page, and **Lift** removes a ban straight away.
+**Fix.** Fix the proxy count first. If it is correct, raise **Requests per IP** or **Sign-in attempts per IP** on the Firewall page. The defaults are 300 requests per 60 seconds and 10 sign-in attempts per 300 seconds, with a 15 minute ban after 5 violations. A trusted address, such as an office with many staff behind one connection, can be added with **Skip rate limits**. Banned addresses are listed on the page, and **Lift** removes a ban straight away. Bans survive a restart, so restarting the server does not clear them.
 
 ## Email is not arriving
 
@@ -75,6 +75,7 @@ Open [Email](#/docs/email) and start on the **Health** tab. It tells you whether
 - **The relay refuses the login.** Check the username and password. Some providers need an app password rather than the normal one.
 - **Wrong port or TLS setting.** Use port 587 and leave **Use TLS from the start** off, or port 465 with it on. The port is fixed at 465 while that box is ticked.
 - **The HELO name is wrong.** Some receiving servers reject mail when the name announced by your server does not look like a real host name. Set **Server name announced when sending (HELO)** to a proper name that resolves to your server.
+- **Mail arrives but lands in spam.** Open the Health tab and look at the **Sender checks** card. It looks up SPF, DMARC and DKIM for your From address's domain and tells you what is missing. DKIM "not found" only matters if your relay does not sign your mail; type your relay's selector in the box and press **Check again**.
 - **Nothing seems wrong but nothing arrives.** Use **Send a test** (save first). The result appears under the button in plain words.
 
 Messages are tried up to five times. After the fifth failure the message is marked **failed** and the receiving server's reason is kept with it. When you have fixed the cause, use **Resend** on one message or **Resend all failed** under Recent messages.
@@ -108,34 +109,92 @@ Links already in emails that were sent before the change keep the old address. F
 3. In Accounts, open the account, pick the person under People, and choose **Resend the confirmation email**.
 4. If you have checked the person's identity another way (a phone call, for instance), choose **Mark email as confirmed**. You are asked for a reason, which is saved in the log with your name. Use it sparingly.
 
-## A scheduled backup is failing
+## A backup is failing
 
-**Cause.** The Overview and Backups pages show the last good backup and the last failure, with the error. Common reasons:
+**Cause.** The status strip on the Backups page and the red alert "The scheduled backup is failing" name which kind failed (snapshot, offsite copy or full-site backup) and the reason. Common reasons:
 
-- The **Off-box folder** is not mounted, not writable, or has run out of space. In Docker the folder must be added as a volume first.
-- The server's own disk is full. The "Storage is almost full" alert appears at 90 percent.
+- The destination is not reachable, or its password or key changed. Press **Test connection** on its card to see the exact reason.
+- A NAS that is mounted through Docker is not mounted, or is not writable.
+- The server's own disk is full. The "Storage is almost full" alert appears at 90 percent. The cost line on the Backups page turns red when your settings will not fit.
+- No backup passphrase is saved, so full-site backups and anything sent to a destination cannot run. The error says to set it on the Full-site backups tab.
+- The saved passphrase or a saved destination password "could not be read": the server's encryption key changed. Enter them again.
 - The database is on PostgreSQL or MariaDB and the dump tools (`pg_dump` or `mysqldump`) are not installed in the container.
-- No passphrase is saved for the scheduled backup.
+- Another backup was running. Only one runs at a time; try again in a minute.
 
-**Fix.** Correct the cause, then use **Run one now** on the Backups page and watch the status line. Each backup is opened and checked after it is written, so a green "verified" means it can really be restored. If **Email Host administrators if a backup fails** is ticked, the Owner is also told by email. The Backups page and [Backups](#/docs/backups) explain the settings.
+**Fix.** Correct the cause, then use **Take a snapshot now**, **Send one now** or **Run one now** on the matching tab and watch the strip. Every backup is opened and checked after it is written, so "verified" means it can really be restored. A failed upload is logged, appears in the [Audit trail](#/docs/audit-trail) and raises the alert at once. See [Backups](#/docs/backups).
 
 Treat a failing backup as urgent. Until one succeeds, you have no recent safety net.
 
+## Test connection fails
+
+Press **Test connection** on the destination's card. The message under it says why. What the common ones mean:
+
+- **The folder is not writable or does not exist.** For a NAS mounted through Docker, check the volume is in `docker-compose.yml`, the container was re-created, and the path is `/backups` (or whatever you mounted). Check the share's permissions for the mapped user.
+- **The smbclient program is not installed.** The Docker image includes it. If you run without Docker, install `smbclient`. Otherwise check the server name, share name, user name, domain and password. A message about a logon failure means the user name or password is wrong.
+- **S3:** a wrong access key or secret key, a bucket that does not exist, a wrong region, or a wrong endpoint. The endpoint must start with `https://`. MinIO usually needs **Use path-style addresses**. Make sure the key may list, write and delete in the bucket.
+- **SFTP:** wrong server, port, user name, password or key. See the next entry for identity messages.
+- **WebDAV:** the address must start with `https://` (or `http://`). Many services want an app password, not the normal one. Check the folder exists.
+- **"Set the backup passphrase ... before turning on a destination."** You cannot turn on any destination except the default folder until a passphrase is saved on the Full-site backups tab.
+- **"The saved password could not be read."** The encryption key changed. Type the password again and save.
+
+## SFTP says the server's identity changed
+
+**Cause.** On the first successful **Test connection**, the page records the SFTP server's identity (its host key fingerprint) and shows it as "Server identity pinned". Every later connection must match it. A mismatch means the server's identity is not the one saved.
+
+**Fix.**
+
+1. Ask: was the SFTP server rebuilt or reinstalled on purpose? If yes, remove the destination and add it again, then press **Test connection** to record the new identity.
+2. If you did not change it, do not carry on. Someone may be pretending to be your server, so check with whoever runs it.
+3. Changing the server name or port on the destination forgets the saved identity, and the next successful test records the new one.
+
+## Customers see a notice that the site was restored
+
+**Cause.** After a restore from the Backups page, the site posts an important (red) announcement to every customer: "The site was restored from a backup taken YYYY-MM-DD HH:MM UTC. Sales or changes made after that time may be missing. Please check your recent activity."
+
+**Fix.** Nothing is wrong. Clear the announcement in [Settings](#/docs/settings) (turn **Show the banner** off and press **Save announcement**) when resellers have had time to check. Resellers who made their own backup file after that time can recover recent work with **Add what is missing**. See [Support and diagnostics](#/docs/support-and-diagnostics). A restore made with the `restore-bundle` command does not post the notice.
+
 ## I need to restore a backup
 
-**Plain database backup on the same server.** On the Backups page, press **Restore** next to the file, type `RESTORE` to confirm and wait. The current database is saved first, then replaced, the server restarts and everyone is signed out. The page reloads by itself after a few seconds.
+1. Open **Backups** and the tab with the file. If you are not sure it is good, press **Test restore** on its row first.
+2. Press **Restore** and read the sheet: which file, when it was taken, how long ago, and that anything entered since will be lost. A safety copy is taken first and the site restarts.
+3. For a full-site `.mbsbak` file, type the passphrase. Type `RESTORE` to confirm.
+4. Wait a few seconds for the console to reload. Everyone is signed out, and customers see the restore notice.
 
-**Full-site backup (a .mbsbak file).** It is protected by the passphrase you chose. You can restore it from the Backups page, or on a new empty server with the command line:
+An **offsite copy** (`.mbsenc`) has no Restore button. Download it, decrypt it with `node server.mjs decrypt-backup`, place the `.db` file in `/data/backup`, then restore it from the Frequent snapshots tab. A **full-site backup** can be restored from the page, or on a new empty server with `restore-bundle`. Both are in [Recovery and emergencies](#/docs/recovery-and-emergencies).
 
-1. Put the file where the container can read it.
-2. Run `BACKUP_PASSPHRASE='your passphrase' node server.mjs restore-bundle --file myboxstock-fullsite-....mbsbak` (in Docker, run it inside the container before first start).
-3. Start the server. Everyone signs in as before.
+**If it will not restore.** The most common cause is a forgotten or mistyped passphrase. It is not stored anywhere readable, so there is no way to recover it. This is why the passphrase must be kept somewhere safe, away from the server.
 
-For PostgreSQL or MariaDB, the restore leaves a file called `restored-dump.sql` in your data folder, which you load with psql or mysql before starting the server.
+> A restore brings back the platform as it was at backup time. Anything customers did after that moment is gone, including new sign-ups. You cannot restore one reseller alone. Tell customers if you ever have to roll back.
 
-**If it will not restore.** The most common cause is a forgotten or mistyped passphrase. It is not stored anywhere readable, so there is no way to recover it. This is why the scheduled backup page asks you to keep your own copy of it. Read [Backups](#/docs/backups) and [Recovery and emergencies](#/docs/recovery-and-emergencies).
+## I was locked out or banned and restarting did not help
 
-> A restore brings back the platform as it was at backup time. Anything customers did after that moment is gone, including new sign-ups. Tell customers if you ever have to roll back.
+**Cause.** Sign-in lockouts and IP bans are saved in the database and survive a restart or an update. This is deliberate, so that restarting cannot let a guesser back in.
+
+**Fix.**
+
+- A locked sign-in name clears itself after 15 minutes. Wait.
+- A banned address clears after the ban length (15 minutes by default), or press **Lift** next to it on the [Firewall](#/docs/firewall) page from another address.
+- A "Block this address" rule never ends by itself. Remove it on the Firewall page.
+- `HOST_ALLOW_ANY` only lifts the Host Console address list. It does not remove bans, blocks or lockouts.
+
+See [Security](#/docs/security) for how lockouts work.
+
+## A reseller sends me "diagnostics" text
+
+It is the output of **Copy diagnostics** on their Backup and restore page. It holds the app version, device, Reseller ID, plan, user counts, two-factor and recovery key status, last backup time and their last warnings and errors. It never has business data. Read it line by line with [Support and diagnostics](#/docs/support-and-diagnostics).
+
+## A reseller says scanning with the phone camera does not work
+
+Almost always one of two things.
+
+1. **The site is not opened over https.** The camera only works on https. Check the Site address in [Settings](#/docs/settings) and your proxy.
+2. **The camera is blocked.** The reseller must allow it in the browser. On an iPhone: Settings, Safari, Camera. Then use **Try again** on the scanner.
+
+If neither helps, ask for the phone and browser, the message the scanner showed, and the diagnostics text. The picture is read on the phone, is never sent to the server and nothing is logged, so there is nothing on your side to check. A keyboard-style hardware scanner is not affected. More in [Support and diagnostics](#/docs/support-and-diagnostics).
+
+## A reseller asks me to restore just their account
+
+You cannot. Backups cover the whole site, are all-or-nothing, and you cannot open the encrypted data. The reseller's own backup file (**Backup and restore**, **Back up now**) is how one account gets its work back. Ask them to restore it with **Choose file** and **Add what is missing**. Explain this kindly, and encourage regular backups.
 
 ## A customer says their trial ended and the app is read-only
 
@@ -163,7 +222,7 @@ If they have lost their phone, the **Owner** opens Security, picks the helper, a
 
 It prints a temporary password for the username `admin` and clears two-factor. You must choose a new password and set up two-factor again at your next sign-in. Details are in [Recovery and emergencies](#/docs/recovery-and-emergencies).
 
-If the message says "Too many failed attempts. Try again in 15 minutes", wait, or lift the ban under Firewall from another address.
+If the message says "Too many failed attempts. Try again in 15 minutes", wait. The lock survives a restart, so restarting does not help. If the cause was a ban on your address, lift it under Firewall from another address.
 
 ## A customer asks me to recover their data, or they lost their password and recovery key
 
@@ -174,7 +233,7 @@ What you can do, safely:
 - **Forgotten password.** Use **Email a password reset link** or **Set a temporary password** for that person in Accounts. They then sign in and choose a new one.
 - **Lost two-factor device.** Use **Reset two-factor authentication** for that person.
 - **Account suspended by mistake.** Choose **Reactivate**.
-- **Account closing.** An account that is closing is kept for 7 days. An Administrator of that account can restore it during that time.
+- **Account closing.** An account that is closing is kept for 7 days. An Administrator of that account can restore it in their app during that time, and you can press **Restore** on the account sheet. After the 7 days the account is erased and cannot be restored.
 
 What you cannot do: read, export, repair or decrypt their inventory, sales or customers. If the account's encryption is set up and nobody has the password or the saved recovery key, the data cannot be opened by anyone. In the Accounts list, a chip saying **No recovery key** is a useful early warning. You can nudge that customer to save theirs, and the [Onboarding](#/docs/onboarding) page shows who has not.
 
@@ -190,7 +249,7 @@ Open [Updates](#/docs/updates). It shows the running version, whether a newer re
 
 ## The Overview shows "A database restore is staged"
 
-A restore has been prepared and will be applied the next time the server restarts. Restart the app when you are ready, remembering that it signs everyone out.
+A restore has been prepared and will be applied the next time the server restarts. Restart the app when you are ready, remembering that it signs everyone out. Restoring from the Backups page restarts the server for you, so you normally only see this banner if the restart did not happen.
 
 ## General FAQ
 
@@ -220,11 +279,11 @@ Use the **Announcement banner** in Settings. It shows one plain-text message (up
 
 ### What does the Host do about backups of customers' data?
 
-You back up the whole platform, which holds each customer's data in the form the customer encrypted it. Backups let you restore the service. They do not give you any way to read the contents. Customers remain responsible for their own exports.
+You back up the whole platform, which holds each customer's data in the form the customer encrypted it. Backups let you restore the service. They do not give you any way to read the contents. Customers remain responsible for their own backups and exports: each Administrator can save their own backup file in the reseller app.
 
 ### How long are logs kept?
 
-By default the database copy of the activity log keeps 90 days, which you can change under Server options in Settings (**Keep the activity log (days)**). Sign-in history per account has its own setting. The [Audit trail](#/docs/audit-trail) records what each Host administrator did.
+By default the database copy of the activity log keeps 90 days, which you can change under Server options in Settings (**Keep the activity log (days)**). Sign-in history per account has its own setting. The [Audit trail](#/docs/audit-trail) records what each Host administrator did, firewall and ban changes, and Host Console sign-ins.
 
 ### Should I use SQLite or PostgreSQL?
 

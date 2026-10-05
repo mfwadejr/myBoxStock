@@ -44,16 +44,21 @@ export function settingsRoutes(db) {
           if ((fw.getLimits().hostConsoleAllowOnly && !listed) || denied) return res.status(400).json({ error: `With that setting the site would see your address as ${then} instead of ${now}, and ${then} is not allowed into the Host Console, so you would be locked out. Add a Host Console rule for ${then} first (Firewall), then change this.`, code: 'PROXY_LOCKOUT' });
         }
       }
+      const was = await runtimeStatus(db);
       const bad = await saveRuntime(db, req.app, req.body.runtime, { secure: req.secure });
       if (bad) return res.status(400).json({ error: bad });
-      hostLog(req, 'info', 'settings.runtime', `Server options changed (${Object.keys(req.body.runtime).join(', ')})`, { data: { keys: Object.keys(req.body.runtime) } });
+      // Audit: only options whose value really changed, with before/after (these are server options, never tenant data).
+      const now = await runtimeStatus(db), changes = Object.keys(now).filter(k => k in req.body.runtime && JSON.stringify(was[k].value) !== JSON.stringify(now[k].value));
+      const show = (v) => v === '' ? 'none' : String(v);
+      if (changes.length) hostLog(req, 'info', 'settings.runtime', `Server options changed: ${changes.map(k => `${k} ${show(was[k].value)} -> ${show(now[k].value)}`).join(', ')}`, { data: { keys: changes, before: Object.fromEntries(changes.map(k => [k, was[k].value])), after: Object.fromEntries(changes.map(k => [k, now[k].value])) } });
+      else hostLog(req, 'info', 'settings.runtime_saved', 'Server options saved with no change', { data: { keys: Object.keys(req.body.runtime) } });
     }
     if (req.body.signInHistoryDays !== undefined) {
       const n = Number(req.body.signInHistoryDays); if (!Number.isInteger(n) || n < 7 || n > 730) return res.status(400).json({ error: 'Sign-in history must be kept for a whole number of days from 7 to 730.' });
       await setSetting(db, 'sign_in_history_days', n);
       hostLog(req, 'info', 'settings.sign_in_history_days', `Sign-in history retention set to ${n} days`, { data: { days: n } });
     }
-    hostLog(req, 'info', 'settings.updated', `Platform settings updated (sign-ups ${req.body.signupsEnabled ? 'open' : 'closed'})`, { data: { signupsEnabled: !!req.body.signupsEnabled } });
+    if (req.body.signupsEnabled !== undefined) hostLog(req, 'info', 'settings.updated', `Platform settings updated (sign-ups ${req.body.signupsEnabled ? 'open' : 'closed'})`, { data: { signupsEnabled: !!req.body.signupsEnabled } });
     res.json({ ok: true });
   });
   return r;

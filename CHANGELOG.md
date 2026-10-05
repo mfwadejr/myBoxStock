@@ -3,6 +3,26 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.20.0] - 2026-10-05
+
+### Added
+- **Backups, rebuilt (Host Console).** A new Backups page with a status strip (last backup and whether it verified, next run, offsite copy, space used and what your settings will cost) and five tabs: **Frequent snapshots**, **Offsite copies**, **Full-site backups**, **Safety copies** and **Destinations**. Snapshots are taken every 15 minutes without pausing sales, kept 24 hours and then thinned (every 15 minutes for 24 hours, hourly for 48 hours, daily for 14 days, weekly for 8 weeks); an encrypted offsite copy goes out hourly; the nightly full-site backup stays. Every frequency and retention value is a setting. New backups go to `/data/backup` (old files in `/data/backups` are still listed and usable).
+- **Backup destinations.** A folder (including a NAS mounted through Docker, with NFS and SMB examples in `docker-compose.yml`), **SMB** (built in), **S3-compatible storage** (Backblaze B2, Wasabi, Cloudflare R2, Amazon S3, MinIO), **SFTP** and **WebDAV**, each with a **Test connection** button. Credentials are stored sealed. Uploads are verified before local copies are trimmed and failures raise the backup alert. Everything that leaves the default folder is encrypted with your backup passphrase first; `node server.mjs decrypt-backup` opens such a file.
+- **Restore, clearer and safer.** The restore sheet names the file, its exact time, how long ago it was and what will be lost; after a restore every reseller sees a banner saying when the backup was taken. **Test restore** opens a backup in a scratch copy and checks it without touching live data.
+- **Reseller backup and restore.** A new **Backup and restore** page (Administrators): a full backup file (`.mbsbackup`) made in the browser, encrypted so it opens only with the account's password or recovery key; restore with a preview and a choice of **Add what is missing** or **Replace everything**, a warning when the account is newer than the file, **Undo last restore** for 7 days, and a reminder on Home when the last backup is more than 7 days old. **Copy diagnostics** copies a support summary (no business data) to paste to the Host admin.
+- **Scan with the phone camera.** A camera button in the Serial, MAC and UID fields, Bulk scan, Quick sale and Inventory search. A dimmed screen with a scan box (Small, Medium, Large), corner brackets and a center aim line; only what is inside the box is read; QR codes and the usual barcodes are supported; the code nearest the center wins and close calls become a tap-to-choose list; MAC addresses are tidied to `XX:XX:XX:XX:XX:XX`; **Type it instead** and **Take a photo** are always there. Pictures never leave the phone. The hardware scanner works as before.
+- **Account menu.** One menu on your name in the top bar of both apps replaces the Reseller / Site admin dropdown, the name label and the Sign out button: Site admin (linked accounts), your linked reseller accounts (Host Console) and Sign out.
+- **Host Console hardening.** Sign-in lockouts and IP bans are saved in the database, so a restart or an update no longer lets a banned or locked-out attacker back in. The audit trail now also records firewall changes, bans, Host Console sign-ins, two-factor changes, server option changes and backup actions, with a **Type** filter. Email > Health has **Sender checks** for SPF, DMARC and DKIM.
+- **Long lists.** Logs, Audit, Alerts, sign-in history and similar feeds scroll inside a box on larger screens with **Load more** and "Showing N of M"; Inventory, Customers, Sales and Host Accounts show 25, 50 or 100 per page.
+- Documentation updated for every change in both the Host and reseller sets (new pages: Backup and restore rewritten, Scanning with your phone, Support and diagnostics).
+
+### Changed
+- The Documentation page has one layout: contents menu on the left, search and the open topic on the right; it opens on Getting started (no grid of boxes).
+- Identifiers (serial, MAC, receipt number, Reseller ID, file names) use a monospace font; IP addresses, dates and amounts use normal tabular figures; Windows gets Segoe UI and Consolas. Number fields have no spinner, text areas no resize grip, checkboxes are larger and blue, and scroll bars are one thin themed style without arrows (the earlier themed rules were being ignored by Chrome, Edge and Safari).
+- The Server options proxy menu shows "Custom (set by the container: …)" for values it cannot show, and saving the card never overwrites them.
+- A read-only account (ended trial) can still make a backup file.
+- New database migrations 14 (security blocks) and 15 (restore points and last backup time). New dependency: `ssh2`. The Docker image adds `samba-client`.
+
 ## [0.19.0] - 2026-10-05
 
 ### Added

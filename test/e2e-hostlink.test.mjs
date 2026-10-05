@@ -1,4 +1,4 @@
-// TEST / e2e-hostlink — a Host administrator who is also a reseller links the two and gets a switcher on both sides.
+// TEST / e2e-hostlink — a Host administrator who is also a reseller links the two and finds the other side in the account menu on both sides.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -9,7 +9,7 @@ let pw; try { pw = await import('playwright'); } catch { try { pw = await import
 const skip = !(pw && fs.existsSync(exe)) ? 'no browser available' : false;
 const PW = 'Sup3rSecretPass!', STRONG = 'H0stSecretPass!x';
 
-test('browser: link Host administrator, switcher on both sides, wrong password refused, unlink', { skip, timeout: 180000 }, async () => {
+test('browser: link Host administrator, account menu on both sides, wrong password refused, unlink', { skip, timeout: 180000 }, async () => {
   const srv = await startServer(), owner = new Client(srv.base);
   await owner.req('POST', '/api/host/login', { login: 'admin', password: srv.hostPw }); await owner.req('POST', '/api/host/change-password', { current: srv.hostPw, next: STRONG });
   const br = await (pw.chromium || pw.default.chromium).launch({ executablePath: exe }), page = await br.newPage({ viewport: { width: 1280, height: 900 } });
@@ -20,7 +20,7 @@ test('browser: link Host administrator, switcher on both sides, wrong password r
     await page.waitForSelector('#go'); const login = 'dana@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');
     await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');
-    assert.equal(await page.locator('#sw').count(), 0, 'no switcher before linking');
+    await page.click('.menu-btn'); assert.equal(await page.locator('.menu-item[data-id=host]').count(), 0, 'no Site admin entry before linking'); await page.keyboard.press('Escape');
 
     // off by default: no card, and the endpoint refuses
     await page.goto(srv.base + '/app/#/security'); await page.waitForSelector('#pw'); assert.equal(await page.locator('#hl').count(), 0, 'no Link option until the Owner allows it');
@@ -32,18 +32,18 @@ test('browser: link Host administrator, switcher on both sides, wrong password r
     await page.fill('.sheet #u', 'admin'); await page.fill('.sheet #p', 'wrong-password-1'); await page.click('.sheet #go');
     await page.waitForSelector('.toast'); const msgWrong = await page.textContent('.toast'); assert.equal(await page.locator('#hlo').count(), 0, 'wrong password does not link');
     await page.fill('.sheet #u', 'nobody-here'); await page.click('.sheet #go'); await page.waitForFunction((m) => [...document.querySelectorAll('.toast')].some(t => t.textContent === m), msgWrong); // same answer for an unknown username
-    await page.fill('.sheet #u', 'admin'); await page.fill('.sheet #p', STRONG); await page.click('.sheet #go'); await page.waitForSelector('#sw'); await page.waitForSelector('#hlo');
-    assert.match(await page.textContent('#sw'), /Reseller · Dual Co/);
+    await page.fill('.sheet #u', 'admin'); await page.fill('.sheet #p', STRONG); await page.click('.sheet #go'); await page.waitForSelector('#hlo');
+    await page.click('.menu-btn'); assert.match(await page.textContent('.menu-head'), /Dual Co/);
     await page.screenshot({ path: process.env.SHOT_DIR ? `${process.env.SHOT_DIR}/switch-app.png` : '/tmp/switch-app.png' });
-    await page.click('#sw'); assert.ok(await page.locator('.select-option', { hasText: 'Site admin' }).count());
+    assert.ok(await page.locator('.menu-item', { hasText: 'Site admin' }).count());
 
     // Host side: the same person sees their reseller account in the switcher
     const ctx = await br.newContext({ viewport: { width: 1280, height: 900 } }); await ctx.addCookies(Object.entries(owner.jar).map(([name, value]) => ({ name, value, url: srv.base })));
-    const hp = await ctx.newPage(); hp.on('pageerror', e => errors.push(e.message)); await hp.goto(srv.base + '/host/'); await hp.waitForSelector('#sw');
-    assert.match(await hp.textContent('#sw'), /Site admin/); await hp.click('#sw'); assert.ok(await hp.locator('.select-option', { hasText: 'Reseller · Dual Co' }).count());
+    const hp = await ctx.newPage(); hp.on('pageerror', e => errors.push(e.message)); await hp.goto(srv.base + '/host/'); await hp.waitForSelector('.menu-btn');
+    await hp.click('.menu-btn'); await hp.waitForSelector('.menu-item[data-id^="u:"]'); assert.ok(await hp.locator('.menu-item', { hasText: 'Dual Co' }).count());
     await hp.screenshot({ path: process.env.SHOT_DIR ? `${process.env.SHOT_DIR}/switch-host.png` : '/tmp/switch-host.png' });
     // choosing the reseller opens the app sign-in with the login filled in
-    const [popup] = await Promise.all([ctx.waitForEvent('page'), hp.locator('.select-option', { hasText: 'Reseller · Dual Co' }).click()]);
+    const [popup] = await Promise.all([ctx.waitForEvent('page'), hp.locator('.menu-item', { hasText: 'Dual Co' }).click()]);
     await popup.waitForSelector('#l'); const at = login.lastIndexOf('@'); assert.equal(await popup.inputValue('#l'), login.slice(0, at).toLowerCase()); assert.equal(await popup.inputValue('#r'), login.slice(at + 1).toLowerCase());
 
     // the Owner turns linking off for the account: the link and switcher go away
@@ -53,7 +53,7 @@ test('browser: link Host administrator, switcher on both sides, wrong password r
     return assert.deepEqual(errors, []);
     // unlink: switcher disappears
     await page.keyboard.press('Escape'); await page.click('#hlo'); await page.click('.sheet .btn:not(.secondary), .modal .btn:not(.secondary)').catch(() => {});
-    await page.waitForFunction(() => !document.querySelector('#sw'));
+    await page.waitForFunction(() => !document.querySelector('.menu-item[data-id=host]'));
     assert.deepEqual(errors, []);
   } finally { await br.close(); await srv.stop(); }
 });

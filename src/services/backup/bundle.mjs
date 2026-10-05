@@ -10,6 +10,7 @@ import { exportKey } from '../../auth/secrets.mjs';
 import { areaLogger } from '../../logging/logger.mjs';
 import { createBackup } from './create.mjs';
 import { backupDir } from './files.mjs';
+import { writeRestoreNote } from './restore-note.mjs';
 
 const L = areaLogger('backup');
 const MAGIC = Buffer.from('MBSBAK1\n');
@@ -81,5 +82,6 @@ export function stageBundleRestore(file, passphrase, actor) {
   if (m.engine !== 'sqlite') throw new Error('This backup holds a database dump. Restore it with psql / mysql on the new server (see the Backups page).');
   fs.writeFileSync(path.join(config.dataDir, 'restore-pending.db'), e['database.db']);
   fs.writeFileSync(path.join(config.dataDir, 'restore-pending.key'), e['secret.key'].toString(), { mode: 0o600 });
+  writeRestoreNote({ name: path.basename(file), takenAt: Date.parse(m.createdAt) || fs.statSync(file).mtimeMs });
   L.warn('restore.staged', `Full-site restore of ${path.basename(file)} staged; the server will restart to apply it`, { actor });
 }

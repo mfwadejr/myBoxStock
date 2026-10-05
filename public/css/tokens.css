@@ -59,9 +59,23 @@
   --color-shadow-3: rgba(0, 0, 0, 0.14);
   --color-shadow-knob: rgba(0, 0, 0, 0.25);
 
+  /* ---- camera scanner (a dark, full-screen camera layer) ---- */
+  --color-scan-bg: #000000;
+  --color-scan-dim: rgba(0, 0, 0, 0.58);
+  --color-scan-glass: rgba(28, 28, 30, 0.78);
+  --color-scan-btn: rgba(255, 255, 255, 0.16);
+  --color-scan-btn-hover: rgba(255, 255, 255, 0.26);
+  --color-scan-text: #ffffff;
+  --color-scan-text-soft: rgba(255, 255, 255, 0.72);
+  --color-scan-aim: #ff453a;
+  --color-scan-ok: #34c759;
+  --color-scan-warn: #ffd60a;
+  --shadow-scan-dim: 0 0 0 100vmax var(--color-scan-dim);
+
   /* ---- typography ---- */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, Menlo, monospace;
+  --text-ident: 14px;
   --text-micro: 11px;
   --text-xs: 12px;
   --text-sm: 13px;
@@ -142,6 +156,8 @@
   --col-req-w: 168px; --col-war-w: 112px; --col-pct-w: 76px;
   --chip-type-w: 120px;
   --stock-list-max-h: 380px;
+  --feed-max-h: 640px;
+  --check-size: 20px;          /* native checkbox/radio box */
   --stock-price-w: 80px;
   --config-w: 840px;
   --move-w: 72px;
@@ -193,6 +209,17 @@
   --recovery-key-w: 28ch;
   --mail-preview-h: 560px;
   --width-phone: 375px;
+  --scan-box-max-w: 560px;
+  --scan-box-w: 90%;
+  --scan-h-small: 64px;
+  --scan-h-medium: 150px;
+  --scan-size-large: 340px;
+  --scan-corner: 28px;
+  --scan-corner-w: 4px;
+  --scan-aim-h: 2px;
+  --scan-aim-inset: 5%;
+  --scan-panel-w: 300px;
+  --scan-panel-max-w: 560px;
 
   /* ---- glass & overlay effects ---- */
   --blur-md: 20px;
@@ -209,6 +236,7 @@
   --z-dropdown: 25;
   --z-side: 30;
   --z-modal: 50;
+  --z-scanner: 55;
   --z-toast: 60;
 
   /* ---- motion ---- */

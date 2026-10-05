@@ -49,7 +49,7 @@ test('browser: remove a built-in detail, warranty countdown, unlock behaviour', 
     // refresh stays unlocked; sign-out wipes the stored key
     await page.reload(); await page.waitForSelector('.side', { timeout: 8000 }); assert.equal(await page.locator('#pw').count(), 0, 'no password prompt after a refresh');
     assert.ok(await page.evaluate(() => !!sessionStorage.getItem('bx.keep')));
-    await page.click('#out'); await page.waitForSelector('#l'); assert.ok(await page.evaluate(() => !sessionStorage.getItem('bx.keep')), 'sign-out wipes the key');
+    await page.click('.menu-btn').then(() => page.click('.menu-item[data-id=out]')); await page.waitForSelector('#l'); assert.ok(await page.evaluate(() => !sessionStorage.getItem('bx.keep')), 'sign-out wipes the key');
 
     // strict mode prompts again
     await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block'); await page.waitForSelector('.side');

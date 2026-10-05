@@ -87,17 +87,18 @@
   const billingChip = (b) => b.state === 'trial' ? `<span class="chip blue">Free trial · ${b.daysLeft} day${b.daysLeft === 1 ? '' : 's'} left</span>`
     : !b.canWrite ? '<span class="chip red">Trial ended — read-only</span>' : '';
   // [key, label, permission needed to see it]
-  const NAV = [['home', 'Home', null], ['sell', 'Quick sale', 'sales.write'], ['inventory', 'Inventory', 'inventory.read'], ['customers', 'Customers', 'customers.read'], ['sales', 'Sales', 'sales.read'], ['team', 'Team', 'users.manage'], ['settings', 'Settings', 'users.manage'], ['activity', 'Activity', 'users.manage'], ['security', 'Security', null], ['docs', 'Documentation', null]];
+  const NAV = [['home', 'Home', null], ['sell', 'Quick sale', 'sales.write'], ['inventory', 'Inventory', 'inventory.read'], ['customers', 'Customers', 'customers.read'], ['sales', 'Sales', 'sales.read'], ['team', 'Team', 'users.manage'], ['settings', 'Settings', 'users.manage'], ['backup', 'Backup and restore', 'users.manage'], ['activity', 'Activity', 'users.manage'], ['security', 'Security', null], ['docs', 'Documentation', null]];
   const PRIMARY = ['home', 'sell', 'inventory', 'customers']; // the phone tab bar; everything else is under More
   const visibleNav = () => NAV.filter(([, , p]) => !p || AccountApp.can(p)).map(([k, l]) => [k, l]);
   AccountApp.showShell = () => shell();
   function shell() {
     const me = AccountApp.me;
-    root.innerHTML = `<header class="topbar"><div class="brand"><a class="brand-link" href="#/home" aria-label="Home"><img class="brand-mark" src="/assets/logo-512.png" alt="myBoxStock" width="512" height="512"></a><span class="brand-name">${esc(me.businessName)}</span></div><div class="grow"></div>${me.hostLinked ? '<span id="swh"></span>' : ''}${billingChip(me.billing)}<span class="muted text-sm hide-phone">${esc(me.username)} · ${esc(me.role)}</span><button class="btn secondary small hide-phone" id="out">Sign out</button></header>
+    root.innerHTML = `<header class="topbar"><div class="brand"><a class="brand-link" href="#/home" aria-label="Home"><img class="brand-mark" src="/assets/logo-512.png" alt="myBoxStock" width="512" height="512"></a><span class="brand-name">${esc(me.businessName)}</span></div><div class="grow"></div>${billingChip(me.billing)}<span id="acct"></span></header>
       <div class="shell"><nav class="side">${visibleNav().map(([k, l]) => `<a href="#/${k}" data-k="${k}">${AccountApp.icons[k] || ''}<span>${l}</span></a>`).join('')}</nav><main class="main" id="main"></main></div>${UI.tabbar.html(visibleNav(), PRIMARY, AccountApp.icons)}`;
-    UI.tabbar.bind(root, visibleNav(), PRIMARY, AccountApp.icons, { head: `<p class="sub">${esc(me.username)} · ${esc(me.role)}</p>`, foot: '<div class="actions"><button class="btn secondary" id="outm">Sign out</button></div>', mount: (el, close) => el.querySelector('#outm').addEventListener('click', () => { close(null); AccountApp.signOut(); }) });
-    if (me.hostLinked) UI.select.switcher(root.querySelector('#swh'), { value: 'me', options: [['me', `Reseller · ${me.businessName}`], ['host', 'Site admin']], pick: (v) => { if (v === 'host') window.open('/host/', '_blank', 'noopener'); } });
-    root.querySelector('#out').addEventListener('click', () => AccountApp.signOut());
+    UI.tabbar.bind(root, visibleNav(), PRIMARY, AccountApp.icons, {});
+    UI.menu.mount(root.querySelector('#acct'), { name: me.username, head: `<b>${esc(me.username)}</b><span>${esc(me.role)}</span><span>${esc(me.businessName)}</span>`,
+      items: [...(me.hostLinked ? [{ id: 'host', label: 'Site admin' }] : []), { id: 'out', label: 'Sign out', sep: me.hostLinked }],
+      pick: (id) => { if (id === 'host') window.open('/host/', '_blank', 'noopener'); else if (id === 'out') AccountApp.signOut(); } });
     window.removeEventListener('hashchange', AccountApp.route); window.addEventListener('hashchange', AccountApp.route); AccountApp.route();
   }
   // A closing account shows its erase date on every page, with a way back.

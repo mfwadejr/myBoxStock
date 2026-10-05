@@ -3,7 +3,7 @@ title: Activity
 summary: See who has signed in to your account, from where, and which devices are signed in right now, and sign people out when you need to.
 keywords: activity, sign-in history, sessions, devices, sign out, sign out everyone, new location, wrong password, blocked, IP address, login alerts, who signed in
 order: 9
-covers: nav:activity, Where people are signed in, Sign out everyone else, Sign out everyone, Person, Device, IP address, Started, Last active, This device, Sign out, Team sign-in history, When, Result, Signed in, Wrong password, Wrong code, Blocked, New location, Load more, Nothing recorded yet, new sign-in email
+covers: nav:activity, Where people are signed in, Sign out everyone else, Sign out everyone, Person, Device, IP address, Started, Last active, This device, Sign out, Team sign-in history, When, Result, Signed in, Wrong password, Wrong code, Blocked, New location, Load more, Showing N of M sign-ins, Nothing recorded yet, new sign-in email
 ---
 
 ## What the Activity page is for
@@ -81,7 +81,7 @@ Use this one when you want a clean slate, for example after a lost laptop that b
 
 ## Team sign-in history
 
-The second card is titled **Team sign-in history**. It is a log of sign-in attempts for everybody on the account, newest first. Fifty entries are shown at a time. The columns are:
+The second card is titled **Team sign-in history**. It is a log of sign-in attempts for everybody on the account, newest first. The newest 100 entries are shown at a time. The columns are:
 
 - **Person**: whose login was used.
 - **When**: the date and time of the attempt.
@@ -109,7 +109,7 @@ A New location label is not proof of anything bad. It is normal when someone sig
 
 ### Load more
 
-When there are more than fifty entries, a **Load more** button appears under the table. Click it to add the next older fifty to the list. When there is nothing older, the button disappears.
+The history shows the newest 100 entries. On a tablet, laptop or desktop it sits in a box about 640 pixels tall that scrolls on its own, and a line under it says "Showing 100 of 340 sign-ins". Press **Load more** to add the next 100 older entries. When there is nothing older the button disappears. On a phone there is no inner box: the whole page scrolls instead, and **Load more** is at the bottom of the list. The same works in **Recent sign-ins** on your [Security](#/docs/security) page.
 
 ### How long history is kept
 

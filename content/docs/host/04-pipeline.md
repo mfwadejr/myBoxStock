@@ -1,9 +1,9 @@
 ---
 title: Pipeline
 summary: Track new sign-ups, who is on a trial and when it ends, what is due to renew in the next 30 days, and which active accounts have gone quiet.
-keywords: pipeline, sign-ups, signups, trials, renewals, gone quiet, inactive, trial ending, days left, last seen, outcome, comped, ended, nudge, follow up, churn
+keywords: pipeline, load more, long lists, sign-ups, signups, trials, renewals, gone quiet, inactive, trial ending, days left, last seen, outcome, comped, ended, nudge, follow up, churn
 order: 4
-covers: nav:pipeline, Sign-ups this week, On a trial, Trials ending in 7 days, All accounts, Where accounts stand, Trials running, Renewals next 30 days, Gone quiet, Business, Reseller ID, Owner, Days left, Last seen, Ended, Ends, Paid, Trial, comped
+covers: nav:pipeline, Sign-ups this week, On a trial, Trials ending in 7 days, All accounts, Where accounts stand, Trials running, Renewals next 30 days, Gone quiet, Business, Reseller ID, Owner, Days left, Last seen, Ended, Ends, Paid, Trial, comped, Load more, Showing N of M accounts
 ---
 
 ## What this page is for
@@ -66,6 +66,10 @@ How to use it:
 3. Open [Accounts](#/docs/accounts) for the ones you want to help, use **Change plan** or **Extend trial** with a reason.
 
 > A trial that ends does not delete anything. The account becomes read-only: the people can still sign in and look at their data, but cannot change it. The server also sends the owner a "trial ended" email by itself. See [Plans](#/docs/plans).
+
+### Long lists
+
+The three lists on this page (Trials running, Renewals and Gone quiet) can be long. On tablets and computers each one scrolls inside a box of its own, about 640 pixels tall, so the cards below stay in reach. Under the box a line says, for example, "Showing 100 of 240 accounts", and **Load more** adds the next 100. On phones there is no box: the page itself scrolls, and the list simply continues until you press **Load more**. Short lists show everything with no button.
 
 ## Renewals, next 30 days
 

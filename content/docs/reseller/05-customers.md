@@ -1,9 +1,9 @@
 ---
 title: Customers
 summary: Keep a list of the people you sell to, see what each one has bought, export or erase their details, and find anyone in seconds.
-keywords: customers, customer list, buyers, contacts, phone, email, notes, purchase history, search, export customer, erase customer, delete customer, privacy, data request, GDPR
+keywords: customers, paging, per page, next, previous, customer list, buyers, contacts, phone, email, notes, purchase history, search, export customer, erase customer, delete customer, privacy, data request, GDPR
 order: 5
-covers: nav:customers, Add customer, Search name, phone, email, Name, Phone, Email, Notes, Purchases, Spent, Last purchase, Save, Cancel, Close, Delete, Erase, Export, customer.csv, purchases.csv, purchase_items.csv, Erased customer, customers.read, customers.write
+covers: nav:customers, 25 / 50 / 100 per page, Previous, Next, Showing 1–25, Add customer, Search name, phone, email, Name, Phone, Email, Notes, Purchases, Spent, Last purchase, Save, Cancel, Close, Delete, Erase, Export, customer.csv, purchases.csv, purchase_items.csv, Erased customer, customers.read, customers.write
 ---
 
 ## What the Customers page is for
@@ -42,6 +42,10 @@ Open **Customers** from the menu. You will see a table with these columns:
 - **Last purchase** - the date of their most recent sale, or a dash if they have never bought.
 
 Click anywhere on a row to open that customer.
+
+### Pages
+
+The list shows **25 rows per page**. Under it a line says, for example, "Showing 1–25 of 60", with a **25 / 50 / 100 per page** list and **Previous** and **Next** buttons. Choose 50 or 100 to see more at once. These controls hide when everything fits on one page of 25 or fewer. Changing the search or a filter always takes you back to page 1. Every customer is in the list; none are cut off.
 
 ### The search box
 

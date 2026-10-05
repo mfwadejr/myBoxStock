@@ -23,7 +23,20 @@
         <div class="card stat"><div class="stat-label">Failed, last 24 hours</div><div class="stat-value">${h.failed24h}</div><div class="stat-note">${h.sent24h} sent</div></div>
         <div class="card stat"><div class="stat-label">Failed, last 7 days</div><div class="stat-value">${h.failed7d}</div><div class="stat-note">${h.sent7d} sent</div></div>
         <div class="card stat"><div class="stat-label">Waiting to send</div><div class="stat-value">${h.queued}</div><div class="stat-note">${h.oldestQueuedAt ? `oldest ${esc(fmt.ago(h.oldestQueuedAt))}` : 'queue is empty'}</div></div></div>
-      ${h.lastFailureAt ? `<div class="card"><h3>Last failure</h3><div class="sub">${esc(fmt.ago(h.lastFailureAt))}. A message that fails five times is given up on; the receiving server’s refusal (a bounce) is shown here.</div><div class="hint danger-text">${esc(h.lastError)}</div></div>` : '<div class="card"><h3>No failures</h3><div class="sub mb-0">Nothing has failed recently.</div></div>'}`);
+      ${h.lastFailureAt ? `<div class="card"><h3>Last failure</h3><div class="sub">${esc(fmt.ago(h.lastFailureAt))}. A message that fails five times is given up on; the receiving server’s refusal (a bounce) is shown here.</div><div class="hint danger-text">${esc(h.lastError)}</div></div>` : '<div class="card"><h3>No failures</h3><div class="sub mb-0">Nothing has failed recently.</div></div>'}
+      <div class="card" id="sender"><h3>Sender checks</h3><div class="sub">Public DNS records of your From address’s domain that help receivers trust your mail. This app does not sign mail itself: your mail relay normally does, so “DKIM not found” is only a problem if your relay does not sign.</div>
+        <div class="row wrap"><input type="text" id="dsel" placeholder="DKIM selector (optional, e.g. default)" class="maxw-md" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="DKIM selector"><button class="btn secondary" id="dgo">Check again</button></div>
+        <div id="dres" class="mt-md" aria-live="polite"></div></div>`);
+    const dres = main.querySelector('#dres'), STATUS = { found: ['green', 'Found'], missing: ['amber', 'Not found'], unknown: ['red', 'Could not check'] };
+    const row = (name, c) => `<div class="setting"><div><div class="setting-title">${name}</div><div class="setting-desc">${esc(c.advice)}${c.record ? `<div class="hint ident">${esc(c.record)}</div>` : ''}</div></div><span class="chip ${STATUS[c.status][0]}">${STATUS[c.status][1]}</span></div>`;
+    const run = async () => {
+      dres.innerHTML = '<div class="hint">Checking…</div>';
+      try {
+        const sel = main.querySelector('#dsel').value.trim(), r = await Host.api('GET', '/mail/sender-checks' + (sel ? `?selector=${encodeURIComponent(sel)}` : ''));
+        dres.innerHTML = r.error ? `<div class="hint">${esc(r.error)}</div>` : `<div class="hint mb-sm">Checked ${esc(r.domain)} just now.</div>${row('SPF', r.spf)}${row('DMARC', r.dmarc)}${row(`DKIM${r.dkim.selector ? ` (${esc(r.dkim.selector)})` : ''}`, r.dkim)}`;
+      } catch (er) { dres.innerHTML = `<div class="hint danger-text">${esc(er.message)}</div>`; }
+    };
+    main.querySelector('#dgo').addEventListener('click', (e) => busy(e.currentTarget, run)); run();
   }
 
   async function delivery(main) {

@@ -1,9 +1,9 @@
 ---
 title: Running the server
 summary: How myBoxStock is deployed and kept healthy: the Docker container, the data folder, every environment variable with its default, reverse proxies and Cloudflare, https, ports, the health check, choosing a database, and how to keep the data volume safe.
-keywords: docker, zimaos, compose, docker-compose, container, data folder, volume, /data, environment variables, PORT, DATA_DIR, DB_CLIENT, DATABASE_URL, TRUST_PROXY, SECURE_COOKIES, PUBLIC_URL, APP_SECRET, LOG_DIR, reverse proxy, caddy, nginx, traefik, cloudflare, https, health check, healthz, sqlite, postgres, postgresql, mariadb, mysql, migrate-db, ports, resources, memory, disk
+keywords: nas volume, nfs, cifs, samba-client, smbclient, ssh2, decrypt-backup, backup folder, docker, zimaos, compose, docker-compose, container, data folder, volume, /data, environment variables, PORT, DATA_DIR, DB_CLIENT, DATABASE_URL, TRUST_PROXY, SECURE_COOKIES, PUBLIC_URL, APP_SECRET, LOG_DIR, reverse proxy, caddy, nginx, traefik, cloudflare, https, health check, healthz, sqlite, postgres, postgresql, mariadb, mysql, migrate-db, ports, resources, memory, disk
 order: 17
-covers: PORT, DATA_DIR, DB_CLIENT, DATABASE_URL, DB_POOL_MAX, TRUST_PROXY, CLOUDFLARE_IP, HOST_ALLOW_ANY, SECURE_COOKIES, MAIL_ALLOW_PRIVATE, PUBLIC_URL, APP_SECRET, LOG_DIR, LOG_LEVEL, LOG_MAX_MB, LOG_FILES, LOG_RETENTION_DAYS, LOG_CONSOLE, CLOSING_SWEEP_MS, BUILD_ID, BACKUP_PASSPHRASE, NODE_ENV, /healthz, docker-compose.yml, restart policy, migrate-db
+covers: PORT, DATA_DIR, DB_CLIENT, DATABASE_URL, DB_POOL_MAX, TRUST_PROXY, CLOUDFLARE_IP, HOST_ALLOW_ANY, SECURE_COOKIES, MAIL_ALLOW_PRIVATE, PUBLIC_URL, APP_SECRET, LOG_DIR, LOG_LEVEL, LOG_MAX_MB, LOG_FILES, LOG_RETENTION_DAYS, LOG_CONSOLE, CLOSING_SWEEP_MS, BUILD_ID, BACKUP_PASSPHRASE, NODE_ENV, /healthz, docker-compose.yml, restart policy, migrate-db, decrypt-backup, /data/backup, /data/backups, nas-backups, driver_opts, samba-client, ssh2, NAS through Docker
 ---
 
 ## The big picture
@@ -23,7 +23,8 @@ The project includes a `Dockerfile` and a `docker-compose.yml`. The container is
 - `restart: unless-stopped`. This is **required**, not optional: restoring a backup works by letting the program exit and be started again by Docker. Without it, a restore would leave the server stopped.
 - It maps port 8080 on the host to 8080 in the container.
 - It sets a few environment variables: `TRUST_PROXY`, `SECURE_COOKIES` and `PUBLIC_URL`, with `APP_SECRET` as an optional extra.
-- It mounts `./data` on the host as `/data` in the container. That is the data folder.
+- It mounts `./data` on the host as `/data` in the container. That is the data folder. Backups are written to `/data/backup` inside it by default.
+- Commented-out lines show how to mount a NAS at `/backups` (see "Backups on a NAS" below).
 
 ### First start
 
@@ -50,16 +51,16 @@ Everything the server remembers lives in the folder mapped to `/data` (the `DATA
 
 - `myboxstock.db`, the database, plus `myboxstock.db-wal` and `myboxstock.db-shm` while it is running. Never delete or copy those three separately while the server is running.
 - `secret.key`, the encryption key that protects two-factor secrets and the saved email password. It is created automatically on first start with private permissions.
-- `backups/`, where the Backups screen keeps its files.
+- `backup/`, where the Backups page keeps its files by default. Backups made by older versions are in `backups/` (with an s). Those files are still listed, downloaded, restored and deleted from where they are, and nothing is moved. You can choose a different folder on the Backups page (Destinations tab, Change folder).
 - `logs/`, the log files described on [Logs](#/docs/logs).
-- Short-lived files such as `restore-pending.db` while a restore is waiting to be applied.
+- Short-lived files such as `restore-pending.db` and `restore-note.json` while a restore is waiting to be applied.
 
 With PostgreSQL or MariaDB the database lives elsewhere, but the data folder still holds the key, the backups and the logs.
 
 ### Keeping it safe
 
-- Put it on storage you trust, and **back it up away from the server**. The scheduled full-site backup can copy each backup to an off-box folder, such as a mounted NAS share or USB drive. See [Backups](#/docs/backups).
-- Keep a copy of `secret.key` (or your `APP_SECRET` value) somewhere safe. Full-site backups include it, plain database snapshots do not.
+- Put it on storage you trust, and **back it up away from the server**. Offsite copies and full-site backups can be sent to a mounted NAS, an SMB share, S3-compatible storage, an SFTP server or WebDAV. See [Backups](#/docs/backups).
+- Keep a copy of `secret.key` (or your `APP_SECRET` value) somewhere safe. Full-site backups include it. Plain snapshots and offsite copies do not.
 - Never run two copies of the server on the same SQLite data folder.
 - Restrict who has access to the box. Anyone who can read the folder can read the database. Customers' business data is encrypted in their own browsers, so what is stored is unreadable without their passwords or recovery keys, but accounts, usernames and sign-in history are not.
 - Watch the disk. See [Recovery and emergencies](#/docs/recovery-and-emergencies) for what to do as it fills.
@@ -85,7 +86,7 @@ These are set in the `environment:` part of the compose file (or your platform's
 
 ### Behind proxies, https and addresses
 
-- **TRUST_PROXY**: how many reverse proxies sit in front of the program, so it learns each visitor's real address. Default empty (none). Use `1` behind one proxy. Settings has a **Reverse proxy in front of the site** option that wins over this.
+- **TRUST_PROXY**: how many reverse proxies sit in front of the program, so it learns each visitor's real address. Default empty (none). Use `1` behind one proxy. Other values such as `loopback` are accepted and shown in Settings as "Custom (set by the container: ...)". Settings has a **Reverse proxy in front of the site** option that wins over this once you save it. This variable stays as the first-start default and as the fallback for `reset-server-options`.
 - **CLOUDFLARE_IP**: `1` when visitors arrive through Cloudflare, so the real visitor address from Cloudflare is used. Default off. Settings has **Site is behind Cloudflare**.
 - **SECURE_COOKIES**: `1` to send sign-in cookies only over https. Default off. Turn on once https works.
 - **HOST_ALLOW_ANY**: `1` is the emergency override that ignores the Host Console address list. Default off. Use it only to get back in; remove it afterwards.
@@ -103,9 +104,34 @@ These are set in the `environment:` part of the compose file (or your platform's
 ### Housekeeping and one-off
 
 - **CLOSING_SWEEP_MS**: how often the server looks for accounts that have passed their closing date and erases them, in milliseconds. Default `3600000` (every hour). Customers who close an account get a 7-day locked period first.
-- **BACKUP_PASSPHRASE**: used only with the `restore-bundle` command to give the backup's passphrase. Do not leave it set permanently.
+- **BACKUP_PASSPHRASE**: used only with the `restore-bundle` and `decrypt-backup` commands to give the backup's passphrase. Do not leave it set permanently. It is not the same as the passphrase saved on the Backups page, which is kept sealed in the database.
+
+No environment variable was added or removed in 0.20.0. Everything about backups is set on the Backups page.
 
 Changing a variable means re-creating the container (`docker compose up -d`), not just restarting it, so the new value is picked up.
+
+## Backups on a NAS
+
+There are two ways to reach a network drive. Both are set up in `docker-compose.yml`, or on the Destinations tab.
+
+### Mounted by Docker
+
+The compose file has commented examples. Uncomment `- nas-backups:/backups` under the service's `volumes`, and uncomment the block at the bottom for your NAS.
+
+- **NFS**: a `nas-backups` volume with `driver: local` and `driver_opts` of `type: nfs`, an `o` line such as `addr=192.168.1.20,nfsvers=4,rw`, and a `device` such as `:/volume1/myboxstock`.
+- **SMB / CIFS**: the same volume with `type: cifs`, an `o` line with `addr`, `username`, `password`, `uid`, `gid` and `vers`, and a `device` such as `//192.168.1.20/myboxstock`.
+
+Then run `docker compose up -d`, and in the Host Console add a **Folder or mounted NAS** destination with the path `/backups`. The step-by-step is in [Backups](#/docs/backups).
+
+> The CIFS example holds a password in the compose file. Keep that file private.
+
+### Reached directly
+
+The Destinations tab can also talk to an SMB share, S3-compatible storage, an SFTP server or WebDAV without mounting anything. The image includes the `smbclient` program (package `samba-client`) for SMB, and the program's own libraries cover S3, WebDAV and SFTP (the SFTP library is `ssh2`, installed with the other dependencies when the image is built). If you run the program without Docker, install `smbclient` yourself to use SMB.
+
+### Commands
+
+Two commands help when working with backup files by hand, both run inside the container: `node server.mjs restore-bundle --file <file.mbsbak>` and `BACKUP_PASSPHRASE='...' node server.mjs decrypt-backup <file.mbsenc or file.mbsbak> <output-file>`. See [Recovery and emergencies](#/docs/recovery-and-emergencies).
 
 ## HTTPS and reverse proxies
 
@@ -165,8 +191,8 @@ The Settings screen shows the current engine and the same commands. On an extern
 
 myBoxStock is a modest program. The Overview screen shows the real numbers for your box: processor, memory (measured against the container's limit when there is one) and disk, plus a short history. The server notes a warning in the system log when memory or disk reaches 90 percent, at most once an hour, and the Alerts screen raises "Storage is almost full" at 90 percent disk.
 
-It does a few things in the background without any action from you: checks for problems every five minutes, sends and retries email, runs scheduled backups, erases accounts past their closing date, clears out expired sessions, trims old sign-in history and removes old log rows, and once a day checks for a new release if you set a release address.
+It does a few things in the background without any action from you: checks for problems every five minutes, sends and retries email, takes frequent snapshots and sends offsite copies on schedule, runs full-site backups and thins old copies, saves and reloads sign-in lockouts and bans, erases accounts past their closing date, clears out expired sessions, trims old sign-in history and removes old log rows, and once a day checks for a new release if you set a release address.
 
 If the server feels slow, look at Overview first. Memory near the limit or a full disk is the usual cause; then consider more resources, or moving from SQLite to PostgreSQL.
 
-A simple routine: look at Overview and Alerts weekly, test a restore on a spare machine now and then, and keep `restart: unless-stopped` and the data folder safe. If something goes wrong, [Troubleshooting and FAQ](#/docs/troubleshooting-faq) and [Recovery and emergencies](#/docs/recovery-and-emergencies) have the answers.
+A simple routine: look at Overview and Alerts weekly, use Test restore on the Backups page and try a real restore on a spare machine now and then, and keep `restart: unless-stopped` and the data folder safe. If something goes wrong, [Troubleshooting and FAQ](#/docs/troubleshooting-faq) and [Recovery and emergencies](#/docs/recovery-and-emergencies) have the answers.

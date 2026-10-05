@@ -65,7 +65,7 @@ export const INDEXES = [
 
 // Order matters when copying between databases (parents before children).
 export const COPY_ORDER = ['settings', 'host_admins', 'accounts', 'billing_events', 'account_users', 'sign_in_history', 'account_keys', 'account_recovery', 'account_roles', 'inventory_items', 'records',
-  'firewall_rules', 'mail_queue', 'event_log', 'password_resets', 'sessions', 'admin_links', 'email_confirmations', 'billing_receipts', 'receipt_mail_usage', 'alerts'];
+  'firewall_rules', 'mail_queue', 'event_log', 'password_resets', 'sessions', 'admin_links', 'email_confirmations', 'billing_receipts', 'receipt_mail_usage', 'alerts', 'security_blocks', 'restore_points', 'restore_point_records'];
 
 // Versioned migrations. Each runs once, in order, and is recorded in schema_migrations.
 // Fresh installs run all of them; existing installs run only the ones they are missing. Never edit an applied migration — add a new one.
@@ -148,6 +148,19 @@ const MIGRATIONS = [
     await db.exec(`CREATE TABLE alerts (id ${id} PRIMARY KEY, kind ${s(40)} NOT NULL, dedupe_key ${s(120)} NOT NULL, level ${s(10)} NOT NULL, title ${s()} NOT NULL, detail ${s(600)},
       first_at BIGINT NOT NULL, last_at BIGINT NOT NULL, occurrences INTEGER NOT NULL DEFAULT 1, status ${s(12)} NOT NULL, resolved_at BIGINT, emailed_at BIGINT)`);
     await db.exec('CREATE INDEX idx_alerts_status ON alerts (status, last_at)');
+  } },
+  { id: 14, name: 'lockouts and bans survive a restart', up: async (db) => {
+    // Active sign-in lockouts, IP bans and the failure counters that lead to them. Only a sign-in name or address and a count: nothing from inside an account.
+    // kind: lockout | failures | ban | violations. subject: sign-in name, mfa:<id> or IP address. expires_at: when the row stops mattering (epoch ms).
+    await db.exec(`CREATE TABLE security_blocks (id ${id} PRIMARY KEY, kind ${s(20)} NOT NULL, subject ${s(200)} NOT NULL, hits INTEGER NOT NULL DEFAULT 0, reason ${s(200)}, created_at BIGINT NOT NULL, expires_at BIGINT NOT NULL)`);
+    await db.exec('CREATE UNIQUE INDEX idx_blocks_subject ON security_blocks (kind, subject)');
+    await db.exec('CREATE INDEX idx_blocks_until ON security_blocks (expires_at)');
+  } },
+  { id: 15, name: 'reseller backup: last backup time and a 7-day undo copy of a restore', up: async (db) => {
+    // last_backup_at is just a time. A restore point is a copy of the account's own ciphertext taken before a restore, so it can be undone for 7 days. The host cannot read it.
+    await db.exec('ALTER TABLE accounts ADD COLUMN last_backup_at BIGINT');
+    await db.exec(`CREATE TABLE restore_points (account_id ${id} PRIMARY KEY, created_at BIGINT NOT NULL, expires_at BIGINT NOT NULL, created_by ${s(160)}, record_count INTEGER NOT NULL DEFAULT 0, mode ${s(12)})`);
+    await db.exec(`CREATE TABLE restore_point_records (account_id ${id} NOT NULL, id ${s(64)} NOT NULL, type ${s(20)} NOT NULL, blob TEXT NOT NULL, rev INTEGER NOT NULL DEFAULT 1, created_at BIGINT NOT NULL, updated_at BIGINT NOT NULL, PRIMARY KEY (account_id, id))`);
   } },
 ];
 

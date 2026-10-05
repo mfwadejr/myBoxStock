@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { config } from '../../core/config.mjs';
 import { areaLogger } from '../../logging/logger.mjs';
-import { backupDir, backupPath, stamp } from './files.mjs';
+import { backupDir, backupPath, stamp, takenAtFromName } from './files.mjs';
+import { writeRestoreNote } from './restore-note.mjs';
 
 const L = areaLogger('backup');
 const pendingFile = () => path.join(config.dataDir, 'restore-pending.db');
@@ -12,6 +13,7 @@ export function stageRestore(name, actor) {
   const p = backupPath(name);
   if (!name.endsWith('.db')) throw new Error('Only SQLite snapshots can be restored from the console. Restore SQL dumps with psql / mysql.');
   fs.copyFileSync(p, pendingFile());
+  writeRestoreNote({ name, takenAt: takenAtFromName(name, fs.statSync(p).mtimeMs) }); // the site-wide notice is posted after the restart
   L.warn('restore.staged', `Restore of ${name} staged; the server will restart to apply it`, { actor, data: { name } });
 }
 export function applyPendingRestore(dbFile) { // run before the DB is opened at startup

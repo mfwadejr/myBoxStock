@@ -25,3 +25,17 @@ test('server options: default, save, validation, https-only cookie switch, reset
   assert.equal((await put({ logLevel: null, logRetentionDays: null, trustProxy: null })).status, 200);
   r = await get(); assert.equal(r.logLevel.saved, false); assert.equal(r.logLevel.value, 'info'); assert.equal(r.trustProxy.value, '');
 });
+
+test('a proxy value set by the container that the menu cannot show is reported as custom, is kept when other options are saved, and is replaced only by an explicit choice', async () => {
+  const s2 = await startServer({ TRUST_PROXY: 'loopback' }), h = new Client(s2.base);
+  try {
+    await h.req('POST', '/api/host/login', { login: 'admin', password: s2.hostPw }); await h.req('POST', '/api/host/change-password', { current: s2.hostPw, next: PW });
+    const st = async () => (await h.req('GET', '/api/host/settings')).data.runtime.trustProxy, p2 = (runtime) => h.req('PUT', '/api/host/settings', { runtime });
+    let t = await st(); assert.equal(t.value, 'loopback'); assert.equal(t.custom, true); assert.equal(t.saved, false);
+    assert.equal((await p2({ logLevel: 'warn' })).status, 200); t = await st(); assert.equal(t.value, 'loopback', 'saving other options leaves it alone'); assert.equal(t.saved, false);
+    assert.equal((await p2({ trustProxy: 'loopback', logLevel: 'info' })).status, 200); t = await st(); assert.equal(t.value, 'loopback'); assert.equal(t.saved, false, 'sending the value already in force changes nothing');
+    assert.equal((await p2({ trustProxy: 'bogus' })).status, 400, 'other unknown values are still refused');
+    assert.equal((await p2({ trustProxy: '1' })).status, 200); t = await st(); assert.equal(t.value, '1'); assert.equal(t.saved, true); assert.equal(t.custom, false); assert.equal(t.env, 'loopback');
+    assert.equal((await p2({ trustProxy: null })).status, 200); t = await st(); assert.equal(t.value, 'loopback'); assert.equal(t.custom, true, 'reset falls back to the container value');
+  } finally { s2.stop(); }
+});

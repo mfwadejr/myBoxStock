@@ -17,15 +17,20 @@ Web requests (`http`) go to files only because of volume.
 |---|---|
 | `http` | every request: method, full path, status, milliseconds, IP, signed-in user |
 | `auth` | login ok/failed (with reason), lockouts, MFA, password changes, resets, sessions, CSRF rejections, unauthenticated access |
-| `security` | firewall rules, rate-limit hits, temporary bans, blocked requests, limit changes |
-| `host` | host console actions: settings, admins, mail test, bootstrap/reset |
+| `security` | firewall rules, rate-limit hits, temporary bans (created by the server, lifted by an administrator), blocked requests, limit changes, `blocks.loaded` (lockouts and bans restored at start), `blocks.write_failed` |
+| `host` | host console actions: settings (`settings.runtime` lists only what changed, before and after; `settings.runtime_saved` for a save with no change), admins, mail test, bootstrap/reset, and the backup audit events below |
 | `accounts` | host **support** actions on accounts: reset link, temp password, MFA reset, suspend, delete |
-| `tenant` | account activity as ids and event names only (never business data). **Hidden from the host viewer.** |
-| `backup` | create / delete / download / restore / schedule / prune |
+| `tenant` | account activity as ids and event names only (never business data). Includes a reseller's own backup events (`backup.file_created`, `backup.restore_started`, `backup.restore_done`, `backup.restore_refused`, `backup.restore_undone`, `backup.restore_rolled_back`, counts only). **Hidden from the host viewer.** |
+| `backup` | snapshots, offsite copies and full-site runs, uploads, thinning and pruning, destinations saved / tested / removed, test restore, restore staged and applied, the post-restore notice |
 | `mail` | queued, sent, retry, failed, settings |
 | `system` | start/stop, key creation, disk/memory warnings, log pruning |
 | `database` | connect, migrations, copies between databases |
 | `error` | unhandled errors with stack |
+
+## Logs and the Audit trail
+The Host **Audit trail** is a view over the same `event_log`; it has no table of its own. Which events it shows is decided in one place, `src/services/audit/types.mjs`: every `host` / `accounts` event that has a named actor, plus a short list of security and auth events (firewall rule added / changed / removed, rate-limit settings and Host Console access limit changed, ban created / lifted, Host Console lockouts, sign-ins, failed sign-ins and sign-outs, two-factor turned on / off and recovery code used). Each kind has a friendly label (the raw event is the tooltip) and a **Type** filter group. Entries with no actor (a ban the server created) show as **System**. Reseller sign-ins are never in it (Host-realm events only). To add a kind of entry, add one row there.
+
+Backup actions are written with `audit()` from `src/services/backup/audit.mjs` into area `host`: `backup.run`, `backup.restore`, `backup.download`, `backup.delete`, `backup.test_restore`, `backup.destination_saved`, `backup.destination_deleted`, `backup.destination_test`, `backup.settings_saved`. They never contain a secret.
 
 ## Line formats
 Human: `2026-10-03 12:30:01.120  WARN   login.failed   Failed sign-in for "ghost@bx-aaaaaa" — no such user  | actor=… | account=… | ip=…`

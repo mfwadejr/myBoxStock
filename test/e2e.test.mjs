@@ -46,13 +46,13 @@ test('browser: setup, add, sell, sign out, unlock, recovery key, CSV import', { 
     assert.ok(!raw.includes('UID-1001') && !raw.includes('Zelda'));
 
     // sign out and in again: password unlocks; reload asks for the password again
-    await page.click('#out'); await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block'); await page.waitForSelector('.side');
+    await page.click('.menu-btn').then(() => page.click('.menu-item[data-id=out]')); await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block'); await page.waitForSelector('.side');
     await page.goto(srv.base + '/app/#/sales'); await page.waitForSelector('tr.click'); assert.equal(await page.locator('tr.click').count(), 1);
     await page.reload(); await page.waitForSelector('#pw'); await page.fill('#pw', 'wrong-password-1'); await page.click('button.block'); await page.waitForTimeout(500); assert.ok(await page.isVisible('#pw'), 'wrong password does not unlock');
     await page.fill('#pw', PW); await page.click('button.block'); await page.waitForSelector('.side');
 
     // password reset by email leaves no key: the recovery key brings access back
-    await page.click('#out'); const { DatabaseSync } = await import('node:sqlite'); const d = new DatabaseSync(path.join(srv.dir, 'myboxstock.db')); d.prepare('DELETE FROM account_keys').run(); d.close();
+    await page.click('.menu-btn').then(() => page.click('.menu-item[data-id=out]')); const { DatabaseSync } = await import('node:sqlite'); const d = new DatabaseSync(path.join(srv.dir, 'myboxstock.db')); d.prepare('DELETE FROM account_keys').run(); d.close();
     await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block'); await page.waitForSelector('#rk');
     await page.fill('#rk', 'AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA'); await page.fill('#pw', PW); await page.click('button.block'); await page.waitForTimeout(500); assert.ok(await page.isVisible('#rk'), 'wrong recovery key is refused');
     await page.fill('#rk', key); await page.fill('#pw', PW); await page.click('button.block'); await page.waitForSelector('.side');

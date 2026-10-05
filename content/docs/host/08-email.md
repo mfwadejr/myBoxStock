@@ -1,9 +1,9 @@
 ---
 title: Email
 summary: Set up how the server sends email, reword each message customers and administrators receive, and check that mail is actually getting out.
-keywords: email, smtp, relay, direct, helo, from address, tls, port 465, 587, test email, resend, queue, bounce, spf, dkim, reverse dns, messages, placeholders, template, preview, health
+keywords: sender checks, dmarc, dns, dkim selector, email, smtp, relay, direct, helo, from address, tls, port 465, 587, test email, resend, queue, bounce, spf, dkim, reverse dns, messages, placeholders, template, preview, health
 order: 8
-covers: nav:email, Delivery, Messages, Health, Send email, Delivery method, Direct to recipient, SMTP relay, From name, From address, Server name announced when sending (HELO), SMTP host, Port, Username, Password, Use TLS from the start of the connection (port 465), Save, Send a test, Send test email, Recent messages, Resend, Resend all failed, Subject, Heading, Body, Button label, Insert a detail, Reset to default, Send test, Live preview, Styled, Plain text, Desktop, Phone, Is email getting out, Last successful send, Failed last 24 hours, Failed last 7 days, Waiting to send, Last failure
+covers: nav:email, Delivery, Messages, Health, Send email, Delivery method, Direct to recipient, SMTP relay, From name, From address, Server name announced when sending (HELO), SMTP host, Port, Username, Password, Use TLS from the start of the connection (port 465), Save, Send a test, Send test email, Recent messages, Resend, Resend all failed, Subject, Heading, Body, Button label, Insert a detail, Reset to default, Send test, Live preview, Styled, Plain text, Desktop, Phone, Is email getting out, Last successful send, Failed last 24 hours, Failed last 7 days, Waiting to send, Last failure, Sender checks, Check again, DKIM selector, SPF, DMARC, DKIM, Found, Not found, Could not check
 ---
 
 ## What email does here
@@ -93,6 +93,9 @@ Spam is such a problem that big mail providers check whether a message really ca
 
 - **SPF** is a short public note on your domain that lists which servers may send mail for it. If your server's address, or your relay's servers, are not on the list, the message looks forged. Your relay provider will give you the exact line to add.
 - **DKIM** is a digital signature added to each message that proves it was not changed on the way. Relay providers normally sign messages for you after you add a record they supply. myBoxStock does not add its own DKIM signature, so if you want signed mail, use a relay that does it.
+- **DMARC** is a public note that tells receivers what to do with mail that fails SPF or DKIM, and where to send reports. A first record that only watches (`p=none`) is a fine start.
+
+You do not have to look these up by hand. The **Sender checks** card on the Health tab (below) looks up SPF, DMARC and DKIM for you.
 - **Reverse DNS** means that looking up your server's public address gives back a name, and that name points back to the same address. It is set by whoever owns the address, usually your hosting provider. It matters mostly for direct delivery. It should match your HELO name.
 
 A related point is a fixed (static) public address. If your address changes, the provider's trust in it starts over.
@@ -164,6 +167,28 @@ If anything failed, **Last failure** shows when and the reason given. A message 
 ### Reading a failure
 
 An authentication reason means a wrong relay username or password. "Connection refused" or a timeout often means a blocked port or wrong host name. A refusal mentioning your address or a blocklist means direct delivery is distrusted: move to a relay or fix SPF and reverse DNS. "Set a From address first" and "Outbound email is disabled in Host settings" mean exactly that.
+
+## Sender checks
+
+At the bottom of the Health tab, the **Sender checks** card looks at the public DNS records of the domain in your From address (the part after the @). These are the records that help other mail servers trust your mail.
+
+It runs by itself each time you open the Health tab, and shows one row for each check with a chip:
+
+- **Found** (green): the record exists. The row quotes it and gives a note.
+- **Not found** (amber): the record does not exist, with plain advice on what to add.
+- **Could not check** (red): the DNS lookup did not answer. Try again in a minute.
+
+The three checks are:
+
+- **SPF**: looks for a TXT record that starts `v=spf1`. If more than one is found, the row says so, because receivers treat two SPF records as an error. Keep a single record.
+- **DMARC**: looks at `_dmarc.` followed by your domain, and shows the policy it finds. A policy of `p=none` is flagged as monitoring only, which is a sensible first step.
+- **DKIM**: looks for the signature key. DKIM keys live under a name called a selector, so the lookup is `selector._domainkey.` followed by your domain. If you type your relay's selector into the **DKIM selector** box, only that one is tried. If you leave it empty, the common ones are tried: default, selector1, selector2, google, k1, mail and dkim.
+
+Press **Check again** after you change DNS records, or after you type a selector. DNS changes can take a while to spread, so a record you just added may not show for a few minutes.
+
+> The app itself does not sign mail. Your relay normally does. So "DKIM not found" only matters if your relay does not sign your mail. If you use a relay, ask the provider which selector they use and type it in the box. If it says it is not found for that selector, the DNS record is missing.
+
+If you have not set a From address yet, the card tells you to set one on the Delivery tab first. Nothing about customers is ever sent to the lookup; it only asks DNS about your own domain.
 
 ## Related pages
 
