@@ -15,16 +15,16 @@ a { color: var(--color-primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
 label { display: block; font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-text-muted); margin-bottom: var(--space-xs); }
 
-input[type=text], input[type=password], input[type=email], input[type=tel], input[type=number], input[type=date], input[type=search], textarea {
+input[type=text], input[type=password], input[type=email], input[type=tel], input[type=number], input[type=date], input[type=time], input[type=search], textarea {
   width: 100%; height: var(--control-h); padding: 0 var(--field-padding-x);
   border: var(--border-strong); border-radius: var(--radius-md);
   background: var(--color-surface); color: var(--color-text); font: inherit;
   transition: border-color var(--dur-base), box-shadow var(--dur-base); appearance: none; -webkit-appearance: none;
 }
 /* Safari/Chrome add their own inner padding to date boxes; remove it so the text lines up with every other box. */
-input[type=date] { display: flex; align-items: center; min-width: 0; line-height: normal; }
-input[type=date]::-webkit-date-and-time-value { text-align: left; margin: 0; min-height: 0; }
-input[type=date]::-webkit-datetime-edit, input[type=date]::-webkit-datetime-edit-fields-wrapper { padding: 0; margin: 0; }
+input[type=date], input[type=time] { display: flex; align-items: center; min-width: 0; line-height: normal; }
+input[type=date]::-webkit-date-and-time-value, input[type=time]::-webkit-date-and-time-value { text-align: left; margin: 0; min-height: 0; }
+input[type=date]::-webkit-datetime-edit, input[type=date]::-webkit-datetime-edit-fields-wrapper, input[type=time]::-webkit-datetime-edit, input[type=time]::-webkit-datetime-edit-fields-wrapper { padding: 0; margin: 0; }
 input[type=date]::-webkit-calendar-picker-indicator { margin: 0; padding: 0; }
 input:focus, textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: var(--focus-ring); }
 .switch input:focus-visible + i { box-shadow: var(--focus-ring); }
@@ -34,3 +34,10 @@ input:focus, textarea:focus { outline: none; border-color: var(--color-primary);
 
 textarea { height: auto; min-height: var(--textarea-min-h); padding: var(--space-md) var(--field-padding-x); resize: vertical; }
 input[type=file] { display: none; }
+
+/* ---- scroll bars: one themed style for everything that scrolls (sheets, tables, lists) ---- */
+* { scrollbar-width: thin; scrollbar-color: var(--color-scroll-thumb) transparent; }
+*::-webkit-scrollbar { width: var(--scroll-w); height: var(--scroll-w); }
+*::-webkit-scrollbar-track, *::-webkit-scrollbar-corner { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--color-scroll-thumb); background-clip: padding-box; border: var(--scroll-gap) solid transparent; border-radius: var(--radius-pill); }
+*::-webkit-scrollbar-thumb:hover { background: var(--color-scroll-thumb-hover); background-clip: padding-box; }

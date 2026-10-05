@@ -23,10 +23,16 @@ function setCookie(res, name, value, maxAgeMs) {
   res.append('Set-Cookie', `${name}=${encodeURIComponent(value)}; ${flags.join('; ')}`);
 }
 
+// Signing in again from the same browser and address replaces the older sign-in instead of piling up one per visit.
+async function dropDuplicates(db, realm, subjectId, keepHash) {
+  const me = await db.get('SELECT ip, ua FROM sessions WHERE token_hash = ?', [keepHash]); if (!me) return;
+  await db.run('DELETE FROM sessions WHERE realm = ? AND subject_id = ? AND ip = ? AND ua = ? AND token_hash <> ? AND mfa_pending = 0', [realm, subjectId, me.ip, me.ua, keepHash]);
+}
 export async function createSession(db, res, req, { realm, subjectId, accountId = null, pending = false }) {
   const raw = token(32), csrf = token(18), now = Date.now(), ttl = pending ? PENDING_TTL : TTL[realm];
   await db.run(`INSERT INTO sessions (token_hash, realm, subject_id, account_id, mfa_ok, mfa_pending, csrf, ip, ua, created_at, expires_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
     [sha256(raw), realm, subjectId, accountId, pending ? 0 : 1, pending ? 1 : 0, csrf, normalizeIp(req.ip).slice(0, 64), String(req.headers['user-agent'] || '').slice(0, 200), now, now + ttl]);
+  if (!pending) await dropDuplicates(db, realm, subjectId, sha256(raw));
   setCookie(res, COOKIE[realm], raw, ttl);
   L.info('session.created', `${realm} session created${pending ? ' (waiting for two-factor code)' : ''}`, { ip: normalizeIp(req.ip), accountId, data: { realm, subjectId, pending } });
   return csrf;
@@ -34,6 +40,7 @@ export async function createSession(db, res, req, { realm, subjectId, accountId 
 export async function promoteSession(db, req, res, realm) {
   const raw = parseCookies(req)[COOKIE[realm]]; if (!raw) return;
   await db.run('UPDATE sessions SET mfa_pending = 0, mfa_ok = 1, expires_at = ? WHERE token_hash = ?', [Date.now() + TTL[realm], sha256(raw)]);
+  const s = await db.get('SELECT subject_id FROM sessions WHERE token_hash = ?', [sha256(raw)]); if (s) await dropDuplicates(db, realm, s.subject_id, sha256(raw));
   setCookie(res, COOKIE[realm], raw, TTL[realm]);
 }
 export async function destroySession(db, req, res, realm) {

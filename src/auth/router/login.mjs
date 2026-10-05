@@ -5,6 +5,7 @@ import { isLocked, registerFailure, clearFailures } from '../lockout.mjs';
 import { areaLogger } from '../../logging/logger.mjs';
 import { normalizeIp } from '../../security/firewall/ip.mjs';
 import { fail } from '../../core/messages.mjs';
+import { activeAnnouncement } from '../../services/announcement/index.mjs';
 
 const L = areaLogger('auth');
 
@@ -56,6 +57,6 @@ export function loginRoutes(r, c) {
     const s = await readSession(db, req, realm);
     const user = s && await c.loadSubject(db, s);
     if (!user) return fail(res, 401, 'NOT_SIGNED_IN');
-    res.json({ user: c.publicUser(user), csrf: s.csrf, mfaPending: !!s.mfa_pending, mustChange: !!user.must_change, ...(c.meExtra ? { vault: await c.meExtra(db, user) } : {}) });
+    res.json({ ...(realm === 'app' ? { announcement: await activeAnnouncement(db) } : {}), user: c.publicUser(user), csrf: s.csrf, mfaPending: !!s.mfa_pending, mustChange: !!user.must_change, ...(c.meExtra ? { vault: await c.meExtra(db, user) } : {}) });
   });
 }

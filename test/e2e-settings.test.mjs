@@ -42,8 +42,8 @@ test('browser: remove a built-in detail, warranty countdown, unlock behaviour', 
     // add a device, sell it, see the warranty countdown
     await page.goto(srv.base + '/app/#/inventory'); await page.click('#add');
     await page.fill('#f_uid', 'W-1'); await page.fill('#make_new', 'Acme'); await page.fill('#model_new', 'Box'); await page.fill('#cost', '10'); await page.fill('#price', '30'); await page.click('#go'); await page.waitForSelector('tr.click');
-    await page.goto(srv.base + '/app/#/sell'); await page.waitForSelector('#scan'); await page.fill('#scan', 'W-1'); await page.press('#scan', 'Enter'); await page.click('#done'); await page.waitForSelector('.receipt');
-    assert.match(await page.textContent('.receipt'), /Warranty: 6 months · ends .* · In warranty · 18\d days remaining/); await page.click('[data-cancel]');
+    await page.goto(srv.base + '/app/#/sell'); await page.waitForSelector('#scan'); await page.fill('#scan', 'W-1'); await page.press('#scan', 'Enter'); await page.fill('#nn', 'Buyer Two'); await page.click('#done'); await page.waitForSelector('.receipt');
+    assert.match(await page.textContent('.receipt'), /Warranty: 6 months · ends .*In warranty · 18\d days remaining/); await page.click('[data-cancel]');
     await page.goto(srv.base + '/app/#/sales'); await page.waitForSelector('tr.click'); assert.match(await page.textContent('tr.click'), /In warranty · 18\d days remaining/);
 
     // refresh stays unlocked; sign-out wipes the stored key

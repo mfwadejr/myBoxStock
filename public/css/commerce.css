@@ -98,6 +98,11 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .brand-logo.empty { display: inline-grid; place-items: center; color: var(--color-text-faint); font-size: var(--text-xs); }
 
 .buy-list { border: var(--border-default); border-radius: var(--radius-md); overflow: hidden; }
-.buy-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-md); align-items: center; padding: var(--space-sm) var(--space-md); border-bottom: var(--border-default); cursor: pointer; }
+.buy-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-xs) var(--space-md); align-items: center; padding: var(--space-md); border-bottom: var(--border-default); cursor: pointer; }
 .buy-row:last-child { border-bottom: 0; }
 .buy-row:hover { background: var(--color-wash-faint); }
+.buy-row .hint { margin-top: var(--space-0); }
+.buy-chip { grid-column: 1 / -1; justify-self: start; }
+.test-step { font-size: var(--text-sm); }
+.test-detail { font-size: var(--text-sm); color: var(--color-text-muted); padding-left: var(--space-xl); }
+.receipt p { overflow-wrap: anywhere; }

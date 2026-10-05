@@ -3,6 +3,25 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.18.0] - 2026-10-05
+
+### Added
+- **Announcement banner.** The Host administrator can show one message at the top of every customer's app (Host Console > Settings > Announcement banner): plain text, three styles (information, heads-up, important), an optional last day, and a Close button for each person. Changing the message shows it again to people who closed the old one.
+- **Sell only tested devices (Settings > Test checklist).** When on, a device stays "Awaiting test" until its required steps are ticked (every step if none are marked required). It is not counted as available and cannot be added to a sale; ticking the steps frees it automatically. Inventory gets an "Awaiting test" filter.
+- **More customer emails** you can reword and preview in Settings > Customer emails: "Sale voided" and "Thank you". Send them from the Email button on a receipt, which now asks which message to send.
+- **Sales page Status filter** (All, Sold, Void) so voided sales can be hidden.
+- **Activity: Sign out everyone else** and **Sign out everyone** (Administrators, with a confirmation).
+- **Time sold** on Quick sale, next to Date sold. A back-dated sale keeps the time of day instead of 12:00 PM.
+
+### Changed
+- **Quick sale has no Walk-in.** Choose Existing or New; Name, Phone and Email are full-width boxes stacked on top of each other (the same in the customer record).
+- **Receipts:** test-record details (such as the firmware change under "Code / firmware upgraded") are on their own indented lines, and the warranty is two short lines.
+- **Customer record, Purchases:** each purchase is a tidy block (receipt number that never wraps, date and items, warranty status, total).
+- **Home:** Recent sales has column headings; "Sold this month" is now "Devices sold this month" with "in N sales" underneath.
+- **Security > Your data:** Export everything and Close my account share the same aligned layout.
+- **Activity:** signing in again from the same browser and address replaces the older sign-in instead of adding another row.
+- **Scroll bars** in sheets, tables and lists use one themed style from the design tokens, and sheets no longer scroll sideways (the receipt buttons wrap instead of running off the edge).
+
 ## [0.17.5] - 2026-10-04
 
 ### Changed

@@ -25,7 +25,7 @@
     try { cfg = await AccountApp.api('GET', '/public-config'); } catch {}
     const m = location.hash.match(/^#\/reset\/(.+)$/); if (m) return resetScreen(m[1]);
     const cf = location.hash.match(/^#\/confirm\/(.+)$/); if (cf) return confirmScreen(cf[1]);
-    try { const r = await AccountApp.api('GET', '/me'); UI.setCsrf(r.csrf); AccountApp.me = r.user; AccountApp.vault.state = r.vault; if (r.mfaPending) return mfaScreen(); if (r.mustChange) return changePwScreen(); if (!await AccountApp.vault.gate(r, AccountApp.pw)) return; AccountApp.pw = null; await AccountApp.store.load(); await AccountApp.vault.policy(); return shell(); }
+    try { const r = await AccountApp.api('GET', '/me'); UI.setCsrf(r.csrf); AccountApp.me = r.user; AccountApp.announcement = r.announcement || null; AccountApp.vault.state = r.vault; if (r.mfaPending) return mfaScreen(); if (r.mustChange) return changePwScreen(); if (!await AccountApp.vault.gate(r, AccountApp.pw)) return; AccountApp.pw = null; await AccountApp.store.load(); await AccountApp.vault.policy(); return shell(); }
     catch (e) { if (location.hash === '#/signup' && cfg.signupsEnabled) signupScreen(); else loginScreen(); if (e && e.status !== 401) toast(e.message || 'Sign-in could not finish. Please try again.', true); }
   }
   // This browser remembers the Reseller ID (not the password) so next time only the username is needed.
@@ -103,6 +103,15 @@
     main.insertAdjacentHTML('afterbegin', `<div class="banner red row spread wrap mb-lg" id="cb"><span>This account is closing and will be erased on ${esc(AccountApp.fmt.day(me.closingAt))}. Until then it is read-only.</span>${AccountApp.can('users.manage') ? '<button class="btn secondary small" id="cbr">Restore account</button>' : ''}</div>`);
     main.querySelector('#cbr')?.addEventListener('click', async () => { try { await AccountApp.api('POST', '/account/restore'); const r = await AccountApp.api('GET', '/me'); AccountApp.me = r.user; toast('Account restored'); AccountApp.route(); } catch (er) { toast(er.message, true); } });
   }
+  // The Host administrator's announcement: a banner on every page until the person closes it (it comes back when the message changes).
+  const ANN = { info: 'blue', warning: '', important: 'red' };
+  const dismissed = () => { try { return localStorage.getItem('mbs-ann'); } catch { return null; } };
+  function announcementBanner(main) {
+    const a = AccountApp.announcement; if (!a || dismissed() === a.id) return;
+    main.insertAdjacentHTML('afterbegin', `<div class="banner ${ANN[a.level] || 'blue'} row spread wrap mb-lg" id="ab" role="status"><span>${esc(a.text)}</span><button class="btn secondary small" id="abx">Close</button></div>`);
+    main.querySelector('#abx').addEventListener('click', () => { try { localStorage.setItem('mbs-ann', a.id); } catch {} main.querySelector('#ab')?.remove(); });
+  }
+  let annAt = Date.now();
   // Soft email confirmation: a banner on Home and Security until the address is confirmed.
   function emailBanner(main) {
     const me = AccountApp.me; if (!me.emailBanner) return;
@@ -113,7 +122,7 @@
     const k = (location.hash.replace(/^#\//, '') || 'home').split('/')[0], key = AccountApp.views[k] ? k : 'home';
     root.querySelectorAll('.side a').forEach(a => a.classList.toggle('active', a.dataset.k === key));
     const main = root.querySelector('#main'); if (!main) return;
-    try { await AccountApp.fresh(); await AccountApp.views[key](main); if (key === 'home' || key === 'security') emailBanner(main); closingBanner(main); } catch (e) { if (e.status === 401) return boot(); swap(main, `<div class="card"><p class="banner red">${esc(e.message)}</p></div>`); }
+    try { await AccountApp.fresh(); if (Date.now() - annAt > 120000) { annAt = Date.now(); AccountApp.announcement = (await AccountApp.api('GET', '/announcement')).announcement; } await AccountApp.views[key](main); if (key === 'home' || key === 'security') emailBanner(main); closingBanner(main); announcementBanner(main); } catch (e) { if (e.status === 401) return boot(); swap(main, `<div class="card"><p class="banner red">${esc(e.message)}</p></div>`); }
   };
   AccountApp.boot = boot;
   boot();

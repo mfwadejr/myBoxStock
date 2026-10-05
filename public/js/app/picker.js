@@ -3,7 +3,7 @@
 (() => {
   const { esc, sheet } = UI, A = AccountApp, C = A.commerce;
 
-  C.availableStock = (exclude = []) => A.store.all('item').filter(e => (e.data.status === 'available' || e.data.status === 'returned') && !exclude.includes(e.id));
+  C.availableStock = (exclude = []) => A.store.all('item').filter(e => (e.data.status === 'available' || e.data.status === 'returned') && C.isReady(e.data) && !exclude.includes(e.id));
   C.modelCounts = (entries) => { const m = new Map(); for (const e of entries) { const k = e.data.model || ''; m.set(k, (m.get(k) || 0) + 1); } return [...m].sort((a, b) => a[0].localeCompare(b[0])); };
   const modelName = (m) => m || 'No model';
   const condOf = (d) => { const f = C.fields().find(x => x.core && x.key === 'cond'); return f ? String(C.getVal(d, f) || '') : ''; };

@@ -32,7 +32,7 @@ test('browser: bulk add, discounts, receipt, Standard-user limit', { skip, timeo
     assert.match(await page.textContent('#tot'), /300\.00/);
     await page.locator('[data-pct]').first().fill('10'); assert.match(await page.textContent('#tot'), /290\.00/);
     await page.fill('#op', '5'); assert.match(await page.textContent('#tot'), /275\.50/); assert.match(await page.textContent('#save'), /24\.50/);
-    await page.click('#done'); await page.waitForSelector('.receipt'); const rc = await page.textContent('.receipt');
+    await page.fill('#nn', 'Buyer One'); await page.click('#done'); await page.waitForSelector('.receipt'); const rc = await page.textContent('.receipt');
     assert.match(rc, /10% off/); assert.match(rc, /Order discount 5%/); assert.match(rc, /275\.50/); await page.click('[data-cancel]');
     await page.goto(srv.base + '/app/#/sales'); await page.waitForSelector('tr.click'); assert.match(await page.textContent('tr.click'), /275\.50/);
     const bar = await page.locator('#q').boundingBox(), dt = await page.locator('#from').boundingBox(), wr = await page.locator('#war').boundingBox(); assert.ok(Math.abs(bar.y - dt.y) < 8 && Math.abs(dt.y - wr.y) < 8, 'search, dates and warranty share one row');
@@ -42,7 +42,7 @@ test('browser: bulk add, discounts, receipt, Standard-user limit', { skip, timeo
     await page.goto(srv.base + '/app/#/team'); await page.waitForSelector('#add'); await page.click('#add'); await page.fill('#u', 'stan'); await page.click('.sheet #r'); await page.click('.sheet .select-option[data-value=Standard]'); await page.fill('#p', 'Temp-pass-12345'); await page.click('.sheet #go'); await page.waitForTimeout(800);
     const o = await (await br.newContext()).newPage(); await o.goto(srv.base + '/app/'); await fillLogin(o, 'stan@' + login.split('@')[1]); await o.fill('#p', 'Temp-pass-12345'); await o.click('button.block');
     await o.waitForSelector('#a'); await o.fill('#a', 'Temp-pass-12345'); await o.fill('#b', 'Brand-new-pass-678'); await o.click('button.block'); await o.waitForSelector('.side');
-    await o.goto(srv.base + '/app/#/sell'); await o.waitForSelector('#scan'); await o.fill('#scan', 'D-4'); await o.press('#scan', 'Enter'); await o.locator('[data-pct]').first().fill('25'); await o.click('#done'); await o.waitForTimeout(600);
+    await o.goto(srv.base + '/app/#/sell'); await o.waitForSelector('#scan'); await o.fill('#scan', 'D-4'); await o.press('#scan', 'Enter'); await o.fill('#cs', 'Buyer'); await o.locator('#cl li').first().click(); await o.locator('[data-pct]').first().fill('25'); await o.click('#done'); await o.waitForTimeout(600);
     assert.equal(await o.locator('.receipt').count(), 0, 'sale over the limit is refused'); assert.match(await o.textContent('.toasts'), /more than the 10%/);
     await o.locator('[data-pct]').first().fill('10'); await o.click('#done'); await o.waitForSelector('.receipt');
     assert.deepEqual(errors, [], 'no script errors in the page');

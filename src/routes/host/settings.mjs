@@ -7,11 +7,18 @@ import { historyDays } from '../../services/signins/index.mjs';
 import { siteStatus, cleanUrl } from '../../services/site/index.mjs';
 import { runtimeStatus, saveRuntime } from '../../services/runtime/index.mjs';
 import { trialDays } from '../../services/billing/index.mjs';
+import { getAnnouncement, saveAnnouncement } from '../../services/announcement/index.mjs';
 
 export function settingsRoutes(db) {
   const r = express.Router();
   r.get('/', async (req, res) => res.json({ signupsEnabled: await getSetting(db, 'signups_enabled', true), trialDays: await trialDays(db), signInHistoryDays: await historyDays(db),
-    database: { client: config.dbClient }, site: await siteStatus(db), runtime: await runtimeStatus(db) }));
+    database: { client: config.dbClient }, site: await siteStatus(db), runtime: await runtimeStatus(db), announcement: await getAnnouncement(db) }));
+  // The banner every customer sees at the top of the app.
+  r.put('/announcement', async (req, res) => {
+    const bad = await saveAnnouncement(db, req.body || {}); if (bad) return res.status(400).json({ error: bad });
+    hostLog(req, 'info', 'settings.announcement', req.body.enabled ? 'Announcement banner turned on' : 'Announcement banner turned off', { data: { enabled: !!req.body.enabled, level: req.body.level } });
+    res.json({ ok: true });
+  });
   r.put('/', async (req, res) => {
     if (req.body.signupsEnabled !== undefined) await setSetting(db, 'signups_enabled', !!req.body.signupsEnabled);
     if (req.body.trialDays !== undefined) {

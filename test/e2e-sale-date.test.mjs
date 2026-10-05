@@ -23,7 +23,10 @@ test('browser: date sold on Quick sale, tidy customer purchases', { skip, timeou
     await page.evaluate(async () => { const S = AccountApp.store; await S.commit({ puts: [1, 2].map(i => ({ type: 'item', data: { uid: 'T-' + i, make: 'A', model: 'B', status: 'available', cost: 100, price: 340, addedAt: Date.now(), receivedOn: '2026-01-01' } })) }); });
     await page.evaluate(() => { location.hash = '#/sell'; }); await page.waitForSelector('#scan');
     await page.fill('#scan', 'T-1'); await page.press('#scan', 'Enter'); await page.waitForSelector('.cart-line');
-    await page.click('[data-mode=new]'); await page.fill('#nn', 'Karen Badders'); await page.fill('#np', '301-514-0873');
+    assert.equal(await page.locator('[data-mode=walk]').count(), 0, 'there is no Walk-in');
+    assert.equal(await page.locator('[data-mode=new]').count(), 1); await page.fill('#nn', 'Karen Badders'); await page.fill('#np', '301-514-0873');
+    const nb = await page.locator('#nn').boundingBox(), pb = await page.locator('#np').boundingBox(), eb = await page.locator('#ne').boundingBox();
+    assert.ok(Math.abs(nb.width - pb.width) < 2 && Math.abs(nb.width - eb.width) < 2 && pb.y < eb.y && nb.y < pb.y, 'name, phone and email are the same width, stacked');
     await page.fill('#sd', '2026-09-15'); await page.click('#done'); await page.waitForSelector('.receipt');
     assert.match(await page.textContent('.receipt'), /S-20260915-[A-Z0-9]{5}\b/, 'the receipt number follows the date sold and has 5 random characters');
     const uniq = await page.evaluate(() => { const C = AccountApp.commerce, S = AccountApp.store, real = crypto.getRandomValues.bind(crypto), taken = S.all('sale')[0].data.no.split('-')[2]; let calls = 0; crypto.getRandomValues = (a) => { calls++; if (calls === 1) { const idx = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; a.set([...taken].map(ch => idx.indexOf(ch))); return a; } return real(a); }; const no = C.newReceiptNo(AccountApp.store.all('sale')[0].data.ts); crypto.getRandomValues = real; return { no, first: S.all('sale')[0].data.no, calls, n: S.all('sale').length }; });
@@ -32,7 +35,7 @@ test('browser: date sold on Quick sale, tidy customer purchases', { skip, timeou
     assert.equal(sale.day, '2026-09-15'); await page.click('[data-cancel]');
     await page.evaluate(() => { location.hash = '#/customers'; }); await page.waitForSelector('tr.click'); await page.click('tr.click'); await page.waitForSelector('.buy-row');
     const box = await page.locator('.buy-row').first().boundingBox(), sheet = await page.locator('.sheet').boundingBox();
-    assert.ok(box.height < 80 && box.x + box.width <= sheet.x + sheet.width, 'a purchase fits on a short row inside the sheet');
+    assert.ok(box.height < 120 && box.x + box.width <= sheet.x + sheet.width, 'a purchase fits on a short row inside the sheet');
     if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT });
     assert.deepEqual(errors, []);
   } finally { await br.close(); await srv.stop(); }

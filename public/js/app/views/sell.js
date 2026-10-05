@@ -1,8 +1,10 @@
 // APP / views / sell — quick sale: scan or type a UID, set prices, choose a customer, finish. One screen, works on a phone.
 (() => {
   const { esc, toast, swap } = UI, A = AccountApp, C = A.commerce, F = A.fmt, S = A.store;
-  const st = { cart: [], mode: 'walk', cust: null, newc: { name: '', phone: '', email: '' }, payment: '', notes: '', msg: '', warranty: '', date: '', orderPct: 0 };
-  const reset = () => Object.assign(st, { cart: [], mode: 'walk', cust: null, newc: { name: '', phone: '', email: '' }, payment: '', notes: '', msg: '', warranty: '', date: '', orderPct: 0 });
+  const st = { cart: [], mode: '', cust: null, newc: { name: '', phone: '', email: '' }, payment: '', notes: '', msg: '', warranty: '', date: '', time: '', orderPct: 0 };
+  const reset = () => Object.assign(st, { cart: [], mode: '', cust: null, newc: { name: '', phone: '', email: '' }, payment: '', notes: '', msg: '', warranty: '', date: '', time: '', orderPct: 0 });
+  // Existing when there are customers to pick from, otherwise New. (There is no walk-in: every sale has a customer.)
+  const modeOf = () => st.mode || (S.all('customer').length ? 'existing' : 'new');
   const totals = () => C.saleTotals(st.cart, st.orderPct), total = () => totals().total;
 
   function lookup(code) {
@@ -16,6 +18,7 @@
   }
   function addEntry(e) {
     if (e.data.status === 'sold') return `${C.itemLabel(e.data)} was already sold${e.data.soldAt ? ' on ' + F.day(e.data.soldAt) : ''}.`;
+    if (C.effStatus(e.data) === 'testing') return `${C.itemLabel(e.data)} is awaiting its tests and cannot be sold yet. Tick its test steps in Inventory first.`;
     if (e.data.status !== 'available' && e.data.status !== 'returned') return `${C.itemLabel(e.data)} is marked ${C.STATUS[e.data.status]?.[1].toLowerCase() || e.data.status}, not available.`;
     if (st.cart.some(l => l.id === e.id)) return `${C.itemLabel(e.data)} is already in this sale.`;
     st.cart.push({ id: e.id, price: e.data.price || 0, pct: 0 }); return '';
@@ -24,8 +27,9 @@
   async function finish(main) {
     if (!st.cart.length) return toast('Add at least one device.', true);
     let customer = null, puts = [];
-    if (st.mode === 'existing') { if (!st.cust) return toast('Choose a customer, or switch to Walk-in.', true); customer = S.get('customer', st.cust); }
-    if (st.mode === 'new') {
+    const mode = modeOf();
+    if (mode === 'existing') { if (!st.cust) return toast('Choose a customer, or switch to New.', true); customer = S.get('customer', st.cust); }
+    if (mode === 'new') {
       if (!st.newc.name.trim()) return toast('Enter the new customer’s name.', true);
       if (!A.can('customers.write')) return toast('Your user type cannot add customers.', true);
       const id = Vault.newId(); customer = { id, data: { name: st.newc.name.trim(), phone: st.newc.phone.trim(), email: st.newc.email.trim(), notes: '', createdAt: Date.now() } }; puts.push({ type: 'customer', id, data: customer.data });
@@ -33,8 +37,9 @@
     if (C.overCap(st.cart, st.orderPct)) return toast(`Discounts on this sale add up to more than the ${C.discountCap()}% you are allowed to give. Ask an Administrator, or reduce them.`, true);
     const untested = st.cart.map(l => S.get('item', l.id).data).filter(d => C.testState(d).missingRequired.length);
     if (untested.length && !await UI.confirmBox({ title: 'Required checks not done', body: `${untested.map(d => esc(C.itemLabel(d))).join(', ')} ${untested.length === 1 ? 'has' : 'have'} required test steps that are not ticked. Sell anyway? The sale record will show what was and was not done.`, confirmLabel: 'Sell anyway' })) return;
-    const sold = st.date && st.date !== C.dateStr(Date.now()) ? C.dateMs(st.date) : 0; if (st.date && (!sold && st.date !== C.dateStr(Date.now()) || sold > Date.now())) return toast('Choose today or an earlier date for Date sold.', true);
-    const now = sold || Date.now(), saleId = Vault.newId(), items = st.cart.map(l => { const it = S.get('item', l.id).data; return { id: l.id, uid: it.uid, serial: it.serial, mac: it.mac, make: it.make, model: it.model, fields: C.fieldSnapshot(it), inspection: C.inspectionSnapshot(it), listPrice: l.price, pct: C.pct(l.pct), price: C.lineNet(l.price, l.pct), cost: it.cost || 0 }; });
+    const today = C.dateStr(Date.now()), when = !st.date && !st.time ? Date.now() : new Date(`${st.date || today}T${st.time || C.timeStr(Date.now())}:00`).getTime();
+    if (!(when > 0) || when > Date.now() + 60e3) return toast('Choose today or an earlier date and time for the sale.', true);
+    const now = when, saleId = Vault.newId(), items = st.cart.map(l => { const it = S.get('item', l.id).data; return { id: l.id, uid: it.uid, serial: it.serial, mac: it.mac, make: it.make, model: it.model, fields: C.fieldSnapshot(it), inspection: C.inspectionSnapshot(it), listPrice: l.price, pct: C.pct(l.pct), price: C.lineNet(l.price, l.pct), cost: it.cost || 0 }; });
     const sale = { no: C.newReceiptNo(now), ts: now, customerId: customer?.id || null, customerName: customer?.data.name || '', customerEmail: customer?.data.email || '', items, subtotal: totals().sub, orderPct: C.pct(st.orderPct), orderOff: totals().off, total: total(), cost: items.reduce((t, i) => t + i.cost, 0), payment: st.payment || C.paymentDefault(), paymentLabel: C.paymentLabel(st.payment || C.paymentDefault()), warranty: C.warrantySnapshot(st.warranty || C.warrantyDefault(), now), notes: st.notes.trim() };
     puts.push({ type: 'sale', id: saleId, data: sale });
     for (const l of st.cart) { const cur = S.get('item', l.id); puts.push({ type: 'item', id: l.id, data: { ...cur.data, status: 'sold', soldAt: now, saleId, price: cur.data.price || l.price } }); }
@@ -48,10 +53,10 @@
     swap(main, `<div class="page-head"><h1>Quick sale</h1><p>Scan or type a device identifier, set the price, and finish.</p></div>
       <div class="sell"><div><div class="card"><input type="text" id="scan" class="scan" placeholder="Scan or type a ${esc(C.lookupFields().map(f => f.label).join(', ') || 'device identifier')} and press Enter" autocomplete="off" autocapitalize="none"><div class="stock-tools mt-md"><button type="button" class="btn secondary small" id="browse">Browse available stock</button><button type="button" class="btn secondary small" id="bulk">Add by quantity</button>${C.modelCounts(C.availableStock(st.cart.map(l => l.id))).map(([m, n]) => `<button type="button" class="filter" data-model="${esc(m)}">${esc(m || 'No model')} · ${n}</button>`).join('')}</div><div class="hint mt-sm ${st.msg ? 'danger-text' : ''}" id="msg">${esc(st.msg)}</div></div>
         <div class="card"><h3>This sale</h3><div id="cart">${st.cart.length ? st.cart.map(l => { const it = S.get('item', l.id).data; return `<div class="cart-line"><div><div class="strong">${esc(C.deviceName(it) || 'Device')}</div><div class="mono muted">${esc(C.lookupFields().map(f => C.getVal(it, f)).filter(Boolean).join(' · '))}</div><div class="mt-xs">${C.testChip(it)}${C.testState(it).missingRequired.length ? ' <span class="chip red">Required checks missing</span>' : ''}</div></div><input type="number" class="price" min="0" step="0.01" data-line="${esc(l.id)}" value="${esc(F.dollars(l.price) || '0.00')}" aria-label="Price"><input type="number" class="pct" min="0" max="100" step="0.1" data-pct="${esc(l.id)}" value="${l.pct ? esc(l.pct) : ''}" placeholder="% off" aria-label="Percent off this device"><button type="button" class="icon-btn" data-rm="${esc(l.id)}" aria-label="Remove" title="Remove">✕</button></div>`; }).join('') : '<div class="empty">Nothing added yet.</div>'}</div></div></div>
-        <div><div class="card"><h3>Customer</h3><div class="seg wide mt-sm" role="tablist"><button type="button" data-mode="walk" class="${st.mode === 'walk' ? 'on' : ''}">Walk-in</button><button type="button" data-mode="existing" class="${st.mode === 'existing' ? 'on' : ''}">Existing</button><button type="button" data-mode="new" class="${st.mode === 'new' ? 'on' : ''}">New</button></div>
-          ${st.mode === 'existing' ? (picked ? `<div class="picked mt-md"><span>${esc(picked.data.name)}${picked.data.phone ? ' · ' + esc(picked.data.phone) : ''}</span><button class="btn secondary small" id="chg">Change</button></div>` : '<div class="mt-md"><input type="search" id="cs" placeholder="Search name, phone or email" autocomplete="off"><ul class="pick-list" id="cl" hidden></ul></div>') : ''}
-          ${st.mode === 'new' ? `<div class="mt-md"><div class="field"><label>Name</label><input type="text" id="nn" value="${esc(st.newc.name)}"></div><div class="grid g2"><div class="field"><label>Phone</label><input type="text" id="np" value="${esc(st.newc.phone)}"></div><div class="field"><label>Email</label><input type="email" id="ne" value="${esc(st.newc.email)}"></div></div></div>` : ''}</div>
-          <div class="card"><div class="field"><label>Date sold</label><input type="date" id="sd" value="${esc(st.date || C.dateStr(Date.now()))}" max="${esc(C.dateStr(Date.now()))}"></div><div class="field"><label>Warranty</label>${UI.select.html({ id: 'war', options: C.warrantyPeriods().filter(p => !p.archived).map(p => [p.key, p.label]), value: st.warranty || C.warrantyDefault() })}</div><div class="field"><label>Paid by</label>${UI.select.html({ id: 'pay', options: C.paymentOptions(), value: st.payment || C.paymentDefault() })}</div><div class="field"><label>Note (optional)</label><input type="text" id="nt" value="${esc(st.notes)}"></div>
+        <div><div class="card"><h3>Customer</h3><div class="seg wide mt-sm" role="tablist"><button type="button" data-mode="existing" class="${modeOf() === 'existing' ? 'on' : ''}">Existing</button><button type="button" data-mode="new" class="${modeOf() === 'new' ? 'on' : ''}">New</button></div>
+          ${modeOf() === 'existing' ? (picked ? `<div class="picked mt-md"><span>${esc(picked.data.name)}${picked.data.phone ? ' · ' + esc(picked.data.phone) : ''}</span><button class="btn secondary small" id="chg">Change</button></div>` : '<div class="mt-md"><input type="search" id="cs" placeholder="Search name, phone or email" autocomplete="off"><ul class="pick-list" id="cl" hidden></ul></div>') : ''}
+          ${modeOf() === 'new' ? `<div class="mt-md"><div class="field"><label>Name</label><input type="text" id="nn" value="${esc(st.newc.name)}" autocomplete="off"></div><div class="field"><label>Phone</label><input type="text" id="np" value="${esc(st.newc.phone)}" autocomplete="off"></div><div class="field"><label>Email</label><input type="email" id="ne" value="${esc(st.newc.email)}" autocomplete="off"></div></div>` : ''}</div>
+          <div class="card"><div class="field"><label>Date sold</label><input type="date" id="sd" value="${esc(st.date || C.dateStr(Date.now()))}" max="${esc(C.dateStr(Date.now()))}"></div><div class="field"><label>Time sold</label><input type="time" id="stm" value="${esc(st.time || C.timeStr(Date.now()))}"></div><div class="field"><label>Warranty</label>${UI.select.html({ id: 'war', options: C.warrantyPeriods().filter(p => !p.archived).map(p => [p.key, p.label]), value: st.warranty || C.warrantyDefault() })}</div><div class="field"><label>Paid by</label>${UI.select.html({ id: 'pay', options: C.paymentOptions(), value: st.payment || C.paymentDefault() })}</div><div class="field"><label>Note (optional)</label><input type="text" id="nt" value="${esc(st.notes)}"></div>
             <div class="field mt-md"><label>% off the whole order${A.can('users.manage') ? '' : ` (you can give up to ${esc(C.discountCap())}%)`}</label><input type="number" id="op" min="0" max="100" step="0.1" value="${st.orderPct ? esc(st.orderPct) : ''}" placeholder="0"></div>
             <div class="sum-line" id="subrow" ${totals().list === totals().total ? 'hidden' : ''}><span>Subtotal before discounts</span><span id="sub">${esc(F.money(totals().list))}</span></div><div class="sum-line" id="saverow" ${totals().saved > 0 ? '' : 'hidden'}><span>You save</span><span id="save">${esc(F.money(totals().saved))}</span></div>
             <div class="total-line"><span>Total</span><span id="tot">${esc(F.money(total()))}</span></div><button class="btn block" id="done" ${st.cart.length ? '' : 'disabled'}>Complete sale</button></div></div></div>`);
@@ -76,6 +81,7 @@
     });
     for (const [id, k] of [['#nn', 'name'], ['#np', 'phone'], ['#ne', 'email']]) q(id)?.addEventListener('input', (e) => { st.newc[k] = e.target.value; });
     q('#sd').addEventListener('change', (e) => { st.date = e.target.value; });
+    q('#stm').addEventListener('change', (e) => { st.time = e.target.value; });
     q('#war').addEventListener('change', (e) => { st.warranty = UI.select.value(e.target); });
     q('#pay').addEventListener('change', (e) => { st.payment = UI.select.value(e.target); });
     q('#nt').addEventListener('input', (e) => { st.notes = e.target.value; });

@@ -10,6 +10,7 @@
   C.steps = () => C.testsOn() ? AccountApp.store.config().steps : []; // switched off in Settings = no steps anywhere; nothing is deleted
   // Dates typed in forms are plain YYYY-MM-DD; shown and compared at midday so time zones never shift the day.
   C.dateMs = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || '') ? new Date(`${s}T12:00:00`).getTime() : 0;
+  C.timeStr = (t) => { const d = new Date(t || Date.now()); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
   C.dateStr = (t) => { const d = new Date(t || Date.now()); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
   C.receivedMs = (d) => C.dateMs(d.receivedOn) || d.addedAt || 0;
   C.testedMs = (d) => C.dateMs(d.testedOn) || Object.values(d.checks || {})[0]?.at || 0;
@@ -39,12 +40,18 @@
   };
   // Test record: which checklist steps are done for a device. Stored as checks = { stepKey: { by, at } }.
   C.testState = (d) => { const steps = C.steps(), done = steps.filter(s => d.checks?.[s.key]); return { done: done.length, total: steps.length, missingRequired: steps.filter(s => s.required && !d.checks?.[s.key]) }; };
+  // "Test before selling" (Settings): a device is ready to sell once its required steps are ticked (every step when none are marked required).
+  // Devices not ready show as "Awaiting test", do not count as available and cannot be put in a sale; ticking the steps frees them automatically.
+  C.requireTested = () => !!AccountApp.store.config().tests.requireBeforeSale && C.steps().length > 0;
+  C.isReady = (d) => { if (!C.requireTested()) return true; const steps = C.steps(), need = steps.some(s => s.required) ? steps.filter(s => s.required) : steps; return need.every(s => d.checks?.[s.key]); };
+  C.effStatus = (d) => (d.status === 'available' || d.status === 'returned') && !C.isReady(d) ? 'testing' : d.status;
+  C.isAvail = (d) => C.effStatus(d) === 'available';
   C.testChip = (d) => { const t = C.testState(d); if (!t.total) return ''; return t.done === t.total ? '<span class="chip green">Tested</span>' : t.done ? `<span class="chip amber">Tested ${t.done}/${t.total}</span>` : '<span class="chip gray">Not tested</span>'; };
   // What gets copied into the sale so the record stays as it was, even if the setup changes later.
   C.inspectionSnapshot = (d) => !C.steps().length ? null : ({ steps: C.steps().map(s => { const c = d.checks?.[s.key]; return { label: s.label, done: !!c, by: c?.by || '', at: c?.at || 0, details: c ? C.detailRows(s, d) : [] }; }), testedOn: C.testedMs(d), by: Object.values(d.checks || {})[0]?.by || '', notes: d.testNotes || '' });
   C.fieldSnapshot = (d) => C.fields().filter(f => f.onSale).map(f => ({ label: f.label, value: C.showVal(f, C.getVal(d, f)) })).filter(x => x.value !== '');
 
-  C.STATUS = { available: ['green', 'Available'], reserved: ['blue', 'Reserved'], sold: ['gray', 'Sold'], returned: ['amber', 'Returned'], damaged: ['red', 'Damaged'], archived: ['gray', 'Archived'] };
+  C.STATUS = { available: ['green', 'Available'], reserved: ['blue', 'Reserved'], sold: ['gray', 'Sold'], returned: ['amber', 'Returned'], testing: ['amber', 'Awaiting test'], damaged: ['red', 'Damaged'], archived: ['gray', 'Archived'] };
   C.statusChip = (s) => { const [c, l] = C.STATUS[s] || ['gray', s]; return `<span class="chip ${c}">${esc(l)}</span>`; };
   // "Paid by" choices are the reseller's own list (Settings > Payment methods). A sale keeps the name it was sold under.
   C.paymentMethods = () => AccountApp.store.config().payments.methods;
@@ -86,7 +93,9 @@
     return { kind: 'expired', cls: 'red', text: ago < 1 ? 'Expired today' : `Expired · ${ago} day${ago === 1 ? '' : 's'} ago` };
   };
   C.warrantyChip = (sale) => { const s = C.warrantyState(sale.warranty); return sale.voided ? '<span class="chip gray">Void</span>' : `<span class="chip ${s.cls}">${esc(s.text)}</span>`; };
-  C.warrantyLine = (sale) => sale.warranty?.end ? `Warranty: ${sale.warranty.label} · ends ${F().day(sale.warranty.end)} · ${C.warrantyState(sale.warranty).text}` : 'Warranty: none';
+  // Two short lines instead of one long one: what the cover is, then where it stands today.
+  C.warrantyLines = (sale) => sale.warranty?.end ? [`Warranty: ${sale.warranty.label} · ends ${F().day(sale.warranty.end)}`, C.warrantyState(sale.warranty).text] : ['Warranty: none'];
+  C.warrantyLine = (sale) => C.warrantyLines(sale).join('\n');
 
   // ---- discounts: a % off any line and/or the whole order; Administrators may be capped for Standard users in Settings ----
   C.pct = (v) => Math.min(100, Math.max(0, Math.round((Number(v) || 0) * 10) / 10));
@@ -104,13 +113,13 @@
   C.itemLabel = (it) => [C.deviceName(it), it.uid || it.serial || it.mac || it.fields?.[0]?.value || Object.values(it.custom || {}).find(Boolean)].filter(Boolean).join(' · ') || 'Device';
 
   // Older sales stored a date per step; newer ones store one "tested on" date for the whole record.
-  const stepLine = (st, rec) => `${st.done ? '✓' : '—'} ${st.label}${st.done && st.at && !rec.testedOn ? ` (${F().day(st.at)}${st.by ? ', ' + st.by : ''})` : ''}${(st.details || []).length ? ': ' + st.details.map(x => `${x.label} ${x.value}`).join('; ') : ''}`;
+  const stepLine = (st, rec) => `${st.done ? '✓' : '—'} ${st.label}${st.done && st.at && !rec.testedOn ? ` (${F().day(st.at)}${st.by ? ', ' + st.by : ''})` : ''}`;
   const recHead = (rec) => `Test record${rec.testedOn ? ` — tested ${F().day(rec.testedOn)}${rec.by ? ', ' + rec.by : ''}` : ''}`;
   C.receiptText = (sale, withTests = false) => {
     const d = sale.data, me = AccountApp.me, lines = [`${me.businessName}`, `Receipt ${d.no}`, F().when(d.ts), d.customerName ? `Customer: ${d.customerName}` : 'Walk-in customer', ''];
     for (const it of d.items) {
       lines.push(`${C.itemLabel(it)}  ${F().money(it.price)}${it.pct ? ` (${it.pct}% off ${F().money(it.listPrice)})` : ''}`); for (const x of it.fields || []) lines.push(`   ${x.label}: ${x.value}`);
-      if (withTests && it.inspection) { lines.push(`   ${recHead(it.inspection)}:`); for (const st of it.inspection.steps) lines.push(`    ${stepLine(st, it.inspection)}`); if (it.inspection.notes) lines.push(`    Notes: ${it.inspection.notes}`); }
+      if (withTests && it.inspection) { lines.push(`   ${recHead(it.inspection)}:`); for (const st of it.inspection.steps) { lines.push(`    ${stepLine(st, it.inspection)}`); for (const x of st.details || []) lines.push(`        ${x.label} ${x.value}`); } if (it.inspection.notes) lines.push(`    Notes: ${it.inspection.notes}`); }
     }
     if (d.orderPct) lines.push('', `Subtotal: ${F().money(d.subtotal)}`, `Order discount ${d.orderPct}%: -${F().money(d.orderOff)}`);
     lines.push('', `Total: ${F().money(d.total)}`, `Paid by: ${C.paymentOf(d)}`, C.warrantyLine(d)); if (d.notes) lines.push('', d.notes); lines.push('', 'Thank you!'); return lines.join('\n');
@@ -120,12 +129,12 @@
   // The reseller's own wording and logo for customer emails (saved in Settings), sent along so the message is built the way they want it.
   C.mailCustom = (key) => { const m = AccountApp.store.config().mail || {}; return { wording: m.wording?.[key] || undefined, logo: m.logo || undefined }; };
   C.hasTests = (sale) => sale.data.items.some(it => it.inspection?.steps?.length);
-  const testHtml = (it) => it.inspection?.steps?.length ? `<div class="test-record"><div class="strong text-sm">${esc(recHead(it.inspection))}</div>${it.inspection.steps.map(st => `<div class="text-sm ${st.done ? '' : 'faint'}">${esc(stepLine(st, it.inspection))}</div>`).join('')}${it.inspection.notes ? `<div class="text-sm mt-xs">${esc(it.inspection.notes)}</div>` : ''}</div>` : '';
+  const testHtml = (it) => it.inspection?.steps?.length ? `<div class="test-record"><div class="strong text-sm">${esc(recHead(it.inspection))}</div>${it.inspection.steps.map(st => `<div class="test-step ${st.done ? '' : 'faint'}">${esc(stepLine(st, it.inspection))}</div>${(st.details || []).map(x => `<div class="test-detail">${esc(x.label)} ${esc(x.value)}</div>`).join('')}`).join('')}${it.inspection.notes ? `<div class="text-sm mt-xs">${esc(it.inspection.notes)}</div>` : ''}</div>` : '';
   const receiptHtml = (sale, withTests) => { const d = sale.data;
     return `<div class="receipt"><img class="receipt-logo" src="/assets/logo-512.png" alt="" width="512" height="512"><h2>${esc(AccountApp.me.businessName)}</h2><div class="sub center">Receipt ${esc(d.no)} · ${esc(F().when(d.ts))}</div>${d.voided ? '<p class="banner red center mt-md">This sale was voided.</p>' : ''}
       <p class="center mt-md">${d.customerName ? `Customer: <b>${esc(d.customerName)}</b>` : 'Walk-in customer'}</p>
       <table><tbody>${d.items.map(it => `<tr><td><div>${esc(C.itemLabel(it))}</div>${it.pct ? `<div class="sub text-sm">${esc(it.pct)}% off</div>` : ''}${(it.fields || []).length ? `<div class="sub text-sm">${it.fields.map(x => `${esc(x.label)}: ${esc(x.value)}`).join(' · ')}</div>` : ''}${withTests ? testHtml(it) : ''}</td><td class="right nowrap">${it.pct ? `<div class="sub text-sm strike">${esc(F().money(it.listPrice))}</div>` : ''}<div>${esc(F().money(it.price))}</div></td></tr>`).join('')}</tbody></table>
-      ${d.orderPct ? `<div class="line-sub"><span>Subtotal</span><span>${esc(F().money(d.subtotal))}</span></div><div class="line-sub"><span>Order discount ${esc(d.orderPct)}%</span><span>−${esc(F().money(d.orderOff))}</span></div>` : ''}<div class="line-total"><span>Total</span><span>${esc(F().money(d.total))}</span></div><p class="sub center mt-md">Paid by ${esc(C.paymentOf(d))}</p><p class="center mt-sm">${esc(C.warrantyLine(d))}</p>${d.notes ? `<p class="center mt-md">${esc(d.notes)}</p>` : ''}<p class="sub center mt-lg">Thank you!</p></div>`; };
+      ${d.orderPct ? `<div class="line-sub"><span>Subtotal</span><span>${esc(F().money(d.subtotal))}</span></div><div class="line-sub"><span>Order discount ${esc(d.orderPct)}%</span><span>−${esc(F().money(d.orderOff))}</span></div>` : ''}<div class="line-total"><span>Total</span><span>${esc(F().money(d.total))}</span></div><p class="sub center mt-md">Paid by ${esc(C.paymentOf(d))}</p><p class="center mt-sm">${esc(C.warrantyLines(d)[0])}</p>${C.warrantyLines(d)[1] ? `<p class="sub center">${esc(C.warrantyLines(d)[1])}</p>` : ''}${d.notes ? `<p class="center mt-md">${esc(d.notes)}</p>` : ''}<p class="sub center mt-lg">Thank you!</p></div>`; };
 
   // Receipt sheet: print, email (sent by the server and not kept, or opened in the person's own mail app), void.
   C.showReceipt = async (sale, { canVoid = true } = {}) => {
@@ -136,10 +145,11 @@
       el.querySelector('#print').addEventListener('click', () => { document.documentElement.classList.add('printing'); window.addEventListener('afterprint', () => document.documentElement.classList.remove('printing'), { once: true }); window.print(); });
       el.querySelector('#mail').addEventListener('click', async () => {
         const subject = `Receipt ${d.no} from ${AccountApp.me.businessName}`, text = () => C.receiptText(sale, withTests);
-        await sheet(`<h2>Email receipt</h2><p class="sub">${C.ownMail() ? `Sent from your own mail server (${esc(C.ownMail().fromAddress)}).` : `Sent from the site, and replies go to ${esc(AccountApp.me.email || 'your own address')}.`} The receipt is not kept on our server.</p><div class="field mt-md"><label>Send to</label><input type="email" id="rto" value="${esc(d.customerEmail || '')}" autocomplete="off"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn secondary" id="rapp">Open in my mail app</button><button class="btn" id="rgo">Send</button></div>`, { onMount: (m, done) => {
+        await sheet(`<h2>Email the customer</h2><p class="sub">${C.ownMail() ? `Sent from your own mail server (${esc(C.ownMail().fromAddress)}).` : `Sent from the site, and replies go to ${esc(AccountApp.me.email || 'your own address')}.`} The receipt is not kept on our server.</p><div class="field mt-md"><label>Message</label>${UI.select.html({ id: 'rkind', options: d.voided ? [['sale_voided', 'Sale voided notice'], ['receipt', 'Receipt']] : [['receipt', 'Receipt'], ['thank_you', 'Thank-you note']], value: d.voided ? 'sale_voided' : 'receipt' })}</div><div class="field mt-md"><label>Send to</label><input type="email" id="rto" value="${esc(d.customerEmail || '')}" autocomplete="off"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn secondary" id="rapp">Open in my mail app</button><button class="btn" id="rgo">Send</button></div>`, { onMount: (m, done) => {
           const to = () => m.querySelector('#rto').value.trim();
-          m.querySelector('#rapp').addEventListener('click', () => { location.href = `mailto:${encodeURIComponent(to())}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text())}`; done(false); });
-          m.querySelector('#rgo').addEventListener('click', async () => { try { await AccountApp.api('POST', '/receipt-email', { to: to(), receiptNo: d.no, text: text(), ...C.mailCustom('receipt'), ...(C.ownMail() ? { smtp: C.ownMail() } : {}) }); toast('Receipt sent'); done(true); } catch (e) { toast(e.message, true); } });
+          const kind = () => UI.select.value(m.querySelector('#rkind')), plain = () => kind() === 'thank_you' ? `Thank you for your purchase from ${AccountApp.me.businessName} (receipt ${d.no}).` : kind() === 'sale_voided' ? `Receipt ${d.no} from ${AccountApp.me.businessName} has been cancelled.\n\n${text()}` : text();
+          m.querySelector('#rapp').addEventListener('click', () => { location.href = `mailto:${encodeURIComponent(to())}?subject=${encodeURIComponent(kind() === 'thank_you' ? `Thank you from ${AccountApp.me.businessName}` : kind() === 'sale_voided' ? `Receipt ${d.no} from ${AccountApp.me.businessName} was cancelled` : subject)}&body=${encodeURIComponent(plain())}`; done(false); });
+          m.querySelector('#rgo').addEventListener('click', async () => { try { await AccountApp.api('POST', '/receipt-email', { kind: kind(), to: to(), receiptNo: d.no, customer: d.customerName, text: kind() === 'thank_you' ? '' : text(), ...C.mailCustom(kind()), ...(C.ownMail() ? { smtp: C.ownMail() } : {}) }); toast('Email sent'); done(true); } catch (e) { toast(e.message, true); } });
         } });
       });
       el.querySelector('#wchg')?.addEventListener('click', async () => {

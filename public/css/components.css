@@ -94,9 +94,9 @@ tr.click:hover td { background: var(--color-wash-faint); }
   display: grid; place-items: center; padding: var(--space-xl); animation: fade-in var(--dur-med) var(--ease); transition: opacity var(--dur-base);
 }
 .scrim.closing { opacity: var(--opacity-none); }
-.sheet { width: min(var(--sheet-w), 100%); max-height: var(--sheet-max-h); overflow: auto; background: var(--color-surface); border-radius: var(--radius-xl); padding: var(--sheet-padding); box-shadow: var(--shadow-overlay); animation: pop-in var(--dur-med) var(--ease); }
+.sheet { width: min(var(--sheet-w), 100%); max-height: var(--sheet-max-h); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; background: var(--color-surface); border-radius: var(--radius-xl); padding: var(--sheet-padding); box-shadow: var(--shadow-overlay); animation: pop-in var(--dur-med) var(--ease); }
 .sheet h2 { margin-bottom: var(--space-xs); }
-.sheet .actions { display: flex; gap: var(--space-md); justify-content: flex-end; margin-top: var(--space-xl); }
+.sheet .actions { display: flex; flex-wrap: wrap; gap: var(--space-md); justify-content: flex-end; margin-top: var(--space-xl); }
 .sheet .actions.split { justify-content: space-between; }
 .toasts { position: fixed; z-index: var(--z-toast); left: 50%; bottom: var(--space-3xl); transform: translateX(-50%); display: flex; flex-direction: column; gap: var(--space-sm); align-items: center; pointer-events: none; }
 .toast { padding: var(--space-md) var(--space-xl); border-radius: var(--radius-pill); background: var(--color-toast); color: var(--color-toast-text); font-size: var(--text-body); box-shadow: var(--shadow-overlay); animation: rise-in var(--dur-med) var(--ease); backdrop-filter: blur(var(--blur-md)); transition: opacity var(--dur-med), transform var(--dur-med); }

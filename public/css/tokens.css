@@ -41,6 +41,8 @@
   --color-wash: rgba(0, 0, 0, 0.05);
   --color-wash-faint: rgba(0, 0, 0, 0.02);
   --color-track: rgba(0, 0, 0, 0.07);
+  --color-scroll-thumb: rgba(0, 0, 0, 0.22);
+  --color-scroll-thumb-hover: rgba(0, 0, 0, 0.38);
   --color-switch-off: rgba(120, 120, 128, 0.32);
   --color-segment: rgba(120, 120, 128, 0.14);
   --color-knob: #ffffff;
@@ -144,6 +146,8 @@
   --content-max: 1240px;
   --sticky-offset: 76px;
   --auth-card-w: 420px;
+  --scroll-w: 10px;
+  --scroll-gap: 2px;
   --sheet-w: 480px;
   --sheet-max-h: 90vh;
   --switch-w: 51px;

@@ -10,7 +10,7 @@ const shapeHistory = (rows) => rows.map((x) => ({ ...x, ts: Number(x.ts), newIp:
 
 export function activityRoutes(db) {
   const r = express.Router();
-  const sessionsFor = async (where, args, current) => (await db.all(`SELECT s.token_hash, s.subject_id, s.ip, s.ua, s.created_at, s.last_seen, u.login FROM sessions s LEFT JOIN account_users u ON u.id = s.subject_id WHERE s.realm = 'app' AND s.mfa_pending = 0 AND s.expires_at > ? AND ${where} ORDER BY s.created_at DESC`, [Date.now(), ...args]))
+  const sessionsFor = async (where, args, current) => (await db.all(`SELECT s.token_hash, s.subject_id, s.ip, s.ua, s.created_at, s.last_seen, u.login FROM sessions s LEFT JOIN account_users u ON u.id = s.subject_id WHERE s.realm = 'app' AND s.mfa_pending = 0 AND s.expires_at > ? AND ${where} ORDER BY COALESCE(s.last_seen, s.created_at) DESC`, [Date.now(), ...args]))
     .map((s) => ({ id: sessionId(s.token_hash), userId: s.subject_id, login: s.login, ip: s.ip, device: describeDevice(s.ua), startedAt: Number(s.created_at), lastSeen: Number(s.last_seen || s.created_at), current: s.token_hash === current }));
 
   r.get('/me', async (req, res) => {
@@ -35,6 +35,17 @@ export function activityRoutes(db) {
     const n = await db.run("DELETE FROM sessions WHERE realm = 'app' AND account_id = ? AND token_hash LIKE ? AND token_hash <> ?", [req.subject.account_id, `${req.params.sid}%`, req.session.token_hash]);
     if (n.changes) tenantLog(req, 'session.revoked', `${req.subject.login} signed out a team session`);
     res.json({ ok: n.changes > 0 });
+  });
+  // Administrators can end every other sign-in on the account, or every one including their own.
+  r.post('/team/revoke-others', need('users.manage'), async (req, res) => {
+    const n = await db.run("DELETE FROM sessions WHERE realm = 'app' AND account_id = ? AND token_hash <> ?", [req.subject.account_id, req.session.token_hash]);
+    tenantLog(req, 'session.revoked', `${req.subject.login} signed out everyone else (${n.changes} sign-in${n.changes === 1 ? '' : 's'})`);
+    res.json({ ok: true, count: n.changes });
+  });
+  r.post('/team/revoke-all', need('users.manage'), async (req, res) => {
+    const n = await db.run("DELETE FROM sessions WHERE realm = 'app' AND account_id = ?", [req.subject.account_id]);
+    tenantLog(req, 'session.revoked', `${req.subject.login} signed out everyone, including themselves (${n.changes} sign-in${n.changes === 1 ? '' : 's'})`);
+    res.json({ ok: true, count: n.changes });
   });
   return r;
 }

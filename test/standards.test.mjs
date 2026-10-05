@@ -37,6 +37,15 @@ test('tokens.css is the only stylesheet with raw values', () => {
   assert.deepEqual(problems, []);
 });
 
+test('everything that scrolls uses the one themed scroll bar, and sheets never scroll sideways', () => {
+  const base = stripComments(read(path.join(PUB, 'css', 'base.css')));
+  assert.ok(/scrollbar-color:\s*var\(--color-scroll-thumb\)/.test(base) && /::-webkit-scrollbar-thumb/.test(base) && /::-webkit-scrollbar\s*\{\s*width:\s*var\(--scroll-w\)/.test(base), 'base.css must define the themed scroll bar from tokens');
+  const other = [];
+  for (const f of cssFiles.filter(f => f !== path.join(PUB, 'css', 'base.css'))) { const css = stripComments(read(f)); if (/scrollbar-(width|color)|::-webkit-scrollbar/.test(css)) other.push(`${rel(f)}: scroll bar styling belongs in base.css only`); if (/overflow-x:\s*(scroll)\b/.test(css)) other.push(`${rel(f)}: overflow-x: scroll`); }
+  assert.deepEqual(other, []);
+  assert.match(stripComments(read(path.join(PUB, 'css', 'components.css'))).match(/\.sheet \{[^}]*\}/)[0], /overflow-x:\s*hidden/, '.sheet must not scroll sideways');
+});
+
 test('every var(--token) used is defined in tokens.css (or is a sanctioned runtime property)', () => {
   const defined = new Set([...read(tokensFile).matchAll(/(--[\w-]+)\s*:/g)].map(m => m[1])), runtime = new Set(['--pct']);
   const missing = [];

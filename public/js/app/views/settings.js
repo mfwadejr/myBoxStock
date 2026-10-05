@@ -97,6 +97,8 @@
         <div class="card mt-lg"><div class="row spread wrap"><div><h3>Test checklist</h3><div class="sub mb-0">Steps you perform on each device. When you tick them in Inventory, who and when is recorded and copied into the sale, so you can show what was done if a customer says it did not work.</div></div><button class="btn secondary" id="adds" ${cfg.tests.enabled ? '' : 'disabled'}>Add a step</button></div>
           <label class="check mt-md"><input type="checkbox" id="ten" ${cfg.tests.enabled ? 'checked' : ''}><span>Use a test checklist</span></label>
           <div class="hint">Turn this off if you do not test devices. The test record is then hidden in Inventory, Quick sale, receipts and CSV files. Nothing already recorded is deleted.</div>
+          <label class="check mt-md"><input type="checkbox" id="treq" ${cfg.tests.requireBeforeSale ? 'checked' : ''} ${cfg.tests.enabled ? '' : 'disabled'}><span>Sell only tested devices</span></label>
+          <div class="hint">When on, a device stays "Awaiting test" until its required steps are ticked (every step if none are marked required). It is not counted as available and cannot be added to a sale. Turn it off if you sell devices as they arrive.</div>
           <div class="mt-md" ${cfg.tests.enabled ? '' : 'hidden'}>${cfg.steps.length ? cfg.steps.map((st, i) => `<div class="step-row"><input type="text" data-k="sl" data-i="${i}" value="${esc(st.label)}" aria-label="Step"><button type="button" class="btn secondary small type-btn" data-k="sdt" data-i="${i}" title="Extra items under this step">Details (${(st.details || []).length})</button><label class="check"><input type="checkbox" data-k="sr" data-i="${i}" ${st.required ? 'checked' : ''}><span class="text-sm">Required before sale</span></label><button type="button" class="icon-btn" data-k="rms" data-i="${i}" aria-label="Remove step" title="Remove">✕</button>${moveBtns('mvs', i, cfg.steps.length)}</div>`).join('') : '<div class="empty">No steps. Add the checks you do on each device.</div>'}</div></div>`);
       const q = (s) => main.querySelectorAll(s);
       q('[data-k=mvf]').forEach(b => b.addEventListener('click', () => shift(cfg.fields, b)));
@@ -166,6 +168,7 @@
         if (p) { cfg.warranty.periods.push(p); draw(); }
       });
       main.querySelector('#ten').addEventListener('change', (e) => { cfg.tests.enabled = e.target.checked; draw(); });
+      main.querySelector('#treq').addEventListener('change', (e) => { cfg.tests.requireBeforeSale = e.target.checked; });
       // Details: extra items shown under a step when it is ticked (text, From → To, or a choice from a list).
       q('[data-k=sdt]').forEach(b => b.addEventListener('click', async () => {
         const st = cfg.steps[Number(b.dataset.i)], list = JSON.parse(JSON.stringify(st.details || []));
@@ -211,7 +214,7 @@
         if (cfg.unlock.mode === 'stay' && !(cfg.unlock.idleMin >= 1 && cfg.unlock.idleMin <= 1440)) return toast('Enter an idle lock time from 1 to 1440 minutes.', true);
         const dcap = Number(cfg.discount.maxStandardPct); if (!(dcap >= 0 && dcap <= 100)) return toast('Enter a discount limit from 0 to 100.', true);
         const mail = { ...mailBody(), wording: cfg.mail.wording, logo: cfg.mail.logo }; if (mail.enabled && (!mail.host || !mail.fromAddress)) return toast('Enter the mail server and a From address, or turn off sending from your own mail server.', true);
-        try { await S.saveConfig({ ...S.config(), mail, discount: { maxStandardPct: dcap }, unlock: { mode: cfg.unlock.mode, idleMin: cfg.unlock.idleMin || 30 }, payments: { default: cfg.payments.default, methods: cfg.payments.methods.map(x => ({ ...x, label: x.label.trim() })) }, warranty: { default: cfg.warranty.default, periods: cfg.warranty.periods.map(x => ({ ...x, label: x.label.trim() })) }, tests: { enabled: cfg.tests.enabled }, fields: cfg.fields.map(f => ({ ...f, label: f.label.trim() })), steps: cfg.steps.map(s => ({ ...s, label: s.label.trim() })) }); await A.vault.policy(); toast('Settings saved'); } catch (er) { toast(er.message, true); }
+        try { await S.saveConfig({ ...S.config(), mail, discount: { maxStandardPct: dcap }, unlock: { mode: cfg.unlock.mode, idleMin: cfg.unlock.idleMin || 30 }, payments: { default: cfg.payments.default, methods: cfg.payments.methods.map(x => ({ ...x, label: x.label.trim() })) }, warranty: { default: cfg.warranty.default, periods: cfg.warranty.periods.map(x => ({ ...x, label: x.label.trim() })) }, tests: { enabled: cfg.tests.enabled, requireBeforeSale: !!cfg.tests.requireBeforeSale && cfg.tests.enabled }, fields: cfg.fields.map(f => ({ ...f, label: f.label.trim() })), steps: cfg.steps.map(s => ({ ...s, label: s.label.trim() })) }); await A.vault.policy(); toast('Settings saved'); } catch (er) { toast(er.message, true); }
       }));
     };
     draw();

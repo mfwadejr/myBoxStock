@@ -3,7 +3,7 @@
   const { esc, fmt, toast, swap } = UI;
   const RESULT = { signed_in: ['green', 'Signed in'], wrong_password: ['red', 'Wrong password'], code_failed: ['red', 'Wrong code'], blocked: ['amber', 'Blocked'] };
 
-  const sessionsCard = (sessions, showWho) => `<div class="card"><h3>Where ${showWho ? 'people are' : 'you’re'} signed in</h3>
+  const sessionsCard = (sessions, showWho) => `<div class="card"><div class="row spread wrap"><h3>Where ${showWho ? 'people are' : 'you’re'} signed in</h3>${showWho ? '<div class="row"><button class="btn secondary small" id="outo">Sign out everyone else</button><button class="btn danger small" id="outa">Sign out everyone</button></div>' : ''}</div>
     <div class="tablewrap"><table><thead><tr>${showWho ? '<th>Person</th>' : ''}<th>Device</th><th>IP address</th><th>Started</th><th>Last active</th><th></th></tr></thead><tbody>${sessions.length ? sessions.map(s => `<tr>${showWho ? `<td class="mono">${esc(s.login || '')}</td>` : ''}<td>${esc(s.device)}${s.current ? ' <span class="chip blue">This device</span>' : ''}</td><td class="mono">${esc(s.ip)}</td><td class="muted">${fmt.date(s.startedAt)}</td><td class="muted">${fmt.ago(s.lastSeen)}</td><td class="right">${s.current ? '' : `<button class="btn secondary small" data-revoke="${esc(s.id)}">Sign out</button>`}</td></tr>`).join('') : '<tr><td colspan="6" class="empty">No active sessions.</td></tr>'}</tbody></table></div></div>`;
 
   const rows = (list, showWho) => list.map(h => { const [c, t] = RESULT[h.result] || ['', h.result]; return `<tr>${showWho ? `<td class="mono">${esc(h.login)}</td>` : ''}<td class="muted">${fmt.dateTime(h.ts)}</td><td><span class="chip ${c}">${t}</span>${h.attempts > 1 ? ` <span class="muted text-sm">× ${h.attempts}</span>` : ''}${h.newIp ? ' <span class="chip amber">New location</span>' : ''}</td><td class="mono">${esc(h.ip)}</td><td>${esc(h.device)}</td></tr>`; }).join('');
@@ -17,6 +17,10 @@
     host.querySelectorAll('[data-revoke]').forEach(b => b.addEventListener('click', async () => {
       try { await AccountApp.api('POST', `${showWho ? '/activity/team' : '/activity'}/sessions/${b.dataset.revoke}/revoke`); toast('Signed out'); render(host, base, showWho); } catch (e) { toast(e.message, true); }
     }));
+    const ask = async (title, body, label, path, self) => { if (!await UI.confirmBox({ title, body, confirmLabel: label, danger: true })) return;
+      try { await AccountApp.api('POST', path); if (self) { location.href = '/app/'; return; } toast('Signed out'); render(host, base, showWho); } catch (e) { toast(e.message, true); } };
+    host.querySelector('#outo')?.addEventListener('click', () => ask('Sign out everyone else?', 'Everyone except you will have to sign in again on every device.', 'Sign out everyone else', '/activity/team/revoke-others', false));
+    host.querySelector('#outa')?.addEventListener('click', () => ask('Sign out everyone?', 'Everyone, including you, will have to sign in again.', 'Sign out everyone', '/activity/team/revoke-all', true));
     let last = h.history.length ? h.history[h.history.length - 1].ts : 0;
     host.querySelector('#more')?.addEventListener('click', async (e) => {
       const n = await AccountApp.api('GET', `${base}?before=${last}`);
