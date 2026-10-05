@@ -2,13 +2,15 @@
 // variables. A saved value wins; if nothing is saved the environment value (or the built-in default) is used. Applied at start and on save.
 import { getSetting, setSetting } from '../../db/settings.mjs';
 import { config } from '../../core/config.mjs';
+import { visitorViaCloudflare } from '../../security/cloudflare.mjs';
 
-const ENV = { trustProxy: config.trustProxy, secureCookies: config.secureCookies, logLevel: config.log.level, logRetentionDays: config.log.retentionDays, allowPrivateMail: config.mailAllowPrivate };
+const ENV = { trustProxy: config.trustProxy, secureCookies: config.secureCookies, logLevel: config.log.level, logRetentionDays: config.log.retentionDays, allowPrivateMail: config.mailAllowPrivate, cloudflareIp: config.cloudflareIp };
 const LEVELS = ['debug', 'info', 'warn', 'error'], PROXY = ['', '1', '2', '3'];
 
 // Each option: how to check it, and how to apply it to the running server.
 const SPEC = {
   trustProxy: { check: (v) => PROXY.includes(String(v)) ? null : 'Choose Off, or 1, 2 or 3 proxies.', norm: (v) => String(v), apply: (v, app) => app?.set('trust proxy', /^\d+$/.test(v) ? Number(v) : (v || false)), set: (v) => { config.trustProxy = v; } },
+  cloudflareIp: { check: (v) => typeof v === 'boolean' ? null : 'Choose on or off.', norm: Boolean, set: (v) => { config.cloudflareIp = v; } },
   secureCookies: { check: (v) => typeof v === 'boolean' ? null : 'Choose on or off.', norm: Boolean, set: (v) => { config.secureCookies = v; } },
   allowPrivateMail: { check: (v) => typeof v === 'boolean' ? null : 'Choose on or off.', norm: Boolean, set: (v) => { config.mailAllowPrivate = v; } },
   logLevel: { check: (v) => LEVELS.includes(v) ? null : 'Choose debug, info, warn or error.', norm: String, set: (v) => { config.log.level = v; } },
@@ -43,10 +45,11 @@ export async function saveRuntime(db, app, body, { secure }) {
 
 // The address this request would be seen as if the proxy count were `value` ('' = none). Used to refuse a change that would lock the
 // person making it out of the Host Console, before it is saved.
-export function addressWith(req, value) {
+export function addressWith(req, value, cloudflare = config.cloudflareIp) {
   const v = String(value ?? ''), n = /^\d+$/.test(v) ? Number(v) : 0, hops = String(req.headers['x-forwarded-for'] || '').split(',').map(x => x.trim()).filter(Boolean);
   const chain = [...hops, req.socket?.remoteAddress || ''];   // the last entry is the connection itself; each trusted proxy lets us step one back
-  return chain[Math.max(0, chain.length - 1 - n)];
+  const seen = chain[Math.max(0, chain.length - 1 - n)];
+  return (cloudflare && visitorViaCloudflare(req.headers, seen)) || seen;
 }
 // Forget every saved server option (back to the container's environment). Used by `node server.mjs reset-server-options`.
 export async function clearRuntime(db) { await db.run('DELETE FROM settings WHERE k = ?', ['runtime']); }

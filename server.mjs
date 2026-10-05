@@ -18,6 +18,7 @@ import { sweepExpired } from './src/services/billing/index.mjs';
 import { purgeSignInHistory } from './src/services/signins/index.mjs';
 import { hostRouter } from './src/routes/host/index.mjs';
 import { appRouter } from './src/routes/app/index.mjs';
+import { cloudflareAddress } from './src/security/cloudflare-middleware.mjs';
 
 if (await runCli(process.argv[2])) process.exit(process.exitCode || 0);
 
@@ -43,6 +44,7 @@ const app = express();
 app.disable('x-powered-by');
 if (config.trustProxy) app.set('trust proxy', /^\d+$/.test(config.trustProxy) ? Number(config.trustProxy) : config.trustProxy);
 await applyRuntime(db, app); // options saved in the Host Console (Settings) win over the environment
+app.use(cloudflareAddress);
 app.use(accessLog);
 app.use((req, res, next) => { // security headers; style-src has no 'unsafe-inline' — all styling comes from /css
   res.set({ 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'no-referrer',

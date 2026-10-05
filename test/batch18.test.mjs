@@ -75,3 +75,25 @@ test('proxy count: a change that would lock the Host out of the Host Console is 
   assert.equal(bad.status, 400); assert.equal(bad.data.code, 'PROXY_LOCKOUT');
   const ok = await h.req('PUT', '/api/host/settings', { signupsEnabled: true, runtime: { trustProxy: '1' } }); assert.equal(ok.status, 200, 'the same count is fine');
 });
+
+test('Cloudflare option: the visitor address comes from CF-Connecting-IP only when the request arrived through a Cloudflare address', async () => {
+  const { isCloudflare, visitorViaCloudflare } = await import('../src/security/cloudflare.mjs');
+  for (const ip of ['104.22.56.114', '172.69.71.94', '172.71.22.208', '2606:4700:3030::1', '::ffff:104.16.0.1']) assert.equal(isCloudflare(ip), true, ip);
+  for (const ip of ['198.51.100.9', '192.168.2.148', '172.16.0.1', '8.8.8.8', '2001:db8::1', 'nonsense', '']) assert.equal(isCloudflare(ip), false, ip);
+  assert.equal(visitorViaCloudflare({ 'cf-connecting-ip': '198.51.100.9' }, '104.22.56.114'), '198.51.100.9');
+  assert.equal(visitorViaCloudflare({ 'cf-connecting-ip': '198.51.100.9' }, '203.0.113.5'), '', 'ignored when the request did not come through Cloudflare');
+  assert.equal(visitorViaCloudflare({ 'cf-connecting-ip': 'not an address' }, '104.22.56.114'), '', 'a junk header is ignored');
+  { const prev = new Client(srv.base); prev.headers = { 'X-Forwarded-For': '198.51.100.20' }; await prev.req('POST', '/api/host/login', { login: 'admin', password: PW }); await prev.req('PUT', '/api/host/firewall/host-access', { enabled: false }); }   // left on by the previous test
+  const via = async (headers) => { const c = new Client(srv.base); c.headers = headers; const lg = await c.req('POST', '/api/host/login', { login: 'admin', password: PW }); assert.equal(lg.status, 200, JSON.stringify(lg.data)); return (await c.req('GET', '/api/host/firewall')).data; };
+  let d = await via({ 'X-Forwarded-For': '104.22.56.114', 'CF-Connecting-IP': '198.51.100.9' }); assert.equal(d.yourIp, '104.22.56.114', 'off by default: Cloudflare is what the site sees'); assert.equal(d.via, 'proxy');
+  const h = new Client(srv.base); h.headers = { 'X-Forwarded-For': '203.0.113.77' }; await h.req('POST', '/api/host/login', { login: 'admin', password: PW });
+  assert.equal((await h.req('PUT', '/api/host/settings', { signupsEnabled: true, runtime: { cloudflareIp: 'yes' } })).status, 400, 'on or off only');
+  assert.equal((await h.req('PUT', '/api/host/settings', { signupsEnabled: true, runtime: { cloudflareIp: true } })).status, 200);
+  d = await via({ 'X-Forwarded-For': '104.22.56.114', 'CF-Connecting-IP': '198.51.100.9' }); assert.equal(d.yourIp, '198.51.100.9', 'on: the real visitor'); assert.equal(d.via, 'cloudflare'); assert.equal(d.behindProxy, false);
+  d = await via({ 'X-Forwarded-For': '203.0.113.77', 'CF-Connecting-IP': '198.51.100.9' }); assert.equal(d.yourIp, '203.0.113.77', 'a forged header from a non-Cloudflare address is ignored');
+  // the lockout guard covers this option too: turning it off would make me look like Cloudflare, which is not on the list
+  const c = new Client(srv.base); c.headers = { 'X-Forwarded-For': '104.22.56.114', 'CF-Connecting-IP': '198.51.100.9' }; await c.req('POST', '/api/host/login', { login: 'admin', password: PW });
+  assert.equal((await c.req('POST', '/api/host/firewall/rules', { kind: 'host', cidr: '198.51.100.9', note: 'me' })).status, 200);
+  await c.req('PUT', '/api/host/firewall/host-access', { enabled: true });
+  const off = await c.req('PUT', '/api/host/settings', { signupsEnabled: true, runtime: { cloudflareIp: false } }); assert.equal(off.status, 400); assert.equal(off.data.code, 'PROXY_LOCKOUT');
+});

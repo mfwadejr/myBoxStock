@@ -34,12 +34,14 @@ export function settingsRoutes(db) {
       hostLog(req, 'info', 'settings.site_url', u ? `Site address for email links set to ${u}` : 'Site address cleared (the PUBLIC_URL setting is used)', { data: { siteUrl: u } });
     }
     if (req.body.runtime) {
-      // A proxy count changes which address the server sees for you. Refuse a change that would put you outside the Host Console list.
-      if ('trustProxy' in req.body.runtime && req.body.runtime.trustProxy !== null && !config.hostAllowAny) {
-        const now = fw.normalizeIp(req.ip), then = fw.normalizeIp(addressWith(req, req.body.runtime.trustProxy));
+      // The proxy count and the Cloudflare option change which address the site sees for you. Refuse a change that would put you outside the Host Console list.
+      const rt = req.body.runtime;
+      if (('trustProxy' in rt || 'cloudflareIp' in rt) && !config.hostAllowAny) {
+        const count = 'trustProxy' in rt ? (rt.trustProxy === null ? config.trustProxy : rt.trustProxy) : config.trustProxy, cf = 'cloudflareIp' in rt ? (rt.cloudflareIp === null ? false : !!rt.cloudflareIp) : config.cloudflareIp;
+        const now = fw.normalizeIp(req.ip), then = fw.normalizeIp(addressWith(req, count, cf));
         if (then !== now) {
           const rules = fw.getRules(), listed = rules.some(r => r.kind === 'host' && fw.matchCidr(then, r.cidr)), denied = rules.some(r => r.kind === 'deny' && fw.matchCidr(then, r.cidr)) && !rules.some(r => r.kind === 'allow' && fw.matchCidr(then, r.cidr));
-          if ((fw.getLimits().hostConsoleAllowOnly && !listed) || denied) return res.status(400).json({ error: `With that proxy count the site would see your address as ${then} instead of ${now}, and ${then} is not allowed into the Host Console, so you would be locked out. Add a Host Console rule for ${then} first (Firewall), then change this.`, code: 'PROXY_LOCKOUT' });
+          if ((fw.getLimits().hostConsoleAllowOnly && !listed) || denied) return res.status(400).json({ error: `With that setting the site would see your address as ${then} instead of ${now}, and ${then} is not allowed into the Host Console, so you would be locked out. Add a Host Console rule for ${then} first (Firewall), then change this.`, code: 'PROXY_LOCKOUT' });
         }
       }
       const bad = await saveRuntime(db, req.app, req.body.runtime, { secure: req.secure });

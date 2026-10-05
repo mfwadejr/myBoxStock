@@ -3,6 +3,16 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.18.2] - 2026-10-05
+
+### Added
+- **Site is behind Cloudflare (Host Console > Settings > Server options).** When on, the firewall, activity log and sign-in history use the visitor's real address from Cloudflare's `CF-Connecting-IP` header instead of Cloudflare's own address. It is only believed when the request really arrives from one of Cloudflare's published address ranges (kept in `src/security/cloudflare.mjs`), so nobody else can fake it. Counting proxies could not do this when the real address is not in the forwarding chain. Can also be set with `CLOUDFLARE_IP=1`.
+- The Firewall page says where "Your address right now" comes from (Cloudflare, or the proxy count).
+
+### Changed
+- The proxy-count lockout guard also covers the Cloudflare option: a change that would put your own address outside the Host Console list is refused with the address to add first.
+- The two blue notices on Firewall > Host Console access now say what to do: how to turn off the HOST_ALLOW_ANY override, and to use the proxy count or the Cloudflare option in Settings (they used to point at the old TRUST_PROXY variable).
+
 ## [0.18.1] - 2026-10-05
 
 ### Fixed
