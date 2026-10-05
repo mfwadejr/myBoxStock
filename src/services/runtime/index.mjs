@@ -40,3 +40,13 @@ export async function saveRuntime(db, app, body, { secure }) {
   await setSetting(db, 'runtime', saved); await applyRuntime(db, app);
   return '';
 }
+
+// The address this request would be seen as if the proxy count were `value` ('' = none). Used to refuse a change that would lock the
+// person making it out of the Host Console, before it is saved.
+export function addressWith(req, value) {
+  const v = String(value ?? ''), n = /^\d+$/.test(v) ? Number(v) : 0, hops = String(req.headers['x-forwarded-for'] || '').split(',').map(x => x.trim()).filter(Boolean);
+  const chain = [...hops, req.socket?.remoteAddress || ''];   // the last entry is the connection itself; each trusted proxy lets us step one back
+  return chain[Math.max(0, chain.length - 1 - n)];
+}
+// Forget every saved server option (back to the container's environment). Used by `node server.mjs reset-server-options`.
+export async function clearRuntime(db) { await db.run('DELETE FROM settings WHERE k = ?', ['runtime']); }

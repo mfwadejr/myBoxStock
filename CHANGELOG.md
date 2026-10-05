@@ -3,6 +3,14 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.18.1] - 2026-10-05
+
+### Fixed
+- **Changing the proxy count can no longer lock you out of the Host Console.** Before saving, the site works out which address it would see for you with the new count; if that address is not on the Host Console list (or is blocked), the change is refused with a plain message naming the address to add first.
+
+### Added
+- `node server.mjs reset-server-options` clears every server option saved in the Host Console (proxy count, secure cookies, log detail) so the container settings apply again. Use it if a saved option ever stops you getting in.
+
 ## [0.18.0] - 2026-10-05
 
 ### Added

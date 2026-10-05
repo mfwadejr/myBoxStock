@@ -1,8 +1,9 @@
-// CLI / commands — `node server.mjs reset-host-admin` and `node server.mjs migrate-db --to <url>`.
+// CLI / commands — `node server.mjs reset-host-admin`, `node server.mjs reset-server-options` and `node server.mjs migrate-db --to <url>`.
 import { initDb } from '../db/connection.mjs';
 import { copyDatabase } from '../db/copy.mjs';
 import { ensureHostAdmin } from './host-admin.mjs';
 import { restoreBundleToDisk } from '../services/backup/bundle.mjs';
+import { clearRuntime } from '../services/runtime/index.mjs';
 import { attachLogDb, closeLogs } from '../logging/logger.mjs';
 
 const arg = (name) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : undefined; };
@@ -12,6 +13,11 @@ export async function runCli(cmd) {
     const db = await initDb(); attachLogDb(db);
     const pw = await ensureHostAdmin(db, { reset: true });
     console.log(`\nHost admin reset. Username: admin\nTemporary password: ${pw}\nTwo-factor was cleared; you must change the password at next sign-in.\n`);
+    await closeLogs(); await db.close(); return true;
+  }
+  if (cmd === 'reset-server-options') {
+    const db = await initDb(); attachLogDb(db); await clearRuntime(db);
+    console.log('\nSaved server options (proxy count, secure cookies, log detail, ...) cleared. The container settings are used again. Restart the app.\n');
     await closeLogs(); await db.close(); return true;
   }
   if (cmd === 'restore-bundle') {

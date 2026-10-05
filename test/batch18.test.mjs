@@ -65,3 +65,13 @@ test('customer emails: Sale voided and Thank you can be previewed and are accept
   assert.equal(ty.data.code, 'RECEIPT_MAIL_OFF', 'a thank-you needs no receipt text; it is only refused because site email is off here');
   const rc = await c.req('POST', '/api/app/receipt-email', { kind: 'receipt', to: 'buyer@example.com', receiptNo: 'S-1', text: '' }); assert.equal(rc.data.code, 'RECEIPT_MAIL_BAD', 'a receipt still needs its text');
 });
+
+test('proxy count: a change that would lock the Host out of the Host Console is refused before it is saved', async () => {
+  const h = new Client(srv.base); h.headers = { 'X-Forwarded-For': '198.51.100.20' };
+  await h.req('POST', '/api/host/login', { login: 'admin', password: PW });
+  const add = await h.req('POST', '/api/host/firewall/rules', { kind: 'host', cidr: '198.51.100.20', note: 'me' }); assert.equal(add.status, 200, JSON.stringify(add.data));
+  const on = await h.req('PUT', '/api/host/firewall/host-access', { enabled: true }); assert.equal(on.status, 200, JSON.stringify(on.data));
+  const bad = await h.req('PUT', '/api/host/settings', { signupsEnabled: true, runtime: { trustProxy: '' } });
+  assert.equal(bad.status, 400); assert.equal(bad.data.code, 'PROXY_LOCKOUT');
+  const ok = await h.req('PUT', '/api/host/settings', { signupsEnabled: true, runtime: { trustProxy: '1' } }); assert.equal(ok.status, 200, 'the same count is fine');
+});

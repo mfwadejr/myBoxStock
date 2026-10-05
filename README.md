@@ -32,7 +32,7 @@ the MariaDB driver is written but has not been run against a live server yet.
 `LOG_DIR` · `LOG_LEVEL` · `LOG_MAX_MB` · `LOG_FILES` · `LOG_RETENTION_DAYS` · `LOG_CONSOLE`
 
 ## Recovery
-Locked out of the host console: `node server.mjs reset-host-admin` (prints a temporary password, clears 2FA).
+Locked out of the host console: `node server.mjs reset-host-admin` (prints a temporary password, clears 2FA). If a saved server option (such as the proxy count) is the cause, `node server.mjs reset-server-options` clears them, or set `HOST_ALLOW_ANY=1` for one restart to ignore the Host Console address list.
 
 ## Documentation
 - `docs/ENCRYPTION-DESIGN.md` — how customer-data encryption works (and its limits)
