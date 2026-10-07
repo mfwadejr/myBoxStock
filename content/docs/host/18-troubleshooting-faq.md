@@ -3,7 +3,7 @@ title: Troubleshooting and FAQ
 summary: Problems you are likely to meet as the Host, grouped by symptom, with the cause, the fix and where to read more. Ends with a general FAQ.
 keywords: test connection, sftp identity, restore notice, lockouts persist, camera, scanning, diagnostics, destination, troubleshooting, problem, error, not found, locked out, blocked, proxy, email not arriving, resend, confirmation link, backup failed, restore, trial, read-only, two-factor, recovery, FAQ, help
 order: 18
-covers: Not Found, host_console.blocked, Reverse proxy in front of the site, Site is behind Cloudflare, Resend, Resend all failed, Site address, Health tab, Send a test, Run one now, Restore, Extend trial, Change plan, Set up two-factor, reset-host-admin, reset-server-options, HOST_ALLOW_ANY, Mark email as confirmed, Email a password reset link, Reset two-factor authentication, Recovery key, Test connection, Take a snapshot now, Send one now, Lift, Copy diagnostics, Try again, decrypt-backup, SFTP identity, Server identity pinned, restore notice, Backup is failing
+covers: Not Found, host_console.blocked, Reverse proxy in front of the site, Site is behind Cloudflare, Resend, Resend all failed, Site address, Health tab, Send a test, Run one now, Restore, Extend trial, Change plan, Set up two-factor, reset-host-admin, reset-server-options, HOST_ALLOW_ANY, Mark email as confirmed, Email a password reset link, Reset two-factor authentication, Recovery key, Test connection, Take a snapshot now, Send one now, Lift, Copy diagnostics, Try again, decrypt-backup, SFTP identity, Server identity pinned, restore notice, Backup is failing, Locked sign-ins, Unlock, Too many failed attempts
 ---
 
 ## How to use this page
@@ -11,6 +11,8 @@ covers: Not Found, host_console.blocked, Reverse proxy in front of the site, Sit
 Find the symptom that matches what you are seeing, read the **Cause**, then follow the **Fix**. Most problems in the Host Console come down to a handful of things: the address list, the proxy count, the Site address, or email delivery.
 
 One rule applies to everything below. You run the server, but your customers own their business data. You cannot see it, and you cannot open it for them. Support tools in [Accounts](#/docs/accounts) deal with sign-in and security, never with the contents of an account.
+
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
 
 ## I get "Not Found" at /host/
 
@@ -172,7 +174,7 @@ An **offsite copy** (`.mbsenc`) has no Restore button. Download it, decrypt it w
 
 **Fix.**
 
-- A locked sign-in name clears itself after 15 minutes. Wait.
+- A locked sign-in name clears itself after 15 minutes. Wait, or press **Unlock** next to it in the **Locked sign-ins** card on the [Firewall](#/docs/firewall) page (or in the person's tools in [Accounts](#/docs/accounts)) from another sign-in. Unlocking never shows or changes a password, and it is written to the [Audit trail](#/docs/audit-trail).
 - A banned address clears after the ban length (15 minutes by default), or press **Lift** next to it on the [Firewall](#/docs/firewall) page from another address.
 - A "Block this address" rule never ends by itself. Remove it on the Firewall page.
 - `HOST_ALLOW_ANY` only lifts the Host Console address list. It does not remove bans, blocks or lockouts.
@@ -222,7 +224,7 @@ If they have lost their phone, the **Owner** opens Security, picks the helper, a
 
 It prints a temporary password for the username `admin` and clears two-factor. You must choose a new password and set up two-factor again at your next sign-in. Details are in [Recovery and emergencies](#/docs/recovery-and-emergencies).
 
-If the message says "Too many failed attempts. Try again in 15 minutes", wait. The lock survives a restart, so restarting does not help. If the cause was a ban on your address, lift it under Firewall from another address.
+If the message says "Too many failed attempts. Try again in 15 minutes", wait, or ask another Host administrator to press **Unlock** on the Firewall page. The lock survives a restart, so restarting does not help. If the cause was a ban on your address, lift it under Firewall from another address.
 
 ## A customer asks me to recover their data, or they lost their password and recovery key
 

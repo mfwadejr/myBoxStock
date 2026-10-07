@@ -12,6 +12,8 @@ covers: nav:updates, Running version, Newest release, Last update, Health since 
 
 The Updates screen is a dashboard for that process. It tells you what is running now, whether a newer release exists, and how the last update went. It has no "Install update" button, on purpose: updating a live server that holds other people's businesses should be a decision you make at a time you pick, with a backup in hand.
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
+
 ## The three status cards
 
 ### Running version

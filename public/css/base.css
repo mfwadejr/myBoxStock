@@ -39,13 +39,18 @@ input[type=file] { display: none; }
 input[type=search]::-webkit-search-cancel-button, input[type=search]::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }   /* no native clear (x) button; the box looks like every other field */
 input[type=checkbox], input[type=radio] { accent-color: var(--color-primary); width: var(--check-size); height: var(--check-size); flex: none; }
 
-/* ---- scroll bars: one themed style for everything that scrolls (sheets, tables, lists, the page) ----
-   Chrome, Edge and Safari use the -webkit- rules. The standard scrollbar-color/width rules are only
-   given to browsers without them (Firefox), because Chrome and Safari ignore the -webkit- rules
-   (and show the native arrows) when the standard ones are also set. */
-*::-webkit-scrollbar { width: var(--scroll-w); height: var(--scroll-w); }
-*::-webkit-scrollbar-track, *::-webkit-scrollbar-corner { background: transparent; }
-*::-webkit-scrollbar-button { display: none; }
-*::-webkit-scrollbar-thumb { background: var(--color-scroll-thumb); background-clip: padding-box; border: var(--scroll-gap) solid transparent; border-radius: var(--radius-pill); }
-*::-webkit-scrollbar-thumb:hover { background: var(--color-scroll-thumb-hover); background-clip: padding-box; }
-@supports not selector(::-webkit-scrollbar) { * { scrollbar-width: thin; scrollbar-color: var(--color-scroll-thumb) transparent; } }
+/* ---- scroll bars: one themed style for everything that scrolls (sheets, tables, lists, menus, the page) ----
+   The standard properties give a thin bar with no arrow buttons in Chrome, Edge, Firefox and current Safari, and the bar is clipped by rounded corners.
+   Setting ::-webkit-scrollbar anywhere would switch WebKit to its older permanent-track bar (not clipped, looks native), so those rules only
+   exist inside the @supports block, for browsers that do not know the standard properties yet. */
+* { scrollbar-width: thin; scrollbar-color: var(--color-scroll-thumb) transparent; }
+@supports not (scrollbar-width: thin) {
+  *::-webkit-scrollbar { width: var(--scroll-w); height: var(--scroll-w); }
+  *::-webkit-scrollbar-track, *::-webkit-scrollbar-corner { background: transparent; }
+  *::-webkit-scrollbar-button { display: none; }
+  *::-webkit-scrollbar-thumb { background: var(--color-scroll-thumb); background-clip: padding-box; border: var(--scroll-gap) solid transparent; border-radius: var(--radius-pill); }
+  *::-webkit-scrollbar-thumb:hover { background: var(--color-scroll-thumb-hover); background-clip: padding-box; }
+  .seg.tabs::-webkit-scrollbar { display: none; }
+}
+/* the tab row scrolls sideways without a visible bar (it fades at the edge instead; see .seg.tabs in components.css) */
+.seg.tabs { scrollbar-width: none; }

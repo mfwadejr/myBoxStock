@@ -3,7 +3,7 @@ title: Audit trail
 summary: A plain record of what each Host administrator did and who signed in to the Host Console: settings, accounts, firewall rules, bans, sign-ins and two-factor changes. This page explains every kind of entry, how it differs from Logs, and how to answer "who changed that?".
 keywords: type filter, system, firewall changes, bans, lockouts, sign-ins, two-factor, audit trail, audit, who changed, who did this, administrator actions, accountability, history, support history, settings changed, suspended, reset password, everyone, actor filter, search, load more
 order: 14
-covers: nav:audit, Everyone, All kinds of entry, Type filter, Settings and accounts, Firewall and access, Bans and lockouts, Host Console sign-ins, Two-factor, System, Firewall rule added, Firewall rule changed, Firewall rule removed, Rate-limit settings changed, Host Console access limit changed, Ban created, Ban lifted, Host Console sign-in locked, Host Console sign-in, Host Console failed sign-in, Host Console sign-out, Two-factor turned on, Two-factor turned off, Two-factor recovery code used, Showing N of M actions, actor filter, Last 24 hours, Last 7 days, Last 30 days, All time, Search actions people addresses Reseller IDs, Load more
+covers: nav:audit, Everyone, All kinds of entry, Type filter, Settings and accounts, Firewall and access, Bans and lockouts, Host Console sign-ins, Two-factor, System, Firewall rule added, Firewall rule changed, Firewall rule removed, Rate-limit settings changed, Host Console access limit changed, Ban created, Ban lifted, Host Console sign-in locked, Host Console sign-in, Host Console failed sign-in, Host Console sign-out, Two-factor turned on, Two-factor turned off, Two-factor recovery code used, Showing N of M actions, actor filter, Last 24 hours, Last 7 days, Last 30 days, All time, Search actions people addresses Reseller IDs, Load more, Sign-in unlocked, account erased email, deleted email not sent
 ---
 
 ## What the Audit trail is
@@ -13,6 +13,8 @@ The Audit trail is a readable list of the things Host administrators did and of 
 Think of it as the answer to a single question: **who changed that?** If a setting is different from yesterday, an account is suddenly suspended, or an administrator's two-factor was reset, this is the screen that tells you which administrator did it and when.
 
 The page deliberately shows only the Host side of the house. It never includes anything from inside a reseller's account: no inventory, no sales, no customers. The Host cannot see those things, so the Audit trail cannot list them.
+
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
 
 ## What counts as an audit entry
 
@@ -45,6 +47,7 @@ Debug-level lines are never shown.
 
 - Ban created. The server creates bans by itself when an address breaks the limits too often, so the name shows **System**.
 - Ban lifted, with the administrator who lifted it.
+- Sign-in unlocked: a Host administrator cleared a lockout from the Firewall page or from a person's tools in Accounts. It shows who unlocked which sign-in and when (and the reason, when it was done from Accounts). A reseller's lockout can be unlocked, but only the unlocks are listed here.
 - Host Console sign-in locked: a Host Console sign-in name was locked for 15 minutes after six wrong attempts.
 
 **Host Console sign-ins:**
@@ -109,9 +112,9 @@ The first menu starts at **Everyone**. It lists every username that has an entry
 
 The second menu starts at **All kinds of entry**. It narrows the list to one group:
 
-- **Settings and accounts**: what administrators changed (settings, accounts, plans, email, administrators).
+- **Settings and accounts**: what administrators changed (settings, accounts, plans, email, administrators). An account deleted by a Host administrator appears here as "deleted" with the reason, and ends either "email queued to N addresses" or "email not sent" followed by the reason (for example no email configured). If the mail server then refuses the "account erased" message, a second entry says "deleted, email not sent" with the mail server's reason.
 - **Firewall and access**: firewall rules, rate-limit settings and the Host Console access limit.
-- **Bans and lockouts**: bans created and lifted, and Host Console sign-ins that were locked.
+- **Bans and lockouts**: bans created and lifted, sign-ins unlocked by an administrator, and Host Console sign-ins that were locked.
 - **Host Console sign-ins**: successful and failed sign-ins and sign-outs.
 - **Two-factor**: turned on, turned off and recovery codes used.
 - **Backups**: backups made (by hand or by the schedule, shown as "scheduler"), restores, downloads, deletions, test restores, destinations saved, tested or removed, and backup settings changes.

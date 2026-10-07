@@ -3,7 +3,7 @@ title: Glossary
 summary: Plain-English meanings of every term used in the Host Console, in alphabetical order, each with a link to the page that explains more.
 keywords: glossary, terms, meaning, definition, words, jargon, what is
 order: 19
-covers: Account menu, DMARC, Feed, Load more, Offsite copy, Passphrase, Restore point, Safety copy, Sender checks, Snapshot, Destination, Thinning, Test restore, DMARC, .mbsenc, .mbsbackup, .mbsbak, Account, Alert, Announcement banner, Audit trail, Authenticator app, Ban, Backup, CIDR, Cloudflare, Closing, Comped, DKIM, Database engine, Direct delivery, Docker, Export, Firewall, Free, Full-site backup, Health, Helper, HELO, Host, Host Console, Log, Log area, Migration, Off-box folder, Onboarding, Open sign-ups, Owner, Paid, Pipeline, Plan, Proxy, Rate limit, Read-only, Recovery codes, Recovery key, Reseller, Reseller ID, Restore, Site address, SMTP, SPF, Suspended, TLS, Temporary password, Trial, Two-factor, User type, Zero-knowledge
+covers: Account menu, DMARC, Feed, Load more, Offsite copy, Passphrase, Restore point, Safety copy, Sender checks, Snapshot, Destination, Thinning, Test restore, DMARC, .mbsenc, .mbsbackup, .mbsbak, Account, Alert, Announcement banner, Audit trail, Authenticator app, Ban, Backup, CIDR, Cloudflare, Closing, Comped, DKIM, Database engine, Direct delivery, Docker, Export, Firewall, Free, Full-site backup, Health, Helper, HELO, Host, Host Console, Log, Log area, Migration, Off-box folder, Onboarding, Open sign-ups, Owner, Paid, Pipeline, Plan, Proxy, Rate limit, Read-only, Recovery codes, Recovery key, Reseller, Reseller ID, Restore, Site address, SMTP, SPF, Suspended, TLS, Temporary password, Trial, Two-factor, User type, Zero-knowledge, Locked sign-in
 ---
 
 Words are listed from A to Z. Each entry is short, and the link at the end of it goes to the page that explains the subject in full.
@@ -29,6 +29,7 @@ A searchable record of what each Host administrator did: who, what, when and fro
 ### Authenticator app
 A phone app that shows a six-digit code that changes every 30 seconds. It is the second step of signing in when two-factor is on. More in [Security](#/docs/security).
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
 
 ## B
 
@@ -118,6 +119,9 @@ The administration area at `/host/`. It handles accounts, backups, email, the fi
 
 
 ## L
+
+### Locked sign-in
+A sign-in name that is refused for 15 minutes after six wrong passwords or two-factor codes in a row. The lock is saved and survives a restart. A Host administrator can end it early with **Unlock** on the Firewall page or in a person's tools in Accounts. Unlocking never shows or changes a password and is recorded in the Audit trail as "Sign-in unlocked". More in [Firewall](#/docs/firewall).
 
 ### Log
 A written record of what the server did, kept as plain-English lines and as raw data. More in [Logs](#/docs/logs).
@@ -234,7 +238,10 @@ An account state in which nobody can sign in until you reactivate it. More in [A
 A one-time password the Host or the Owner can set for someone. It is shown once, and the person must choose a new password at the next sign-in. More in [Accounts](#/docs/accounts).
 
 ### Test restore
-A check that opens a backup in a scratch copy, tests it and deletes the copy, without touching the live site. More in [Backups](#/docs/backups).
+A check that opens a backup in a scratch copy, tests it and deletes the copy, without touching the live site. Offsite copies are fetched from their destination first, and Restore on them stays disabled until the test passes. More in [Backups](#/docs/backups).
+
+### Backup setup
+The four guided steps at the top of Backups (passphrase, where copies go, how much to keep, prove it). Each step unlocks the next. More in [Backups](#/docs/backups).
 
 ### Thinning
 Keeping fewer copies as they get older: every copy for a day, then one an hour, then one a day, then one a week. The four numbers are settings. More in [Backups](#/docs/backups).

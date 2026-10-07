@@ -1,9 +1,9 @@
 ---
 title: Accounts
 summary: Find a customer account, check its health, and use the support tools: suspend, reset passwords and two-factor, temporary passwords, plan changes, receipts, closing and erasing.
-keywords: accounts, paging, per page, page size, search, customer, support, suspend, reactivate, reset password, temporary password, two-factor reset, 2FA, confirm email, resend, mark confirmed, sign out everywhere, disable sign-in, delete user, delete account, closing, restore, erase, plan, extend trial, receipt, support history, host link, health filter, recovery key
+keywords: accounts, unlock, locked out, unlock sign-in, account erased email, delete reason, email not sent, deleted email not sent, paging, per page, page size, search, customer, support, suspend, reactivate, reset password, temporary password, two-factor reset, 2FA, confirm email, resend, mark confirmed, sign out everywhere, disable sign-in, delete user, delete account, closing, restore, erase, plan, extend trial, receipt, support history, host link, health filter, recovery key
 order: 3
-covers: nav:accounts, Search by business Reseller ID or email, All plans, On trial, Free (comped), Paid, Ended / read-only, Any health, No recovery key saved, No two-factor, Email not verified, Inactive 30 days, Encryption not set up, Closing, Suspended, Business, Reseller ID, Owner, Users, Plan, Status, Health, Last sign-in, Showing, 25 per page, 50 per page, 100 per page, Previous, Next, Account sheet, Change plan, Extend trial, Suspend, Reactivate, Record a receipt, Remove receipt, Plan history, Support history, Allow this account to link a Host administrator, People, Manage, Delete, Restore, Email a password reset link, Resend the confirmation email, Mark as confirmed, Set a temporary password, Reset two-factor authentication, Sign out everywhere, Disable sign-in, Enable sign-in, Delete this user, Reason
+covers: nav:accounts, Terms, Terms accepted, Not accepted yet, Older terms accepted, Search by business Reseller ID or email, All plans, On trial, Free (comped), Paid, Ended / read-only, Any health, No recovery key saved, No two-factor, Email not verified, Inactive 30 days, Encryption not set up, Closing, Suspended, Business, Reseller ID, Owner, Users, Plan, Status, Health, Last sign-in, Showing, 25 per page, 50 per page, 100 per page, Previous, Next, Account sheet, Change plan, Extend trial, Suspend, Reactivate, Record a receipt, Remove receipt, Plan history, Support history, Allow this account to link a Host administrator, People, Manage, Delete, Restore, Email a password reset link, Resend the confirmation email, Mark as confirmed, Set a temporary password, Reset two-factor authentication, Sign out everywhere, Disable sign-in, Enable sign-in, Delete this user, Reason, locked out, Unlock this sign-in, Not locked out, Reason (included in the email, optional), Email is not set up so nobody will be told this account was deleted, Delete forever, account erased email
 ---
 
 ## What this page is for
@@ -13,6 +13,8 @@ Accounts is where you help customers. Most of what customers ask you for falls i
 It is just as important to know what is not here. You will never see a customer's inventory, sales, customers or receipts. Their data is encrypted in their own browser before it reaches the server, so even the Host cannot read it. At the top of every account sheet a blue note says it plainly: you can help with sign-in and security, and business data is not visible to host administrators.
 
 > The customer owns their data and is 100 percent responsible for it, for saving their recovery key, and for making their own exports. Resetting a password or two-factor lets someone sign in again. It does not give anyone the ability to read data they could not already open. If a customer loses their recovery key and every device, the data cannot be recovered by you.
+
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
 
 ## The account list
 
@@ -74,6 +76,10 @@ The sheet is a pop-up with these sections from top to bottom. Press **Done** to 
 
 The name, status chip, Reseller ID and creation date. If the account is closing, a red bar says when it will be erased and offers **Restore**. The **Data** section says whether the account is **Encrypted** or "Not set up yet", and how many "stored records" exist. The count is of opaque encrypted blobs. It tells you whether the account has ever stored anything, never what it is.
 
+### Terms
+
+Shows which version of the Terms of Service and Privacy Policy the account accepted, and when: a green **Terms accepted** chip, or an amber **Older terms accepted** or **Not accepted yet** chip. Customers accept at sign-up with a required box, and the account cannot be created without it. Accounts created before the Terms existed show **Not accepted yet**, and accounts whose accepted version is older than the current one show **Older terms accepted**: an Administrator of the account is asked to accept at their next sign-in and cannot use the account until they do. The acceptance is also in the log (the event is `terms.accepted`). Only the version and the time are kept. The current version is one setting in the code (`TERMS_VERSION`, next to the pages in `content/legal`): changing it asks every account again.
+
 ### Plan, Change plan and Extend trial
 
 Shows the current plan, any note, the end date ("Ends" or "Ended"), and whether the account is read-only. "Plan history" can be expanded to list every change with date, who made it and the reason.
@@ -113,11 +119,13 @@ A switch labelled "Allow this account to link a Host administrator". When on, th
 
 ### People
 
-Every person in the account, with chips for their role, **2FA**, **disabled**, and **Verified** or "Not verified" email, plus their login and last sign-in. Press **Manage** beside a person for their tools.
+Every person in the account, with chips for their role, **2FA**, **disabled**, a red **locked out** chip while their sign-in is locked, and **Verified** or "Not verified" email, plus their login and last sign-in. Press **Manage** beside a person for their tools.
 
 ### Delete
 
-The red **Delete** button erases the whole account immediately. See "Closing, restoring and erasing" below.
+The red **Delete** button opens a sheet. It explains that the delete is permanent and that you cannot recover the data (it was encrypted; the only way back is the customer's own backup file), asks for an optional **Reason (included in the email)**, and asks you to type the account's Reseller ID. **Delete forever** stays greyed out until the ID matches. See "Closing, restoring and erasing" below.
+
+If Email is not set up, the sheet shows a red warning: "Email is not set up, so nobody will be told this account was deleted." You may still go ahead on purpose.
 
 ## Managing a person
 
@@ -135,6 +143,16 @@ Pressing **Manage** opens a list of buttons. Several are greyed out when they ma
 All of these ask for a **Reason** except Resend the confirmation email and Delete this user (which asks you to type the login instead). A reason is a few words (at least 3 characters, up to 200). It is saved in the log with your name and shown in Support history. Good reasons are specific: "Owner called, lost phone", not "ok".
 
 > Before resetting two-factor or setting a temporary password, make sure the person is who they say they are. Phone back a number you already hold, or reply to the owner's email address. Someone who tricks you into a reset takes over the account's sign-in.
+
+### Unlock this sign-in
+
+After six wrong passwords (or wrong two-factor codes) in a row, a sign-in is locked for 15 minutes. While that is so, the person shows a red **locked out** chip, and the **Unlock this sign-in** button in their Manage list is available (otherwise it reads **Not locked out** and is greyed out). Press it, say why in a few words, and the lock and the failed-attempt count are cleared at once, so the person can try again right away.
+
+- Only a signed-in Host administrator can do this. Reseller users cannot.
+- It never shows, sets or resets a password. If the person has forgotten it, use **Email a password reset link** or **Set a temporary password** afterwards.
+- It is written to the [Audit trail](#/docs/audit-trail) under **Bans and lockouts** as "Sign-in unlocked", with your name, the time, the account and your reason, and to the account's Support history.
+- If someone else is guessing the password, unlocking lets them try again too. Unlock only when you have good reason to think the person is the real owner.
+- All locked sign-ins across the site are also listed on the [Firewall](#/docs/firewall) page.
 
 ### Typical cases
 
@@ -162,7 +180,13 @@ After the 7 days the server erases the account. It checks when it starts and the
 
 ### 2. You delete it
 
-The red **Delete** button asks you to type the account's Reseller ID and then erases the account at once, with the same result as above and without the 7 days. No "account erased" email is sent when you delete an account yourself, so tell the customer. It cannot be undone. Only erase early when the customer has asked you to or you have a clear reason, and write it down.
+The red **Delete** button asks you to type the account's Reseller ID (and optionally a reason) and then erases the account at once, with the same result as above and without the 7 days. It cannot be undone. Only erase early when the customer has asked you to or you have a clear reason, and write it down.
+
+**The "account erased" email.** One email goes out as part of the delete. The server first notes the owner's address and the addresses of the account's Administrators (held in memory only, never stored), then erases the account, then sends one "Account erased by the Host" email to each of those addresses. It says the account was deleted by the Host, when, the reason you typed (if any), and that the Host cannot recover the data, because it was encrypted and the only way back is the customer's own backup file. No separate email is sent before the delete, since it could announce a delete that then does not happen. The closing sweep never sends a second email for an account you deleted.
+
+**The delete never waits for the email.** If Email is not set up, or sending fails, the account is still deleted. The [Audit trail](#/docs/audit-trail) then records "deleted, email not sent" with the reason (for example "no email configured", or the mail server's error), so you know to tell the customer yourself. When the email was handed over, the entry says it was queued to that many addresses. Only one delivery attempt is made, so the customer never gets a repeat.
+
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. If it is not set up, nobody is told, and the delete sheet warns you in red.
 
 ### What stays after an erase
 

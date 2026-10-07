@@ -12,17 +12,23 @@ import { trialDays, recordEvent } from '../../services/billing/index.mjs';
 import { dropKeys } from '../../services/vault/keys.mjs';
 import { sendConfirmation, confirmWith, isHeld } from '../../services/verify/index.mjs';
 import { DAY } from '../../services/billing/state.mjs';
+import { TERMS_VERSION } from '../../services/legal/index.mjs';
+import { docsRoutes } from '../docs.mjs';
+import { fail } from '../../core/messages.mjs';
 
 export function publicRoutes(db) {
   const r = express.Router();
   const loginOf = (username, code) => `${username.toLowerCase()}@${code.toLowerCase()}`;
 
-  r.get('/public-config', async (req, res) => res.json({ signupsEnabled: await getSetting(db, 'signups_enabled', true), trialDays: await trialDays(db) }));
+  r.get('/public-config', async (req, res) => res.json({ signupsEnabled: await getSetting(db, 'signups_enabled', true), trialDays: await trialDays(db), termsVersion: TERMS_VERSION }));
+  r.use('/legal', docsRoutes('legal'));   // the Terms and Privacy pages are public: they are read before an account exists
 
   r.post('/signup', async (req, res) => {
     const ip = normalizeIp(req.ip);
     if (!(await getSetting(db, 'signups_enabled', true))) { log('tenant', 'info', 'signup.closed', 'Sign-up attempt while sign-ups are closed', { ip }); return res.status(403).json({ error: 'Sign-ups are closed right now.' }); }
     const { businessName, email, username, password } = req.body;
+    if (req.body.acceptTerms !== true) return fail(res, 400, 'TERMS_REQUIRED');
+    if (req.body.termsVersion && req.body.termsVersion !== TERMS_VERSION) return fail(res, 409, 'TERMS_STALE');
     if (!businessName?.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email || '')) return res.status(400).json({ error: 'Enter a business name and a valid email.' });
     if (!/^[a-z0-9._-]{3,30}$/i.test(username || '')) return res.status(400).json({ error: 'Username: 3–30 letters, numbers, . _ -' });
     const bad = passwordProblem(password); if (bad) return res.status(400).json({ error: bad });
@@ -31,12 +37,13 @@ export function publicRoutes(db) {
     let code = newResellerId(); while (await db.get('SELECT id FROM accounts WHERE LOWER(account_code) = ?', [code])) code = newResellerId();
     const login = loginOf(username, code);
     await db.tx(async (t) => {
-      await t.run('INSERT INTO accounts (id, account_code, business_name, owner_email, status, plan, trial_ends_at, plan_changed_at, created_at) VALUES (?,?,?,?,?,?,?,?,?)', [accountId, code, businessName.trim().slice(0, 150), email.trim().slice(0, 200), 'active', 'trial', trialEnds, now, now]);
+      await t.run('INSERT INTO accounts (id, account_code, business_name, owner_email, status, plan, trial_ends_at, plan_changed_at, created_at, terms_version, terms_accepted_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)', [accountId, code, businessName.trim().slice(0, 150), email.trim().slice(0, 200), 'active', 'trial', trialEnds, now, now, TERMS_VERSION, now]);
       await recordEvent(t, { accountId, kind: 'trial_started', to: 'trial', actor: 'system', note: `Free trial of ${days} days`, detail: { trialEnds, days } });
       for (const [name, perms] of Object.entries(DEFAULT_ROLES)) await t.run('INSERT INTO account_roles (id, account_id, name, perms, builtin) VALUES (?,?,?,?,1)', [newId(), accountId, name, JSON.stringify(perms)]);
       await t.run('INSERT INTO account_users (id, account_id, login, username, email, role, pw_hash, created_at) VALUES (?,?,?,?,?,?,?,?)', [userId, accountId, login, username.toLowerCase(), email.trim(), 'Administrator', hashPassword(password), now]);
     });
     log('tenant', 'info', 'account.created', `New account (Reseller ID ${code}) created by ${login} with a ${days}-day free trial`, { actor: login, accountId, ip, data: { code, trialDays: days } });
+    log('accounts', 'info', 'terms.accepted', `Terms of Service and Privacy Policy version ${TERMS_VERSION} accepted at sign-up by ${login}`, { actor: login, accountId, ip, data: { version: TERMS_VERSION, via: 'signup' } });
     log('accounts', 'info', 'trial.started', `Account ${code} signed up — ${days}-day free trial until ${new Date(trialEnds).toISOString().slice(0, 10)}`, { actor: 'system', accountId, ip, data: { code, trialDays: days, trialEnds } });
     await enqueueMail(db, email.trim(), 'welcome', { name: username, accountCode: code, username: username.toLowerCase(), login, url: `${base}/app/`, trialLine: `Your free trial runs for ${days} days (until ${new Date(trialEnds).toISOString().slice(0, 10)}).` }); processQueue(db).catch(() => {});
     await sendConfirmation(db, { id: userId, username: username.toLowerCase(), login, account_id: accountId, email: email.trim() }, email.trim(), { accountCode: code, ip });

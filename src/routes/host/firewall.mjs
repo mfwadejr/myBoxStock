@@ -2,10 +2,25 @@
 import express from 'express';
 import { config as appConfig } from '../../core/config.mjs';
 import * as fw from '../../security/firewall/index.mjs';
+import { listLockouts, unlock } from '../../auth/lockout.mjs';
+import { fail } from '../../core/messages.mjs';
 
 export function firewallRoutes(db) {
   const r = express.Router(), me = (req) => req.subject.username, from = (req) => fw.normalizeIp(req.ip);
-  r.get('/', async (req, res) => res.json({ limits: fw.getLimits(), rules: await db.all('SELECT * FROM firewall_rules ORDER BY created_at DESC'),
+  // Active sign-in lockouts, named for the Host: the sign-in name, or who the wrong two-factor codes were for. Identity only.
+  const lockoutsView = async () => {
+    const out = [];
+    for (const l of listLockouts()) {
+      let who = l.key, kind = 'signin';
+      if (l.key.startsWith('mfa:')) {
+        kind = 'twofactor'; const id = l.key.slice(4);
+        who = (await db.get('SELECT u.username || \'@\' || a.account_code AS n FROM account_users u JOIN accounts a ON a.id = u.account_id WHERE u.id = ?', [id]))?.n || (await db.get('SELECT username AS n FROM host_admins WHERE id = ?', [id]))?.n || 'unknown person';
+      }
+      out.push({ key: l.key, kind, who, host: l.realm === 'host', expires: l.expires });
+    }
+    return out.sort((a, b) => a.expires - b.expires);
+  };
+  r.get('/', async (req, res) => res.json({ lockouts: await lockoutsView(), limits: fw.getLimits(), rules: await db.all('SELECT * FROM firewall_rules ORDER BY created_at DESC'),
     ports: fw.listeningPorts(), bans: fw.listBans(), stats: fw.firewallStats(), yourIp: fw.normalizeIp(req.ip), hostAllowAny: appConfig.hostAllowAny, via: req.ipSource || 'proxy',
     behindProxy: req.ipSource !== 'cloudflare' && /^(10\.|127\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::1$)/.test(fw.normalizeIp(req.ip)) }));
   const covered = async (ip, skipId) => (await db.all("SELECT id, cidr FROM firewall_rules WHERE kind = 'host' AND enabled = 1")).some(x => x.id !== skipId && fw.matchCidr(ip, x.cidr));
@@ -37,5 +52,11 @@ export function firewallRoutes(db) {
   r.post('/rules/:id/toggle', async (req, res) => { if (!req.body.enabled && await guard(req, res)) return; await fw.setRuleEnabled(db, req.params.id, !!req.body.enabled, me(req), from(req)); res.json({ ok: true }); });
   r.delete('/rules/:id', async (req, res) => { if (await guard(req, res)) return; await fw.removeRule(db, req.params.id, me(req), from(req)); res.json({ ok: true }); });
   r.post('/unban', async (req, res) => { fw.unban(String(req.body.ip || ''), me(req), from(req)); res.json({ ok: true }); });
+  // Let a locked-out person try again now. Host administrators only (every Host Console user is one). Never touches a password.
+  r.post('/unlock', async (req, res) => {
+    const key = String(req.body?.key || '');
+    if (!unlock(key, { actor: me(req), ip: from(req) })) return fail(res, 400, 'NOT_LOCKED');
+    res.json({ ok: true });
+  });
   return r;
 }

@@ -15,3 +15,6 @@ export { audit } from './audit.mjs';
 export { thin, thinPolicy, DEFAULT_THIN } from './thin.mjs';
 export { estimateCost } from './cost.mjs';
 export { encryptFile, decryptFile } from './crypt.mjs';
+export { getSetup, setupPassphrase, setupWhere, setupKeep, setupProve, MAIL_NOTE } from './setup.mjs';
+export { testOffsiteCopy, restoreOffsiteCopy, dropToken } from './offsite.mjs';
+export { passphraseReady, assertPassphraseReady, coded } from './gate.mjs';

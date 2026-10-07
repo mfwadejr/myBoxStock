@@ -19,7 +19,8 @@ const HOST = ['overview', 'alerts', 'accounts', 'pipeline', 'plans', 'backups', 
 // What to verify on the page as it is now.
 const inspect = (w) => `(() => {
   const vis = (e) => { const r = e.getBoundingClientRect(), s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
-  const out = { overflow: document.documentElement.scrollWidth - innerWidth, small: [], zoomy: [], tableNotCards: 0 };
+  const out = { overflow: document.documentElement.scrollWidth - innerWidth, small: [], zoomy: [], tableNotCards: 0, crowded: [] };
+  for (const h of document.querySelectorAll('.card-head')) { const n = h.nextElementSibling; if (vis(h) && n && vis(n) && n.getBoundingClientRect().top - h.getBoundingClientRect().bottom < 11.5) out.crowded.push((h.querySelector('h3')?.textContent || 'card') + ':' + Math.round(n.getBoundingClientRect().top - h.getBoundingClientRect().bottom)); }   // a card's title row (with a chip that may wrap) never sits on the row below it
   const touch = ${w} <= 820;
   const side = document.querySelector('.side'), bar = document.querySelector('.tabbar');
   out.side = !!side && vis(side); out.bar = !!bar && vis(bar);
@@ -40,7 +41,7 @@ const wait = async (page, sel, label) => { try { await page.waitForSelector(sel,
 const check = (label, w, r) => {
   assert.ok(r.overflow <= 1, `${label}: the page scrolls sideways by ${r.overflow}px`);
   if (w <= 820) { assert.ok(r.bar, `${label}: the tab bar shows`); assert.ok(!r.side, `${label}: the side menu is hidden`); } else { assert.ok(r.side, `${label}: the side menu shows`); assert.ok(!r.bar, `${label}: the tab bar is hidden`); }
-  assert.deepEqual(r.small, [], `${label}: controls under 44px`); assert.deepEqual(r.zoomy, [], `${label}: fields under 16px (iPhones zoom in)`); assert.equal(r.tableNotCards, 0, `${label}: tables should be cards on phones`);
+  assert.deepEqual(r.small, [], `${label}: controls under 44px`); assert.deepEqual(r.zoomy, [], `${label}: fields under 16px (iPhones zoom in)`); assert.equal(r.tableNotCards, 0, `${label}: tables should be cards on phones`); assert.deepEqual(r.crowded, [], `${label}: a card header sits on the row below it`);
 };
 
 test('browser: reseller app at phone, tablet, laptop and desktop sizes', { skip, timeout: 600000 }, async () => {
@@ -48,7 +49,7 @@ test('browser: reseller app at phone, tablet, laptop and desktop sizes', { skip,
   page.setDefaultTimeout(20000); const errors = []; page.on('pageerror', e => errors.push(e.message));
   try {
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
-    await page.fill('#bn', 'Resp Co'); await page.fill('#em', 'r@example.com'); await page.fill('#un', 'rae'); await page.fill('#pw', PW); await page.click('button.block');
+    await page.fill('#bn', 'Resp Co'); await page.fill('#em', 'r@example.com'); await page.fill('#un', 'rae'); await page.fill('#pw', PW); await page.check('#tc'); await page.click('button.block');
     await page.waitForSelector('#go'); const id = (await page.textContent('.codeblock')).trim(); await page.click('#go');
     await fillLogin(page, 'rae@' + id); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.main');

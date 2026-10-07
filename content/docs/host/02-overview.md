@@ -14,6 +14,8 @@ The page refreshes itself every 10 seconds while you keep it open, so you can le
 
 > Overview only shows server and identity facts. There is nothing here about any customer's stock, sales or customers, because the server cannot read them.
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
+
 ## The heading line
 
 Under the page title you see the server's host name, how long it has been running ("up" followed by a duration) and the app version, for example `v0.20.0`. Why it matters:

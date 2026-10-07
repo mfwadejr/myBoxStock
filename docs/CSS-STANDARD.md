@@ -34,7 +34,9 @@ Page code names the **kind** of value; the CSS decides the font.
 - Windows falls back to Segoe UI / Consolas / Cascadia Mono because those are in the font tokens.
 
 ## Native controls
-`base.css` styles them once: number fields have no spinner, text areas no resize grip (`resize: none` is the only `resize` allowed), search boxes no clear button, checkboxes are 20px and brand blue, date/time keep the native picker with a quieter icon, and every scroll bar is one thin themed style (no arrow buttons). Tested.
+`base.css` styles them once: number fields have no spinner, text areas no resize grip (`resize: none` is the only `resize` allowed), search boxes no clear button, checkboxes are 20px and brand blue, date/time keep the native picker with a quieter icon, and every scroll bar is one thin themed style (no arrow buttons): `* { scrollbar-width: thin; scrollbar-color: var(--color-scroll-thumb) transparent }`. The `::-webkit-scrollbar` rules exist only inside `@supports not (scrollbar-width: thin)`, because any such rule makes Safari use its older bar, which overhangs rounded corners. A rounded, shadowed box that scrolls is a fixed frame (`overflow: hidden`) with an inner scroller: `.sheet` / `.sheet-body` (pop-up sheets) and `.menu-pop` / `.menu-body` (account menu). Tested.
+
+Shared layout classes: `.card-head` (a card's title row with a chip or button; keeps a gap when the chip wraps), `input[type=number].num` (short number boxes), `.grip` and `.reordering` (the Settings Reorder handle), `.sr-only` (screen-reader-only text). Never an inline style or a one-off width.
 
 ## Long lists
 - **Feeds** (Host Logs, Audit, Alerts history, Onboarding, Pipeline, Backups file lists, sign-in history): put the list in `.feed` (a box capped at `--feed-max-h`, about 640px, on tablets and up; no cap at 640px and narrower, where the page scrolls) and use `UI.more` or `UI.chunked` for the "Showing N of M …" line and **Load more** (100 rows at a time; Backups lists 25).

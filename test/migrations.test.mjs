@@ -44,3 +44,16 @@ test('migration 15 adds the last-backup time and the 7-day restore point tables,
   assert.ok(COPY_ORDER.includes('restore_points') && COPY_ORDER.includes('restore_point_records'));
   await db.close(); fs.rmSync(path.dirname(file), { recursive: true, force: true });
 });
+
+test('migration 16 adds the Terms version and time to accounts; existing accounts stay empty (asked once at next sign-in)', async () => {
+  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'mbs-mig-')), 'terms.db'), db = await openSqlite(file);
+  await migrate(db);
+  assert.ok(await db.get('SELECT id FROM schema_migrations WHERE id = 16'), 'migration 16 recorded');
+  await db.run("INSERT INTO accounts (id, account_code, business_name, owner_email, status, plan, created_at) VALUES ('a1','BX-T1','Old Co','o@x.com','active','free',1)");
+  let a = await db.get('SELECT terms_version, terms_accepted_at FROM accounts WHERE id = ?', ['a1']);
+  assert.equal(a.terms_version, null); assert.equal(a.terms_accepted_at, null);
+  await db.run("UPDATE accounts SET terms_version = '2026-10-07-draft', terms_accepted_at = 5 WHERE id = 'a1'");
+  a = await db.get('SELECT terms_version, terms_accepted_at FROM accounts WHERE id = ?', ['a1']);
+  assert.equal(a.terms_version, '2026-10-07-draft'); assert.equal(Number(a.terms_accepted_at), 5);
+  await db.close(); fs.rmSync(path.dirname(file), { recursive: true, force: true });
+});

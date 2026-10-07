@@ -14,7 +14,7 @@ test('browser: test record details, tested-on date, switch off/on, date received
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   try {
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
-    await page.fill('#bn', 'Record Co'); await page.fill('#em', 'r@example.com'); await page.fill('#un', 'rita'); await page.fill('#pw', PW); await page.click('button.block');
+    await page.fill('#bn', 'Record Co'); await page.fill('#em', 'r@example.com'); await page.fill('#un', 'rita'); await page.fill('#pw', PW); await page.check('#tc'); await page.click('button.block');
     await page.waitForSelector('#go'); const login = 'rita@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');
     await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');

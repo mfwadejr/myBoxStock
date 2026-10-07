@@ -21,19 +21,24 @@ export const CAMERA_INIT = `(() => {
   window.__camAim = () => { const v = document.querySelector('.scan-video'), b = document.querySelector('.scan-box'); const vr = v.getBoundingClientRect(), br = b.getBoundingClientRect();
     const s = Math.max(vr.width / v.videoWidth, vr.height / v.videoHeight), ox = (vr.width - v.videoWidth * s) / 2, oy = (vr.height - v.videoHeight * s) / 2;
     return { x: (br.left - vr.left + br.width / 2 - ox) / s, y: (br.top - vr.top + br.height / 2 - oy) / s }; };
+  // Where image point (ix, iy) is on the screen right now (client pixels): where to tap to aim at it.
+  window.__camPoint = (ix, iy) => { const v = document.querySelector('.scan-video'), vr = v.getBoundingClientRect();
+    const s = Math.max(vr.width / v.videoWidth, vr.height / v.videoHeight), ox = (vr.width - v.videoWidth * s) / 2, oy = (vr.height - v.videoHeight * s) / 2;
+    return { x: vr.left + ox + (cam.ax + (ix - cam.px) * cam.scale) * s, y: vr.top + oy + (cam.ay + (iy - cam.py) * cam.scale) * s }; };
   const md = navigator.mediaDevices || (navigator.mediaDevices = {});
   md.getUserMedia = async (c) => {
     cam.constraints = c; cam.started++; cam.img = null;   // a new camera session starts on an empty picture
     if (cam.mode !== 'ok') { const names = { denied: 'NotAllowedError', none: 'NotFoundError', busy: 'NotReadableError' }; throw Object.assign(new Error('x'), { name: names[cam.mode] }); }
     draw(); const stream = cv.captureStream(15);
     for (const t of stream.getVideoTracks()) { const stop = t.stop.bind(t); t.stop = () => { cam.stopped++; stop(); };
-      if (cam.torchCap) { t.getCapabilities = () => ({ torch: true }); t.applyConstraints = async (c2) => { cam.torch = !!c2.advanced?.[0]?.torch; }; } }
+      if (cam.torchCap || cam.focusCap) { t.getCapabilities = () => ({ ...(cam.torchCap ? { torch: true } : {}), ...(cam.focusCap ? { focusMode: ['continuous', 'single-shot'] } : {}) });
+        t.applyConstraints = async (c2) => { const a = c2.advanced?.[0] || {}; if ('torch' in a) cam.torch = !!a.torch; if (a.pointsOfInterest) (cam.focus = cam.focus || []).push(a.pointsOfInterest[0]); }; } }
     return stream; };
 })();`;
 
 export async function signup(page, srv, name = 'sam') {
   await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
-  await page.fill('#bn', 'Scan Co'); await page.fill('#em', name + '@example.com'); await page.fill('#un', name); await page.fill('#pw', PW); await page.click('button.block');
+  await page.fill('#bn', 'Scan Co'); await page.fill('#em', name + '@example.com'); await page.fill('#un', name); await page.fill('#pw', PW); await page.check('#tc'); await page.click('button.block');
   await page.waitForSelector('#go'); const login = name + '@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');
   await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block');
   await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.main');

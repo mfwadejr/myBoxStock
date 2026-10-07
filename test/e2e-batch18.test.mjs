@@ -17,7 +17,7 @@ test('browser: awaiting-test items, Sales status filter, time sold, receipt layo
     await host.req('POST', '/api/host/login', { login: 'admin', password: srv.hostPw });
     await host.req('POST', '/api/host/change-password', { current: srv.hostPw, next: PW });
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
-    await page.fill('#bn', 'Batch Co'); await page.fill('#em', 'b@example.com'); await page.fill('#un', 'bea'); await page.fill('#pw', PW); await page.click('button.block');
+    await page.fill('#bn', 'Batch Co'); await page.fill('#em', 'b@example.com'); await page.fill('#un', 'bea'); await page.fill('#pw', PW); await page.check('#tc'); await page.click('button.block');
     await page.waitForSelector('#go'); const login = 'bea@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');
     await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');

@@ -11,6 +11,7 @@ import { emailRoutes } from './email.mjs';
 import { receiptRoutes } from './receipts.mjs';
 import { accountRoutes } from './account.mjs';
 import { backupRoutes, diagnosticsRoutes } from './backup.mjs';
+import { termsRoutes, termsGate } from './terms.mjs';
 import { hostLinkRoutes } from './hostlink.mjs';
 import { docsRoutes } from '../docs.mjs';
 import { loadUser } from './context.mjs';
@@ -26,6 +27,7 @@ export function appRouter(db) {
   r.use((req, res, next) => { db.run('UPDATE accounts SET last_activity = ? WHERE id = ?', [Date.now(), req.subject.account_id]).catch(() => {}); next(); });
   // Remember when this session was last used (at most once a minute) so people can see which devices are active.
   r.use((req, res, next) => { if (Date.now() - Number(req.session.last_seen || 0) > 60e3) db.run('UPDATE sessions SET last_seen = ? WHERE token_hash = ?', [Date.now(), req.session.token_hash]).catch(() => {}); next(); });
+  r.use('/terms', termsRoutes(db)); r.use(termsGate);   // updated terms: an Administrator accepts first (before the closing and read-only checks, which must not stop this)
   // A closing account is read-only for its Administrators (so they can still export) until it is restored or erased.
   r.use((req, res, next) => {
     if (!req.subject.closing_at || req.method === 'GET' || req.method === 'HEAD' || ['/account/restore', '/account/export-note', '/backup/made'].includes(req.path)) return next();

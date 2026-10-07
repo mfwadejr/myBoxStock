@@ -31,7 +31,7 @@ for (const [w, h, label] of [[375, 812, 'phone'], [1280, 800, 'laptop']]) {
       for (let i = 0; i < 30; i++) fs.writeFileSync(path.join(dir, `myboxstock-snap-${new Date(base + i * 60000).toISOString().replace(/[:T]/g, '-').slice(0, 19)}.db`), 'x'.repeat(2048));
       fs.writeFileSync(path.join(dir, 'myboxstock-pre-restore-2026-01-02-03-04-05.db'), 'x');
       await signIn(page, srv);
-      await page.goto(srv.base + '/host/#/backups'); await page.waitForSelector('.stat');
+      await page.goto(srv.base + '/host/#/backups'); await page.waitForSelector('#tabs'); await page.waitForSelector('.stat');
 
       // status strip
       const strip = await page.textContent('.main'); assert.match(strip, /Last backup/); assert.match(strip, /verified/); assert.match(strip, /Next run/); assert.match(strip, /Offsite copy/); assert.match(strip, /Space used/);

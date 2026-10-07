@@ -21,6 +21,8 @@ Each card saves on its own. Pressing Save on one card never changes the others.
 
 > The Host never sees what customers store in their accounts. Nothing on this screen changes that. These options control how the platform behaves, not what is inside anyone's inventory.
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
+
 ## Open sign-ups
 
 This switch decides whether new businesses can create an account from the sign-up page.

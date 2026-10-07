@@ -4,6 +4,8 @@
 .card { background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); padding: var(--card-padding); }
 .card + .card { margin-top: var(--space-lg); }
 .card h3 { margin-bottom: var(--space-2xs); }
+.card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-md); }   /* title and description with a chip or button; when the chip wraps under the text it keeps the same gap */
+.card-head:not(:last-child) { margin-bottom: var(--space-md); }   /* and the row below never sits on top of it */
 .card .sub { color: var(--color-text-muted); margin-bottom: var(--space-lg); }
 .stat { padding: var(--stat-pad-y) var(--space-xl); }
 .stat-label { color: var(--color-text-muted); font-size: var(--text-sm); font-weight: var(--weight-medium); }
@@ -36,6 +38,7 @@
 /* ---- forms ---- */
 .field { margin-bottom: var(--space-md); }
 .field input[type=date], .field input[type=time] { max-width: var(--width-sm); }   /* every date and time box in a form is the same width */
+input[type=number].num { width: var(--width-xs); }   /* short number boxes (days, minutes, port, counts) are compact, not full width; the type selector keeps this above the base width: 100% */
 .hint { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-xs); }
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-sm); height: var(--control-h-md); padding: 0 var(--btn-padding-x);
@@ -101,7 +104,8 @@ tr.click:hover td { background: var(--color-wash-faint); }
   display: grid; place-items: center; padding: var(--space-xl); animation: fade-in var(--dur-med) var(--ease); transition: opacity var(--dur-base);
 }
 .scrim.closing { opacity: var(--opacity-none); }
-.sheet { width: min(var(--sheet-w), 100%); max-height: var(--sheet-max-h); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; background: var(--color-surface); border-radius: var(--radius-xl); padding: var(--sheet-padding); box-shadow: var(--shadow-overlay); animation: pop-in var(--dur-med) var(--ease); }
+.sheet { display: flex; flex-direction: column; width: min(var(--sheet-w), 100%); max-height: var(--sheet-max-h); overflow: hidden; background: var(--color-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-overlay); animation: pop-in var(--dur-med) var(--ease); }   /* the rounded, shadowed frame never scrolls, so no scroll bar can overhang a corner */
+.sheet-body { flex: 1 1 auto; min-height: var(--space-0); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: var(--sheet-padding); }   /* the inner area is what scrolls */
 .sheet h2 { margin-bottom: var(--space-xs); }
 .sheet .actions { display: flex; flex-wrap: wrap; gap: var(--space-md); justify-content: flex-end; margin-top: var(--space-xl); }
 .sheet .actions.split { justify-content: space-between; }
@@ -124,14 +128,24 @@ tr.click:hover td { background: var(--color-wash-faint); }
 /* ---- checkbox row & disclosure ---- */
 .check { display: flex; align-items: center; gap: var(--space-sm); font-weight: var(--weight-regular); color: var(--color-text); }
 .check input { margin: var(--space-0); }
+.check.tap { min-height: var(--tap-min); align-items: center; }   /* a checkbox with a sentence beside it: the whole row is at least a tap target tall */
 details > summary { cursor: pointer; padding: var(--space-xs) var(--space-0); }
 details[open] > summary { margin-bottom: var(--space-xs); }
 
 /* ---- full-width segmented switch (sign in / create account) ---- */
 .seg.wide { display: flex; width: 100%; }
 .seg.wide button { flex: 1; }
-.seg.tabs { display: flex; flex-wrap: wrap; width: 100%; }   /* a row of page tabs: wraps instead of scrolling sideways on a phone */
-.seg.tabs button { flex: 1 1 auto; }
+/* ---- tab rows: the ONE shared style (Backups, Email). A single row that scrolls sideways when it does not fit, 44px tabs,
+   the selected tab scrolled into view (UI.tabRow), and a soft fade at an edge that has more. The visible bar is hidden in base.css. ---- */
+.seg.tabs { display: flex; flex-wrap: nowrap; width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+.seg.tabs button { flex: 1 0 auto; white-space: nowrap; min-height: var(--tap-min); }
+.seg.tabs.more-start { -webkit-mask-image: linear-gradient(to right, transparent, black var(--space-2xl)); mask-image: linear-gradient(to right, transparent, black var(--space-2xl)); }
+.seg.tabs.more-end { -webkit-mask-image: linear-gradient(to left, transparent, black var(--space-2xl)); mask-image: linear-gradient(to left, transparent, black var(--space-2xl)); }
+.seg.tabs.more-start.more-end { -webkit-mask-image: linear-gradient(to right, transparent, black var(--space-2xl), black calc(100% - var(--space-2xl)), transparent); mask-image: linear-gradient(to right, transparent, black var(--space-2xl), black calc(100% - var(--space-2xl)), transparent); }
+
+/* ---- guided setup steps (Host Backups): a numbered list of steps; a locked step is dimmed until the one before it is done ---- */
+.setup-step { padding: var(--space-md) var(--space-0); border-top: var(--border-default); }
+.setup-step.locked { opacity: var(--opacity-disabled); }
 
 /* ---- themed dropdown (the ONLY dropdown: UI.select) ---- */
 .select { position: relative; display: inline-block; min-width: var(--width-xs); }
@@ -168,7 +182,8 @@ details[open] > summary { margin-bottom: var(--space-xs); }
 .menu-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .menu-chevron { fill: none; stroke: currentColor; stroke-width: var(--stroke-icon); stroke-linecap: round; stroke-linejoin: round; width: var(--icon-size); height: var(--icon-size); flex: none; color: var(--color-text-faint); }
 .menu-scrim { display: none; }
-.menu-pop { position: fixed; z-index: var(--z-modal); top: calc(var(--topbar-h) + var(--space-xs)); right: var(--space-xl); width: var(--width-md); max-width: calc(100% - var(--space-2xl)); max-height: calc(100dvh - var(--topbar-h) - var(--space-2xl)); overflow-y: auto; overscroll-behavior: contain; padding: var(--space-xs); background: var(--color-surface); border: var(--border-default); border-radius: var(--radius-lg); box-shadow: var(--shadow-overlay); animation: pop-in var(--dur-med) var(--ease); }
+.menu-pop { position: fixed; z-index: var(--z-modal); top: calc(var(--topbar-h) + var(--space-xs)); right: var(--space-xl); width: var(--width-md); max-width: calc(100% - var(--space-2xl)); max-height: calc(100dvh - var(--topbar-h) - var(--space-2xl)); display: flex; flex-direction: column; overflow: hidden; background: var(--color-surface); border: var(--border-default); border-radius: var(--radius-lg); box-shadow: var(--shadow-overlay); animation: pop-in var(--dur-med) var(--ease); }
+.menu-body { flex: 1 1 auto; min-height: var(--space-0); overflow-y: auto; overscroll-behavior: contain; padding: var(--space-xs); }
 .menu-head { padding: var(--space-md); border-bottom: var(--border-default); margin-bottom: var(--space-xs); overflow-wrap: anywhere; }
 .menu-head b { display: block; font-size: var(--text-lg); }
 .menu-head span { display: block; color: var(--color-text-muted); font-size: var(--text-sm); }

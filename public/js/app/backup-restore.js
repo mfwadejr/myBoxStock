@@ -6,10 +6,12 @@
   E.appVersion = async () => { if (!version) { try { version = (await (await fetch('/healthz')).json()).version || ''; } catch {} } return version || 'unknown'; };
   const serverRecords = async () => (await api('GET', '/vault/records')).records;
 
+  // The account's team as it is now: username, email and role only (the server never sends passwords, two-factor secrets or sessions here).
+  E.currentTeam = async () => A.backupFile.cleanPeople(await api('GET', '/users'));
   // Reads everything the server holds (ciphertext), adds the wrapped keys, and returns the file text and counts for the log.
   E.makeFile = async () => {
-    const records = await serverRecords(), rec = await api('GET', '/vault/recovery'), v = A.vault.state;
-    const text = await A.backupFile.build({ adk: A.vault.adk, accountCode: A.me.accountCode, appVersion: await E.appVersion(), records, keys: v?.keys || null, recoveryWrappedAdk: rec.wrappedAdk });
+    const records = await serverRecords(), rec = await api('GET', '/vault/recovery'), v = A.vault.state, team = await E.currentTeam();
+    const text = await A.backupFile.build({ adk: A.vault.adk, accountCode: A.me.accountCode, appVersion: await E.appVersion(), records, keys: v?.keys || null, recoveryWrappedAdk: rec.wrappedAdk, team });
     const c = { devices: 0, customers: 0, sales: 0, records: records.length }; for (const r of records) { if (r.type === 'item') c.devices++; else if (r.type === 'customer') c.customers++; else if (r.type === 'sale') c.sales++; }
     return { text, counts: c, name: A.backupFile.fileName(A.me.accountCode) };
   };
@@ -48,11 +50,12 @@
   };
 
   // progress(done, total). On any failure the safety copy is put back and the error says so.
-  E.run = async (parsed, mode, progress = () => {}) => {
+  E.run = async (parsed, mode, progress = () => {}, { team = false } = {}) => {
     await api('POST', '/backup/restore/begin', { accountCode: A.me.accountCode, mode }); // refuses a different account's file, then saves the safety copy
     try {
       const plan = E.plan(parsed, mode, (await E.snapshot()).recs), steps = [...chunks(plan.deletes).map(c => ({ deletes: c })), ...chunks(plan.puts).map(c => ({ puts: c }))], total = steps.length; let done = 0; progress(0, total);
       for (const step of steps) { await api('POST', '/vault/batch', { puts: step.puts || [], deletes: step.deletes || [] }); progress(++done, total); }
+      if (team && parsed.team?.length) { const t = await api('POST', '/backup/restore/team', { people: parsed.team }); plan.invited = t.added; plan.teamSkipped = t.skipped.length; } // after the records, so a failure above never leaves invitations behind
       await api('POST', '/backup/restore/done', { added: plan.added, replaced: plan.replaced, removed: plan.removed });
       S.reset(); await S.load(); return plan;
     } catch (e) {
@@ -62,4 +65,6 @@
     }
   };
   E.undo = async () => { const r = await api('POST', '/backup/undo', {}); S.reset(); await S.load(); return r; };
+  // For "Test a backup file": what the account holds now (ids and revisions) and its team. Read only.
+  E.testAgainst = async () => ({ recs: await serverRecords(), team: await E.currentTeam() });
 })();

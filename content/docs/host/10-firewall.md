@@ -1,9 +1,9 @@
 ---
 title: Firewall
 summary: Control who can open the Host Console, block or exempt addresses site-wide, tune the rate limits and bans, and set up the proxy or Cloudflare options safely.
-keywords: bans survive restart, unban, audit, firewall, rate limit, ban, block, allow list, cidr, ip address, host console access, 404, HOST_ALLOW_ANY, cloudflare, proxy, lockout, unban, ports, skip rate limits
+keywords: locked sign-ins, unlock, unlock sign-in, locked out, bans survive restart, unban, audit, firewall, rate limit, ban, block, allow list, cidr, ip address, host console access, 404, HOST_ALLOW_ANY, cloudflare, proxy, lockout, unban, ports, skip rate limits
 order: 10
-covers: nav:firewall, Blocked, Rate-limited, Temporary bans, Rate limiting, Requests per IP, per window (seconds), Sign-in attempts per IP, Ban after N violations, Ban length (minutes), Save, Host Console access, Your address right now, Add my address, Add rule, Note (optional), Remove, Block this address, Skip rate limits, Site-wide blocking and rate-limit exceptions, Lift, Ports in this container, HOST_ALLOW_ANY, Reverse proxy in front of the site, Site is behind Cloudflare
+covers: nav:firewall, Blocked, Rate-limited, Temporary bans, Rate limiting, Requests per IP, per window (seconds), Sign-in attempts per IP, Ban after N violations, Ban length (minutes), Save, Host Console access, Your address right now, Add my address, Add rule, Note (optional), Remove, Block this address, Skip rate limits, Site-wide blocking and rate-limit exceptions, Lift, Ports in this container, HOST_ALLOW_ANY, Reverse proxy in front of the site, Site is behind Cloudflare, Locked sign-ins, Unlock
 ---
 
 ## What the Firewall page is for
@@ -16,6 +16,8 @@ There are two separate ideas on this page, and mixing them up is the most common
 - **Site-wide blocking and rate-limit exceptions** apply to **the whole site**, including customers' apps, the sign-up page and the Host Console.
 
 > Quick test: if you are asking "who may manage this server?", use Host Console access. If you are asking "how do I stop a bad visitor or help a good one?", use the site-wide rules or the rate limits.
+
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
 
 ## The three counters
 
@@ -68,7 +70,7 @@ A person using the app normally makes a handful of requests a minute, so the def
 - Limits count per address. If an office or mobile carrier shares one address, everyone counts as one; give it a **Skip rate limits** rule or raise the numbers.
 - The request counters (requests per window and sign-in attempts per window) live in the server's memory, on purpose, so a restart starts them again from zero. That is harmless, because they only cover a minute or a few minutes.
 - Bans and the count of violations that lead to a ban are different. They are saved in the database, so a restart does not lift a ban or let a banned address start fresh. An update, which restarts the server, does not either.
-- Separately, after six wrong attempts in a row a sign-in name is locked for 15 minutes. That cannot be changed here. Lockouts are also saved and survive a restart (see [Security](#/docs/security)).
+- Separately, after six wrong attempts in a row a sign-in name is locked for 15 minutes. That cannot be changed here. Lockouts are also saved and survive a restart (see [Security](#/docs/security)). To let someone in sooner, use **Unlock** on this page.
 
 > Do not set **Sign-in attempts per IP** to 1 or 2. People mistype passwords.
 
@@ -148,6 +150,12 @@ Each rule shows a label ("blocked" in red, or "skips limits" in green), the addr
 ## Temporary bans
 
 When there are any, a **Temporary bans** card lists each banned address and the time the ban ends, with a **Lift** button (in other words, unban). Lift ends the ban at once and clears that address's violation count. Bans end by themselves after the **Ban length (minutes)**. If a regular customer got banned by mistake, lifting the ban is the quick fix, and a **Skip rate limits** rule is the permanent one.
+
+## Locked sign-ins
+
+When any sign-in is locked, a **Locked sign-ins** card appears under the bans. After six wrong passwords or two-factor codes in a row a sign-in is locked for 15 minutes. Each row shows the sign-in name (for a reseller, the username and Reseller ID, for example `lena@misty-puffin-3953`), why it is locked (too many wrong passwords or too many wrong two-factor codes), whether it is a Host Console sign-in, and when the lock ends.
+
+Press **Unlock** and confirm. The lock and the failed-attempt count are cleared at once (also from the database copy, so a restart cannot bring it back), and the person can try again right away. Only Host administrators can do this. It never shows or changes a password. Each unlock is written to the [Audit trail](#/docs/audit-trail) under **Bans and lockouts** as "Sign-in unlocked", with your name and the time. A reseller user's lock can also be cleared from the person's tools in [Accounts](#/docs/accounts). This is separate from **Lift**, which ends an address ban.
 
 ### Bans survive a restart
 

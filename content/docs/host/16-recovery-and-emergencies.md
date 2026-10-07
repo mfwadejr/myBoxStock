@@ -12,6 +12,8 @@ Almost every emergency on this server can be fixed, and the tools for it are alr
 
 Two reassurances: the commands below are run on the server itself, so if you can reach the machine you can get back in; and your customers keep working in their own accounts while you sort this out.
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
+
 ## Where to run the commands
 
 The recovery commands all look like `node server.mjs <command>`. They are run **inside the container**, in the program's own folder, which is `/app`. If you use the standard compose setup, the service is called `myboxstock`. Pick whichever of these fits how you work:
@@ -156,7 +158,7 @@ If it was the wrong backup, restore the safety copy from the **Safety copies** t
 
 ### You only have an offsite copy
 
-Offsite copies (files ending `.mbsenc`) are encrypted and have no Restore button. To use one:
+The easiest way is the **Restore** button on the copy in the **Offsite copies** tab. It tests the copy first (complete, passphrase opens it, integrity check, version fits), keeps Restore disabled until every check passes, takes a safety copy and then restores. See [Backups](#/docs/backups). That needs a working console. If you cannot sign in, or the copy is in a place the server cannot reach, do it by hand:
 
 1. Download it from the **Offsite copies** tab, or fetch it from the destination yourself.
 2. Decrypt it on a machine that has the program. Run `BACKUP_PASSPHRASE='your passphrase' node server.mjs decrypt-backup myboxstock-offsite-....db.mbsenc restored.db`. The passphrase is the one saved on the Full-site backups tab. A wrong one is refused and nothing is written.

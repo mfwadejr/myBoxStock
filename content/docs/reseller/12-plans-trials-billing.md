@@ -14,6 +14,8 @@ The most important thing to know is reassuring: **when a trial or paid period en
 
 > You do not pay or change plans inside the app. Your plan is set by your site administrator, the person or company that runs your myBoxStock site. To continue, contact them.
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. The person who runs your site sets this up, so if a message you expect never arrives, ask them to check it.
+
 ## The three plans
 
 ### Trial

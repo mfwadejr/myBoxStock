@@ -48,24 +48,100 @@
       q('[data-k=mdx]').forEach(b => b.addEventListener('click', async () => { if (await UI.confirmBox({ title: `Remove “${b.dataset.n}”?`, body: 'No device uses it, so nothing else changes.', confirmLabel: 'Remove', danger: true })) catDo(() => K.removeModel(b.dataset.m, b.dataset.n), 'Removed'); }));
     };
 
-    const moveBtns = (k, i, n) => `<span class="move-btns"><button type="button" class="icon-btn move" data-k="${k}" data-i="${i}" data-d="-1" aria-label="Move up" title="Move up" ${i === 0 ? 'disabled' : ''}>▲</button><button type="button" class="icon-btn move" data-k="${k}" data-i="${i}" data-d="1" aria-label="Move down" title="Move down" ${i === n - 1 ? 'disabled' : ''}>▼</button></span>`;
-    const shift = (list, b) => { const i = Number(b.dataset.i), j = i + Number(b.dataset.d); if (j < 0 || j >= list.length) return; [list[i], list[j]] = [list[j], list[i]]; draw(); };
+    // ---- Reorder: each list has a Reorder switch. Off = rows are locked (no handle column). On = each row has a six-dot grip; only the grip moves a row (pointer drag, or Space + arrow keys). ----
+    const LISTS = { fields: () => cfg.fields, steps: () => cfg.steps, pay: () => cfg.payments.methods, war: () => cfg.warranty.periods };
+    const NOUN = { fields: 'device details', steps: 'test steps', pay: 'payment methods', war: 'warranty periods' };
+    const reorderOn = { fields: false, steps: false, pay: false, war: false };
+    const rc = (l) => reorderOn[l] ? ' reordering' : '';
+    const GRIP_DOTS = [6, 12, 18].map(y => `<circle cx="9" cy="${y}" r="1.6"/><circle cx="15" cy="${y}" r="1.6"/>`).join('');
+    const grip = (l, name) => reorderOn[l] ? `<button type="button" class="grip" data-grip="${l}" aria-pressed="false" aria-roledescription="drag handle" aria-label="Reorder ${esc((name || '').trim() || 'this row')}"><svg class="icon grip-icon" viewBox="0 0 24 24" aria-hidden="true">${GRIP_DOTS}</svg></button>` : '';
+    const rswitch = (l) => `<span class="row"><span class="text-sm muted">Reorder</span><label class="switch"><input type="checkbox" data-reorder="${l}" aria-label="Reorder ${NOUN[l]}" ${reorderOn[l] ? 'checked' : ''}><i></i></label></span>`;
+    const rhint = (l) => reorderOn[l] ? '<p class="hint reorder-hint">Drag the dots to move a row. With a keyboard: focus the dots, press Space to pick the row up, use the arrow keys to move it, then press Space to drop it. Turn Reorder off to lock the order.</p>' : '';
+    const nameOf = (row) => row.querySelector('input[type=text]')?.value.trim() || 'This row';
+    const say = (t) => { const live = main.querySelector('#rlive'); if (live) live.textContent = t; };
+    let busyKb = null;   // the row picked up with the keyboard, if any
+
+    const wireReorder = () => {
+      // Writes the rows' current on-screen order back into the list, redraws, and optionally puts focus back on the moved row's grip.
+      const commit = (l, box, row, refocus, verb) => {
+        const arr = LISTS[l](), order = [...box.children].map(r => Number(r.dataset.ri)), at = order.indexOf(Number(row.dataset.ri)), name = nameOf(row), changed = order.some((v, n) => v !== n);
+        if (changed) { const next = order.map(n => arr[n]); arr.splice(0, arr.length, ...next); }
+        draw();
+        if (refocus) main.querySelector(`[data-list="${l}"] [data-ri="${at}"] .grip`)?.focus();
+        say(changed || verb === 'Dropped' ? `${verb} ${name} at position ${at + 1} of ${order.length}.` : '');
+      };
+      main.querySelectorAll('[data-reorder]').forEach(sw => sw.addEventListener('change', () => {
+        reorderOn[sw.dataset.reorder] = sw.checked; draw();
+        main.querySelector(`[data-reorder="${sw.dataset.reorder}"]`)?.focus();
+        say(sw.checked ? `Reorder is on for ${NOUN[sw.dataset.reorder]}. Each row has a handle.` : `Reorder is off. The order of ${NOUN[sw.dataset.reorder]} is locked in.`);
+      }));
+      main.querySelectorAll('.grip').forEach(g => {
+        const row = g.closest('[data-ri]'), box = row.parentElement, l = g.dataset.grip;
+        // pointer (mouse, pen or finger): drag the grip; rows move as the pointer crosses their middles; the page scrolls near the top and bottom edges
+        g.addEventListener('pointerdown', (e) => {
+          if (e.button !== 0 || busyKb) return;
+          e.preventDefault(); const id = e.pointerId; let y = e.clientY, raf = 0;
+          const zone = g.offsetHeight * 2, step = g.offsetHeight / 3;
+          row.classList.add('drag-row'); document.documentElement.classList.add('reorder-drag');
+          const place = () => {
+            let before = null;
+            for (const sib of box.children) { if (sib === row) continue; const b = sib.getBoundingClientRect(); if (y < b.top + b.height / 2) { before = sib; break; } }
+            if (before !== row.nextElementSibling) box.insertBefore(row, before);
+          };
+          const tick = () => {
+            raf = 0; const dir = y < zone ? -(zone - Math.max(y, 0)) / zone : y > innerHeight - zone ? (y - (innerHeight - zone)) / zone : 0;
+            if (!dir) return; scrollBy(0, Math.ceil(Math.max(-1, Math.min(1, dir)) * step)); place(); raf = requestAnimationFrame(tick);
+          };
+          const move = (ev) => { if (ev.pointerId !== id) return; y = ev.clientY; place(); if (!raf) raf = requestAnimationFrame(tick); };
+          const end = (ev) => {
+            if (ev.pointerId !== id) return;
+            removeEventListener('pointermove', move); removeEventListener('pointerup', end); removeEventListener('pointercancel', end);
+            if (raf) cancelAnimationFrame(raf); document.documentElement.classList.remove('reorder-drag'); row.classList.remove('drag-row');
+            commit(l, box, row, false, 'Moved');
+          };
+          addEventListener('pointermove', move); addEventListener('pointerup', end); addEventListener('pointercancel', end);
+        });
+        // keyboard and screen reader: Space picks the row up, the arrow keys move it, Space drops it, Escape puts it back
+        const stop = (refocus, verb) => { const k = busyKb; busyKb = null; k.row.classList.remove('drag-row'); commit(l, box, row, refocus, verb); };
+        g.addEventListener('keydown', (e) => {
+          const n = box.children.length, pos = () => [...box.children].indexOf(row) + 1;
+          if (e.key === ' ') {
+            e.preventDefault();
+            if (busyKb) return stop(true, 'Dropped');
+            busyKb = { row, start: [...box.children] }; row.classList.add('drag-row'); g.setAttribute('aria-pressed', 'true');
+            say(`Picked up ${nameOf(row)}, position ${pos()} of ${n}. Use the up and down arrow keys to move it, Space to drop it, Escape to cancel.`);
+          } else if (busyKb && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+            e.preventDefault();
+            const up = e.key === 'ArrowUp' || e.key === 'ArrowLeft', sib = e.key === 'Home' ? box.firstElementChild : e.key === 'End' ? null : up ? row.previousElementSibling : row.nextElementSibling;
+            if (e.key === 'Home' || e.key === 'End') { if (e.key === 'Home' ? row === box.firstElementChild : row === box.lastElementChild) return say(`Already ${e.key === 'Home' ? 'first' : 'last'}.`); box.insertBefore(row, sib); }
+            else if (!sib) return say(up ? 'Already first.' : 'Already last.');
+            else if (up) box.insertBefore(row, sib); else box.insertBefore(sib, row);
+            g.focus(); row.scrollIntoView({ block: 'nearest' });
+            say(`${nameOf(row)}, position ${pos()} of ${n}.`);
+          } else if (busyKb && e.key === 'Escape') {
+            e.preventDefault(); e.stopPropagation(); busyKb.start.forEach(r => box.append(r)); stop(true, 'Put back');
+            say(`Move cancelled. ${nameOf(row)} is back at its place.`);
+          }
+        });
+        g.addEventListener('blur', () => setTimeout(() => { if (busyKb && busyKb.row === row && document.activeElement !== g && document.body.contains(g)) stop(false, 'Dropped'); }));
+      });
+    };
 
     const draw = () => {
-      swap(main, `<div class="page-head row spread wrap"><div><h1>Settings</h1><p>What you track for each device, and the checks you do before selling it.</p></div><button class="btn" id="save">Save changes</button></div>
-        <div class="card"><div class="row spread wrap"><div><h3>Device details to track</h3><div class="sub mb-0">Turn on what you record for each device. Identifiers you can scan or type at the till are looked up in Quick sale. Anything ticked for the sale record is copied onto the sale.</div></div><button class="btn secondary" id="addf">Add a detail</button></div>
-          <div class="check-row check-head mt-md"><span>Name</span><span>Track</span><span>Look up in sale</span><span>Must be unique</span><span>On sale record</span><span></span><span>Order</span></div>
-          ${cfg.fields.map((f, i) => `<div class="check-row"><div class="row"><input type="text" data-k="fl" data-i="${i}" value="${esc(f.label)}" aria-label="Name">${f.type === 'choice' ? `<button type="button" class="btn secondary small type-btn" data-k="ech" data-i="${i}" title="Change the choices">Choices (${(f.options || []).length})</button>` : `<span class="chip gray nowrap">${esc(typeLabel(f))}</span>`}</div>${chk('fe', f.enabled, i)}${chk('fk', f.lookup, i)}${chk('fu', f.unique, i)}${chk('fs', f.onSale, i)}<button type="button" class="icon-btn" data-k="rmf" data-i="${i}" aria-label="Remove ${esc(f.label)}" title="Remove">✕</button>${moveBtns('mvf', i, cfg.fields.length)}</div>`).join('')}
+      swap(main, `<div class="sr-only" id="rlive" role="status" aria-live="assertive" aria-atomic="true"></div><div class="page-head row spread wrap"><div><h1>Settings</h1><p>What you track for each device, and the checks you do before selling it.</p></div><button class="btn" id="save">Save changes</button></div>
+        <div class="card${rc('fields')}"><div class="row spread wrap"><div><h3>Device details to track</h3><div class="sub mb-0">Turn on what you record for each device. Identifiers you can scan or type at the till are looked up in Quick sale. Anything ticked for the sale record is copied onto the sale.</div></div><div class="row wrap">${rswitch('fields')}<button class="btn secondary" id="addf">Add a detail</button></div></div>${rhint('fields')}
+          <div class="check-row check-head mt-md"><span>Name</span><span>Track</span><span>Look up in sale</span><span>Must be unique</span><span>On sale record</span><span></span>${reorderOn.fields ? '<span></span>' : ''}</div>
+          <div data-list="fields">${cfg.fields.map((f, i) => `<div class="check-row" data-ri="${i}"><div class="row"><input type="text" data-k="fl" data-i="${i}" value="${esc(f.label)}" aria-label="Name">${f.type === 'choice' ? `<button type="button" class="btn secondary small type-btn" data-k="ech" data-i="${i}" title="Change the choices">Choices (${(f.options || []).length})</button>` : `<span class="chip gray nowrap">${esc(typeLabel(f))}</span>`}</div>${chk('fe', f.enabled, i)}${chk('fk', f.lookup, i)}${chk('fu', f.unique, i)}${chk('fs', f.onSale, i)}<button type="button" class="icon-btn" data-k="rmf" data-i="${i}" aria-label="Remove ${esc(f.label)}" title="Remove">✕</button>${grip('fields', f.label)}</div>`).join('')}</div>
           <p class="hint mt-md">Make, model, cost, selling price, status and notes are always available. Turning a detail off, or removing it, hides it but keeps what was entered.</p></div>
-        <div class="card mt-lg"><div class="row spread wrap"><div><h3>Warranty periods</h3><div class="sub mb-0">The choices offered at Quick sale. The chosen period is saved on each sale, so changing this list never alters past sales. A period that has been used on a sale can be archived but not removed.</div></div><button class="btn secondary" id="addw">Add a period</button></div>
-          <div class="mt-md">${cfg.warranty.periods.map((p, i) => `<div class="war-row"><input type="text" data-k="wl" data-i="${i}" value="${esc(p.label)}" aria-label="Name"><span class="chip gray nowrap">${esc(p.amount ? C.periodLabel(p) : 'No cover')}</span>${cfg.warranty.default === p.key ? '<span class="chip green nowrap">Default</span>' : `<button type="button" class="btn secondary small" data-k="wd" data-i="${i}" ${p.archived ? 'disabled' : ''}>Make default</button>`}<button type="button" class="btn secondary small" data-k="wa" data-i="${i}" ${cfg.warranty.default === p.key ? 'disabled' : ''}>${p.archived ? 'Restore' : 'Archive'}</button>${usedKeys.has(p.key) || p.key === 'none' ? '<span class="icon-slot"></span>' : `<button type="button" class="icon-btn" data-k="wr" data-i="${i}" aria-label="Remove ${esc(p.label)}" title="Remove">✕</button>`}${moveBtns('mvw', i, cfg.warranty.periods.length)}</div>`).join('')}</div></div>
-        <div class="card mt-lg"><div class="row spread wrap"><div><h3>Payment methods</h3><div class="sub mb-0">The "Paid by" choices at Quick sale. Each sale keeps the name it was sold under, so renaming never alters past receipts. A method that has been used on a sale can be archived but not removed.</div></div><button class="btn secondary" id="addp">Add a method</button></div>
-          <div class="mt-md">${cfg.payments.methods.map((p, i) => `<div class="pay-row"><input type="text" data-k="pl" data-i="${i}" value="${esc(p.label)}" aria-label="Name" maxlength="40">${cfg.payments.default === p.key ? '<span class="chip green nowrap">Default</span>' : `<button type="button" class="btn secondary small" data-k="pd" data-i="${i}" ${p.archived ? 'disabled' : ''}>Make default</button>`}<button type="button" class="btn secondary small" data-k="pa" data-i="${i}" ${cfg.payments.default === p.key ? 'disabled' : ''}>${p.archived ? 'Restore' : 'Archive'}</button>${usedPay.has(p.key) || cfg.payments.methods.length < 2 ? '<span class="icon-slot"></span>' : `<button type="button" class="icon-btn" data-k="pr" data-i="${i}" aria-label="Remove ${esc(p.label)}" title="Remove">✕</button>`}${moveBtns('mvp', i, cfg.payments.methods.length)}</div>`).join('')}</div></div>
+        <div class="card mt-lg${rc('war')}"><div class="row spread wrap"><div><h3>Warranty periods</h3><div class="sub mb-0">The choices offered at Quick sale. The chosen period is saved on each sale, so changing this list never alters past sales. A period that has been used on a sale can be archived but not removed.</div></div><div class="row wrap">${rswitch('war')}<button class="btn secondary" id="addw">Add a period</button></div></div>${rhint('war')}
+          <div class="mt-md" data-list="war">${cfg.warranty.periods.map((p, i) => `<div class="war-row" data-ri="${i}"><input type="text" data-k="wl" data-i="${i}" value="${esc(p.label)}" aria-label="Name"><span class="chip gray nowrap">${esc(p.amount ? C.periodLabel(p) : 'No cover')}</span>${cfg.warranty.default === p.key ? '<span class="chip green nowrap">Default</span>' : `<button type="button" class="btn secondary small" data-k="wd" data-i="${i}" ${p.archived ? 'disabled' : ''}>Make default</button>`}<button type="button" class="btn secondary small" data-k="wa" data-i="${i}" ${cfg.warranty.default === p.key ? 'disabled' : ''}>${p.archived ? 'Restore' : 'Archive'}</button>${usedKeys.has(p.key) || p.key === 'none' ? '<span class="icon-slot"></span>' : `<button type="button" class="icon-btn" data-k="wr" data-i="${i}" aria-label="Remove ${esc(p.label)}" title="Remove">✕</button>`}${grip('war', p.label)}</div>`).join('')}</div></div>
+        <div class="card mt-lg${rc('pay')}"><div class="row spread wrap"><div><h3>Payment methods</h3><div class="sub mb-0">The "Paid by" choices at Quick sale. Each sale keeps the name it was sold under, so renaming never alters past receipts. A method that has been used on a sale can be archived but not removed.</div></div><div class="row wrap">${rswitch('pay')}<button class="btn secondary" id="addp">Add a method</button></div></div>${rhint('pay')}
+          <div class="mt-md" data-list="pay">${cfg.payments.methods.map((p, i) => `<div class="pay-row" data-ri="${i}"><input type="text" data-k="pl" data-i="${i}" value="${esc(p.label)}" aria-label="Name" maxlength="40">${cfg.payments.default === p.key ? '<span class="chip green nowrap">Default</span>' : `<button type="button" class="btn secondary small" data-k="pd" data-i="${i}" ${p.archived ? 'disabled' : ''}>Make default</button>`}<button type="button" class="btn secondary small" data-k="pa" data-i="${i}" ${cfg.payments.default === p.key ? 'disabled' : ''}>${p.archived ? 'Restore' : 'Archive'}</button>${usedPay.has(p.key) || cfg.payments.methods.length < 2 ? '<span class="icon-slot"></span>' : `<button type="button" class="icon-btn" data-k="pr" data-i="${i}" aria-label="Remove ${esc(p.label)}" title="Remove">✕</button>`}${grip('pay', p.label)}</div>`).join('')}</div></div>
         <div class="card mt-lg"><div class="row spread wrap"><div><h3>Makes and models</h3><div class="sub mb-0">The lists offered when you add a device. They are built from your devices; add names here ahead of time, rename them, or merge two spellings of the same name. Changes here are saved straight away and update the devices that use them. Past sales keep the name they were sold under.</div></div><button class="btn secondary" id="addmk">Add a make</button></div>
           <div class="mt-md" id="catlist">${catHtml()}</div></div>
         <div class="card mt-lg"><h3>Unlock behaviour</h3><div class="sub">Your data is encrypted in the browser. This decides what happens when someone on your team refreshes the page. It applies to everyone on the account.</div>
           <div class="field mt-md"><label>After a browser refresh</label>${UI.select.html({ id: 'um', options: [['ask', 'Ask for the password again (most private)'], ['stay', 'Stay unlocked while this tab is open']], value: cfg.unlock.mode })}</div>
-          <div class="field" id="uiw" ${cfg.unlock.mode === 'stay' ? '' : 'hidden'}><label>Lock automatically after (minutes without activity)</label><input type="number" id="ui" min="1" max="1440" step="1" value="${esc(cfg.unlock.idleMin)}"></div>
+          <div class="field" id="uiw" ${cfg.unlock.mode === 'stay' ? '' : 'hidden'}><label>Lock automatically after (minutes without activity)</label><input type="number" id="ui" class="num" min="1" max="1440" step="1" value="${esc(cfg.unlock.idleMin)}"></div>
           <p class="hint">Staying unlocked keeps the account key in this tab’s temporary browser storage. It is cleared when the tab closes, when someone signs out, and after the idle time. The trade-off: malicious script running on the page while the tab is open could use that key, so keep it on the default if the device is shared or untrusted.</p></div>
         <div class="card mt-lg"><h3>Email sending</h3><div class="sub">Receipts (and later newsletters) can go out from your own mail server, so they come from your address and do not use the site’s shared sender. Leave it off to use the site’s sender, with replies going to your email address.</div>
           <div class="setting mt-md"><div><div class="setting-title">Send from my own mail server</div><div class="setting-desc">Your mail provider’s details (Gmail, Outlook, your web host, an email service…).</div></div><label class="switch"><input type="checkbox" id="mon" ${cfg.mail.enabled ? 'checked' : ''}><i></i></label></div>
@@ -73,7 +149,7 @@
             <div class="grid g2"><div class="field"><label>From name</label><input type="text" id="mfn" value="${esc(cfg.mail.fromName)}" placeholder="${esc(A.me.businessName)}"></div>
               <div class="field"><label>From address</label><input type="email" id="mfa" value="${esc(cfg.mail.fromAddress)}" placeholder="sales@yourbusiness.com" autocapitalize="none"></div>
               <div class="field"><label>SMTP host</label><input type="text" id="mh" value="${esc(cfg.mail.host)}" placeholder="smtp.example.com" autocapitalize="none" spellcheck="false"></div>
-              <div class="field"><label>Port</label><input type="number" id="mp" min="1" max="65535" value="${cfg.mail.secure ? 465 : cfg.mail.port === 465 ? 587 : esc(cfg.mail.port)}" ${cfg.mail.secure ? 'disabled' : ''}><div class="hint" id="mphint"></div></div>
+              <div class="field"><label>Port</label><input type="number" id="mp" class="num" min="1" max="65535" value="${cfg.mail.secure ? 465 : cfg.mail.port === 465 ? 587 : esc(cfg.mail.port)}" ${cfg.mail.secure ? 'disabled' : ''}><div class="hint" id="mphint"></div></div>
               <div class="field"><label>Username</label><input type="text" id="mu" value="${esc(cfg.mail.user)}" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
               <div class="field"><label>Password</label><input type="password" id="mw" value="${esc(cfg.mail.pass)}" autocomplete="new-password"></div></div>
             <div class="setting"><div><div class="setting-title">Use TLS from the start of the connection (port 465)</div><div class="setting-desc">Leave off for port 587, which upgrades to TLS automatically.</div></div><label class="switch"><input type="checkbox" id="mtls" ${cfg.mail.secure ? 'checked' : ''}><i></i></label></div>
@@ -93,19 +169,16 @@
             <div class="row mt-md"><button class="btn secondary" id="creset" type="button">Back to default wording</button></div></div>
             <div><div class="sub mb-sm" id="csub"></div><iframe class="mail-frame" id="cfr" title="Email preview" sandbox=""></iframe><div class="hint">Shown with sample details. Updates as you type.</div></div></div></div>` : ''}
         <div class="card mt-lg"><h3>Discounts</h3><div class="sub">Quick sale lets you take a % off a single device or the whole order. Administrators can give any discount. Set the most a Standard user may give in total on one sale.</div>
-          <div class="field mt-md"><label>Most a Standard user can discount (%)</label><input type="number" id="dc" min="0" max="100" step="1" value="${esc(cfg.discount.maxStandardPct)}"></div>
+          <div class="field mt-md"><label>Most a Standard user can discount (%)</label><input type="number" id="dc" class="num" min="0" max="100" step="1" value="${esc(cfg.discount.maxStandardPct)}"></div>
           <p class="hint">This limit is checked in the app when the sale is completed. Because your data is encrypted, the server cannot enforce it, so treat it as a guard rail for honest mistakes rather than a security control.</p></div>
-        <div class="card mt-lg"><div class="row spread wrap"><div><h3>Test checklist</h3><div class="sub mb-0">Steps you perform on each device. When you tick them in Inventory, who and when is recorded and copied into the sale, so you can show what was done if a customer says it did not work.</div></div><button class="btn secondary" id="adds" ${cfg.tests.enabled ? '' : 'disabled'}>Add a step</button></div>
+        <div class="card mt-lg${rc('steps')}"><div class="row spread wrap"><div><h3>Test checklist</h3><div class="sub mb-0">Steps you perform on each device. When you tick them in Inventory, who and when is recorded and copied into the sale, so you can show what was done if a customer says it did not work.</div></div><div class="row wrap">${rswitch('steps')}<button class="btn secondary" id="adds" ${cfg.tests.enabled ? '' : 'disabled'}>Add a step</button></div></div>${rhint('steps')}
           <label class="check mt-md"><input type="checkbox" id="ten" ${cfg.tests.enabled ? 'checked' : ''}><span>Use a test checklist</span></label>
           <div class="hint">Turn this off if you do not test devices. The test record is then hidden in Inventory, Quick sale, receipts and CSV files. Nothing already recorded is deleted.</div>
           <label class="check mt-md"><input type="checkbox" id="treq" ${cfg.tests.requireBeforeSale ? 'checked' : ''} ${cfg.tests.enabled ? '' : 'disabled'}><span>Sell only tested devices</span></label>
           <div class="hint">When on, a device stays "Awaiting test" until its required steps are ticked (every step if none are marked required). It is not counted as available and cannot be added to a sale. Turn it off if you sell devices as they arrive.</div>
-          <div class="mt-md" ${cfg.tests.enabled ? '' : 'hidden'}>${cfg.steps.length ? cfg.steps.map((st, i) => `<div class="step-row"><input type="text" data-k="sl" data-i="${i}" value="${esc(st.label)}" aria-label="Step"><button type="button" class="btn secondary small type-btn" data-k="sdt" data-i="${i}" title="Extra items under this step">Details (${(st.details || []).length})</button><label class="check"><input type="checkbox" data-k="sr" data-i="${i}" ${st.required ? 'checked' : ''}><span class="text-sm">Required before sale</span></label><button type="button" class="icon-btn" data-k="rms" data-i="${i}" aria-label="Remove step" title="Remove">✕</button>${moveBtns('mvs', i, cfg.steps.length)}</div>`).join('') : '<div class="empty">No steps. Add the checks you do on each device.</div>'}</div></div>`);
+          <div class="mt-md" data-list="steps" ${cfg.tests.enabled ? '' : 'hidden'}>${cfg.steps.length ? cfg.steps.map((st, i) => `<div class="step-row" data-ri="${i}"><input type="text" data-k="sl" data-i="${i}" value="${esc(st.label)}" aria-label="Step"><button type="button" class="btn secondary small type-btn" data-k="sdt" data-i="${i}" title="Extra items under this step">Details (${(st.details || []).length})</button><label class="check"><input type="checkbox" data-k="sr" data-i="${i}" ${st.required ? 'checked' : ''}><span class="text-sm">Required before sale</span></label><button type="button" class="icon-btn" data-k="rms" data-i="${i}" aria-label="Remove step" title="Remove">✕</button>${grip('steps', st.label)}</div>`).join('') : '<div class="empty">No steps. Add the checks you do on each device.</div>'}</div></div>`);
       const q = (s) => main.querySelectorAll(s);
-      q('[data-k=mvf]').forEach(b => b.addEventListener('click', () => shift(cfg.fields, b)));
-      q('[data-k=mvs]').forEach(b => b.addEventListener('click', () => shift(cfg.steps, b)));
-      q('[data-k=mvp]').forEach(b => b.addEventListener('click', () => shift(cfg.payments.methods, b)));
-      q('[data-k=mvw]').forEach(b => b.addEventListener('click', () => shift(cfg.warranty.periods, b)));
+      wireReorder();
       q('[data-k=fl]').forEach(e => e.addEventListener('input', () => { cfg.fields[e.dataset.i].label = e.value; }));
       for (const [cls, k] of [['[data-k=fe]', 'enabled'], ['[data-k=fk]', 'lookup'], ['[data-k=fu]', 'unique'], ['[data-k=fs]', 'onSale']]) q(cls).forEach(e => e.addEventListener('change', () => { cfg.fields[e.dataset.i][k] = e.checked; }));
       const mailBody = () => ({ enabled: main.querySelector('#mon').checked, host: main.querySelector('#mh').value.trim(), port: Number(main.querySelector('#mp').value) || 587, secure: main.querySelector('#mtls').checked, user: main.querySelector('#mu').value.trim(), pass: main.querySelector('#mw').value, fromName: main.querySelector('#mfn').value.trim(), fromAddress: main.querySelector('#mfa').value.trim() });
@@ -161,7 +234,7 @@
       q('[data-k=pr]').forEach(b => b.addEventListener('click', () => { cfg.payments.methods.splice(Number(b.dataset.i), 1); draw(); }));
       main.querySelector('#addp').addEventListener('click', () => { cfg.payments.methods.push({ key: 'p' + Vault.newId().slice(0, 7), label: '' }); draw(); const ins = q('[data-k=pl]'); ins[ins.length - 1]?.focus(); });
       main.querySelector('#addw').addEventListener('click', async () => {
-        const p = await sheet(`<h2>Add a warranty period</h2><div class="grid g2 mt-md"><div class="field"><label>Length</label><input type="number" id="a" min="1" max="120" step="1" value="6"></div><div class="field"><label>Unit</label>${UI.select.html({ id: 'u', options: C.WARRANTY_UNITS, value: 'months' })}</div></div><div class="field"><label>Name (optional)</label><input type="text" id="n" placeholder="Shown at Quick sale, for example 6 months"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Add</button></div>`, { onMount: (el, close) => el.querySelector('#go').addEventListener('click', () => {
+        const p = await sheet(`<h2>Add a warranty period</h2><div class="grid g2 mt-md"><div class="field"><label>Length</label><input type="number" id="a" class="num" min="1" max="120" step="1" value="6"></div><div class="field"><label>Unit</label>${UI.select.html({ id: 'u', options: C.WARRANTY_UNITS, value: 'months' })}</div></div><div class="field"><label>Name (optional)</label><input type="text" id="n" placeholder="Shown at Quick sale, for example 6 months"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Add</button></div>`, { onMount: (el, close) => el.querySelector('#go').addEventListener('click', () => {
           const amount = Math.floor(Number(el.querySelector('#a').value)), unit = UI.select.value(el.querySelector('#u'));
           if (!(amount >= 1 && amount <= 120)) return toast('Enter a length from 1 to 120.', true);
           const np = { key: 'w' + Vault.newId().slice(0, 7), amount, unit }; np.label = el.querySelector('#n').value.trim() || C.periodLabel(np); close(np);

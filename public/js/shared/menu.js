@@ -32,7 +32,7 @@
       else if (e.key === 'Home') { e.preventDefault(); items[0]?.focus(); }
       else if (e.key === 'End') { e.preventDefault(); items.at(-1)?.focus(); }
     };
-    const draw = () => `<div class="menu-scrim" data-menu-scrim></div><div class="menu-pop" id="${id}">${state.head ? `<div class="menu-head">${state.head}</div>` : ''}<div class="menu-list" role="menu" aria-labelledby="${id}-btn">${rows(state.items)}</div></div>`;
+    const draw = () => `<div class="menu-scrim" data-menu-scrim></div><div class="menu-pop" id="${id}"><div class="menu-body">${state.head ? `<div class="menu-head">${state.head}</div>` : ''}<div class="menu-list" role="menu" aria-labelledby="${id}-btn">${rows(state.items)}</div></div></div>`;
     const open = () => {
       layer = document.createElement('div'); layer.className = 'menu-layer'; layer.innerHTML = draw(); document.body.append(layer);
       btn.setAttribute('aria-expanded', 'true');

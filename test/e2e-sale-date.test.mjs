@@ -16,7 +16,7 @@ test('browser: date sold on Quick sale, tidy customer purchases', { skip, timeou
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   try {
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
-    await page.fill('#bn', 'Date Co'); await page.fill('#em', 'd@example.com'); await page.fill('#un', 'dee'); await page.fill('#pw', PW); await page.click('button.block');
+    await page.fill('#bn', 'Date Co'); await page.fill('#em', 'd@example.com'); await page.fill('#un', 'dee'); await page.fill('#pw', PW); await page.check('#tc'); await page.click('button.block');
     await page.waitForSelector('#go'); const login = 'dee@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');
     await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');

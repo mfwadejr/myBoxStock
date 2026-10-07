@@ -15,6 +15,8 @@ myBoxStock runs as a single program in a single container. One container serves 
 
 All of the server's memory of what happened lives in one **data folder**. The container itself can be thrown away and rebuilt at any time, which is exactly how updates work, as long as the data folder is kept. If you remember one rule from this page, make it that one: **the container is disposable, the data folder is precious.**
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
+
 ## Deploying with Docker (and ZimaOS)
 
 The project includes a `Dockerfile` and a `docker-compose.yml`. The container is built on a small Node 22 image, and it listens on port 8080 inside. The standard compose file looks like this in spirit:

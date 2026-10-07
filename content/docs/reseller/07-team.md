@@ -1,9 +1,9 @@
 ---
 title: Team
 summary: Give your staff their own sign-ins, choose what each person is allowed to do, reset a forgotten password, and switch off or remove someone who has left.
-keywords: team, staff, users, add person, employees, roles, administrator, standard, view, permissions, reset access, reset password, disable, enable, delete user, 2FA, sign out, account menu, backup, last sign-in, temporary password, email confirmation
+keywords: pending invitation, set up access, restore team, team in backup, team, staff, users, add person, employees, roles, administrator, standard, view, permissions, reset access, reset password, disable, enable, delete user, 2FA, sign out, account menu, backup, last sign-in, temporary password, email confirmation
 order: 7
-covers: nav:team, Team members are not in the backup, Sign out in the account menu, Add person, Username, Email (optional), Role, Temporary password, Add, Cancel, Role, 2FA, Last sign-in, From IP, Signed in on, Reset access, New temporary password, Reset, Delete, Disable, Enable, Administrator, Standard, View, users.manage, Reseller ID
+covers: nav:team, Team members are in the backup, Pending invitation, Set up access, Sign out in the account menu, Add person, Username, Email (optional), Role, Temporary password, Add, Cancel, Role, 2FA, Last sign-in, From IP, Signed in on, Reset access, New temporary password, Reset, Delete, Disable, Enable, Administrator, Standard, View, users.manage, Reseller ID
 ---
 
 ## What the Team page is for
@@ -15,6 +15,8 @@ The **Team** page is where you decide who can sign in to your business account a
 - **Accountability.** Your account keeps an [Activity](#/docs/activity) record of who did what, which only works if each person signs in as themselves.
 
 This page is only for **Administrators**. Anyone else does not see **Team** in the menu, and if they reach it they are told "Only administrators can manage the team."
+
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. The person who runs your site sets this up, so if a message you expect never arrives, ask them to check it.
 
 ## How people sign in
 
@@ -158,7 +160,11 @@ There is no sign-out button on the Team page. People are signed out of every dev
 
 ## Team members and backups
 
-A backup file made on the [Backup and restore](#/docs/backup-and-restore) page does **not** contain your team: not the people, not their user types, not their passwords or sign-in history. Restoring a backup never adds, removes or changes a person. If you ever have to start a new account, add your people again on this page. Write down who has which user type somewhere safe.
+A backup file made on the [Backup and restore](#/docs/backup-and-restore) page contains your **team list**: each person's username, email and user type (Administrator, Standard or View), locked with your key like the rest. It never contains passwords, two-factor secrets or sign-ins.
+
+When you restore a file, the restore sheet has a switch **Add team members (N in this file)**, on by default. People from the file who are not already on your team come back as **pending invitations**. On this page they carry a **Pending invitation** tag and cannot sign in yet. Press **Set up access** on their row (it works like **Reset access**), give them a temporary password and tell them their Reseller ID and username. They then choose their own password and set up their own two-factor. People who match a current member by username or email are skipped, nobody's user type is changed, and **Replace everything** never removes anyone. **Undo last restore** removes the invitations that restore added (only those still pending).
+
+A pending Administrator does not count as "another Administrator" when you delete someone: an account always needs one person who can really sign in.
 
 ## Practical advice
 

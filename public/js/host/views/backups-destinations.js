@@ -27,12 +27,13 @@
       <div class="field"><label>Name</label><input type="text" id="dn" value="${esc(cur?.name || '')}" autocomplete="off" placeholder="For example Office NAS"></div>
       ${cur ? '' : `<div class="field"><label>Type</label>${UI.select.html({ id: 'dt', options: TYPE_OPTIONS, value: type })}</div>`}
       <div id="df">${fieldHtml(type, cur)}</div>
-      <div class="setting"><div><div class="setting-title">Use this destination</div><div class="setting-desc">Everything sent here is encrypted first with your backup passphrase.</div></div><label class="switch"><input type="checkbox" id="den" ${cur ? (cur.enabled ? 'checked' : '') : 'checked'}><i></i></label></div>
+      <div class="banner blue mt-md">Everything sent here is encrypted first with your backup passphrase. A destination is saved switched off. Press Test connection on its card; it can only be switched on after the test passes, and changing its details means testing again.</div>
       <div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Save</button></div>`, {
       onMount: (el, close) => {
         el.querySelector('#dt')?.addEventListener('change', () => { type = UI.select.value(el.querySelector('#dt')); el.querySelector('#df').innerHTML = fieldHtml(type, null); });
         el.querySelector('#go').addEventListener('click', (e) => busy(e.currentTarget, async () => {
-          try { const body = { type, name: el.querySelector('#dn').value, enabled: el.querySelector('#den').checked, ...gather(el, type) }; await Host.api(cur ? 'PUT' : 'POST', `/backups/destinations${cur ? '/' + cur.id : ''}`, body); close(true); } catch (er) { toast(er.message, true); }
+          try { const g = gather(el, type), same = (k) => String(g.settings[k] ?? '') === String(cur?.settings?.[k] ?? ''), changed = !cur || Object.keys(g.secrets).length > 0 || Object.keys(g.settings).some(k => !same(k)); // a destination that is new or changed goes back to off until it passes Test connection
+          const body = { type, name: el.querySelector('#dn').value, enabled: !!cur?.enabled && !changed, ...g }; await Host.api(cur ? 'PUT' : 'POST', `/backups/destinations${cur ? '/' + cur.id : ''}`, body); close(true); } catch (er) { toast(er.message, true); }
         }));
       },
     });
@@ -42,7 +43,8 @@
   const card = (d) => `<div class="card" data-id="${esc(d.id)}"><div class="row spread wrap"><div><h3>${esc(d.name)} <span class="chip">${esc(d.typeLabel)}</span>${d.builtin ? ' <span class="chip blue">Built in</span>' : ''}</h3>
       <div class="setting-desc">${d.type === 'folder' ? `<span class="ident">${esc(d.settings.path)}</span>` : esc(d.settings.host || d.settings.url || d.settings.bucket || '')}${d.type === 'sftp' && d.hostKey ? `<br>Server identity pinned: <span class="ident">${esc(d.hostKey)}</span>` : ''}</div>
       <div class="hint">${d.builtin ? 'The default location, inside the data folder you already mount. Files here are plain database files (see the note on the Frequent snapshots tab).' : d.encrypted ? 'Files are encrypted with your backup passphrase before they are sent.' : ''}${d.lastTest ? ` Last test: ${d.lastTest.ok ? 'worked' : 'failed'} ${esc(fmt.ago(d.lastTest.at))}.` : ''}</div></div>
-      ${d.builtin ? '' : `<label class="switch"><input type="checkbox" data-en ${d.enabled ? 'checked' : ''}><i></i></label>`}</div>
+      ${d.builtin ? '' : `<label class="switch"><input type="checkbox" data-en aria-label="Use ${esc(d.name)}" ${d.enabled ? 'checked' : ''} ${!d.enabled && !d.tested ? 'disabled' : ''}><i></i></label>`}</div>
+      ${!d.builtin && !d.enabled && !d.tested ? '<div class="banner mt-md" data-needtest>Run Test connection and get a pass before this destination can be turned on.</div>' : ''}
       <div class="row wrap mt-md"><button class="btn secondary small" data-test>Test connection</button>${d.builtin ? '<button class="btn secondary small" data-folder>Change folder</button>' : '<button class="btn secondary small" data-edit>Edit</button><button class="btn danger small" data-del>Delete</button>'}</div><div class="mt-sm" data-result></div></div>`;
 
   B.destinationsPane = (pane, d, refresh) => {
@@ -52,7 +54,7 @@
       const dest = d.destinations.find(x => x.id === c.dataset.id), res = c.querySelector('[data-result]');
       c.querySelector('[data-test]').addEventListener('click', (e) => busy(e.currentTarget, async () => {
         res.innerHTML = '<span class="hint">Testing…</span>';
-        try { const r = await Host.api('POST', `/backups/destinations/${encodeURIComponent(dest.id)}/test`); res.innerHTML = `<div class="banner ${r.ok ? 'blue' : 'red'}">${esc(r.message)}</div>`; if (r.ok && r.fingerprint && !dest.hostKey && dest.type === 'sftp') refresh(); } catch (er) { res.innerHTML = `<div class="banner red">${esc(er.message)}</div>`; }
+        try { const r = await Host.api('POST', `/backups/destinations/${encodeURIComponent(dest.id)}/test`); res.innerHTML = `<div class="banner ${r.ok ? 'blue' : 'red'}">${esc(r.message)}</div>`; if (r.ok) { const en = c.querySelector('[data-en]'); if (en) en.disabled = false; c.querySelector('[data-needtest]')?.remove(); } if (r.ok && r.fingerprint && !dest.hostKey && dest.type === 'sftp') refresh(); } catch (er) { res.innerHTML = `<div class="banner red">${esc(er.message)}</div>`; }
       }));
       c.querySelector('[data-folder]')?.addEventListener('click', async () => {
         const v = await sheet(`<h2>Backup folder on this server</h2><div class="field mt-md"><label>Folder path</label><input type="text" id="lf" value="${esc(d.localDir === d.defaultDir ? '' : d.localDir)}" placeholder="${esc(d.defaultDir)}" autocomplete="off"><div class="hint">Leave blank for the default, ${esc(d.defaultDir)}, which is inside the data folder you already mount. Older backups stay where they are and are still listed.</div></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Save</button></div>`,

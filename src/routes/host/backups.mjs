@@ -1,11 +1,14 @@
 // ROUTES / host / backups — the Backups page: settings per tier, lists, run now, download, delete, restore, test restore, destinations.
 import express from 'express';
 import { hostLog } from './context.mjs';
+import { fail, MSG } from '../../core/messages.mjs';
 import * as bk from '../../services/backup/index.mjs';
 import { listDestinations, enabledDestinations, clientFor } from '../../services/backup/destinations/index.mjs';
 import { destinationsRoutes } from './backups-destinations.mjs';
 import { takenAtFromName } from '../../services/backup/files.mjs';
 
+// A service error with a catalog code becomes fail(); anything else keeps its own plain-English message.
+export const bad = (res, e, status = 400) => (e?.code && MSG[e.code] ? fail(res, status, e.code) : res.status(status).json({ error: e.message }));
 const TIERS = ['frequent', 'full', 'safety'], busyMsg = (by) => `Another backup is running (${by}). Try again in a minute.`;
 // Where the plain database snapshots stand today, in plain words (shown on the page).
 const PLAIN_NOTE = 'Snapshots in this server\u2019s backup folder are plain database files, readable only by the app\u2019s own user. Passwords are hashed, two-factor secrets and saved mail/destination passwords are sealed with this server\u2019s key (which is not inside a snapshot), and customers\u2019 inventory, customers and sales are encrypted in their own browsers. Account names, e-mail addresses and plan details are readable, so keep the folder private. Anything sent away from this server is encrypted with your backup passphrase first.';
@@ -13,8 +16,41 @@ const PLAIN_NOTE = 'Snapshots in this server\u2019s backup folder are plain data
 export function backupsRoutes(db) {
   const r = express.Router(), H = (req, lvl, ev, msg, data) => hostLog(req, lvl, ev, msg, { data });
   r.use('/destinations', destinationsRoutes(db));
+  // Backup setup: four guided steps, each unlocked by the one before (see services/backup/setup.mjs).
+  r.get('/setup', async (req, res) => res.json(await bk.getSetup(db)));
+  r.post('/setup/passphrase', async (req, res) => {
+    try { const out = await bk.setupPassphrase(db, req.body || {}, req.subject.username); res.json(out); } catch (e) { bad(res, e); }
+  });
+  r.post('/setup/where', async (req, res) => {
+    try { const out = await bk.setupWhere(db, req.body || {}, req.subject.username); res.json(out); } catch (e) { bad(res, e); }
+  });
+  r.post('/setup/keep', async (req, res) => {
+    try { const out = await bk.setupKeep(db, req.body || {}, req.subject.username); res.json(out); } catch (e) { bad(res, e); }
+  });
+  r.post('/setup/prove', async (req, res) => {
+    try {
+      const l = await bk.withBackupLock('the setup check', () => bk.setupProve(db, req.subject.username)); if (l.skipped) return fail(res, 409, 'HOST_BACKUP_BUSY');
+      res.json(l.value);
+    } catch (e) { bad(res, e); }
+  });
+  // An offsite copy: test it (nothing is restored), then restore it with the token a passing test returns.
+  r.post('/offsite/test', async (req, res) => {
+    try {
+      const { destination, name, passphrase } = req.body || {}, out = await bk.testOffsiteCopy(db, String(destination || ''), String(name || ''), { passphrase: String(passphrase || ''), actor: req.subject.username });
+      bk.audit('backup.test_restore', `Test restore of offsite copy ${name}: ${out.ok ? 'passed' : 'failed'}`, { actor: req.subject.username, ip: req.ip, level: out.ok ? 'info' : 'warn', data: { name, destination, ok: out.ok, source: 'offsite' } }); res.json(out);
+    } catch (e) { bad(res, e, 404); }
+  });
+  r.delete('/offsite/token/:token', (req, res) => { bk.dropToken(req.params.token); res.json({ ok: true }); });
+  r.post('/offsite/restore', async (req, res) => {
+    const b = req.body || {};
+    if (b.confirm !== 'RESTORE') return fail(res, 400, 'HOST_BACKUP_RESTORE_CONFIRM');
+    try {
+      const out = await bk.restoreOffsiteCopy(db, String(b.destination || ''), String(b.name || ''), { token: b.token, passphrase: String(b.passphrase || ''), actor: req.subject.username, ip: req.ip });
+      res.json({ ok: true, restarting: true, safetyCopy: out.safetyCopy }); setTimeout(() => process.exit(0), 600);
+    } catch (e) { bk.audit('backup.restore', `Restore from the offsite copy ${b.name} refused: ${e.message}`, { actor: req.subject.username, ip: req.ip, level: 'warn', data: { name: b.name, ok: false, source: 'offsite' } }); bad(res, e); }
+  });
   r.get('/', async (req, res) => res.json({ backups: bk.listBackups(), schedule: await bk.getSchedule(db), full: await bk.getFullConfig(db), fullStatus: await bk.getFullStatus(db), engine: db.client, restorePending: bk.restorePending(),
-    tiers: await bk.getTiers(db), overview: await bk.backupOverview(db), destinations: await listDestinations(db), busy: bk.backupBusy(), plainNote: PLAIN_NOTE, localDir: bk.backupDir(), defaultDir: bk.defaultBackupDir() }));
+    tiers: await bk.getTiers(db), overview: await bk.backupOverview(db), destinations: await listDestinations(db), busy: bk.backupBusy(), setup: await bk.getSetup(db), plainNote: PLAIN_NOTE, localDir: bk.backupDir(), defaultDir: bk.defaultBackupDir() }));
   // One page of a tier's files, newest first: { rows, total }.
   r.get('/files', (req, res) => {
     const tier = String(req.query.tier || 'frequent'); if (!TIERS.includes(tier)) return res.status(400).json({ error: 'Unknown list.' });
@@ -31,7 +67,7 @@ export function backupsRoutes(db) {
   });
   r.put('/tiers', async (req, res) => {
     try { const tiers = await bk.saveTiers(db, req.body || {}, req.subject.username); H(req, 'info', 'backup.settings_saved', 'Backup frequency and retention settings changed', { frequent: tiers.frequent, offsite: { ...tiers.offsite, destinations: tiers.offsite.destinations.length }, safety: tiers.safety }); res.json({ tiers, overview: await bk.backupOverview(db) }); }
-    catch (e) { res.status(400).json({ error: e.message }); }
+    catch (e) { bad(res, e); }
   });
   r.post('/run/:tier', async (req, res) => {
     const tier = req.params.tier; if (!['frequent', 'offsite'].includes(tier)) return res.status(404).end();
@@ -69,7 +105,7 @@ export function backupsRoutes(db) {
       res.json({ ok: true, restarting: true }); setTimeout(() => process.exit(0), 600);
     } catch (e) { res.status(400).json({ error: e.message }); }
   });
-  r.put('/full', async (req, res) => { try { res.json(await bk.saveFullConfig(db, req.body || {}, req.subject.username)); } catch (e) { res.status(400).json({ error: e.message }); } });
+  r.put('/full', async (req, res) => { try { res.json(await bk.saveFullConfig(db, req.body || {}, req.subject.username)); } catch (e) { bad(res, e); } });
   r.post('/full/run', async (req, res) => { const l = await bk.withBackupLock('a full-site backup', () => bk.runFullBackup(db, 'manual', req.subject.username)); if (l.skipped) return res.status(409).json({ error: busyMsg(l.by) }); const out = l.value; res.status(out.ok ? 200 : 400).json(out.ok ? out : { error: out.error }); });
   r.put('/schedule', async (req, res) => res.json(await bk.saveSchedule(db, req.body, req.subject.username)));
   r.get('/:name/download', (req, res) => { try { const p = bk.backupPath(req.params.name); H(req, 'info', 'backup.download', `Downloaded backup ${req.params.name}`, { name: req.params.name }); res.download(p); } catch { res.status(404).end(); } });

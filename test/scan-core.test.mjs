@@ -49,3 +49,35 @@ test('crop math: the box over an object-fit: cover video maps to the right pixel
   // never outside the frame
   const r3 = J(C.cropRect({ w: 100, h: 100 }, { w: 100, h: 100 }, { x: -20, y: -20, w: 300, h: 300 })); assert.deepEqual(r3, { x: 0, y: 0, w: 100, h: 100 });
 });
+
+test('tap to aim: the box is centered on the tap and clamped to the stage, keeping its size', () => {
+  const area = { w: 375, h: 500 }, size = { w: 300, h: 64 };
+  assert.deepEqual(J(C.placeBox({ x: 187.5, y: 250 }, size, area)), { x: 38, y: 218 }, 'centered on the tap');
+  assert.deepEqual(J(C.placeBox({ x: 0, y: 0 }, size, area)), { x: 0, y: 0 }, 'clamped at the top left');
+  assert.deepEqual(J(C.placeBox({ x: 999, y: 999 }, size, area)), { x: 75, y: 436 }, 'clamped at the bottom right');
+  assert.deepEqual(J(C.placeBox({ x: 10, y: 10 }, { w: 400, h: 600 }, area)), { x: 0, y: 0 }, 'a box bigger than the stage stays at the corner');
+});
+
+test('the crop follows the moved box: tapping a lower point crops lower in the camera frame', () => {
+  const view = { w: 375, h: 812 }, video = { w: 720, h: 1280 }, size = { w: 300, h: 64 };
+  const mid = C.cropRect(view, video, { ...C.placeBox({ x: 187.5, y: 406 }, size, view), ...size });
+  const low = C.cropRect(view, video, { ...C.placeBox({ x: 187.5, y: 600 }, size, view), ...size });
+  assert.ok(low.y > mid.y + 250, `the crop moved down (${mid.y} to ${low.y})`); assert.ok(Math.abs(low.w - mid.w) <= 1 && Math.abs(low.h - mid.h) <= 1, 'same size');
+  const centerY = (r) => r.y + r.h / 2, s = Math.max(view.w / video.w, view.h / video.h);
+  assert.ok(Math.abs(centerY(low) - 600 / s) <= 2, 'the crop is centered on the tapped point');
+  // the nearest-to-the-aim rule uses the box, so a code at the moved box's middle wins over one at the old middle
+  const box = { w: 300, h: 64 };
+  assert.equal(C.choose([{ value: 'OLD', x: 150, y: 5 }, { value: 'AIMED', x: 150, y: 32 }], box).pick.value, 'AIMED');
+});
+
+test('tapped points map to the camera frame (focus point)', () => {
+  const view = { w: 375, h: 812 }, video = { w: 720, h: 1280 };
+  const c = C.videoPoint(view, video, { x: 187.5, y: 406 }); assert.ok(Math.abs(c.x - 0.5) < 0.001 && Math.abs(c.y - 0.5) < 0.001);
+  assert.deepEqual(J(C.videoPoint({ w: 400, h: 300 }, { w: 400, h: 300 }, { x: 100, y: 75 })), { x: 0.25, y: 0.25 });
+  assert.deepEqual(J(C.videoPoint({ w: 100, h: 100 }, { w: 100, h: 100 }, { x: -5, y: 500 })), { x: 0, y: 1 }, 'clamped to the frame');
+});
+
+test('the stuck hint says to aim at the bars, and suggests Medium only on Small', () => {
+  assert.match(C.stuckHint('medium'), /^Nothing read yet\. Put the red line across the bars, not the printed text\. Move closer and hold steady\.$/);
+  assert.match(C.stuckHint('small'), /Medium/); assert.doesNotMatch(C.stuckHint('large'), /Medium/);
+});

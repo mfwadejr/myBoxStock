@@ -39,5 +39,19 @@
     return { x: x0, y: y0, w: Math.max(1, x1 - x0), h: Math.max(1, y1 - y0) };
   }
 
-  return { normalizeMac, accept, ranked, choose, consensus, cropRect };
+  // Tap to aim: the box is centered on the tapped point but never leaves the stage (area = { w, h }). tap and the result are relative to the stage; the result is the box's top-left corner.
+  function placeBox(tap, size, area) {
+    const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), Math.max(lo, hi));
+    return { x: Math.round(clamp(tap.x - size.w / 2, 0, area.w - size.w)), y: Math.round(clamp(tap.y - size.h / 2, 0, area.h - size.h)) };
+  }
+  // A point on the video element (CSS pixels) as a 0..1 position in the real camera frame, for asking the camera to focus there. Same object-fit: cover math as cropRect.
+  function videoPoint(view, video, pt) {
+    const s = Math.max(view.w / video.w, view.h / video.h), ox = (view.w - video.w * s) / 2, oy = (view.h - video.h * s) / 2, c = (v) => Math.min(1, Math.max(0, v));
+    return { x: c((pt.x - ox) / s / video.w), y: c((pt.y - oy) / s / video.h) };
+  }
+  // The hint shown when nothing has been read for a while. On the Small strip it also suggests Medium.
+  const STUCK = 'Nothing read yet. Put the red line across the bars, not the printed text. Move closer and hold steady.';
+  const stuckHint = (size) => size === 'small' ? `${STUCK} Or try the Medium size.` : STUCK;
+
+  return { normalizeMac, accept, ranked, choose, consensus, cropRect, placeBox, videoPoint, stuckHint };
 });

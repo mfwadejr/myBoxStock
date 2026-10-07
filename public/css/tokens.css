@@ -134,6 +134,7 @@
   --border-primary: var(--border-width) solid var(--color-primary);
   --ring-width: 4px;
   --focus-ring: 0 0 0 var(--ring-width) var(--color-primary-soft);
+  --shadow-filled: 0 0 0 var(--ring-width) var(--color-success);
 
   /* ---- shadows ---- */
   --shadow-card: 0 1px 2px var(--color-shadow-1), 0 4px 16px var(--color-shadow-2);
@@ -160,7 +161,6 @@
   --check-size: 20px;          /* native checkbox/radio box */
   --stock-price-w: 80px;
   --config-w: 840px;
-  --move-w: 72px;
   --logo-preview: 64px;
   --topbar-h: 52px;
   --sidebar-w: 232px;
@@ -246,6 +246,7 @@
   --dur-slow: 0.45s;
   --dur-meter: 0.6s;
   --dur-view: 0.28s;
+  --dur-highlight: 1.6s;
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
   --lift-sm: 8px;
   --lift-md: 14px;

@@ -1,9 +1,9 @@
 ---
 title: Settings
 summary: Set up how myBoxStock works for your business - the details you record on each device, warranty periods, payment methods, makes and models, test checklist, discounts, locking, and your own email sending and wording.
-keywords: camera button, scan, settings, setup, configure, fields, device details, warranty periods, payment methods, makes, models, catalog, test checklist, discount limit, standard user, unlock, auto lock, idle, smtp, own mail server, email wording, logo, receipts, customer emails, export, close account, save changes
+keywords: reorder, move rows, drag, drag handle, grip, six dots, change order, camera button, scan, settings, setup, configure, fields, device details, warranty periods, payment methods, makes, models, catalog, test checklist, discount limit, standard user, unlock, auto lock, idle, smtp, own mail server, email wording, logo, receipts, customer emails, export, close account, save changes
 order: 8
-covers: nav:settings, camera button on lookup and unique details, Save changes, Device details to track, Add a detail, Name, Track, Look up in sale, Must be unique, On sale record, Choices, Order, Move up, Move down, Remove, Warranty periods, Add a period, Length, Unit, Make default, Archive, Restore, Default, Payment methods, Add a method, Makes and models, Add a make, Rename or merge, Add model, Unlock behaviour, After a browser refresh, Lock automatically after, Email sending, Send from my own mail server, From name, From address, SMTP host, Port, Username, Password, Use TLS from the start of the connection, Send a test email to me, Customer emails, Choose logo, Remove logo, Subject, Heading, Body, Insert a detail, Back to default wording, Discounts, Most a Standard user can discount, Test checklist, Use a test checklist, Sell only tested devices, Add a step, Details, Required before sale, Add an item, Save choices, users.manage
+covers: nav:settings, camera button on lookup and unique details, Save changes, Device details to track, Add a detail, Name, Track, Look up in sale, Must be unique, On sale record, Choices, Reorder, Drag handle, Remove, Warranty periods, Add a period, Length, Unit, Make default, Archive, Restore, Default, Payment methods, Add a method, Makes and models, Add a make, Rename or merge, Add model, Unlock behaviour, After a browser refresh, Lock automatically after, Email sending, Send from my own mail server, From name, From address, SMTP host, Port, Username, Password, Use TLS from the start of the connection, Send a test email to me, Customer emails, Choose logo, Remove logo, Subject, Heading, Body, Insert a detail, Back to default wording, Discounts, Most a Standard user can discount, Test checklist, Use a test checklist, Sell only tested devices, Add a step, Details, Required before sale, Add an item, Save choices, users.manage
 ---
 
 ## What the Settings page is for
@@ -13,6 +13,8 @@ covers: nav:settings, camera button on lookup and unique details, Save changes, 
 Settings is only for **Administrators**. Anyone else does not see it in the menu, and if they reach it they are told "Only Administrators can change these settings." The user types are explained on the [Team](#/docs/team) page.
 
 Your settings are saved encrypted with the rest of your business data, so the site operator cannot read them. See [Your data, your responsibility](#/docs/your-data-your-responsibility).
+
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. The person who runs your site sets this up, so if a message you expect never arrives, ask them to check it.
 
 ## Saving: read this first
 
@@ -27,7 +29,7 @@ There is one exception. The **Makes and models** card saves each change straight
 - **Business name.** It is set when the account is created. This page does not change it. It is shown in the header and printed on receipts and emails.
 - **Your logo.** The logo you can choose here is for customer emails (see the Customer emails card below). The on-screen and printed receipt shows your business name.
 - **Backups, exporting your data and closing your account.** Backups live on their own page, [Backup and restore](#/docs/backup-and-restore), which is next to Settings in the menu. **Export everything** is there and on the [Security](#/docs/security) page, where **Close account** is too. They are explained in [Your data, your responsibility](#/docs/your-data-your-responsibility).
-- **Backups do include your settings.** Your fields, test steps, warranty periods and catalog are inside a backup file, so a restore brings them back too. Team members are not in the file.
+- **Backups do include your settings.** Your fields, test steps, warranty periods and catalog are inside a backup file, so a restore brings them back too. The team list (usernames, emails and user types, never passwords) is in the file too; see [Team](#/docs/team).
 - **People and roles.** See [Team](#/docs/team).
 
 ## Device details to track
@@ -44,7 +46,7 @@ Each row has these controls:
 - **Must be unique** - tick to stop two devices having the same value. Great for UID and MAC address, since no two boxes should share them. Only text details can be unique.
 - **On sale record** - tick to copy this detail onto the sale and show it on the receipt. For example, ticking Serial number means the customer's receipt lists the serial number of the box they bought, which helps in warranty claims.
 - **Remove** (a cross) - removes the detail from the list. A confirmation says it stops showing in Inventory, Quick sale and new sale records, but what was already entered is kept and only hidden. It takes effect when you press **Save changes**.
-- **Order** (the up and down arrows, Move up and Move down) - changes the order the details appear in forms.
+- **Reorder** (a switch at the top right of the card) - see "Changing the order of a list" below. It is off normally, so the rows are locked and the page has more room on a phone.
 
 For Number, Date and Yes / No details the Look up and Unique boxes are greyed out, because they only make sense for text.
 
@@ -66,6 +68,19 @@ Press **Choices (n)** next to a Choice detail. Enter one choice per line in the 
 
 You must have at least one detail that is both ticked **Track** and **Look up in sale**. Otherwise Quick sale would have no way to find a box, and Save changes tells you "Turn on at least one detail to look up in Quick sale."
 
+### Changing the order of a list
+
+Device details, warranty periods, payment methods and test steps each have a **Reorder** switch at the top right of their card. It starts off, and while it is off the rows are locked, so you cannot move one by accident and scrolling the page never drags a row.
+
+1. Turn **Reorder** on for the card. Every row now shows a handle made of six grey dots at its right end.
+2. Press and hold the handle (with a mouse, a pen or your finger) and drag the row up or down. On a phone the page scrolls by itself when you hold the row near the top or bottom of the screen. Only the handle moves a row; touching anywhere else on the row scrolls the page as usual.
+3. Let go to drop the row in its new place.
+4. Turn **Reorder** off to lock the order in, then press **Save changes**. The new order is used in Add device, Quick sale, receipts and the test checklist.
+
+With a keyboard or a screen reader: Tab to a row's handle, press **Space** to pick the row up, press the **Up** and **Down arrow** keys to move it (**Home** and **End** jump to the top and bottom), then press **Space** to drop it. **Escape** puts it back where it was. The screen reader says the row's new position after every move, for example "Remote tested, position 2 of 5".
+
+> The order is part of your settings, so it is saved, encrypted, when you press **Save changes**, like everything else on this page.
+
 ## Warranty periods
 
 This card is the list of warranties you offer at [Quick sale](#/docs/quick-sale). The standard list is No warranty, 30 days, 60 days, 90 days and 1 year.
@@ -79,7 +94,7 @@ Controls:
 - **Make default** - makes another period the pre-selected one. (Greyed out for an archived period.)
 - **Archive** and **Restore** - hide a period from Quick sale without deleting it, or bring it back. The default period cannot be archived; make another one the default first.
 - **Remove** (a cross) - deletes a period, only possible if no sale has used it. Once used, you can archive it instead.
-- **Move up** and **Move down** - change the order shown at Quick sale.
+- **Reorder** - the switch at the top of the card; turn it on to change the order shown at Quick sale (see below).
 
 ### Add a period
 
@@ -99,7 +114,7 @@ The choices under **Paid by** at Quick sale. The starting list is Cash, Card, Ba
 - **Make default** and the green **Default** tag - which method Quick sale pre-selects.
 - **Archive** and **Restore** - hide a method you no longer take, or bring it back. The default cannot be archived.
 - **Remove** (a cross) - only for a method no sale has used, and never the last remaining one.
-- **Move up** and **Move down** - change the order.
+- **Reorder** - the switch at the top of the card; turn it on to change the order of the methods (see below).
 - **Add a method** - adds a blank row. Type its name, then press **Save changes**.
 
 Example: you start accepting a payment app. Press **Add a method**, type its name, and press **Save changes**. It is available at Quick sale straight away. Names must be unique and cannot be blank.
@@ -197,7 +212,7 @@ Each step has:
 - a text box for the step name,
 - **Details (n)** - extra items to fill in when the step is ticked,
 - a **Required before sale** tick,
-- a **Remove** cross, and **Move up** / **Move down** arrows.
+- a **Remove** cross. Use the **Reorder** switch at the top of the card to change the order of the steps.
 
 The starting steps are Device inspected, Batteries installed in remote, Remote tested, Device tested, and Code / firmware upgraded (if needed), which has Launcher and Firmware details.
 

@@ -35,3 +35,4 @@
 .row-end { justify-content: flex-end; }
 .switch-sm { transform: scale(var(--scale-small-switch)); display: inline-block; }
 .pad-y-sm { padding: var(--space-sm) var(--space-0); }
+.sr-only { position: absolute; width: var(--border-width); height: var(--border-width); margin: calc(var(--border-width) * -1); padding: var(--space-0); border: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }   /* read out by screen readers, never seen (live announcements) */

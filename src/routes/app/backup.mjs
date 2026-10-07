@@ -7,6 +7,7 @@ import { log } from '../../logging/logger.mjs';
 import { vaultEnabled } from '../../services/vault/keys.mjs';
 import { currentPoint, makePoint, undoPoint } from '../../services/backup/restorepoint.mjs';
 import { buildDiagnostics } from '../../services/backup/diagnostics.mjs';
+import { addInvitations, removeInvitations, MAX_PEOPLE } from '../../services/backup/team.mjs';
 
 const num = (v) => Math.max(0, Math.min(1e9, Math.floor(Number(v) || 0)));
 const counts = (b) => ({ devices: num(b?.devices), customers: num(b?.customers), sales: num(b?.sales), records: num(b?.records) });
@@ -44,12 +45,23 @@ export function backupRoutes(db) {
     tenantLog(req, 'backup.restore_done', `${req.subject.login} finished a restore: ${c.added} added, ${c.replaced} replaced, ${c.removed} removed`, c);
     res.json({ ok: true });
   });
+  // After the records are restored (the safety copy already exists): add the Team list from the file as pending invitations. People who match a current member are skipped.
+  // The server learns usernames, emails and roles only (the Team page already holds them); passwords, two-factor secrets and sessions are not in a backup file.
+  r.post('/restore/team', admin, ready, async (req, res) => {
+    const p = await currentPoint(db, req.subject.account_id); if (!p) return fail(res, 404, 'BACKUP_NO_RESTORE_POINT');
+    const people = req.body?.people; if (!Array.isArray(people) || people.length > MAX_PEOPLE) return fail(res, 400, 'BACKUP_BAD');
+    const out = await addInvitations(db, { accountId: req.subject.account_id, accountCode: req.subject.account_code, stamp: p.createdAt, people });
+    for (const a of out.added) tenantLog(req, 'user.invited_from_backup', `${req.subject.login} restored ${a.login} from a backup file as a pending invitation (${a.role})`, { userId: a.id, role: a.role });
+    tenantLog(req, 'backup.team_restored', `${req.subject.login} restored the team from a backup file: ${out.added.length} added as pending invitations, ${out.skipped.length} skipped`, { added: out.added.length, skipped: out.skipped.length });
+    res.json({ ok: true, added: out.added.length, skipped: out.skipped });
+  });
   // Puts everything back as it was before the restore (also used by the browser when a restore fails part-way).
   r.post('/undo', admin, ready, async (req, res) => {
     const p = await undoPoint(db, req.subject.account_id); if (!p) return fail(res, 404, 'BACKUP_NO_RESTORE_POINT');
-    const failed = !!req.body?.failed;
+    const failed = !!req.body?.failed, invites = await removeInvitations(db, req.subject.account_id, p.createdAt); // anyone the restore added as a pending invitation goes too
+    if (invites) tenantLog(req, 'backup.team_removed', `${req.subject.login} ${failed ? 'rolled back' : 'undid'} a restore: ${invites} pending invitation${invites === 1 ? '' : 's'} it added removed`, { removed: invites });
     log('tenant', failed ? 'warn' : 'info', failed ? 'backup.restore_rolled_back' : 'backup.restore_undone', failed ? `A restore by ${req.subject.login} did not finish, so the account was put back as it was (${p.count} records)` : `${req.subject.login} undid the last restore (${p.count} records back as before)`, { actor: req.subject.login, accountId: req.subject.account_id, data: { count: p.count } });
-    res.json({ ok: true, count: p.count });
+    res.json({ ok: true, count: p.count, invitations: invites });
   });
   return r;
 }

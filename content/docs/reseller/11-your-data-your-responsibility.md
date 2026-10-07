@@ -19,6 +19,8 @@ It also comes with a responsibility that we want to state clearly and kindly:
 
 Please read this page once, carefully, and then go through the checklist near the end.
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. The person who runs your site sets this up, so if a message you expect never arrives, ask them to check it.
+
 ## How the encryption works, in plain words
 
 Imagine a locked box that lives at a storage warehouse. You put your records into the box and lock it at your own desk, using a key that only you hold. The warehouse stores the locked box but never has the key, so it can never open it.
@@ -104,7 +106,8 @@ Only Administrators can make one. It takes a minute. Open **Backup and restore**
 - It is named like `myboxstock-backup-amber-fox-4271-20261005.mbsbackup`: your Reseller ID, then the date.
 - It is made inside your own browser. Your records stay locked inside it, exactly as the site holds them.
 - It can only be opened with your password or your recovery key. If someone steals the file, it is as hard to open as the site's own copy.
-- It holds your devices, customers, sales and receipts, and your settings and catalog. It does **not** hold your team members or their sign-ins. Those you set up again on the [Team](#/docs/team) page if you ever rebuild an account.
+- It holds your devices, customers, sales and receipts, your settings and catalog, and your **team list** (usernames, emails and user types, locked with your key). It never holds passwords, two-factor secrets or sign-ins. If you restore the team list, each person comes back as a pending invitation and chooses their own password; see the [Team](#/docs/team) page.
+- You can check a file before you need it with **Test a backup file** on the Backup and restore page. It runs in your browser and changes nothing.
 
 ### How often
 
@@ -201,7 +204,7 @@ What happens next:
 - **Straight away**, the account is locked. People who are not Administrators are signed out and cannot sign in. Administrators can still sign in, but only to look around, export, make a backup file, or restore the account.
 - **For seven days** a red banner on every page shows the date the account will be erased. While it is closing the account is read-only. An Administrator can click **Restore account** in that banner at any time to cancel the closing.
 - **After seven days** everything is erased automatically: the people and their sign-in history, the devices, customers and sales, your keys, your recovery key, your billing history and your undo copy. This cannot be undone.
-- Emails are sent when the closing starts (with the erase date) and when the erase is finished.
+- Emails are sent when the closing starts (with the erase date) and when the erase is finished. In rare cases the person who runs the site can also delete an account straight away, without the 7 days (for example when you ask them to). They cannot read your data and cannot bring the account back. If the site's email is set up, one "account erased" email then goes to the owner and the Administrators, saying the account was deleted by the site's Host, when, and the reason they gave if any. The delete never waits for that email, so if email is not set up nobody is emailed, which is one more reason to keep your own backup file and export.
 - **What stays:** plain log entries with no link to your account, counts of receipt emails, and the site's own encrypted backups until they expire (at most about 8 weeks with the defaults). Your own backup files and exports are yours and are not touched.
 
 Seven days is a safety net for second thoughts. It is not a backup plan. Back up before you close.

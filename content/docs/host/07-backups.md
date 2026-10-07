@@ -1,9 +1,9 @@
 ---
 title: Backups
 summary: How the Backups page protects the server: frequent snapshots, offsite copies, full-site backups and safety copies, where they go, how to set up each kind of destination, how to test and restore one, and how much space it all uses.
-keywords: backup, backups, restore, snapshot, offsite, off-site, full-site, safety copy, destination, thinning, retention, passphrase, encryption, decrypt-backup, mbsenc, mbsbak, restore-bundle, NAS, SMB, S3, Backblaze, Wasabi, Cloudflare R2, Amazon S3, MinIO, SFTP, WebDAV, NFS, Docker volume, test connection, test restore, cost, disk space, nightly, verify, disaster
+keywords: backup setup, guided setup, hard gate, locked, protected, restore offsite, tabs, backup, backups, restore, snapshot, offsite, off-site, full-site, safety copy, destination, thinning, retention, passphrase, encryption, decrypt-backup, mbsenc, mbsbak, restore-bundle, NAS, SMB, S3, Backblaze, Wasabi, Cloudflare R2, Amazon S3, MinIO, SFTP, WebDAV, NFS, Docker volume, test connection, test restore, cost, disk space, nightly, verify, disaster
 order: 7
-covers: nav:backups, Status strip, Last backup, Next run, Offsite copy, Space used, At these settings you will hold about, Frequent snapshots, Offsite copies, Full-site backups, Safety copies, Destinations, Take a snapshot now, Send one now, Run one now, Take a snapshot every, Send a copy every, Send them to, Also send them to, Keep every copy for (hours), Then one an hour for (hours), Then one a day for (days), Then one a week for (weeks), Also keep a plain copy every night, Nightly hour (UTC), Keep nightly copies, Are snapshots protected, Snapshots on this server, Copies held at the destinations, How often, Every night, Once a week, Weekly copy is taken on, Backup runs on, Hour (UTC), Keep daily copies, Keep weekly copies, Extra folder (optional), Backup passphrase, Email Host administrators if a backup fails, Make one with a new passphrase, Create backup, Remove safety copies older than (days), Always keep the newest, Add a destination, Edit destination, Change folder, Backup folder on this server, Folder path, Test connection, Use this destination, Name, Type, Folder or mounted NAS, Windows / NAS share (SMB), S3-compatible storage, SFTP (SSH) server, WebDAV, Server, Share name, Folder on the share (optional), User name, Domain (optional), Endpoint, Region, Bucket, Folder prefix (optional), Access key, Secret key, Use path-style addresses, Port, Folder, Password, Private key (optional), Key passphrase (optional), WebDAV address, Server identity pinned, Download, Restore, Test restore, Delete, Restore this backup, Type RESTORE to confirm, Load more, Showing, decrypt-backup, restore-bundle, .mbsenc, .mbsbak, /data/backup, /data/backups, thinning, safety copy, offsite copy, snapshot, destination, How much will it use
+covers: nav:backups, Status strip, Last backup, Next run, Offsite copy, Space used, At these settings you will hold about, Frequent snapshots, Offsite copies, Full-site backups, Safety copies, Destinations, Take a snapshot now, Send one now, Run one now, Take a snapshot every, Send a copy every, Send them to, Also send them to, Keep every copy for (hours), Then one an hour for (hours), Then one a day for (days), Then one a week for (weeks), Also keep a plain copy every night, Nightly hour (UTC), Keep nightly copies, Are snapshots protected, Snapshots on this server, Copies held at the destinations, How often, Every night, Once a week, Weekly copy is taken on, Backup runs on, Hour (UTC), Keep daily copies, Keep weekly copies, Extra folder (optional), Backup passphrase, Email Host administrators if a backup fails, Make one with a new passphrase, Create backup, Remove safety copies older than (days), Always keep the newest, Add a destination, Edit destination, Change folder, Backup folder on this server, Folder path, Test connection, Use this destination, Name, Type, Folder or mounted NAS, Windows / NAS share (SMB), S3-compatible storage, SFTP (SSH) server, WebDAV, Server, Share name, Folder on the share (optional), User name, Domain (optional), Endpoint, Region, Bucket, Folder prefix (optional), Access key, Secret key, Use path-style addresses, Port, Folder, Password, Private key (optional), Key passphrase (optional), WebDAV address, Server identity pinned, Download, Restore, Test restore, Delete, Restore this backup, Type RESTORE to confirm, Load more, Showing, decrypt-backup, restore-bundle, .mbsenc, .mbsbak, /data/backup, /data/backups, thinning, safety copy, offsite copy, snapshot, destination, How much will it use, Backup setup, Local only (same disk), Copy off this server, Off-site and verified, Protected, Not protected yet, Prove it, Recommended, Minimal, Custom, Set the passphrase, I have saved this passphrase somewhere other than this server, Go to Destinations, Run the first backup and test restore, Make a full-site backup on a schedule, Restore this copy, Restore from an offsite copy, Test again
 ---
 
 ## What this page is for
@@ -14,6 +14,22 @@ The **Backups** page is where you decide how often copies are made, how many are
 
 > Customers own their business data. It is encrypted in their own browser, so your backups only hold it in encrypted form and you cannot read it. A backup of the server cannot recover a customer's lost password or recovery key. Customers also keep their own backup files (see [Support and diagnostics](#/docs/support-and-diagnostics) for how that fits with yours).
 
+## Backup setup
+
+At the top of the page, **Backup setup** walks you through four steps. Each step unlocks the next, so nothing is turned on before what it depends on is ready. The server enforces the same order as the page, so a locked step cannot be skipped by other means.
+
+1. **Passphrase.** Type a backup passphrase (at least 12 characters) twice and tick **I have saved this passphrase somewhere other than this server**, then press **Set the passphrase**. If it is lost, every encrypted copy can never be opened and nobody can recover it for you. Until this step is done, the **Offsite copies**, **Full-site backups** and **Destinations** tabs are locked, each with a plain reason, and the server refuses to turn any of them on. Frequent snapshots in the default folder need no passphrase and work from day one.
+2. **Where do copies go.** Say whether copies should also leave this server (a NAS, cloud storage or both). Choosing **No, keep copies on this server only** is allowed, as a deliberate choice, but copies on the same disk are lost with the disk. Choosing **Yes** finishes only once a destination has passed **Test connection** and been switched on. A destination is always saved switched off; its switch stays disabled until a test passes on exactly those details, and changing the details means testing again.
+3. **How much to keep.** Choose **Recommended**, **Minimal** or **Custom**. Each shows the estimated disk use worked out from your real database size. Recommended and Minimal write the thinning numbers for snapshots and offsite copies; Custom keeps your own.
+4. **Prove it.** **Run the first backup and test restore** makes a full-site backup, opens it as a test restore and, if copies go off this server, sends one, fetches it back and tests that as well. Only then does the page say **Protected**.
+
+A status line under the title always says where you stand: **Local only (same disk)**, **Copy off this server** (a copy is held away, not yet tested) or **Off-site and verified** (a copy is held away and a test restore of it passed).
+
+Installs that already had a passphrase before this setup existed show all four steps as done and nothing is locked.
+
+If no mail is set up, the setup panel and the **Email Host administrators if a backup fails** switch warn that failure emails will not be sent. Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway.
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
+
 ## The four kinds of backup
 
 Think of the page as four layers. Each one answers a different "what if".
@@ -23,7 +39,7 @@ Think of the page as four layers. Each one answers a different "what if".
 - **Full-site backups**: one passphrase-protected file with the database and the server's encryption key. They answer "I must rebuild the whole thing on a new server".
 - **Safety copies**: taken for you just before every restore, so a restore can itself be undone.
 
-Each kind has its own tab, its own list of files and its own settings. A fifth tab, **Destinations**, holds the places that copies can be sent to.
+Each kind has its own tab, its own list of files and its own settings. A fifth tab, **Destinations**, holds the places that copies can be sent to. On a phone the five tabs sit in one row that you slide sideways; a soft fade shows there are more, and the selected tab is kept in view.
 
 ## The status strip
 
@@ -98,7 +114,7 @@ Every time it runs, the server takes a fresh snapshot, compresses it, encrypts i
 
 You cannot turn offsite copies on until you have chosen at least one destination, that destination is turned on, and a backup passphrase is saved.
 
-The list **Copies held at the destinations** shows what is stored out there, with **Download** and **Delete** on each row. There is no **Restore** button on an offsite copy, on purpose: it is encrypted, so you first decrypt it by hand. See "Restoring an offsite copy" below.
+The list **Copies held at the destinations** shows what is stored out there, with **Download**, **Restore**, **Test restore** and **Delete** on each row. **Restore** and **Test restore** fetch the copy and test it first; see "Restoring an offsite copy" below.
 
 ## Full-site backups
 
@@ -152,7 +168,7 @@ A destination other than the default folder cannot be turned on until a backup p
 
 ### Test connection
 
-**Test connection** writes a small file to the destination, reads it back and deletes it. The result appears under the card in plain words. The card also remembers "Last test: worked" or "failed" with the time. Always test after saving, and again after you change anything on the other side such as a password.
+**Test connection** writes a small file to the destination, reads it back and deletes it. The result appears under the card in plain words. The card also remembers "Last test: worked" or "failed" with the time. A destination cannot be turned on until a test has passed on exactly its current details (Backup setup, step 2). Always test again after you change anything on the other side such as a password.
 
 ### The five types
 
@@ -264,13 +280,19 @@ A backup you have never opened is a hope, not a plan. **Test restore** on any lo
 3. Press **Run test**.
 4. Read the result: a pass or fail message, and a line for each check such as "The database passes its integrity check" and "Accounts and users can be read" with the counts.
 
-For a full-site file it also checks that the passphrase opens it and that the key is inside. For a PostgreSQL or MariaDB dump it can only check that the file is complete. Offsite copies must be decrypted first.
+For a full-site file it also checks that the passphrase opens it and that the key is inside. For a PostgreSQL or MariaDB dump it can only check that the file is complete. Offsite copies have their own test on the Offsite copies tab (below).
 
 ### Restoring an offsite copy
 
-1. Download the `.mbsenc` file from the **Offsite copies** tab, or fetch it from the destination.
-2. Decrypt it with `decrypt-backup` (above) into a `.db` file.
-3. Put the `.db` file in the backup folder (`/data/backup`). It then appears in **Frequent snapshots**, where **Test restore** and **Restore** work.
+On the **Offsite copies** tab, **Restore** opens one sheet that tests the copy by itself, with no button to press. It never touches the live site until you restore.
+
+1. The server fetches the copy from its destination and checks it is complete (size, checksum and authenticated decryption), that the backup passphrase opens it, that the database passes its integrity check in a scratch copy, that its database version and app version fit this server, how many accounts, users and records are inside and how that compares with the live site (older or newer, how many accounts differ). The scratch copy is then deleted.
+2. The checks appear as a Passed or Failed list. A copy made with an earlier passphrase fails with a hint; type the old passphrase in the sheet and test again.
+3. **Restore this copy** stays disabled, with the reason shown, until every check has passed and you have typed RESTORE. A failed or skipped check keeps it disabled, with no override. The result is valid only while that sheet is open and only for that exact file: if you reopen the sheet, or the file changes, it is tested again.
+4. Before anything is replaced, a safety copy of the current database is taken and kept on the **Safety copies** tab, so the restore can be undone by restoring it.
+5. Then the same safeguards as a local restore apply: the site closes while restoring, the console reloads, resellers see the post-restore notice, and the audit trail records **Backup test restore** and **Backup restored**.
+
+**Test restore** on an offsite copy runs the same checks and offers no restore. Restoring from the console works on SQLite only; for a copy from a newer version of the app the test fails and asks you to update the server first. If the destination cannot be reached, the first check fails with the reason.
 
 An offsite copy is a snapshot, so it does not hold `secret.key`. On the same server that is fine. On a new server with a different key, two-factor secrets, the saved mail password, saved destination passwords and the saved passphrase cannot be read: people set up two-factor again and you type the passwords again. To rebuild a lost server completely, use a full-site backup. See [Recovery and emergencies](#/docs/recovery-and-emergencies).
 
@@ -292,7 +314,7 @@ Check the cost line after every change. If it turns red, the settings will not f
 
 ## When a backup fails
 
-A failed snapshot, offsite copy or full-site backup is logged, written to the [Audit trail](#/docs/audit-trail), shown as a red banner on this page, and raises the alert "The scheduled backup is failing" at once (see [Alerts](#/docs/alerts)). A failed upload to a destination counts the same way. The Owner is emailed once, and with **Email Host administrators if a backup fails** on, every administrator with an address is emailed for a full-site failure. The alert clears itself after the next good backup.
+A failed snapshot, offsite copy or full-site backup is logged, written to the [Audit trail](#/docs/audit-trail), shown as a red banner on this page, and raises the alert "The scheduled backup is failing" at once (see [Alerts](#/docs/alerts)). A failed upload to a destination counts the same way. The Owner is emailed once, and with **Email Host administrators if a backup fails** on, every administrator with an address is emailed for a full-site failure. Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. The alert clears itself after the next good backup.
 
 Common causes: a full disk, a NAS that is not mounted, a changed password, a passphrase that cannot be read because the server's key changed, or an SFTP identity that changed.
 

@@ -20,6 +20,8 @@ Use it when you want to know what the server has been doing and why. Typical que
 
 Logs is about the platform itself. It never contains a customer's inventory, sales or customer list, because the Host cannot see those and the server does not write them down. A related but different screen, the [Audit trail](#/docs/audit-trail), lists what Host administrators did and who signed in to the Host Console. Everything in the Audit trail is also in Logs, but Logs has much more: it is the place for troubleshooting, and the Audit trail is the place for accountability.
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
+
 ## How an entry looks
 
 Each entry in the list shows:

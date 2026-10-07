@@ -4,6 +4,9 @@
   const { esc, toast } = UI, A = AccountApp, Core = window.ScanCore, KEY = 'mbs.scanSize', SIZES = [['small', 'Small'], ['medium', 'Medium'], ['large', 'Large']];
   const sizeGet = () => { try { const v = localStorage.getItem(KEY); return SIZES.some(s => s[0] === v) ? v : 'medium'; } catch { return 'medium'; } };
   const sizeSet = (v) => { try { localStorage.setItem(KEY, v); } catch { /* private window: the choice is simply not remembered */ } };
+  const CONFIRM_KEY = 'mbs.scanConfirm', TAP_KEY = 'mbs.scanTapped';   // "Confirm each scan" and "has tapped to aim once", both remembered on this device only
+  const flag = (k) => { try { return localStorage.getItem(k) === '1'; } catch { return false; } };
+  const flagSet = (k, on) => { try { on ? localStorage.setItem(k, '1') : localStorage.removeItem(k); } catch { /* private window: not remembered */ } };
   const val = (x) => typeof x === 'function' ? x() : x;
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   const WEAK = /code_39|itf|codabar|code39/i;   // these have no built-in check digit, so wait for one more matching frame
@@ -31,19 +34,45 @@
         <div class="scan-panel">
           <p class="scan-hint" role="status" aria-live="polite"></p>
           <div class="scan-sizes" role="group" aria-label="Scan box size">${SIZES.map(([k, l]) => `<button type="button" class="scan-btn" data-size="${k}" aria-pressed="false">${l}</button>`).join('')}</div>
+          <button type="button" class="scan-btn" data-act="confirm" aria-pressed="false">Confirm each scan</button>
           <div class="scan-row"><button type="button" class="scan-btn" data-act="flash" hidden>Flash</button><button type="button" class="scan-btn" data-act="retry" hidden>Try again</button><button type="button" class="scan-btn" data-act="type">Type it instead</button><button type="button" class="scan-btn" data-act="photo">${A.icons.camera}Take a photo</button></div>
         </div>
         <input type="file" class="scan-file" accept="image/*" capture="environment">`;
       document.body.append(layer);
       const q = (s) => layer.querySelector(s), box = q('.scan-box'), video = q('video'), hint = q('.scan-hint'), got = q('.scan-got'), choices = q('.scan-choices');
-      const S = { i: 0, alive: true, paused: false, stream: null, track: null, lock: null, audio: null, count: 0, ignore: null, typed: false, torch: false, cons: Core.consensus(2), looping: false };
+      const S = { i: 0, alive: true, paused: false, stream: null, track: null, lock: null, audio: null, count: 0, ignore: null, typed: false, torch: false, cons: Core.consensus(2), looping: false, aim: null, off: { dx: 0, dy: 0 }, stuck: null, pending: null, filled: new Set(), caps: {}, refocus: null };
       const step = () => steps[S.i], mode = () => val(step().mode) || 'text', label = () => val(step().label) || 'a code';
-      const setState = (st, text) => { layer.dataset.state = st; if (text != null) hint.textContent = text; };
-      const lookText = () => `Fit the whole code in the box`;
+      const setState = (st, text) => { layer.dataset.state = st; delete layer.dataset.stuck; if (text != null) hint.textContent = text; };
+      const lookText = () => flag(TAP_KEY) ? 'Fit the whole code in the box' : 'Fit the whole code in the box. Tap the barcode you want.';
+      const sizeNow = () => SIZES.map(z => z[0]).find(k => box.classList.contains(k)) || 'medium';
       const title = () => { q('.scan-title').textContent = `Scan ${label()}`; };
       const showSizes = () => layer.querySelectorAll('[data-size]').forEach(b => { const on = box.classList.contains(b.dataset.size); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
       const clearPanel = () => { got.hidden = true; choices.hidden = true; choices.innerHTML = ''; q('[data-act=retry]').hidden = true; };
-      const look = () => { clearPanel(); S.cons.reset(); S.paused = false; title(); setState('look', lookText()); };
+      const showConfirm = () => { const b = q('[data-act=confirm]'), on = flag(CONFIRM_KEY); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.textContent = `Confirm each scan: ${on ? 'On' : 'Off'}`; };
+      // The "stuck" hint: nothing read for a while, so say what usually goes wrong. It clears as soon as something is read or the box is moved.
+      const clearStuck = () => { clearTimeout(S.stuck); S.stuck = null; delete layer.dataset.stuck; };
+      const armStuck = () => { clearStuck(); if (!S.stream) return; S.stuck = setTimeout(() => { if (!S.alive || S.paused || layer.dataset.state !== 'look') return; layer.dataset.stuck = '1'; hint.textContent = Core.stuckHint(sizeNow()); }, A.scanner.stuckMs); };
+      const look = () => { clearPanel(); S.cons.reset(); S.paused = false; S.pending = null; title(); setState('look', lookText()); armStuck(); };
+
+      // ---- tap to aim: the box (and its aim line) moves to the tapped spot, and the camera is asked to focus there ----
+      const stage = q('.scan-stage');
+      const place = () => {
+        if (!S.aim) return; const sr = stage.getBoundingClientRect(), br = box.getBoundingClientRect(); if (!sr.width || !br.width) return;
+        const nat = { x: br.left - sr.left - S.off.dx, y: br.top - sr.top - S.off.dy }, p = Core.placeBox({ x: S.aim.x - sr.left, y: S.aim.y - sr.top }, { w: br.width, h: br.height }, { w: sr.width, h: sr.height });
+        S.off = { dx: p.x - Math.round(nat.x), dy: p.y - Math.round(nat.y) }; box.classList.add('aimed'); box.style.setProperty('--scan-dx', `${S.off.dx}px`); box.style.setProperty('--scan-dy', `${S.off.dy}px`);
+      };
+      const focusAt = async (cx, cy) => {
+        try {
+          const vr = video.getBoundingClientRect(); if (!S.track || !video.videoWidth) return;
+          const pt = Core.videoPoint({ w: vr.width, h: vr.height }, { w: video.videoWidth, h: video.videoHeight }, { x: cx - vr.left, y: cy - vr.top });
+          await S.track.applyConstraints({ advanced: [{ pointsOfInterest: [pt], focusMode: 'single-shot' }] });
+          clearTimeout(S.refocus); S.refocus = setTimeout(() => { try { S.alive && S.track && S.caps.continuous && S.track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {}); } catch { /* keep the focus where it is */ } }, 2000);
+        } catch { /* not every phone can focus on a point */ }
+      };
+      const aimAt = (cx, cy) => {
+        S.aim = { x: cx, y: cy }; S.cons.reset(); flagSet(TAP_KEY, true);
+        setState('look', lookText()); place(); armStuck(); focusAt(cx, cy);
+      };
 
       // ---- feedback, wake lock, torch ----
       const beep = () => { try { const ac = S.audio; if (!ac) return; const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 880; g.gain.value = 0.08; o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.09); } catch { /* sound is optional */ } };
@@ -55,29 +84,39 @@
       // ---- closing: always stop the camera and release the screen ----
       const stopCamera = () => { try { S.stream?.getTracks().forEach(t => t.stop()); } catch { /* already stopped */ } S.stream = null; S.track = null; try { video.srcObject = null; } catch { /* gone */ } };
       const close = () => {
-        if (!S.alive) return; S.alive = false; stopCamera();
+        if (!S.alive) return; S.alive = false; stopCamera(); clearStuck(); clearTimeout(S.refocus); window.removeEventListener('resize', place); try { watch && watch.disconnect(); } catch { /* gone */ }
         try { S.lock?.release(); } catch { /* released */ } S.lock = null; try { S.audio?.close(); } catch { /* closed */ }
         document.removeEventListener('keydown', onKey, true); document.removeEventListener('visibilitychange', onVis); window.removeEventListener('pagehide', close); window.removeEventListener('hashchange', close);
         layer.remove(); try { opener && opener.isConnected && opener.focus && !S.typed && opener.focus({ preventScroll: true }); } catch { /* nothing to focus */ }
+        if (!S.typed) S.filled.forEach(A.scanner.highlight);
         resolve({ typed: S.typed, count: S.count });
       };
       const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); close(); } };
       document.addEventListener('keydown', onKey, true); document.addEventListener('visibilitychange', onVis); window.addEventListener('pagehide', close); window.addEventListener('hashchange', close);
 
       // ---- a value was read ----
-      const finish = async (value) => {
-        S.paused = true; clearPanel(); buzz(); beep(); setState('got', 'Got it'); q('.scan-value').textContent = value; got.hidden = false; q('.scan-got .scan-row').innerHTML = '';
+      // confirmed = the person already approved this code (Use this, or they tapped it in a list), so nothing more is asked.
+      const finish = async (value, confirmed = false) => {
+        S.paused = true; clearPanel(); clearStuck(); if (!confirmed) { buzz(); beep(); }
+        q('.scan-value').textContent = value; got.hidden = false; q('.scan-got .scan-row').innerHTML = '';
+        if (flag(CONFIRM_KEY) && !confirmed) {   // "Confirm each scan": show the code and fill nothing until Use this
+          S.pending = value; setState('got', 'Got it. Tap Use this to fill it in, or Scan again.');
+          q('.scan-got .scan-row').innerHTML = '<button type="button" class="scan-btn primary" data-act="use">Use this</button><button type="button" class="scan-btn" data-act="redo">Scan again</button>';
+          return;
+        }
+        S.pending = null; setState('got', 'Got it');
         let bad = ''; try { bad = await step().apply(value) || ''; } catch (e) { bad = e.message || 'That could not be used.'; }
         if (!S.alive) return;
-        if (bad) { S.ignore = value; setState('warn', bad); S.paused = false; S.cons.reset(); return; }
+        if (bad) { S.ignore = value; setState('warn', bad); S.paused = false; S.cons.reset(); armStuck(); return; }
         S.count++; try { A.scanner.onScan && A.scanner.onScan(); } catch { /* an event hook must never break scanning */ }
         const cont = !!val(step().continuous), nxt = steps[S.i + 1];
+        if (!cont && step().input) S.filled.add(step().input);
         if (cont) { S.ignore = value; await sleep(900); if (S.alive) { got.hidden = true; look(); S.paused = false; } return; }
         if (nxt) {
           const row = q('.scan-got .scan-row'); row.innerHTML = `<button type="button" class="scan-btn primary" data-act="next">Scan ${esc(val(nxt.label) || 'the next one')}</button><button type="button" class="scan-btn" data-act="redo">Scan again</button><button type="button" class="scan-btn" data-act="close">Done</button>`;
           return;
         }
-        toast(`Scanned ${value}`); await sleep(650); close();
+        toast(`Scanned ${value}`); await sleep(confirmed ? 250 : A.scanner.gotMs); close();   // long enough to see "Got it" before the camera closes
       };
 
       // ---- choose between near-equal codes ----
@@ -129,9 +168,9 @@
         } catch (e) { return problem(cameraProblem(e)); }
         if (!S.alive) { stopCamera(); return; }
         S.track = S.stream.getVideoTracks()[0];
-        try { const caps = S.track.getCapabilities ? S.track.getCapabilities() : {}; if (caps.focusMode && caps.focusMode.includes('continuous')) await S.track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); q('[data-act=flash]').hidden = !caps.torch; } catch { /* focus and flash are extras */ }
+        try { const caps = S.track.getCapabilities ? S.track.getCapabilities() : {}; S.caps.continuous = !!(caps.focusMode && caps.focusMode.includes('continuous')); if (caps.focusMode && caps.focusMode.includes('continuous')) await S.track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); q('[data-act=flash]').hidden = !caps.torch; } catch { /* focus and flash are extras */ }
         video.srcObject = S.stream; try { await video.play(); } catch { /* autoplay is already on */ }
-        wake(); S.paused = false; loop();
+        wake(); S.paused = false; armStuck(); loop();
       };
 
       // ---- the photo fallback: the same decoder, on a picture instead of the camera ----
@@ -155,19 +194,24 @@
       // ---- buttons ----
       layer.addEventListener('click', async (e) => {
         const b = e.target.closest('button'); if (!b) return;
-        if (b.dataset.size) { box.className = `scan-box ${b.dataset.size}`; sizeSet(b.dataset.size); showSizes(); S.cons.reset(); return; }
-        if (b.dataset.pick != null) return finish(choices._list[Number(b.dataset.pick)].value);
+        if (b.dataset.size) { box.classList.remove(...SIZES.map(z => z[0])); box.classList.add(b.dataset.size); sizeSet(b.dataset.size); showSizes(); place(); S.cons.reset(); if (!S.paused) { setState('look', lookText()); armStuck(); } return; }
+        if (b.dataset.pick != null) return finish(choices._list[Number(b.dataset.pick)].value, true);
         const act = b.dataset.act;
         if (act === 'close') close();
         else if (act === 'type') { S.typed = true; close(); }
         else if (act === 'photo') q('.scan-file').click();
-        else if (act === 'redo') { S.ignore = null; look(); }
+        else if (act === 'redo') { S.ignore = S.pending != null ? S.pending : null; look(); }   // after Scan again in confirm mode the same code is not read again until something else is seen
+        else if (act === 'use') { if (S.pending != null) finish(S.pending, true); }
+        else if (act === 'confirm') { flagSet(CONFIRM_KEY, !flag(CONFIRM_KEY)); showConfirm(); }
         else if (act === 'next') { S.i++; S.ignore = null; look(); }
         else if (act === 'retry') { S.alive && start(); }
         else if (act === 'flash') { try { S.torch = !S.torch; await S.track.applyConstraints({ advanced: [{ torch: S.torch }] }); b.classList.toggle('on', S.torch); } catch { S.torch = false; } }
       });
       q('.scan-file').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (f) photo(f); });
-      showSizes(); title(); layer.focus({ preventScroll: true }); start();
+      video.addEventListener('click', (e) => { if (S.alive && !S.paused) aimAt(e.clientX, e.clientY); });
+      window.addEventListener('resize', place);
+      let watch = null; try { watch = new ResizeObserver(place); watch.observe(stage); } catch { /* the window resize above still covers rotation */ }   // the hint can grow or shrink and move the stage: the box stays on the aimed spot
+      showSizes(); showConfirm(); title(); layer.focus({ preventScroll: true }); start();
     });
   }
 
@@ -178,13 +222,23 @@
     return '';
   };
   const stepFor = (input) => ({
+    input,
     label: () => input.dataset.scanlabel || 'a code', mode: () => input.dataset.scanmode || 'text', continuous: () => input.dataset.scancontinuous === '1',
     apply: (v) => { fillInput(input, input.dataset.scanenter === '1')(v); const m = input.dataset.scanmsg && document.querySelector(input.dataset.scanmsg); return m && !m.hidden ? m.textContent.trim() : ''; },   // a screen that rejects the value (already scanned, not in stock) shows its message here
   });
   const nextInputs = (input) => { const host = input.closest('.sheet'); if (!host || input.dataset.scanenter) return []; const all = [...host.querySelectorAll('.scanfield input')], at = all.indexOf(input); return all.slice(at + 1).filter(n => !n.value.trim()).slice(0, 1); };
 
+  // A brief green highlight on the field that just received a code (a shared class; it fades out, or just shows for a moment with reduced motion).
+  const highlight = (input) => {
+    const el = input && (input.isConnected ? input : input.id && document.getElementById(input.id)); if (!el || !String(el.value || '').trim()) return;
+    el.classList.remove('scan-filled'); void el.offsetWidth; el.classList.add('scan-filled'); setTimeout(() => el.classList.remove('scan-filled'), 1800);
+  };
+
   A.scanner = {
     engine: 'auto',
+    gotMs: 1500,     // how long "Got it" stays on screen before the camera closes
+    stuckMs: 6000,   // how long with nothing read before the "stuck" hint
+    highlight,
     run,
     // Scan one code into an input; resolves when the scanner closes.
     async into(input) {

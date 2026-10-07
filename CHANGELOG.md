@@ -3,6 +3,28 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.21.0] - 2026-10-07
+
+### Added
+- **Test a backup file (reseller).** A separate card on Backup and restore. Choose a `.mbsbackup` and it is only tested, never restored: is it a myBoxStock file, made for this account, does it open with this account's key, is it complete (count and checksum), does every record open. It then shows what is inside (devices, customers, sales, team members, date made, app version) and compares it with the account now (added since, changed since, missing now, unchanged). It runs in the browser, so the Host sees nothing, and read-only accounts can use it.
+- **Team members in the backup file.** Every new backup holds a sealed Team list (usernames, emails, user types; never passwords, two-factor secrets or sessions). The restore sheet has an **Add team members** switch (on by default) that recreates missing people as pending invitations ("Set up access" on the Team page). People already in the account are skipped, Replace everything never removes anyone, and Undo last restore removes the pending invitations the restore added.
+- **Backup setup (Host Console).** A guided panel at the top of Backups with four steps that unlock one after another: passphrase, where copies go (a destination must pass Test connection first), how much to keep, and prove it (first backup and a test restore). A status line reads Local only, Copy off this server, or Off-site and verified. The Full-site backups switch now has a label, and the failure-email switch warns when no mail is set up.
+- **Restore from an offsite copy (Host Console).** Each offsite copy has Restore and Test restore. Restore tests the copy by itself first (complete, decrypts, integrity check, version compatible, comparison with the live site) and stays disabled until every check passes. A safety copy is taken before anything is replaced.
+- **Unlock a locked-out sign-in (Host Console).** An Unlock action on Firewall (Locked sign-ins) and in the account's Manage sheet, audited as "Sign-in unlocked".
+- **Account erased email on a Host delete.** When a Host Administrator deletes an account, one "account erased" email goes to the owner and Administrators after the delete (with an optional reason). The delete never waits on the email; the audit trail records whether it was sent. The delete sheet warns when Email is not set up.
+- **Terms and Privacy at sign-up.** A required checkbox with links, recorded with the version and time (migration 16); legal pages in both apps and at `/legal` (draft placeholders for now, version `2026-10-07-draft`); an "Updated terms" screen when the version changes; the Host sees acceptance on the account.
+- **Scanner: tap to aim and a stuck hint.** Tap the camera picture to move the scan box onto the barcode you want; after about 6 seconds with nothing read, a hint says to put the line across the bars. The aim resets each time the scanner opens.
+- **Scanner: easier to notice a read.** "Got it" stays for 1.5 seconds, the field that received the code flashes green, and an optional **Confirm each scan** setting shows Use this / Scan again before anything is filled in.
+- **Reorder switch with grip handles (reseller Settings).** Each reorderable list has a Reorder switch; when on, rows move by dragging a six-dot handle (touch, mouse or keyboard) and switching off locks the order. The old arrows are gone.
+
+### Changed
+- Scroll bars use the browser's standard thin themed bar everywhere in both apps, and pop-up sheets and menus keep a fixed rounded frame with an inner scroller so a bar can never overhang a corner.
+- Host Onboarding uses the same plan logic as Accounts: Free counts as the final step (with a "free" chip and a Free count), and ended trials or paid plans show "Trial ended" or "Paid ended". "Stopped at" shows "Finished setup" when every step is done.
+- Backups tabs on phones are one scrolling row; number fields in Settings and similar pages have a compact width; the "No backup yet" chip no longer touches the line below it.
+- Documentation updated for every change in both sets, and every page that mentions email or alerts now says that emails and alerts only work after the Email section is set up (direct sending or an SMTP gateway).
+- Code comments no longer say "switcher".
+- New database migration 16 (terms acceptance).
+
 ## [0.20.0] - 2026-10-05
 
 ### Added

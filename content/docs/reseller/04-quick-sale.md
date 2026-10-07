@@ -16,6 +16,8 @@ Quick sale appears in the menu only for people whose user type allows recording 
 
 > Note: if your trial or paid period has ended, the account is read-only and sales cannot be saved. See [Plans, trials and billing](#/docs/plans-trials-billing).
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. The person who runs your site sets this up, so if a message you expect never arrives, ask them to check it.
+
 ## Before your first sale
 
 Check that:

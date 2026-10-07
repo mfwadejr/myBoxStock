@@ -5,14 +5,14 @@
   // Resolves with the value passed to close(), or null if dismissed (Esc, click outside, Cancel).
   UI.sheet = (html, { onMount, wide = false } = {}) => new Promise((resolve) => {
     const scrim = document.createElement('div'); scrim.className = 'scrim';
-    scrim.innerHTML = `<div class="sheet${wide ? ' wide' : ''}" role="dialog" aria-modal="true">${html}</div>`;
+    scrim.innerHTML = `<div class="sheet${wide ? ' wide' : ''}" role="dialog" aria-modal="true"><div class="sheet-body">${html}</div></div>`;
     const onKey = (e) => { if (e.key === 'Escape') close(null); };
     const close = (v = null) => { scrim.classList.add('closing'); setTimeout(() => scrim.remove(), 200); document.removeEventListener('keydown', onKey); resolve(v); };
     document.addEventListener('keydown', onKey);
     scrim.addEventListener('mousedown', (e) => { if (e.target === scrim) close(null); });
     document.body.append(scrim);
     scrim.querySelector('[data-cancel]')?.addEventListener('click', () => close(null));
-    onMount?.(scrim.querySelector('.sheet'), close);
+    onMount?.(scrim.querySelector('.sheet-body'), close);
     scrim.querySelector('input,select')?.focus();
   });
 

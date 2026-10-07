@@ -16,7 +16,7 @@ test('browser: link Host administrator, account menu on both sides, wrong passwo
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   try {
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
-    await page.fill('#bn', 'Dual Co'); await page.fill('#em', 'd@example.com'); await page.fill('#un', 'dana'); await page.fill('#pw', PW); await page.click('button.block');
+    await page.fill('#bn', 'Dual Co'); await page.fill('#em', 'd@example.com'); await page.fill('#un', 'dana'); await page.fill('#pw', PW); await page.check('#tc'); await page.click('button.block');
     await page.waitForSelector('#go'); const login = 'dana@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');
     await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');
@@ -37,7 +37,7 @@ test('browser: link Host administrator, account menu on both sides, wrong passwo
     await page.screenshot({ path: process.env.SHOT_DIR ? `${process.env.SHOT_DIR}/switch-app.png` : '/tmp/switch-app.png' });
     assert.ok(await page.locator('.menu-item', { hasText: 'Site admin' }).count());
 
-    // Host side: the same person sees their reseller account in the switcher
+    // Host side: the same person sees their reseller account in the linked-accounts list
     const ctx = await br.newContext({ viewport: { width: 1280, height: 900 } }); await ctx.addCookies(Object.entries(owner.jar).map(([name, value]) => ({ name, value, url: srv.base })));
     const hp = await ctx.newPage(); hp.on('pageerror', e => errors.push(e.message)); await hp.goto(srv.base + '/host/'); await hp.waitForSelector('.menu-btn');
     await hp.click('.menu-btn'); await hp.waitForSelector('.menu-item[data-id^="u:"]'); assert.ok(await hp.locator('.menu-item', { hasText: 'Dual Co' }).count());
@@ -46,12 +46,12 @@ test('browser: link Host administrator, account menu on both sides, wrong passwo
     const [popup] = await Promise.all([ctx.waitForEvent('page'), hp.locator('.menu-item', { hasText: 'Dual Co' }).click()]);
     await popup.waitForSelector('#l'); const at = login.lastIndexOf('@'); assert.equal(await popup.inputValue('#l'), login.slice(0, at).toLowerCase()); assert.equal(await popup.inputValue('#r'), login.slice(at + 1).toLowerCase());
 
-    // the Owner turns linking off for the account: the link and switcher go away
+    // the Owner turns linking off for the account: the link and the list entry go away
     await owner.req('POST', `/api/host/accounts/${acct}/host-link`, { allowed: false });
-    assert.equal((await owner.req('GET', '/api/host/links')).data.accounts.length, 0, 'Host switcher list is empty again');
+    assert.equal((await owner.req('GET', '/api/host/links')).data.accounts.length, 0, 'Host linked-accounts list is empty again');
     await page.goto(srv.base + '/app/#/home'); await page.waitForSelector('.side'); await page.goto(srv.base + '/app/#/security'); await page.waitForSelector('#pw'); assert.equal(await page.locator('#hl, #hlo').count(), 0, 'card is gone');
     return assert.deepEqual(errors, []);
-    // unlink: switcher disappears
+    // unlink: the list entry disappears
     await page.keyboard.press('Escape'); await page.click('#hlo'); await page.click('.sheet .btn:not(.secondary), .modal .btn:not(.secondary)').catch(() => {});
     await page.waitForFunction(() => !document.querySelector('.menu-item[data-id=host]'));
     assert.deepEqual(errors, []);

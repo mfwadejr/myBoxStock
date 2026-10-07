@@ -17,7 +17,7 @@ test('browser: customer email wording and logo, live preview, saved with the acc
   const png = path.join(os.tmpdir(), `logo-${Date.now()}.png`); fs.writeFileSync(png, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64'));
   try {
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
-    await page.fill('#bn', 'Shiny Co'); await page.fill('#em', 's@example.com'); await page.fill('#un', 'shay'); await page.fill('#pw', PW); await page.click('button.block');
+    await page.fill('#bn', 'Shiny Co'); await page.fill('#em', 's@example.com'); await page.fill('#un', 'shay'); await page.fill('#pw', PW); await page.check('#tc'); await page.click('button.block');
     await page.waitForSelector('#go'); const login = 'shay@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');
     await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');

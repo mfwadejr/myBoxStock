@@ -30,6 +30,14 @@ async function inproc() {
 }
 test.after(() => { if (inprocDir) fs.rmSync(inprocDir, { recursive: true, force: true }); });
 const davBody = (o = {}) => ({ type: 'webdav', name: 'Office DAV', enabled: true, settings: { url: dav.url, username: dav.user, folder: 'mbs' }, secrets: { password: dav.pass }, ...o });
+// Destinations are saved switched off, must pass Test connection, and only then can be turned on (as the Backup setup requires).
+async function addDest(c, body) {
+  const made = await c.req('POST', '/api/host/backups/destinations', { ...body, enabled: false }); if (made.status !== 200) return made;
+  const t = await c.req('POST', `/api/host/backups/destinations/${made.data.id}/test`); assert.equal(t.data.ok, true, t.data.message);
+  return c.req('PUT', `/api/host/backups/destinations/${made.data.id}`, { ...body, enabled: true, secrets: {} });
+}
+// Changes a saved destination straight in the database (as if the far end changed its sign-in).
+function tweakDest(dir, id, fn) { const d = new DatabaseSync(path.join(dir, 'myboxstock.db')); d.exec('PRAGMA busy_timeout=5000'); try { const list = JSON.parse(d.prepare('SELECT v FROM settings WHERE k = ?').get('backup_destinations').v); fn(list.find(x => x.id === id)); d.prepare('UPDATE settings SET v = ? WHERE k = ?').run(JSON.stringify(list), 'backup_destinations'); } finally { d.close(); } }
 const stored = (key) => { const d = new DatabaseSync(path.join(srv.dir, 'myboxstock.db'), { readOnly: true }); try { return d.prepare('SELECT v FROM settings WHERE k = ?').get(key)?.v || ''; } finally { d.close(); } };
 
 test('settings: every number is validated in plain English, the defaults are the owner\'s, and the backup folder is /data/backup', async () => {
@@ -53,7 +61,7 @@ test('destinations: nothing outside the default folder can be enabled without th
   const first = (await host.req('GET', '/api/host/backups/destinations')).data.destinations.find(d => d.name === 'Office DAV');
   assert.equal(first.enabled, false); await host.req('DELETE', `/api/host/backups/destinations/${first.id}`);
   assert.equal((await host.req('PUT', '/api/host/backups/full', { enabled: false, passphrase: PASS, keepDaily: 14, keepWeekly: 8 })).status, 200);
-  r = await host.req('POST', '/api/host/backups/destinations', davBody()); assert.equal(r.status, 200, JSON.stringify(r.data));
+  r = await addDest(host, davBody()); assert.equal(r.status, 200, JSON.stringify(r.data));
   assert.equal(r.data.secrets.password, 'saved'); assert.equal(r.data.encrypted, true);
   const all = JSON.stringify([(await host.req('GET', '/api/host/backups')).data, (await host.req('GET', '/api/host/backups/destinations')).data, r.data]);
   assert.ok(!all.includes(dav.pass), 'the destination password is never sent back'); assert.ok(!all.includes(PASS));
@@ -65,9 +73,12 @@ test('destinations: nothing outside the default folder can be enabled without th
   r = await host.req('PUT', `/api/host/backups/destinations/${r.data.id}`, { name: 'Office DAV', enabled: true, settings: { url: dav.url, username: dav.user, folder: 'mbs' }, secrets: {} }); assert.equal(r.status, 200);
   const t = await host.req('POST', `/api/host/backups/destinations/${r.data.id}/test`); assert.equal(t.data.ok, true, t.data.message); assert.match(t.data.message, /written, read back and removed/);
   assert.deepEqual(fs.readdirSync(path.join(dav.root, 'dav', 'mbs')), [], 'the test file was removed again');
-  const bad = await host.req('PUT', `/api/host/backups/destinations/${r.data.id}`, { name: 'Office DAV', enabled: true, settings: { url: dav.url, username: dav.user, folder: 'mbs' }, secrets: { password: 'wrong' } });
+  const bad = await host.req('PUT', `/api/host/backups/destinations/${r.data.id}`, { name: 'Office DAV', enabled: false, settings: { url: dav.url, username: dav.user, folder: 'mbs' }, secrets: { password: 'wrong' } });
   const t2 = await host.req('POST', `/api/host/backups/destinations/${bad.data.id}/test`); assert.equal(t2.data.ok, false); assert.match(t2.data.message, /did not accept the user name and password/);
-  await host.req('PUT', `/api/host/backups/destinations/${r.data.id}`, { name: 'Office DAV', enabled: true, settings: { url: dav.url, username: dav.user, folder: 'mbs' }, secrets: { password: dav.pass } });
+  await host.req('PUT', `/api/host/backups/destinations/${r.data.id}`, { name: 'Office DAV', enabled: false, settings: { url: dav.url, username: dav.user, folder: 'mbs' }, secrets: { password: dav.pass } });
+  assert.equal((await host.req('PUT', `/api/host/backups/destinations/${r.data.id}`, { name: 'Office DAV', enabled: true, settings: { url: dav.url, username: dav.user, folder: 'mbs' }, secrets: {} })).data.code, 'HOST_BACKUP_DEST_TEST_FIRST', 'changed details must be tested again');
+  assert.equal((await host.req('POST', `/api/host/backups/destinations/${r.data.id}/test`)).data.ok, true);
+  assert.equal((await host.req('PUT', `/api/host/backups/destinations/${r.data.id}`, { name: 'Office DAV', enabled: true, settings: { url: dav.url, username: dav.user, folder: 'mbs' }, secrets: {} })).status, 200);
   const log = fs.readFileSync(path.join(srv.logDir, 'backup', 'backup.log'), 'utf8'); assert.ok(!log.includes(dav.pass) && !log.includes('wrong') && !log.includes(PASS));
 });
 
@@ -109,7 +120,7 @@ test('offsite copy: compressed, encrypted with the passphrase before it leaves, 
 });
 
 test('offsite to S3-compatible storage: signed requests, the checksum is compared, full-site bundles go as they are, old copies are thinned remotely', { skip: !sqlite && 'SQLite snapshots' }, async () => {
-  const s = await host.req('POST', '/api/host/backups/destinations', { type: 's3', name: 'Bucket', enabled: true, settings: { endpoint: s3.endpoint, region: s3.region, bucket: s3.bucket, prefix: 'site', accessKey: s3.access, pathStyle: true }, secrets: { secretKey: s3.secret } });
+  const s = await addDest(host, { type: 's3', name: 'Bucket', settings: { endpoint: s3.endpoint, region: s3.region, bucket: s3.bucket, prefix: 'site', accessKey: s3.access, pathStyle: true }, secrets: { secretKey: s3.secret } });
   assert.equal(s.status, 200, JSON.stringify(s.data)); assert.ok(!JSON.stringify(s.data).includes(s3.secret));
   assert.ok(!stored('backup_destinations').includes(s3.secret));
   const t = await host.req('POST', `/api/host/backups/destinations/${s.data.id}/test`); assert.equal(t.data.ok, true, t.data.message);
@@ -189,10 +200,10 @@ test('failure: a destination that stops working is logged, audited, raises the b
   try {
     await h.req('POST', '/api/host/login', { login: 'admin', password: s2.hostPw }); await h.req('POST', '/api/host/change-password', { current: s2.hostPw, next: PW });
     await h.req('PUT', '/api/host/backups/full', { enabled: false, passphrase: PASS, keepDaily: 14, keepWeekly: 8 });
-    const dd = (await h.req('POST', '/api/host/backups/destinations', { type: 'webdav', name: 'Flaky', enabled: true, settings: { url: d2.url, username: d2.user }, secrets: { password: d2.pass } })).data;
+    const dd = (await addDest(h, { type: 'webdav', name: 'Flaky', settings: { url: d2.url, username: d2.user }, secrets: { password: d2.pass } })).data;
     await h.req('PUT', '/api/host/backups/tiers', { offsite: { enabled: true, destinations: [dd.id] } });
     assert.equal((await h.req('POST', '/api/host/backups/run/offsite')).status, 200);
-    await h.req('PUT', `/api/host/backups/destinations/${dd.id}`, { name: 'Flaky', enabled: true, settings: { url: d2.url, username: d2.user }, secrets: { password: 'changed-on-the-server' } });
+    tweakDest(s2.dir, dd.id, (x) => { x.settings.username = 'changed-on-the-server'; });
     const bad = await h.req('POST', '/api/host/backups/run/offsite'); assert.equal(bad.status, 400); assert.match(bad.data.error, /did not accept the user name and password/);
     let a = (await h.req('GET', '/api/host/alerts')).data.open; assert.equal(a.filter(x => x.kind === 'backup.failing').length, 1, 'the existing backup-failing alert is raised straight away');
     assert.match(a[0].detail, /Offsite copies are failing/); assert.ok(!JSON.stringify(a).includes(d2.pass));
@@ -200,7 +211,7 @@ test('failure: a destination that stops working is logged, audited, raises the b
     const ov = (await h.req('GET', '/api/host/backups')).data.overview; assert.equal(ov.failing.offsite, true); assert.match(ov.failing.detail.offsite.error, /user name and password/);
     assert.ok(readJsonl(s2.logDir, 'backup').some(e => e.event === 'offsite.failed' && e.level === 'error'));
     assert.ok(readJsonl(s2.logDir, 'host').some(e => e.event === 'backup.run' && e.level === 'error' && /failed/.test(e.message)));
-    await h.req('PUT', `/api/host/backups/destinations/${dd.id}`, { name: 'Flaky', enabled: true, settings: { url: d2.url, username: d2.user }, secrets: { password: d2.pass } });
+    tweakDest(s2.dir, dd.id, (x) => { x.settings.username = d2.user; });
     assert.equal((await h.req('POST', '/api/host/backups/run/offsite')).status, 200);
     a = (await h.req('POST', '/api/host/alerts/check')).data.open; assert.equal(a.filter(x => x.kind === 'backup.failing').length, 0, 'cleared after a good copy');
   } finally { s2.stop(); d2.close(); }

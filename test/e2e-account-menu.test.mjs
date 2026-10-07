@@ -43,7 +43,7 @@ test('browser: reseller account menu at phone, tablet and desktop sizes; Site ad
   page.setDefaultTimeout(20000); const errors = []; page.on('pageerror', e => errors.push(e.message));
   try {
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
-    await page.fill('#bn', 'Menu Co'); await page.fill('#em', 'm@example.com'); await page.fill('#un', 'mona'); await page.fill('#pw', PW); await page.click('button.block');
+    await page.fill('#bn', 'Menu Co'); await page.fill('#em', 'm@example.com'); await page.fill('#un', 'mona'); await page.fill('#pw', PW); await page.check('#tc'); await page.click('button.block');
     await page.waitForSelector('#go'); const login = 'mona@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');
     await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.menu-btn');

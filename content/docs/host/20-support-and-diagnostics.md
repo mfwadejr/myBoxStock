@@ -12,6 +12,8 @@ Resellers can now look after their own safety. Their app has a **Backup and rest
 
 > Customers own their data and are responsible for it. The Host stores it encrypted and cannot read it or recover it. A backup file kept somewhere safe is the reseller's own protection, and yours is the protection of the platform.
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
+
 ## Reading a Copy diagnostics message
 
 When a reseller says "something is wrong", ask the Administrator to open **Backup and restore**, press **Copy diagnostics** in the Help card and paste the text into an email or message to you. If their browser blocks copying, a sheet shows the text so they can select it by hand. Only Administrators see this button.
@@ -51,7 +53,7 @@ You may be asked what the file is, so here is the short version.
 
 - The file is named `myboxstock-backup-` followed by the Reseller ID and the date, and ends in `.mbsbackup`. It is made in the reseller's browser by **Back up now**.
 - It is plain JSON with a small readable header (format and version, Reseller ID, when it was made, app version). Everything else is the account's records, which were already encrypted, plus a sealed index, and the account's keys wrapped by the password and by the recovery key.
-- It holds items, models, customers, sales and receipts, and settings and catalogue. It does not hold users, roles or sign-ins, so team members are not in it.
+- It holds items, models, customers, sales and receipts, and settings and catalogue. It also holds a sealed team list (usernames, emails and user types, sealed with the account key, so you cannot read it). It never holds passwords, two-factor secrets or sign-ins. On restore, the reseller can bring the team back as pending invitations. The reseller can also test any backup file in their browser with **Test a backup file**, which changes nothing and tells you nothing.
 - It opens only with the account's password or recovery key. A stolen file is as hard to attack as the server's own copy.
 - On an iPhone or iPad a sheet "Your backup is ready" offers **Save backup file**, which opens the share sheet so they can choose Files. Elsewhere it downloads. "Last backup" is only recorded once the file is saved.
 - Accounts that are closing can still make a backup.

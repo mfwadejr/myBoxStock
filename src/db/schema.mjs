@@ -162,7 +162,14 @@ const MIGRATIONS = [
     await db.exec(`CREATE TABLE restore_points (account_id ${id} PRIMARY KEY, created_at BIGINT NOT NULL, expires_at BIGINT NOT NULL, created_by ${s(160)}, record_count INTEGER NOT NULL DEFAULT 0, mode ${s(12)})`);
     await db.exec(`CREATE TABLE restore_point_records (account_id ${id} NOT NULL, id ${s(64)} NOT NULL, type ${s(20)} NOT NULL, blob TEXT NOT NULL, rev INTEGER NOT NULL DEFAULT 1, created_at BIGINT NOT NULL, updated_at BIGINT NOT NULL, PRIMARY KEY (account_id, id))`);
   } },
+  { id: 16, name: 'terms and privacy acceptance on the account owner', up: async (db) => {
+    // Which version of the Terms and Privacy Policy the account owner accepted, and when. Nothing else: no extra personal data. Existing accounts stay empty and are asked once at their next Administrator sign-in.
+    await db.exec(`ALTER TABLE accounts ADD COLUMN terms_version ${s(40)}`);
+    await db.exec('ALTER TABLE accounts ADD COLUMN terms_accepted_at BIGINT');
+  } },
 ];
+
+export const LATEST_MIGRATION = MIGRATIONS[MIGRATIONS.length - 1].id; // used by the offsite test to refuse a copy made by a newer app
 
 export async function migrate(db) {
   await db.exec(`CREATE TABLE IF NOT EXISTS schema_migrations (id INTEGER PRIMARY KEY, applied_at BIGINT NOT NULL)`);

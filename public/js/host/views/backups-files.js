@@ -82,16 +82,60 @@
     },
   });
 
+  // A copy held at a destination: it is fetched and tested first (the sheet starts the test by itself). "Restore this copy" stays disabled,
+  // with the reason shown, until every check has passed; the result is valid only while this sheet is open and for this exact file.
+  // `restore: false` makes it the stand-alone Test restore (same checks, nothing to restore).
+  B.offsiteSheet = async (dest, name, where, { restore = true } = {}) => {
+    let token = null;
+    await sheet(`<h2>${restore ? 'Restore from an offsite copy' : 'Test restore'}</h2><p class="muted"><span class="ident">${esc(name)}</span><br>${esc(where)}</p>
+      <div class="field"><label for="opp">Backup passphrase</label><input type="password" id="opp" autocomplete="off" placeholder="Leave blank to use the saved passphrase"><div class="hint">Only needed if the passphrase was changed after this copy was made.</div></div>
+      <div id="otest"></div>
+      ${restore ? `<div id="orest" class="mt-lg"><div class="banner red">Everyone goes back to this copy. Anything entered after it was taken will be lost.</div>
+        <ul class="hint"><li>A safety copy of the site as it is now is taken first, and kept on the Safety copies tab, so this restore can be undone.</li><li>The site closes while it restores, then restarts, and everyone is signed out. This console reloads.</li><li>A notice is shown to every customer afterwards: the site was restored from a backup and recent entries may be missing.</li></ul>
+        <div class="field mt-md"><label for="ocf">Type RESTORE to confirm</label><input type="text" id="ocf" autocomplete="off" autocapitalize="characters"></div>
+        <p class="hint" id="owhy"></p></div>` : ''}
+      <div class="actions"><button class="btn secondary" data-cancel>Close</button><button class="btn secondary" id="oagain">Test again</button>${restore ? '<button class="btn danger" id="ogo" disabled>Restore this copy</button>' : ''}</div>`, {
+      onMount: (el, close) => {
+        const out = el.querySelector('#otest'), go = el.querySelector('#ogo'), cf = el.querySelector('#ocf'), why = el.querySelector('#owhy'), again = el.querySelector('#oagain');
+        let passed = false, reason = 'Testing the copy…';
+        const sync = () => {
+          if (!go) return;
+          const typed = cf.value === 'RESTORE'; go.disabled = !(passed && typed);
+          why.textContent = passed ? (typed ? '' : 'Type RESTORE to turn the button on.') : `Restore is off: ${reason}`;
+        };
+        const run = async () => {
+          passed = false; token = null; reason = 'Testing the copy…'; sync(); out.innerHTML = '<p class="hint" role="status">Fetching the copy and testing it. The live site is not touched…</p>'; again.disabled = true;
+          try {
+            const r = await Host.api('POST', '/backups/offsite/test', { destination: dest, name, passphrase: el.querySelector('#opp').value });
+            passed = r.ok; token = r.token || null; reason = r.ok ? '' : r.summary;
+            out.innerHTML = `<div class="banner ${r.ok ? 'blue' : 'red'}" role="status">${esc(r.summary)}</div>${r.checks.map(c => `<div class="setting"><div><div class="setting-title">${esc(c.label)}</div>${c.detail ? `<div class="setting-desc">${esc(c.detail)}</div>` : ''}</div><span class="chip ${c.ok ? 'green' : 'red'}">${c.ok ? 'Passed' : 'Failed'}</span></div>`).join('')}`;
+          } catch (e) { reason = e.message; out.innerHTML = `<div class="banner red">${esc(e.message)}</div>`; }
+          again.disabled = false; sync();
+        };
+        again.addEventListener('click', run); cf?.addEventListener('input', sync);
+        go?.addEventListener('click', () => busy(go, async () => { try { await Host.api('POST', '/backups/offsite/restore', { destination: dest, name, token, confirm: 'RESTORE', passphrase: el.querySelector('#opp').value }); token = null; close(true); } catch (e) { toast(e.message, true); } }));
+        run();
+      },
+    }).then(async (done) => {
+      if (token) { try { await Host.api('DELETE', `/backups/offsite/token/${token}`); } catch {} } // closing the sheet ends the test result
+      if (done) { toast('Restoring… the console will reload'); setTimeout(() => location.reload(), 4500); }
+    });
+  };
+
   // Rows for copies held at a destination.
   B.remoteRow = (r) => `<tr><td class="ident" data-label="">${esc(r.name)}</td><td class="tab-num" data-label="Taken">${esc(fmt.date(r.takenAt))}</td><td class="muted" data-label="Where">${esc(r.destinationName)}</td><td class="tab-num" data-label="Size">${fmt.bytes(r.size)}</td>
-    <td class="right nowrap" data-label=""><a class="btn secondary small" href="/api/host/backups/destinations/${encodeURIComponent(r.destination)}/files/${encodeURIComponent(r.name)}/download">Download</a> <button class="btn danger small" data-rdel="${esc(r.destination)}|${esc(r.name)}">Delete</button></td></tr>`;
+    <td class="right nowrap" data-label=""><a class="btn secondary small" href="/api/host/backups/destinations/${encodeURIComponent(r.destination)}/files/${encodeURIComponent(r.name)}/download">Download</a> ${B.engine === 'sqlite' && !/\.sql/.test(r.name) ? `<button class="btn secondary small" data-roff data-dest="${esc(r.destination)}" data-name="${esc(r.name)}" data-where="${esc(r.destinationName)}">Restore</button>` : ''}<button class="btn secondary small" data-rtest data-dest="${esc(r.destination)}" data-name="${esc(r.name)}" data-where="${esc(r.destinationName)}">Test restore</button> <button class="btn danger small" data-rdel="${esc(r.destination)}|${esc(r.name)}">Delete</button></td></tr>`;
   B.remoteList = (el, onChange) => B.fileList(el, {
     heads: ['File', 'Taken', 'Where', 'Size', ''], row: B.remoteRow, empty: 'No copies have been sent away yet.',
     load: async (off) => { const r = await Host.api('GET', `/backups/offsite?offset=${off}&limit=${PAGE}`); if (r.problems?.length && !off) toast(`${r.problems[0].destination}: ${r.problems[0].error}`, true); return r; },
-    after: (box, reload) => box.querySelectorAll('[data-rdel]').forEach(b => b.addEventListener('click', async () => {
-      const [dest, name] = b.dataset.rdel.split('|');
-      if (!await confirmBox({ title: 'Delete this copy?', body: `<span class="ident">${esc(name)}</span> will be removed from the destination. This cannot be undone.`, confirmLabel: 'Delete', danger: true })) return;
-      try { await Host.api('DELETE', `/backups/destinations/${encodeURIComponent(dest)}/files/${encodeURIComponent(name)}`); toast('Copy deleted'); await reload(); onChange?.(); } catch (e) { toast(e.message, true); }
-    })),
+    after: (box, reload) => {
+      box.querySelectorAll('[data-roff]').forEach(b => b.addEventListener('click', async () => { await B.offsiteSheet(b.dataset.dest, b.dataset.name, b.dataset.where); onChange?.(); }));
+      box.querySelectorAll('[data-rtest]').forEach(b => b.addEventListener('click', async () => { await B.offsiteSheet(b.dataset.dest, b.dataset.name, b.dataset.where, { restore: false }); onChange?.(); }));
+      box.querySelectorAll('[data-rdel]').forEach(b => b.addEventListener('click', async () => {
+        const [dest, name] = b.dataset.rdel.split('|');
+        if (!await confirmBox({ title: 'Delete this copy?', body: `<span class="ident">${esc(name)}</span> will be removed from the destination. This cannot be undone.`, confirmLabel: 'Delete', danger: true })) return;
+        try { await Host.api('DELETE', `/backups/destinations/${encodeURIComponent(dest)}/files/${encodeURIComponent(name)}`); toast('Copy deleted'); await reload(); onChange?.(); } catch (e) { toast(e.message, true); }
+      }));
+    },
   });
 })();

@@ -20,6 +20,7 @@ import { sweepExpired } from './src/services/billing/index.mjs';
 import { purgeSignInHistory } from './src/services/signins/index.mjs';
 import { hostRouter } from './src/routes/host/index.mjs';
 import { appRouter } from './src/routes/app/index.mjs';
+import { legalPages } from './src/routes/legal-pages.mjs';
 import { startAlertWorker } from './src/services/alerts/index.mjs';
 import { recordStartup, startUpdateWorker } from './src/services/updates/index.mjs';
 import { cloudflareAddress } from './src/security/cloudflare-middleware.mjs';
@@ -65,6 +66,7 @@ app.use(express.json({ limit: '100kb' }));
 app.use('/api', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 app.use('/api/host', hostRouter(db));
 app.use('/api/app', appRouter(db));
+app.use('/legal', legalPages());   // Terms and Privacy as plain pages (one source: content/legal)
 app.get('/healthz', (req, res) => res.json({ ok: true, version: config.version, build: config.build || null }));
 app.use(express.static(path.join(here, 'public')));
 app.get('/', (req, res) => res.redirect('/app/'));

@@ -58,7 +58,7 @@ test('browser: Inventory pages 25 / 25 / 10, the size select works, searching re
   page.setDefaultTimeout(20000); const errors = []; page.on('pageerror', e => errors.push(e.message));
   try {
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
-    await page.fill('#bn', 'Pages Co'); await page.fill('#em', 'p@example.com'); await page.fill('#un', 'pat'); await page.fill('#pw', PW); await page.click('button.block');
+    await page.fill('#bn', 'Pages Co'); await page.fill('#em', 'p@example.com'); await page.fill('#un', 'pat'); await page.fill('#pw', PW); await page.check('#tc'); await page.click('button.block');
     await page.waitForSelector('#go'); const id = (await page.textContent('.codeblock')).trim(); await page.click('#go');
     await fillLogin(page, 'pat@' + id); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.main');

@@ -48,7 +48,7 @@
   const PRIMARY = ['overview', 'alerts', 'accounts', 'logs']; // the phone tab bar; everything else is under More
   function shell() {
     root.innerHTML = `<header class="topbar"><div class="brand"><a class="brand-link" href="#/overview" aria-label="Home"><img class="brand-mark" src="/assets/logo-512.png" alt="myBoxStock" width="512" height="512"></a>myBoxStock <span class="brand-sub">Host</span></div><div class="grow"></div><span id="acct"></span></header>
-      <div class="shell"><nav class="side">${Host.nav.map(([k, l]) => `<a href="#/${k}" data-k="${k}">${Host.icons[k]}<span>${l}</span></a>`).join('')}</nav><main class="main" id="main"></main></div>${UI.tabbar.html(Host.nav, PRIMARY, Host.icons)}`;
+      <div class="shell"><nav class="side">${Host.nav.map(([k, l]) => `<a href="#/${k}" data-k="${k}">${Host.icons[k]}<span>${l}</span></a>`).join('')}</nav><main class="main" id="main"></main></div>${UI.legal.footer(true)}${UI.tabbar.html(Host.nav, PRIMARY, Host.icons)}`;
     UI.tabbar.bind(root, Host.nav, PRIMARY, Host.icons);
     Host.menu = UI.menu.mount(root.querySelector('#acct'), { name: Host.me.username, head: `<b>${esc(Host.me.username)}</b><span>Host administrator</span>`, items: menuItems([]),
       pick: (id) => { if (id === 'out') signOut(); else if (id.startsWith('u:')) window.open(`/app/#/u/${encodeURIComponent(id.slice(2))}`, '_blank', 'noopener'); } });

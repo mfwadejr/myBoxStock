@@ -14,6 +14,8 @@ Alerts are about the server only: email delivery, backups, sign-in floods, disk 
 
 > Think of the Alerts page as a short to-do list the server writes for you. An empty list is the goal. Most entries remove themselves once you fix the cause.
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
+
 ## How alerts are found
 
 The server runs a check pass over every alert type every five minutes, starting shortly after it starts. Each check does one of two things:

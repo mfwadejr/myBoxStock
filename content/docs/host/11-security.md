@@ -3,7 +3,7 @@ title: Security
 summary: Protect your own sign-in with two-factor and a strong password, manage the list of Host administrators, and know what the Owner can do when someone is locked out.
 keywords: set up, sign-in lockout, lockouts survive restart, six wrong tries, security, two-factor, 2fa, totp, authenticator, recovery codes, password, administrator, owner, helper, temporary password, sign out, reset two-factor, add administrator, delete administrator, contact, lockout, reset-host-admin
 order: 11
-covers: nav:security, Two-factor authentication, Set up, Turn off, Password, Change password, Current, New, Update, Host administrators, Add administrator, Username, Email, Temporary password, Edit, Delete, Name, Cell number, Support actions, Reset two-factor, Set temporary password, Sign out everywhere, Owner, you, Last sign-in, Contact, Two-factor, reset-host-admin, Sign-in lockout, locked for 15 minutes
+covers: nav:security, Two-factor authentication, Set up, Turn off, Password, Change password, Current, New, Update, Host administrators, Add administrator, Username, Email, Temporary password, Edit, Delete, Name, Cell number, Support actions, Reset two-factor, Set temporary password, Sign out everywhere, Owner, you, Last sign-in, Contact, Two-factor, reset-host-admin, Sign-in lockout, locked for 15 minutes, Unlock
 ---
 
 ## What this page is for
@@ -13,6 +13,8 @@ The Host Console can see every account on your server, manage plans, take backup
 One important boundary to remember: even with full access, Host administrators cannot see any customer's business data. Customers own that data and hold the keys to it. Security here is about protecting the platform and the console, not about reaching into customer records.
 
 > Treat a Host administrator sign-in like the keys to the building. Strong password, two-factor on, and nobody shares a login.
+
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
 
 ## Your two-factor authentication
 
@@ -119,7 +121,7 @@ Work through these in order.
 
 1. **A helper lost their phone.** The Owner opens Edit for them, uses **Reset two-factor**, then tells them to sign in and set it up again. If they also forgot their password, use **Set temporary password** as well.
 2. **A helper forgot their password.** The Owner uses **Set temporary password**.
-3. **Too many wrong tries.** After six wrong passwords or codes in a row for a sign-in name, that name is locked for 15 minutes. Waiting is the cure, and restarting the server does not help (see "Sign-in lockouts" below). Separately, the Firewall's sign-in limits can stop an address for a while. See [Firewall](#/docs/firewall).
+3. **Too many wrong tries.** After six wrong passwords or codes in a row for a sign-in name, that name is locked for 15 minutes. Waiting is one cure, and another Host administrator can press **Unlock** on the [Firewall](#/docs/firewall) page to end it sooner. Restarting the server does not help (see "Sign-in lockouts" below). Separately, the Firewall's sign-in limits can stop an address for a while. See [Firewall](#/docs/firewall).
 4. **The Owner is locked out.** Another person cannot reset the Owner. Use a recovery code if you have one. If not, on the server run `node server.mjs reset-host-admin`. It prints a temporary password for the Owner account (the oldest administrator), clears its two-factor, and signs every Host administrator out. You must choose a new password at the next sign-in and set two-factor up again.
 5. **You cannot reach the console at all** because of an address list or a proxy setting. See [Recovery and emergencies](#/docs/recovery-and-emergencies).
 
@@ -133,8 +135,8 @@ To stop password guessing, a sign-in name is locked after **six wrong attempts i
 - A correct sign-in before the sixth wrong try resets the count to zero.
 - **Lockouts survive a restart.** An active lockout, and the count that leads to one, are saved in the database and loaded again when the server starts, including the restart that follows an update. Restarting the container no longer lets someone in early, and it no longer clears a lock for you. Waiting 15 minutes does.
 - A refused sign-in because the account is suspended, closing or disabled is not counted as a wrong attempt.
-- The number of tries and the length of the lock cannot be changed.
-- A Host Console lockout is written to the [Audit trail](#/docs/audit-trail) as "Host Console sign-in locked", and every wrong attempt is in [Logs](#/docs/logs). Lockouts of resellers' users are in Logs only.
+- The number of tries and the length of the lock cannot be changed. A Host administrator can end a lock early with **Unlock** (Firewall page, or a person's tools in [Accounts](#/docs/accounts)). It clears the lock and the count, never shows or changes a password, and is written to the Audit trail as "Sign-in unlocked". A locked-out Host administrator cannot unlock themselves, because they cannot sign in: another administrator does it, or they wait.
+- A Host Console lockout is written to the [Audit trail](#/docs/audit-trail) as "Host Console sign-in locked", an unlock as "Sign-in unlocked", and every wrong attempt is in [Logs](#/docs/logs). Lockouts of resellers' users are in Logs only.
 
 Separately, the Firewall limits how many sign-in attempts one address can make in a few minutes, and bans addresses that keep breaking limits. See [Firewall](#/docs/firewall).
 

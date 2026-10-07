@@ -1,9 +1,9 @@
 ---
 title: Troubleshooting and FAQ
 summary: Plain-language fixes for the problems people run into most, from sign-in trouble and lost keys to scanners, receipts and read-only accounts, plus answers to common questions.
-keywords: troubleshooting, camera blocked, camera busy, no camera, https, wrong barcode, mac not accepted, restore refused, this file cannot be used, account is newer than this file, undo restore, backup file size, lost recovery key backup, site restored banner, help, error, cannot sign in, locked out, forgot password, lost authenticator, lost recovery key, scanner, receipt email, read-only, out of date, refresh, faq, not working, problem
+keywords: troubleshooting, camera blocked, camera busy, no camera, https, wrong barcode, mac not accepted, restore refused, this file cannot be used, account is newer than this file, undo restore, backup file size, lost recovery key backup, site restored banner, help, error, cannot sign in, locked out, forgot password, lost authenticator, lost recovery key, scanner, tap to aim, nothing read yet, got it, confirm each scan, use this, receipt email, read-only, out of date, refresh, faq, not working, problem
 order: 13
-covers: camera is turned off for this site, The camera only works when this site is opened over https, The camera is busy, No camera was found, Two codes are about equally close, No MAC address was found in that photo, This file cannot be used, Your account is newer than this file, There is no restore to undo, The restore did not finish, The site was restored from a backup, Copy diagnostics, Incorrect sign-in or password, Too many failed attempts, Forgot password, Reset link, Two-factor code, Recovery code, Recovery key, Unlock your data, Use your recovery key, Scanner, Bulk scan, Email receipt, Read-only, Trial ended, Closing account, Out of date page, Someone else changed this, Records could not be opened, Disabled sign-in, Suspended account, Mail server settings, Reseller ID, Change password, Reset access
+covers: camera is turned off for this site, The camera only works when this site is opened over https, The camera is busy, No camera was found, Two codes are about equally close, No MAC address was found in that photo, This file cannot be used, Your account is newer than this file, There is no restore to undo, The restore did not finish, The site was restored from a backup, Copy diagnostics, Incorrect sign-in or password, Too many failed attempts, Forgot password, Reset link, Two-factor code, Recovery code, Recovery key, Unlock your data, Use your recovery key, Scanner, Bulk scan, Email receipt, Read-only, Trial ended, Closing account, Out of date page, Someone else changed this, Records could not be opened, Disabled sign-in, Suspended account, Mail server settings, Reseller ID, Change password, Reset access, Account deleted by the Host, account erased email, Too many failed attempts, Nothing read yet, Confirm each scan, Use this
 ---
 
 ## How to use this page
@@ -15,6 +15,8 @@ A few ideas help everywhere:
 - Your business data (inventory, customers, sales) is encrypted in your browser with a key that belongs to your account. The hosting service stores it but cannot read it, and cannot recover it for you. That is why a few problems below can only be solved by you or by another Administrator on your team. See [Your data, your responsibility](#/docs/your-data-your-responsibility).
 - To sign in you need three things: your **Reseller ID**, your **username**, and your **password**. Your Reseller ID looks like `amber-fox-4271`.
 - If a problem is not listed here, note the exact words of the message you saw. They are the quickest way for support to help you.
+
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. The person who runs your site sets this up, so if a message you expect never arrives, ask them to check it.
 
 ## Signing in
 
@@ -35,7 +37,7 @@ A few ideas help everywhere:
 
 **Cause.** The same sign-in name was tried with a wrong password six times in a row. This protects your account from people guessing passwords. The lock lasts 15 minutes.
 
-**Fix.** Wait the 15 minutes, then try again, carefully. Trying again sooner will not work and does not help. If you are not sure of your password, use "Forgot password?" instead of guessing. If you did not make those attempts yourself, a person may be trying to get into your account, so change your password after you get back in and consider turning on two-factor sign-in. See [Security](#/docs/security).
+**Fix.** Wait the 15 minutes, then try again, carefully. If you cannot wait, ask the person who runs the site to unlock your sign-in: a site administrator can clear the lock from their console in one step, and it is recorded in their audit trail. They cannot see or change your password when they do; if you have forgotten it, use "Forgot password?" or ask them to email you a reset link afterwards. Trying again sooner will not work and does not help. If you are not sure of your password, use "Forgot password?" instead of guessing. If you did not make those attempts yourself, a person may be trying to get into your account, so change your password after you get back in and consider turning on two-factor sign-in. See [Security](#/docs/security).
 
 Administrators can look at the sign-in history on the [Activity](#/docs/activity) page to see wrong-password attempts and where they came from.
 
@@ -346,7 +348,19 @@ The camera scanner has its own set of fixes. See "Scanning with the camera" just
 
 **Cause.** The label has several barcodes and the one nearest the aim line was read.
 
-**Fix.** Tap **Small** so the scan box is a thin strip, slide the phone until only the barcode you want crosses the aim line, and scan again. Always check the value in the box before you save. If two barcodes are equally close you get two big buttons: "Two codes are about equally close. Tap the one you want."
+**Fix.** Tap **Small** so the scan box is a thin strip, then **tap the barcode you want** on the picture so the box and red line move onto it, and scan again. Always check the value in the box before you save. If two barcodes are equally close you get two big buttons: "Two codes are about equally close. Tap the one you want."
+
+### The hint says "Nothing read yet. Put the red line across the bars, not the printed text."
+
+**Cause.** Nothing was read for about six seconds. Most often the scan box is over the printed text under a barcode, or between two barcodes, and not over the bars. This is common on labels where the S/N barcode is stacked over the MAC barcode.
+
+**Fix.** **Tap the barcode you want** on the picture. The scan box moves to the spot you tapped. Put the red line across the bars, then hold steady and move a little closer. If the box is on **Small**, try **Medium**. The message clears by itself once you move the box or a code is read.
+
+### I did not notice that the scan worked
+
+**Cause.** An iPhone does not buzz, and its beep is muted when the ringer is on silent.
+
+**Fix.** Look for the green **Got it** with the code, which stays up for about a second and a half. When the scanner closes, the box that received the code flashes green. If you still want to check every code first, open the scanner and turn on **Confirm each scan**: each code then waits for you to tap **Use this** (or **Scan again**) and nothing is filled in until you do.
 
 ### The scanner will not read at all, or takes a long time
 
@@ -420,7 +434,15 @@ No. The file is locked with your keys and opens only with your password or your 
 
 ### Are my team members in the backup?
 
-No. The file holds devices, customers, sales, receipts and settings, but not people, user types or sign-ins. Add people again on the [Team](#/docs/team) page if you ever rebuild.
+Yes, the list is: each person's username, email and user type, locked with your key. Passwords, two-factor secrets and sign-ins are never in the file. When you restore, the switch **Add team members (N in this file)** brings them back as pending invitations (on by default). Give each one a temporary password with **Set up access** on the [Team](#/docs/team) page. Anyone already on your team is skipped and **Replace everything** never removes a person.
+
+### How do I check that a backup file is good?
+
+Open **Backup and restore** and use the **Test a backup file** card. Pick the file and read the result: a **Passed** or **Failed** list (is a backup, made for this account, opens with this account's key, complete and not damaged, every record can be opened), then what is inside and how it compares with your account now. Nothing is restored, changed or sent, the file stays on your device, and it works even if your account is read-only.
+
+### The test says "damaged: one of its records cannot be opened"
+
+**Cause.** One record inside the file was changed or damaged after it was made. A restore would not notice, but the test opens every record. **Fix.** Do not rely on that file. Use another copy and make a fresh backup.
 
 ### The backup reminder keeps showing on Home
 
@@ -494,6 +516,18 @@ On your welcome email, on the Security page, on the Team page heading, and the s
 
 No. They are encrypted in your browser before they are sent and are only opened in your browser. The service stores the scrambled version. That also means it cannot restore your data if you lose both your password and your recovery key. See [Your data, your responsibility](#/docs/your-data-your-responsibility).
 
+### Why can't I create my account? It says to tick the box.
+
+Sign-up needs the **I agree to the Terms of Service and Privacy Policy** box ticked. Tick it (the names beside it are links to the pages) and press **Create account** again. Nothing is created until you do.
+
+### Why does it say Updated terms when I sign in?
+
+The Terms of Service or Privacy Policy were changed, or your account was created before they were introduced. An Administrator reads them, ticks the box and presses **Accept and continue**, once for each new version. Until then the account cannot be used, for anyone. If you are not an Administrator, ask one to sign in and accept. See [Getting started](#/docs/getting-started).
+
+### Who is responsible for my data?
+
+You are. myBoxStock, its owner and supporting staff cannot see your customer data (inventory, customers, sales, receipts and prices) and are not responsible or liable for it. You own your data and are 100 percent responsible for it, for your recovery key, and for your own backup files and exports.
+
 ### What should I keep safe?
 
 Four things: your **recovery key**, your **two-factor recovery codes** (if you use two-factor), a recent **backup file** (Backup and restore, **Back up now**), and if you like a recent **export** of your data. Keep them somewhere other than the computer you use every day.
@@ -532,7 +566,7 @@ An Administrator can open [Activity](#/docs/activity) to see where people are si
 
 ### How do I close my account?
 
-An Administrator uses **Close account** on the [Security](#/docs/security) page, entering their password and Reseller ID. The account is locked for 7 days: only Administrators can sign in, to look, export, make a backup file or restore it, and an "account is closing" email with the erase date is sent. An Administrator can restore it any time before the erase date. After that the site erases everything (people, devices, customers, sales, keys, billing history and your undo copy) and there is no way back. The site's own encrypted backups may still hold a locked copy for up to about 8 weeks with the default settings, and it cannot be opened without your keys. Backup files and exports you made yourself are yours and are not touched. Make a backup first.
+An Administrator uses **Close account** on the [Security](#/docs/security) page, entering their password and Reseller ID. The account is locked for 7 days: only Administrators can sign in, to look, export, make a backup file or restore it, and an "account is closing" email with the erase date is sent. An Administrator can restore it any time before the erase date. After that the site erases everything (people, devices, customers, sales, keys, billing history and your undo copy) and there is no way back. The site's own encrypted backups may still hold a locked copy for up to about 8 weeks with the default settings, and it cannot be opened without your keys. Backup files and exports you made yourself are yours and are not touched. Make a backup first. In rare cases the person who runs the site can also delete an account straight away, without the 7 days (for example when you ask them to). They cannot read your data and cannot bring the account back. If the site's email is set up, one "account erased" email then goes to the owner and the Administrators, saying the account was deleted by the site's Host, when, and the reason they gave if any. The delete never waits for that email, so if email is not set up nobody is emailed, which is one more reason to keep your own backup file and export.
 
 ### Who can I ask for more help?
 

@@ -34,7 +34,7 @@ test('browser: date and time boxes in forms are one width', { skip, timeout: 120
   page.setDefaultTimeout(20000); const errors = []; page.on('pageerror', e => errors.push(e.message));
   try {
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
-    await page.fill('#bn', 'Width Co'); await page.fill('#em', 'w@example.com'); await page.fill('#un', 'walt'); await page.fill('#pw', PW); await page.click('button.block');
+    await page.fill('#bn', 'Width Co'); await page.fill('#em', 'w@example.com'); await page.fill('#un', 'walt'); await page.fill('#pw', PW); await page.check('#tc'); await page.click('button.block');
     await page.waitForSelector('#go'); const login = 'walt@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');
     await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');

@@ -17,6 +17,8 @@ Plans has two jobs that are easy to mix up, so it helps to separate them right a
 
 This page covers both, because understanding the account states is what makes the list make sense.
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
+
 ## The three kinds of account plan
 
 ### Free trial

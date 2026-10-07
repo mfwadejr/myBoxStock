@@ -12,6 +12,7 @@ import { areaLogger } from '../../../logging/logger.mjs';
 import { backupDir, defaultBackupDir } from '../files.mjs';
 import { encryptFile, ENC_EXT, isEncryptedName } from '../crypt.mjs';
 import { getPassphrase } from '../passphrase.mjs';
+import { assertPassphraseReady, coded } from '../gate.mjs';
 import { folderClient } from './folder.mjs';
 import { smbClient } from './smb.mjs';
 import { s3Client } from './s3.mjs';
@@ -41,10 +42,12 @@ const LOCAL = () => ({ id: 'local', type: 'folder', name: 'This server', enabled
 
 const all = async (db) => (await getSetting(db, 'backup_destinations', []));
 const save = (db, list) => setSetting(db, 'backup_destinations', list);
+// A fingerprint of everything that decides whether a connection works; a passed test only counts while it is unchanged.
+const sig = (d) => crypto.createHash('sha256').update(JSON.stringify([d.type, d.settings, d.secrets || {}])).digest('hex').slice(0, 24);
 export const needsEncryption = (d) => !(d.id === 'local' || (d.type === 'folder' && path.resolve(d.settings.path) === path.resolve(defaultBackupDir())));
 
 // What the browser may see: settings, and for every secret only whether it is saved.
-export const publicView = (d) => ({ id: d.id, type: d.type, typeLabel: TYPES[d.type].label, name: d.name, enabled: !!d.enabled, builtin: !!d.builtin, settings: d.settings, secrets: Object.fromEntries(TYPES[d.type].secrets.map(k => [k, d.secrets?.[k] ? 'saved' : ''])), hostKey: d.hostKey || '', encrypted: needsEncryption(d), lastTest: d.lastTest || null });
+export const publicView = (d) => ({ id: d.id, type: d.type, typeLabel: TYPES[d.type].label, name: d.name, enabled: !!d.enabled, builtin: !!d.builtin, settings: d.settings, secrets: Object.fromEntries(TYPES[d.type].secrets.map(k => [k, d.secrets?.[k] ? 'saved' : ''])), hostKey: d.hostKey || '', encrypted: needsEncryption(d), lastTest: d.lastTest || null, tested: d.builtin || !!(d.lastTest?.ok && d.lastTest.sig === sig(d)) });
 export async function listDestinations(db) { return [publicView(LOCAL()), ...(await all(db)).map(publicView)]; }
 export async function getDestination(db, id) { if (id === 'local') return LOCAL(); const d = (await all(db)).find(x => x.id === id); if (!d) throw new Error('That destination was not found.'); return d; }
 export async function enabledDestinations(db, ids) { const list = [LOCAL(), ...(await all(db))]; return (ids || []).map(id => list.find(d => d.id === id)).filter(d => d && d.enabled); }
@@ -63,6 +66,10 @@ export async function saveDestination(db, body, actor, id = null) {
   const d = { id: cur?.id || crypto.randomBytes(6).toString('hex'), type, name, enabled: !!body.enabled, settings, secrets, hostKey: cur?.hostKey || '', lastTest: cur?.lastTest || null };
   if (type === 'sftp' && cur && (cur.settings.host !== settings.host || cur.settings.port !== settings.port)) d.hostKey = ''; // a different server has a different identity
   if (d.enabled && needsEncryption(d) && !(await getPassphrase(db))) throw new Error('Set the backup passphrase (Full-site backups tab) before turning on a destination. Everything sent away from this server is encrypted with it.');
+  if (d.enabled && needsEncryption(d)) {
+    await assertPassphraseReady(db);
+    if (!(d.lastTest?.ok && d.lastTest.sig === sig(d))) throw coded('HOST_BACKUP_DEST_TEST_FIRST'); // Test connection must pass first, on exactly these details
+  }
   if (cur) list[list.indexOf(cur)] = d; else list.push(d);
   await save(db, list);
   L.info('destination.saved', `Backup destination "${name}" (${type}) ${cur ? 'changed' : 'added'}, ${d.enabled ? 'on' : 'off'}`, { actor, data: { id: d.id, type, name, enabled: d.enabled } });
@@ -98,7 +105,7 @@ export async function testDestination(db, id, actor) {
     const r = await c.put(file, name), st = await c.stat(name);
     if (!st || (r.size != null && st.size !== fs.statSync(file).size)) throw new Error('The test file was written but could not be read back correctly.');
     await c.remove(name); if (await c.stat(name)) throw new Error('The test file could not be removed again.');
-    if (id !== 'local') { const list = await all(db), x = list.find(y => y.id === id); if (x) { if (learned) x.hostKey = learned; x.lastTest = { at: Date.now(), ok: true }; await save(db, list); } }
+    if (id !== 'local') { const list = await all(db), x = list.find(y => y.id === id); if (x) { if (learned) x.hostKey = learned; x.lastTest = { at: Date.now(), ok: true, sig: sig(x) }; await save(db, list); } }
     L.info('destination.test_ok', `Test connection to "${d.name}" worked`, { actor, data: { id, type: d.type } });
     return { ok: true, message: `Connected. A small test file was written, read back and removed.${learned ? ` The server's identity (${learned}) was recorded and will be required from now on.` : ''}`, fingerprint: learned || d.hostKey || '' };
   } catch (e) {

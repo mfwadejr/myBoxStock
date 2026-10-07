@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import express from 'express';
 import { hostLog } from './context.mjs';
+import { fail, MSG } from '../../core/messages.mjs';
 import { TYPES, listDestinations, saveDestination, deleteDestination, testDestination, getDestination, clientFor } from '../../services/backup/destinations/index.mjs';
 
 const okName = (n) => /^[\w.-]+$/.test(n) && !n.includes('..');
@@ -15,7 +16,7 @@ export function destinationsRoutes(db) {
     try {
       const d = await saveDestination(db, req.body || {}, req.subject.username, isNew ? null : req.params.id);
       H(req, 'info', 'backup.destination_saved', `Backup destination "${d.name}" (${d.type}) ${isNew ? 'added' : 'changed'}`, { id: d.id, type: d.type, enabled: d.enabled }); res.json(d);
-    } catch (e) { res.status(400).json({ error: e.message }); }
+    } catch (e) { if (e.code && MSG[e.code]) return fail(res, 400, e.code); res.status(400).json({ error: e.message }); }
   };
   r.post('/', write(true));
   r.put('/:id', write(false));

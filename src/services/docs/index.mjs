@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'content', 'docs');
 export const REALMS = ['reseller', 'host'];
+// The legal pages (Terms, Privacy, ...) use the same renderer and loader from content/legal. One source: the app and the marketing site both read these files.
+const LEGAL = 'legal', DIRS = { reseller: path.join(ROOT, 'reseller'), host: path.join(ROOT, 'host'), [LEGAL]: path.join(ROOT, '..', 'legal') };
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const list = (v) => String(v || '').split(',').map(x => x.trim()).filter(Boolean);
 
@@ -39,19 +41,19 @@ function parse(file, realm) {
   const raw = fs.readFileSync(file, 'utf8').replace(/\r/g, ''), m = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
   if (!m) throw new Error(`${file}: missing the header block`);
   const meta = Object.fromEntries(m[1].split('\n').map(l => { const i = l.indexOf(':'); return i < 0 ? null : [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }).filter(Boolean));
-  for (const k of ['title', 'summary', 'keywords', 'order']) if (!meta[k]) throw new Error(`${file}: header needs "${k}"`);
+  for (const k of ['title', 'summary', 'keywords', 'order', ...(realm === LEGAL ? ['version', 'effective'] : [])]) if (!meta[k]) throw new Error(`${file}: header needs "${k}"`);
   const { html, sections } = render(m[2]);
-  return { realm, slug: path.basename(file, '.md').replace(/^\d+-/, ''), title: meta.title, summary: meta.summary, keywords: list(meta.keywords), covers: list(meta.covers), order: Number(meta.order), html, sections, body: m[2] };
+  return { realm, slug: path.basename(file, '.md').replace(/^\d+-/, ''), title: meta.title, summary: meta.summary, keywords: list(meta.keywords), covers: list(meta.covers), order: Number(meta.order), ...(realm === LEGAL ? { version: meta.version, effective: meta.effective } : {}), html, sections, body: m[2] };
 }
 
 const cache = new Map();
 export function load(realm) {
-  if (!REALMS.includes(realm)) throw new Error('Unknown documentation set');
+  if (!DIRS[realm]) throw new Error('Unknown documentation set');
   if (cache.has(realm)) return cache.get(realm);
-  const dir = path.join(ROOT, realm), pages = fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => f.endsWith('.md')).sort().map(f => parse(path.join(dir, f), realm)) : [];
+  const dir = DIRS[realm], pages = fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => f.endsWith('.md')).sort().map(f => parse(path.join(dir, f), realm)) : [];
   pages.sort((a, b) => a.order - b.order); cache.set(realm, pages); return pages;
 }
-export const meta = (p) => ({ slug: p.slug, title: p.title, summary: p.summary, order: p.order });
+export const meta = (p) => ({ slug: p.slug, title: p.title, summary: p.summary, order: p.order, ...(p.version ? { version: p.version, effective: p.effective } : {}) });
 export const toc = (realm) => load(realm).map(meta);
 export function page(realm, slug) {
   const pages = load(realm), i = pages.findIndex(p => p.slug === slug); if (i < 0) return null;

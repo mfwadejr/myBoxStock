@@ -37,7 +37,7 @@
 
   async function accountSheet(id, refresh) {
     const d = await Host.api('GET', `/accounts/${id}`), a = d.account;
-    const rows = d.users.map(u => `<div class="setting"><div><div class="setting-title">${esc(u.username)} <span class="chip">${esc(u.role)}</span> ${u.totp_enabled ? '<span class="chip green">2FA</span>' : ''} ${u.disabled ? '<span class="chip red">disabled</span>' : ''} ${u.email ? (u.email_verified_at ? '<span class="chip green">Verified</span>' : '<span class="chip amber">Not verified</span>') : ''}</div>
+    const rows = d.users.map(u => `<div class="setting"><div><div class="setting-title">${esc(u.username)} <span class="chip">${esc(u.role)}</span> ${u.totp_enabled ? '<span class="chip green">2FA</span>' : ''} ${u.disabled ? '<span class="chip red">disabled</span>' : ''} ${u.locked ? '<span class="chip red">locked out</span>' : ''} ${u.email ? (u.email_verified_at ? '<span class="chip green">Verified</span>' : '<span class="chip amber">Not verified</span>') : ''}</div>
       <div class="setting-desc">${esc(u.login)} · last sign-in ${fmt.ago(u.last_login)}</div></div><button class="btn secondary small" data-u="${u.id}">Manage</button></div>`).join('');
     await sheet(`<div class="row spread"><h2>${esc(a.business_name)}</h2><span class="chip ${a.status === 'active' ? 'green' : 'red'}">${esc(a.status)}</span></div>
       <p class="muted"><span class="ident">${esc(a.account_code)}</span> · created ${fmt.date(a.created_at)}</p>
@@ -45,6 +45,8 @@
       <div class="banner blue my-md">You can help with sign-in and security. Business data is not visible to host administrators.</div>
       <h3 class="mt-sm">Data</h3>
       <div class="setting"><div><div class="setting-title">${d.data.encrypted ? '<span class="chip green">Encrypted</span>' : '<span class="chip amber">Not set up yet</span>'}</div><div class="setting-desc">${d.data.recordCount} stored record${d.data.recordCount === 1 ? '' : 's'}. Their contents are unreadable to you by design — only the account's own people can open them.</div></div></div>
+      <h3 class="mt-sm">Terms</h3>
+      <div class="setting"><div><div class="setting-title">${d.terms.version ? `<span class="chip ${d.terms.outdated ? 'amber' : 'green'}">${d.terms.outdated ? 'Older terms accepted' : 'Terms accepted'}</span>` : '<span class="chip amber">Not accepted yet</span>'}</div><div class="setting-desc">${d.terms.version ? `Version ${esc(d.terms.version)}, accepted ${fmt.date(d.terms.acceptedAt)}.` : 'This account was created before the Terms were introduced.'}${d.terms.outdated ? ` The current version is ${esc(d.terms.current)}; an Administrator is asked to accept it at their next sign-in.` : ''}</div></div></div>
       <h3 class="mt-sm">Plan</h3>
       <div class="setting"><div><div class="setting-title">${planChip(a.billing)} ${a.plan_note ? `<span class="muted text-sm">${esc(a.plan_note)}</span>` : ''}</div>
         <div class="setting-desc">${a.billing.endsAt ? `${a.billing.canWrite ? 'Ends' : 'Ended'} ${fmt.date(a.billing.endsAt)}` : a.plan === 'free' ? 'Free account — never expires' : 'No end date'}${a.billing.canWrite ? '' : ' · account is read-only'}</div></div>
@@ -72,12 +74,20 @@
         el.querySelector('#unclose')?.addEventListener('click', async () => { try { await Host.api('POST', `/accounts/${id}/restore-closing`); toast('Closing cancelled'); close(); refresh(); } catch (er) { toast(er.message, true); } });
         el.querySelector('#del').addEventListener('click', async () => {
           close();
-          const c = await confirmBox({ title: 'Delete account?', body: 'This permanently erases the account, its users and all of its data. It cannot be undone.', confirmLabel: 'Delete forever', danger: true, typeToConfirm: a.account_code });
-          if (c) { try { await Host.api('DELETE', `/accounts/${id}`, { confirm: c }); toast('Account deleted'); refresh(); } catch (er) { toast(er.message, true); } }
+          const r = await deleteSheet(a, d.mailReady);
+          if (r) { try { await Host.api('DELETE', `/accounts/${id}`, r); toast('Account deleted'); refresh(); } catch (er) { toast(er.message, true); } }
         });
         el.querySelectorAll('[data-u]').forEach(b => b.addEventListener('click', () => { const u = d.users.find(x => x.id === b.dataset.u); close(); userSheet(a, u, () => accountSheet(id, refresh)); }));
       } });
   }
+
+  // Delete sheet: type the Reseller ID, optional reason (goes in the "account erased" email). Warns in red when Email is not set up, so nobody will be told.
+  const deleteSheet = (a, mailReady) => sheet(`<h2>Delete account?</h2><p class="muted">This permanently erases the account, its users and all of its data. It cannot be undone. The Host cannot recover it: the data is encrypted, and the only way back is the customer's own backup file.</p>
+      ${mailReady ? '<p class="muted">One “account erased” email is sent to the owner and the Administrators after the delete. The delete never waits for it.</p>' : '<div class="banner red my-md" role="alert">Email is not set up, so nobody will be told this account was deleted. Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway.</div>'}
+      <div class="field mt-md"><label>Reason (included in the email, optional)</label><input type="text" id="rs" maxlength="200" autocomplete="off"></div>
+      <div class="field"><label>Type <b>${esc(a.account_code)}</b> to confirm</label><input type="text" id="tc" autocomplete="off"></div>
+      <div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn danger" id="ok" disabled>Delete forever</button></div>`,
+    { onMount: (el, close) => { const ok = el.querySelector('#ok'), tc = el.querySelector('#tc'); tc.addEventListener('input', () => { ok.disabled = tc.value !== a.account_code; }); ok.addEventListener('click', () => close({ confirm: tc.value, reason: el.querySelector('#rs').value.trim() })); } });
 
   async function userSheet(a, u, back) {
     await sheet(`<h2>${esc(u.username)}</h2><p class="muted">${esc(u.login)}</p>
@@ -87,6 +97,7 @@
         <button class="btn secondary" id="mv" ${u.email && !u.email_verified_at ? '' : 'disabled'}>Mark email as confirmed</button>
         <button class="btn secondary" id="tmp">Set a temporary password</button>
         <button class="btn secondary" id="mfa" ${u.totp_enabled ? '' : 'disabled'}>Reset two-factor authentication</button>
+        <button class="btn secondary" id="unl" ${u.locked ? '' : 'disabled'}>${u.locked ? 'Unlock this sign-in' : 'Not locked out'}</button>
         <button class="btn secondary" id="so">Sign out everywhere</button>
         <button class="btn ${u.disabled ? 'secondary' : 'danger'}" id="dis">${u.disabled ? 'Enable sign-in' : 'Disable sign-in'}</button>
         <button class="btn danger" id="rm">Delete this user</button></div>
@@ -105,6 +116,7 @@
           await sheet(`<h2>Temporary password</h2><p class="muted">Share this securely with ${esc(u.username)}. They must change it at next sign-in, and it is shown only now.</p><div class="codeblock mt-md">${esc(r.tempPassword)}</div><div class="actions"><button class="btn" data-cancel>Done</button></div>`);
         });
         act('#mfa', async () => { const reason = await askReason('Reset two-factor?', `${esc(u.username)} will be signed out and must set up two-factor again.`); if (reason) { await Host.api('POST', `/accounts/${a.id}/users/${u.id}/reset-mfa`, { reason }); toast('Two-factor reset'); close(); } });
+        act('#unl', async () => { const reason = await askReason('Unlock this sign-in?', `${esc(u.username)} can try again right away. Their password is not shown or changed. It is saved in the log and the Audit trail, with your name.`); if (reason) { await Host.api('POST', `/accounts/${a.id}/users/${u.id}/unlock`, { reason }); toast('Unlocked'); close(); } });
         act('#so', async () => { const reason = await askReason('Sign out everywhere?', `${esc(u.username)} is signed out on every device.`); if (reason) { await Host.api('POST', `/accounts/${a.id}/users/${u.id}/sign-out`, { reason }); toast('Signed out everywhere'); close(); } });
         act('#rm', async () => {
           close(); const c = await confirmBox({ title: 'Delete user?', body: `${esc(u.login)} is removed from the account and can no longer sign in. This cannot be undone.`, confirmLabel: 'Delete user', danger: true, typeToConfirm: u.login });
@@ -135,7 +147,7 @@
   async function planSheet(a, back, { extend = false } = {}) {
     await sheet(`<h2>Change plan</h2><p class="muted">${esc(a.business_name)} · <span class="ident">${esc(a.account_code)}</span></p>
       <div class="field mt-md"><label>Plan</label>${UI.select.html({ id: 'pl', value: extend ? 'trial' : ['free', 'trial', 'paid'].includes(a.plan) ? a.plan : 'free', options: [['free', 'Free — comped, never expires'], ['trial', 'Free trial'], ['paid', 'Paid']] })}</div>
-      <div class="field" id="f-days"><label>Trial length (days)</label><input type="number" id="days" min="1" max="730" value="14"><label class="check mt-sm"><input type="checkbox" id="ext" ${extend ? 'checked' : ''}> Add to the current end date instead of starting today</label></div>
+      <div class="field" id="f-days"><label>Trial length (days)</label><input type="number" id="days" class="num" min="1" max="730" value="14"><label class="check mt-sm"><input type="checkbox" id="ext" ${extend ? 'checked' : ''}> Add to the current end date instead of starting today</label></div>
       <div class="field" id="f-until"><label>Paid through (optional)</label><input type="date" id="until"><div class="hint">Leave empty for no end date.</div></div>
       <div class="field"><label>Reason (saved in the account's history)</label><input type="text" id="note" maxlength="255" placeholder="e.g. Comped for launch partner"></div>
       <div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Save plan</button></div>`, { onMount: (el, close) => {

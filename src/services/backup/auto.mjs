@@ -13,6 +13,7 @@ import { enqueueMail, processQueue } from '../mail/index.mjs';
 import { enabledDestinations, uploadVerified, clientFor } from './destinations/index.mjs';
 import { pruneRemoteCount, raiseFailing } from './runner.mjs';
 import { audit } from './audit.mjs';
+import { assertPassphraseReady } from './gate.mjs';
 
 const L = areaLogger('backup');
 export const DEFAULT_FULL = { enabled: false, frequency: 'nightly', hourUtc: 3, weekday: 0, keepDaily: 14, keepWeekly: 8, offboxDir: '', destinationIds: [], passphrase: '', emailOnFailure: true };
@@ -37,7 +38,8 @@ export async function saveFullConfig(db, p, actor) {
     if (p.passphrase.length < MIN_PASSPHRASE) throw new Error(`The backup passphrase must be at least ${MIN_PASSPHRASE} characters.`);
     next.passphrase = seal(p.passphrase);
   }
-  if (next.enabled && !next.passphrase) throw new Error('Choose a backup passphrase before turning scheduled backups on.');
+  if (next.enabled && !next.passphrase) throw new Error('Choose a backup passphrase (Backup setup, step 1) before turning scheduled backups on.');
+  if (next.enabled && raw.passphrase) await assertPassphraseReady(db);
   if (next.offboxDir && !path.isAbsolute(next.offboxDir)) throw new Error('The off-box folder must be a full path, for example /backups.');
   if (next.destinationIds.length && (await enabledDestinations(db, next.destinationIds)).length !== next.destinationIds.length) throw new Error('One of the chosen destinations is turned off or no longer exists.');
   await setSetting(db, 'backup_full', next);

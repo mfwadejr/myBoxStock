@@ -14,6 +14,8 @@ Home only shows information. Everything on it is worked out inside your browser 
 
 Everyone who can sign in can see Home. Only people whose user type can record sales see the **Quick sale** button. See [Team](#/docs/team) for user types.
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. The person who runs your site sets this up, so if a message you expect never arrives, ask them to check it.
+
 ## The top of the page
 
 At the top you will see the word **Home**, your business name, and the current month and year, for example "Acme Streaming · October 2026". The month matters because the four tiles below count from the first day of this calendar month up to now.

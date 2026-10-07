@@ -22,7 +22,7 @@ test('browser: back up, restore (add missing and replace), preview, undo, refusa
   const nums = () => page.$$eval('.compare .tab-num', els => els.map(e => e.textContent.trim()));
   try {
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
-    await page.fill('#bn', 'Backup Co'); await page.fill('#em', 'b@example.com'); await page.fill('#un', 'bea'); await page.fill('#pw', PW); await page.click('button.block');
+    await page.fill('#bn', 'Backup Co'); await page.fill('#em', 'b@example.com'); await page.fill('#un', 'bea'); await page.fill('#pw', PW); await page.check('#tc'); await page.click('button.block');
     await page.waitForSelector('#go'); const id = (await page.textContent('.codeblock')).trim(), login = 'bea@' + id; await page.click('#go');
     await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');

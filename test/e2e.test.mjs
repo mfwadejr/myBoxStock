@@ -18,7 +18,7 @@ test('browser: setup, add, sell, sign out, unlock, recovery key, CSV import', { 
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   try {
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
-    await page.fill('#bn', 'Demo Boxes'); await page.fill('#em', 'd@example.com'); await page.fill('#un', 'dana'); await page.fill('#pw', PW); await page.click('button.block');
+    await page.fill('#bn', 'Demo Boxes'); await page.fill('#em', 'd@example.com'); await page.fill('#un', 'dana'); await page.fill('#pw', PW); await page.check('#tc'); await page.click('button.block');
     await page.waitForSelector('#go'); const login = 'dana@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');
     await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); const key = (await page.textContent('.recovery-key')).trim(); assert.equal(key.length, 52);

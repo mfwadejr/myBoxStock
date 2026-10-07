@@ -1,9 +1,9 @@
 ---
 title: Glossary
 summary: A to Z meanings of the words and labels you see in myBoxStock, each with a link to the page that explains more.
-keywords: glossary, backup file, mbsbackup, account menu, scan box, aim line, preset, restore point, diagnostics, add what is missing, replace everything, meaning, definition, terms, words, what does it mean, reseller id, recovery key, administrator, standard, view, trial, read-only, void, sku, uid, mac, serial, two-factor, authenticator, export, receipt, catalog, warranty
+keywords: glossary, tap to aim, confirm each scan, use this, backup file, mbsbackup, account menu, scan box, aim line, preset, restore point, diagnostics, add what is missing, replace everything, meaning, definition, terms, words, what does it mean, reseller id, recovery key, administrator, standard, view, trial, read-only, void, sku, uid, mac, serial, two-factor, authenticator, export, receipt, catalog, warranty
 order: 14
-covers: Account menu, Add what is missing, Aim line, Backup file, .mbsbackup, Diagnostics, Preset, Replace everything, Restore point, Scan box, Account, Activity, Administrator, Archive, Authenticator, Available, Bulk scan, Catalog, Cost, Customer, Date received, Discount, Disabled, Encryption, Erase, Export, Free trial, Idle lock, Import, Inventory, Look up in sale, Make, Model, Paid by, Password, Quick sale, Read-only, Receipt, Recovery code, Recovery key, Required before sale, Reseller ID, Reorder level, Reserved, Reset access, Returned, Sale, Selling price, Session, Settings, Standard, Status, Suspended, Team, Test checklist, Tested on, Trial, Two-factor, UID, Unlock, User type, Username, View, Void, Warranty, Awaiting test
+covers: Tap to aim, Confirm each scan, Account menu, Add what is missing, Aim line, Backup file, .mbsbackup, Diagnostics, Preset, Replace everything, Restore point, Scan box, Account, Activity, Administrator, Archive, Authenticator, Available, Bulk scan, Catalog, Cost, Customer, Date received, Discount, Disabled, Encryption, Erase, Export, Free trial, Idle lock, Import, Inventory, Look up in sale, Make, Model, Paid by, Password, Quick sale, Read-only, Receipt, Recovery code, Recovery key, Required before sale, Reseller ID, Reorder level, Reserved, Reset access, Returned, Sale, Selling price, Session, Settings, Standard, Status, Suspended, Team, Test checklist, Tested on, Trial, Two-factor, UID, Unlock, User type, Username, View, Void, Warranty, Awaiting test, Pending invitation, Test a backup file, Reorder switch, Drag handle
 ---
 
 Words are listed in alphabetical order. A word in bold inside a definition has its own entry.
@@ -30,7 +30,7 @@ The user type that can do everything: manage the team, change settings, see acti
 
 ### Aim line
 
-The thin line across the middle of the scan box on the camera scanner. When a screen shows several barcodes, the one nearest the aim line is the one that is read. It turns green when a code is read. See [Scanning with your phone camera](#/docs/scanning-with-your-phone).
+The thin line across the middle of the scan box on the camera scanner. When a screen shows several barcodes, the one nearest the aim line is the one that is read. It moves with the scan box when you tap the picture (see Tap to aim), and turns green when a code is read. See [Scanning with your phone camera](#/docs/scanning-with-your-phone).
 
 ### Archive
 
@@ -50,7 +50,7 @@ A status shown for a device that still has required test steps to tick when your
 
 ### Backup file
 
-A file ending in `.mbsbackup` that holds a copy of your whole account, still locked with your key. You make it with **Back up now** and keep it somewhere safe. It opens only with your password or recovery key and restores only into its own account. Team members are not in it. See [Backup and restore](#/docs/backup-and-restore).
+A file ending in `.mbsbackup` that holds a copy of your whole account, still locked with your key. You make it with **Back up now** and keep it somewhere safe. It opens only with your password or recovery key and restores only into its own account. It also holds your team list (usernames, emails and user types, never passwords). See [Backup and restore](#/docs/backup-and-restore).
 
 ### Bulk scan
 
@@ -59,6 +59,10 @@ A way to add many devices at once. You choose what is the same for all of them (
 ### Catalog
 
 The list of makes and models you sell, kept in Settings and used to fill in devices quickly. Models can also have a **reorder level**. See [Settings](#/docs/settings).
+
+### Confirm each scan
+
+A choice on the camera scanner, off by default and remembered on that device only. When it is on, a code that has been read is shown with **Use this** and **Scan again**, and nothing is filled in until you tap **Use this**. It also works in Bulk scan and for the MAC address and UID steps. See [Scanning with your phone camera](#/docs/scanning-with-your-phone).
 
 ### Cost
 
@@ -114,7 +118,7 @@ Your list of devices, with status, cost, price, test results and the other detai
 
 ### Locked (sign-in)
 
-What happens for 15 minutes after six wrong passwords in a row for the same sign-in. See [Troubleshooting and FAQ](#/docs/troubleshooting-faq).
+What happens for 15 minutes after six wrong passwords in a row for the same sign-in. The person who runs the site can unlock it earlier; they never see or change your password when they do. See [Troubleshooting and FAQ](#/docs/troubleshooting-faq).
 
 ### Look up in sale
 
@@ -135,6 +139,10 @@ The payment method recorded on a sale, such as cash or card. Payment methods are
 ### Password
 
 Your secret for signing in. It must be at least 10 characters with letters and numbers. In an encrypted account it also protects the key to your data. See [Security](#/docs/security).
+
+### Pending invitation
+
+A team member who came back from a backup file and has not been given a password yet. They show on the [Team](#/docs/team) page with a **Pending invitation** tag and cannot sign in until an Administrator presses **Set up access** and gives them a temporary password. They then choose their own password and set up their own two-factor.
 
 ### Preset (scan box size)
 
@@ -164,9 +172,17 @@ One of a set of single-use codes shown when you turn on **two-factor**. Use one 
 
 A long code shown once when encryption is turned on. It is the only way to get your data back if everyone forgets their passwords. The hosting service cannot see or recover it. An Administrator can create a new one, which cancels the old one. See [Your data, your responsibility](#/docs/your-data-your-responsibility).
 
+### Drag handle
+
+The six grey dots at the end of a row in Settings when its **Reorder** switch is on. Drag it to move the row, or focus it and use Space and the arrow keys. See [Settings](#/docs/settings).
+
 ### Reorder level
 
 A number on a model. When the available devices of that model fall to it or below, Home shows a low-stock notice. See [Inventory](#/docs/inventory).
+
+### Reorder switch
+
+A switch at the top of the Settings cards for device details, warranty periods, payment methods and test steps. Off (the normal state) locks the rows in place; on shows a **drag handle** on each row so you can change the order. Turning it off locks the new order in. Not the same as a **reorder level**, which is a stock number on a model. See [Settings](#/docs/settings).
 
 ### Replace everything
 
@@ -202,7 +218,7 @@ One transaction, with one or more devices, one customer and one receipt. See [Sa
 
 ### Scan box
 
-The bright rectangle on the camera scanner. Only the part of the picture inside it is read. See [Scanning with your phone camera](#/docs/scanning-with-your-phone).
+The bright rectangle on the camera scanner. Only the part of the picture inside it is read. Tap the picture to move it onto the barcode you want. See [Scanning with your phone camera](#/docs/scanning-with-your-phone).
 
 ### Selling price
 
@@ -236,6 +252,10 @@ An account which the site operator has paused. Nobody can sign in until it is li
 
 The page where Administrators add people, choose their user types, disable them, reset their access or delete them. See [Team](#/docs/team).
 
+### Test a backup file
+
+A card on Backup and restore that checks a backup file in your browser without restoring anything: is it a backup, made for this account, does it open with this account's key, is it complete, can every record be opened. It also shows what is inside and how it compares with your account now. See [Backup and restore](#/docs/backup-and-restore).
+
 ### Test checklist
 
 The list of steps (such as "powers on") that you tick for each device, set up in Settings. Steps can be marked **required before sale**. See [Settings](#/docs/settings).
@@ -243,6 +263,10 @@ The list of steps (such as "powers on") that you tick for each device, set up in
 ### Tested on
 
 The date a device was tested. It defaults to today. See [Inventory](#/docs/inventory).
+
+### Tap to aim
+
+Tapping the live camera picture on the scanner to move the scan box and its aim line to the barcode you want, instead of moving the phone. The box keeps its size and stays on the picture, and goes back to the middle the next time the scanner opens. See [Scanning with your phone camera](#/docs/scanning-with-your-phone).
 
 ### Trial
 
@@ -279,3 +303,5 @@ Cancels a sale: its devices go back to available and the sale stays in your hist
 ### Warranty
 
 The period after a sale during which you stand behind a device. Periods are set in Settings, chosen at Quick sale, and shown on the receipt with the end date. See [Settings](#/docs/settings).
+
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. The person who runs your site sets this up, so if a message you expect never arrives, ask them to check it.

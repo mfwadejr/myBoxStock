@@ -16,6 +16,12 @@ export function stageRestore(name, actor) {
   writeRestoreNote({ name, takenAt: takenAtFromName(name, fs.statSync(p).mtimeMs) }); // the site-wide notice is posted after the restart
   L.warn('restore.staged', `Restore of ${name} staged; the server will restart to apply it`, { actor, data: { name } });
 }
+// Stages an already-opened SQLite file (from an offsite copy) the same way; applied at the next start.
+export function stageRestoreFile(src, { name, takenAt, actor }) {
+  fs.copyFileSync(src, pendingFile());
+  writeRestoreNote({ name, takenAt });
+  L.warn('restore.staged', `Restore of the offsite copy ${name} staged; the server will restart to apply it`, { actor, data: { name, source: 'offsite' } });
+}
 export function applyPendingRestore(dbFile) { // run before the DB is opened at startup
   if (!fs.existsSync(pendingFile())) return false;
   fs.mkdirSync(backupDir(), { recursive: true });

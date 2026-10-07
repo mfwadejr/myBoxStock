@@ -32,17 +32,17 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .receipt table { margin: var(--space-lg) var(--space-0); }
 .receipt .line-total { display: flex; justify-content: space-between; font-weight: var(--weight-semibold); font-size: var(--text-lg); border-top: var(--border-strong); padding-top: var(--space-md); }
 .test-record { margin-top: var(--space-xs); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-sm); background: var(--color-wash-faint); border: var(--border-default); }
-.check-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(4, var(--col-check-w)) var(--control-h-md) var(--move-w); gap: var(--space-sm); align-items: center; padding: var(--space-sm) var(--space-0); border-bottom: var(--border-default); }
+.check-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(4, var(--col-check-w)) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-sm) var(--space-0); border-bottom: var(--border-default); }
 .check-row:last-child { border-bottom: 0; }
 .check-head { font-size: var(--text-xs); color: var(--color-text-muted); font-weight: var(--weight-medium); }
 .check-row .check, .check-row .icon-btn { justify-self: center; justify-content: center; }
 .check-head span:not(:first-child) { text-align: center; }
 .check-row, .step-row { max-width: var(--config-w); }
 .pay-row input[type=text] { height: var(--control-h-md); }
-.pay-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--col-war-w) var(--col-war-w) var(--control-h-md) var(--move-w); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); max-width: var(--config-w); }
+.pay-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--col-war-w) var(--col-war-w) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); max-width: var(--config-w); }
 .war-row input[type=text] { height: var(--control-h-md); }
 .war-row .chip { justify-content: center; }
-.war-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--chip-type-w) var(--col-war-w) var(--col-war-w) var(--control-h-md) var(--move-w); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); max-width: var(--config-w); }
+.war-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--chip-type-w) var(--col-war-w) var(--col-war-w) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); max-width: var(--config-w); }
 .icon-slot { width: var(--control-h-md); }
 .cat-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--chip-type-w) var(--col-req-w) var(--col-war-w) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); border-bottom: var(--border-default); max-width: var(--config-w); }
 .cat-row .chip { justify-content: center; }
@@ -53,7 +53,7 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .check-row input[type=text], .step-row input[type=text] { height: var(--control-h-md); }
 .check-row .row { gap: var(--space-sm); }
 .check-row .chip, .check-row .type-btn { flex: none; width: var(--chip-type-w); justify-content: center; }
-.step-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--chip-type-w) var(--col-req-w) var(--control-h-md) var(--move-w); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); }
+.step-row { display: grid; grid-template-columns: minmax(0, 1fr) var(--chip-type-w) var(--col-req-w) var(--control-h-md); gap: var(--space-sm); align-items: center; padding: var(--space-xs) var(--space-0); }
 .tests { margin-top: var(--space-md); padding: var(--space-md) var(--space-lg); border-radius: var(--radius-md); background: var(--color-wash-faint); border: var(--border-default); }
 .test-items { margin-left: var(--space-2xl); }
 .test-items .field { margin-bottom: var(--space-sm); }
@@ -65,7 +65,8 @@ tr.click:hover td { background: var(--color-wash-faint); }
 @media print {
   html.printing .topbar, html.printing .side, html.printing #root, html.printing .toasts, html.printing .version-badge { display: none; }
   html.printing .scrim { position: static; background: none; backdrop-filter: none; display: block; padding: var(--space-0); }
-  html.printing .sheet { box-shadow: none; max-height: none; width: 100%; overflow: visible; padding: var(--space-0); }
+  html.printing .sheet { box-shadow: none; max-height: none; width: 100%; overflow: visible; display: block; }
+  html.printing .sheet-body { overflow: visible; padding: var(--space-0); }
   html.printing .sheet .actions, html.printing .no-print { display: none; }
   html.printing body { background: var(--color-surface); }
 }
@@ -87,11 +88,19 @@ tr.click:hover td { background: var(--color-wash-faint); }
 
 .receipt-logo { display: block; width: var(--logo-receipt); height: var(--logo-receipt); margin: var(--space-0) auto var(--space-sm); object-fit: contain; }
 
-/* Up / down buttons that reorder a row in Settings lists. */
-.move-btns { display: inline-flex; gap: var(--space-xs); justify-self: center; }
-.icon-btn.move { width: var(--control-h-sm); height: var(--control-h-sm); font-size: var(--text-sm); }
-.icon-btn.move:hover, .icon-btn.move:focus-visible { background: var(--color-primary-soft); color: var(--color-primary); }
-.icon-btn.move[disabled] { opacity: var(--opacity-disabled); pointer-events: none; }
+/* Reorder (Settings lists): a switch per list; when on, each row gets a six-dot grip and an extra last column. Only the grip moves a row. */
+.reordering .check-row { grid-template-columns: minmax(0, 1fr) repeat(4, var(--col-check-w)) var(--control-h-md) var(--tap-min); }
+.reordering .pay-row { grid-template-columns: minmax(0, 1fr) var(--col-war-w) var(--col-war-w) var(--control-h-md) var(--tap-min); }
+.reordering .war-row { grid-template-columns: minmax(0, 1fr) var(--chip-type-w) var(--col-war-w) var(--col-war-w) var(--control-h-md) var(--tap-min); }
+.reordering .step-row { grid-template-columns: minmax(0, 1fr) var(--chip-type-w) var(--col-req-w) var(--control-h-md) var(--tap-min); }
+.reorder-hint { margin-bottom: var(--space-0); }
+.grip { display: inline-grid; place-items: center; flex: none; justify-self: center; width: var(--tap-min); height: var(--tap-min); padding: var(--space-0); border: 0; border-radius: var(--radius-md); background: none; color: var(--color-text-faint); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }   /* touch-action none lives on the handle only, so the rest of the row scrolls the page as usual */
+.grip:hover { background: var(--color-wash); color: var(--color-text-muted); }
+.grip:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.grip[aria-pressed=true] { background: var(--color-primary-soft); color: var(--color-primary); }
+.grip-icon { width: var(--tabbar-icon); height: var(--tabbar-icon); fill: currentColor; stroke: none; }
+.drag-row { position: relative; z-index: var(--z-raised); background: var(--color-surface); border-radius: var(--radius-md); box-shadow: var(--shadow-overlay); }
+html.reorder-drag { user-select: none; -webkit-user-select: none; cursor: grabbing; }
 
 /* A reseller's logo shown in Settings, and the empty state before one is chosen. */
 .brand-logo { width: var(--logo-preview); height: var(--logo-preview); object-fit: contain; border: var(--border-default); border-radius: var(--radius-md); background: var(--color-surface); }

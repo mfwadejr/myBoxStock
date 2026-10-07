@@ -19,6 +19,8 @@ The page is called **Activity** in the menu. It is only shown to people with the
 
 > Activity shows facts about signing in: names, times, devices and network addresses. It never shows your inventory, customers or sales. Those are encrypted in your browser and are covered in [Your data, your responsibility](#/docs/your-data-your-responsibility).
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. The person who runs your site sets this up, so if a message you expect never arrives, ask them to check it.
+
 ## Where people are signed in
 
 The first card on the page is titled **Where people are signed in**. It lists every sign-in that is currently open on your account, for the whole team. Each row is one device or browser that is signed in. A person who uses a laptop and a phone will appear twice.
@@ -96,7 +98,7 @@ If nothing has been recorded yet the card says "Nothing recorded yet."
 - **Signed in** (green): the sign-in worked.
 - **Wrong password** (red): somebody entered the right username with the wrong password.
 - **Wrong code** (red): the password was right but the two-factor code or recovery code was wrong.
-- **Blocked** (amber): the attempt was refused, for example because there had been too many failed tries in a short time. After six wrong attempts the account's sign-in is paused for 15 minutes to protect it.
+- **Blocked** (amber): the attempt was refused, for example because there had been too many failed tries in a short time. After six wrong attempts the account's sign-in is paused for 15 minutes to protect it. The person who runs the site can end the pause early (an "unlock"); that never shows or changes anyone's password.
 
 ### Repeat counts and New location
 

@@ -39,15 +39,29 @@ test('tokens.css is the only stylesheet with raw values', () => {
 
 test('everything that scrolls uses the one themed scroll bar, and sheets never scroll sideways', () => {
   const base = stripComments(read(path.join(PUB, 'css', 'base.css')));
-  assert.ok(/scrollbar-color:\s*var\(--color-scroll-thumb\)/.test(base) && /::-webkit-scrollbar-thumb/.test(base) && /::-webkit-scrollbar\s*\{\s*width:\s*var\(--scroll-w\)/.test(base), 'base.css must define the themed scroll bar from tokens');
+  // the standard properties apply to everything...
+  assert.match(base, /\*\s*\{\s*scrollbar-width:\s*thin;\s*scrollbar-color:\s*var\(--color-scroll-thumb\)\s+transparent;\s*\}/, 'base.css must set scrollbar-width: thin and scrollbar-color from tokens on everything');
+  // ...and the -webkit- rules exist ONLY inside @supports not (scrollbar-width: thin), because any ::-webkit-scrollbar rule makes Safari use its older, unclipped bar
+  const at = base.search(/@supports\s+not\s*\(\s*scrollbar-width:\s*thin\s*\)\s*\{/);
+  assert.ok(at >= 0, 'the ::-webkit-scrollbar fallback must sit inside @supports not (scrollbar-width: thin)');
+  const open = base.indexOf('{', at); let depth = 0, end = open; for (; end < base.length; end++) { if (base[end] === '{') depth++; else if (base[end] === '}' && --depth === 0) break; }
+  const fallback = base.slice(open + 1, end), outside = base.slice(0, at) + base.slice(end + 1);
+  assert.ok(!/::-webkit-scrollbar/.test(outside), '::-webkit-scrollbar rules must not exist outside the @supports not block');
+  assert.match(fallback, /::-webkit-scrollbar\s*\{\s*width:\s*var\(--scroll-w\)/); assert.match(fallback, /::-webkit-scrollbar-button\s*\{\s*display:\s*none/); assert.match(fallback, /::-webkit-scrollbar-thumb\s*\{[^}]*var\(--color-scroll-thumb\)/);
   const other = [];
   for (const f of cssFiles.filter(f => f !== path.join(PUB, 'css', 'base.css'))) { const css = stripComments(read(f)); if (/scrollbar-(width|color)|::-webkit-scrollbar/.test(css)) other.push(`${rel(f)}: scroll bar styling belongs in base.css only`); if (/overflow-x:\s*(scroll)\b/.test(css)) other.push(`${rel(f)}: overflow-x: scroll`); }
   assert.deepEqual(other, []);
-  assert.match(stripComments(read(path.join(PUB, 'css', 'components.css'))).match(/\.sheet \{[^}]*\}/)[0], /overflow-x:\s*hidden/, '.sheet must not scroll sideways');
+  // a pop-up sheet is a fixed, rounded, clipped frame with an inner area that scrolls, so no bar can overhang a corner
+  const comp = stripComments(read(path.join(PUB, 'css', 'components.css')));
+  const rule = (sel) => comp.match(new RegExp(sel.replace('.', '\\.') + ' \\{[^}]*\\}'))[0];
+  assert.match(rule('.sheet'), /overflow:\s*hidden/, '.sheet is the fixed frame (overflow hidden)');
+  assert.doesNotMatch(rule('.sheet'), /overflow-y/, '.sheet itself must not scroll');
+  assert.match(rule('.sheet-body'), /overflow-y:\s*auto/, '.sheet-body is the inner scroller'); assert.match(rule('.sheet-body'), /overflow-x:\s*hidden/, 'a sheet must not scroll sideways');
+  assert.match(rule('.menu-pop'), /overflow:\s*hidden/, 'the account menu is a clipped frame'); assert.match(rule('.menu-body'), /overflow-y:\s*auto/, 'with an inner scroller');
 });
 
 test('every var(--token) used is defined in tokens.css (or is a sanctioned runtime property)', () => {
-  const defined = new Set([...read(tokensFile).matchAll(/(--[\w-]+)\s*:/g)].map(m => m[1])), runtime = new Set(['--pct']);
+  const defined = new Set([...read(tokensFile).matchAll(/(--[\w-]+)\s*:/g)].map(m => m[1])), runtime = new Set(['--pct', '--scan-dx', '--scan-dy']);
   const missing = [];
   for (const f of cssFiles) for (const m of stripComments(read(f)).matchAll(/var\((--[\w-]+)/g)) if (!defined.has(m[1]) && !runtime.has(m[1])) missing.push(`${rel(f)}: ${m[1]}`);
   assert.deepEqual([...new Set(missing)], []);
@@ -161,5 +175,5 @@ test('native controls are styled: no textarea grip, no number spinners, no searc
   assert.match(base, /input\[type=number\]::-webkit-inner-spin-button[^{]*\{[^}]*-webkit-appearance:\s*none/);
   assert.match(base, /input\[type=search\]::-webkit-search-cancel-button[^{]*\{[^}]*(-webkit-)?appearance:\s*none/);
   assert.match(base, /\*::-webkit-scrollbar-button\s*\{\s*display:\s*none/, 'scroll bar arrows are hidden');
-  assert.match(base, /\*::-webkit-scrollbar-thumb\s*\{[^}]*var\(--color-scroll-thumb\)/);
+  assert.match(base, /scrollbar-width:\s*thin/, 'thin standard scroll bar');
 });

@@ -19,6 +19,8 @@ Why would you use it? Some everyday examples:
 
 Your sales are encrypted in your browser with your own key, so only people who sign in to your account can read them. See [Your data, your responsibility](#/docs/your-data-your-responsibility).
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. The person who runs your site sets this up, so if a message you expect never arrives, ask them to check it.
+
 ## Who can do what
 
 - **Administrator** and **Standard** users can view sales, record new ones, and void a sale.

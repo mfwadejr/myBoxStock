@@ -25,6 +25,7 @@
 .scan-box.small { height: min(var(--scan-h-small), 100%); }
 .scan-box.medium { height: min(var(--scan-h-medium), 100%); }
 .scan-box.large { height: min(var(--scan-size-large), 100%); width: auto; aspect-ratio: 1 / 1; max-width: var(--scan-box-w); }
+.scan-box.aimed { left: var(--scan-dx); top: var(--scan-dy); }   /* Tap to aim: moved from its centered spot by the offsets the scanner sets */
 .scan-corner { position: absolute; width: var(--scan-corner); height: var(--scan-corner); border: 0 solid var(--color-scan-text); border-radius: var(--radius-xs); }
 .scan-corner.tl { top: 0; left: 0; border-top-width: var(--scan-corner-w); border-left-width: var(--scan-corner-w); }
 .scan-corner.tr { top: 0; right: 0; border-top-width: var(--scan-corner-w); border-right-width: var(--scan-corner-w); }
@@ -38,7 +39,7 @@
 .scan-panel { grid-area: panel; position: relative; z-index: var(--z-nav); display: flex; flex-direction: column; gap: var(--space-md); width: min(100%, var(--scan-panel-max-w)); justify-self: center; padding: var(--space-lg); background: var(--color-scan-glass); backdrop-filter: blur(var(--blur-md)) saturate(var(--saturate)); -webkit-backdrop-filter: blur(var(--blur-md)) saturate(var(--saturate)); border-radius: var(--radius-xl) var(--radius-xl) 0 0; touch-action: auto; overflow-y: auto; max-height: 100%; }
 .scan-hint { text-align: center; color: var(--color-scan-text-soft); font-size: var(--text-lead); }
 .scanner[data-state=got] .scan-hint { color: var(--color-scan-ok); font-weight: var(--weight-semibold); }
-.scanner[data-state=warn] .scan-hint { color: var(--color-scan-warn); }
+.scanner[data-state=warn] .scan-hint, .scanner[data-stuck] .scan-hint { color: var(--color-scan-warn); }
 .scan-float { position: absolute; left: var(--space-lg); right: var(--space-lg); bottom: var(--space-md); display: flex; flex-direction: column; align-items: center; pointer-events: auto; }
 .scan-float > * { width: min(100%, var(--scan-panel-max-w)); padding: var(--space-md); border-radius: var(--radius-lg); background: var(--color-scan-glass); backdrop-filter: blur(var(--blur-md)); -webkit-backdrop-filter: blur(var(--blur-md)); }
 .scan-float > [hidden] { display: none; }
@@ -65,3 +66,7 @@
 }
 /* Tablets and computers: the same layer, with the controls centered under the picture. */
 @media (min-width: 821px) { .scan-panel { border-radius: var(--radius-xl); margin-bottom: var(--space-lg); } }
+
+/* The field that just received a scanned code flashes green and fades (the keyframes are in motion.css). With reduced motion it just shows for a moment. */
+.scan-filled { animation: scan-filled var(--dur-highlight) var(--ease); }
+@media (prefers-reduced-motion: reduce) { .scan-filled { box-shadow: var(--shadow-filled); background-color: var(--color-success-soft); } }

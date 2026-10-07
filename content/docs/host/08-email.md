@@ -3,10 +3,12 @@ title: Email
 summary: Set up how the server sends email, reword each message customers and administrators receive, and check that mail is actually getting out.
 keywords: sender checks, dmarc, dns, dkim selector, email, smtp, relay, direct, helo, from address, tls, port 465, 587, test email, resend, queue, bounce, spf, dkim, reverse dns, messages, placeholders, template, preview, health
 order: 8
-covers: nav:email, Delivery, Messages, Health, Send email, Delivery method, Direct to recipient, SMTP relay, From name, From address, Server name announced when sending (HELO), SMTP host, Port, Username, Password, Use TLS from the start of the connection (port 465), Save, Send a test, Send test email, Recent messages, Resend, Resend all failed, Subject, Heading, Body, Button label, Insert a detail, Reset to default, Send test, Live preview, Styled, Plain text, Desktop, Phone, Is email getting out, Last successful send, Failed last 24 hours, Failed last 7 days, Waiting to send, Last failure, Sender checks, Check again, DKIM selector, SPF, DMARC, DKIM, Found, Not found, Could not check
+covers: nav:email, Delivery, Messages, Health, Send email, Delivery method, Direct to recipient, SMTP relay, From name, From address, Server name announced when sending (HELO), SMTP host, Port, Username, Password, Use TLS from the start of the connection (port 465), Save, Send a test, Send test email, Recent messages, Resend, Resend all failed, Subject, Heading, Body, Button label, Insert a detail, Reset to default, Send test, Live preview, Styled, Plain text, Desktop, Phone, Is email getting out, Last successful send, Failed last 24 hours, Failed last 7 days, Waiting to send, Last failure, Sender checks, Check again, DKIM selector, SPF, DMARC, DKIM, Found, Not found, Could not check, Account erased by the Host, Emails and alerts only work after the Email section is set up
 ---
 
 ## What email does here
+
+**Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway.** The Email page itself shows this in a blue box above its tabs. Until it is done, nothing below can reach anyone: not sign-up and sign-in emails, not password resets, not backup-failure or alert emails, not the "account erased" message. The places in the app that depend on email warn you where that matters, for example the delete sheet in [Accounts](#/docs/accounts).
 
 The server sends email on its own for several reasons: welcome messages when a business signs up, password resets, confirmations, "new sign-in" notices, warnings that a trial has ended, account closing notices, backup failure notices, and the problem alerts sent to you. It is outbound only: the server never receives mail, and nobody can reply to it and reach a mailbox.
 
@@ -110,7 +112,7 @@ The **Messages** tab lets you reword every message the platform sends. You chang
 
 A selector at the top lists the messages, grouped as **Account**, **Trial** and **System**, in the form "Group · Name", with "(edited)" after any whose wording you have changed. The groups hold:
 
-- Account: Welcome, New sign-in alert, Confirm your email, Password reset, Password reset (several accounts), Temporary password, Two-factor reset, Account closing and Account erased.
+- Account: Welcome, New sign-in alert, Confirm your email, Password reset, Password reset (several accounts), Temporary password, Two-factor reset, Account closing, Account erased (sent by the hourly closing sweep) and Account erased by the Host (sent once when a Host administrator deletes an account; it carries the optional reason).
 - Trial: Trial ended.
 - System: Backup failed, Host alert and Test message.
 

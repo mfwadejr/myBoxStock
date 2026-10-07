@@ -16,6 +16,8 @@ The page loads when you open it. It does not refresh itself, so reopen **Pipelin
 
 > Pipeline is read-only. To act on someone you see here, find them in [Accounts](#/docs/accounts) by business name or Reseller ID and use the support tools there.
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
+
 ## The four numbers at the top
 
 ### Sign-ups this week

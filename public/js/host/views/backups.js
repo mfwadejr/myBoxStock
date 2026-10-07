@@ -9,7 +9,7 @@
   const TIER_NAME = { frequent: 'Frequent snapshot', manual: 'Manual snapshot', offsite: 'Offsite copy', full: 'Full-site backup' };
   let tab = 'frequent';
 
-  const num = (id, label, v, min, max, hint = '') => `<div class="field"><label for="${id}">${esc(label)}</label><input type="number" id="${id}" min="${min}" max="${max}" value="${esc(v)}" inputmode="numeric">${hint ? `<div class="hint">${esc(hint)}</div>` : ''}</div>`;
+  const num = (id, label, v, min, max, hint = '') => `<div class="field"><label for="${id}">${esc(label)}</label><input type="number" class="num" id="${id}" min="${min}" max="${max}" value="${esc(v)}" inputmode="numeric">${hint ? `<div class="hint">${esc(hint)}</div>` : ''}</div>`;
   const thinHtml = (p, t, count) => `<div class="setting-title mt-md">How long to keep them</div><div class="setting-desc">Every copy is kept for a while, then thinned out: one an hour, then one a day, then one a week.${count ? ` These settings keep about <b>${count}</b> files.` : ''}</div>
     <div class="grid g2 mt-md">${num(`${p}-fh`, 'Keep every copy for (hours)', t.fullHours, 1, 168)}${num(`${p}-hh`, 'Then one an hour for (hours)', t.hourlyHours, 0, 720)}${num(`${p}-dd`, 'Then one a day for (days)', t.dailyDays, 0, 365)}${num(`${p}-ww`, 'Then one a week for (weeks)', t.weeklyWeeks, 0, 520)}</div>`;
   const readThin = (root, p) => ({ fullHours: root.querySelector(`#${p}-fh`).value, hourlyHours: root.querySelector(`#${p}-hh`).value, dailyDays: root.querySelector(`#${p}-dd`).value, weeklyWeeks: root.querySelector(`#${p}-ww`).value });
@@ -32,12 +32,19 @@
     <div class="banner ${o.cost.warning ? 'red' : 'blue'} mb-lg" id="cost">${esc(o.cost.line)}${o.cost.warning ? `<br>${esc(o.cost.warning)}` : ''}</div>`;
   }
 
+  // A locked tab shows why and cannot be changed until step 1 of Backup setup is done (the server refuses it as well).
+  const lockPane = (pane, reason) => {
+    if (!reason) return;
+    pane.insertAdjacentHTML('afterbegin', `<div class="banner red mb-lg" id="lock-note">${esc(reason)}</div>`);
+    pane.querySelectorAll('input, textarea, button:not([data-test]):not([data-folder]), .select-btn').forEach(x => { x.disabled = true; });
+  };
+
   const panes = {
     frequent(pane, d) {
       const f = d.tiers.frequent, s = d.schedule;
-      pane.innerHTML = `<div class="card"><div class="row spread wrap"><div><h3>Frequent snapshots</h3><div class="setting-desc">Small, quick copies of the database kept on this server so a restore loses as little as possible. They are taken while the site keeps running; nobody waits for them.</div></div><label class="switch"><input type="checkbox" id="fen" ${f.enabled ? 'checked' : ''}><i></i></label></div>
+      pane.innerHTML = `<div class="card"><div class="row spread wrap"><div><h3>Frequent snapshots</h3><div class="setting-desc">Small, quick copies of the database kept on this server so a restore loses as little as possible. They are taken while the site keeps running; nobody waits for them.</div></div><label class="switch"><input type="checkbox" id="fen" aria-label="Take frequent snapshots" ${f.enabled ? 'checked' : ''}><i></i></label></div>
         <div class="field mt-md"><label>Take a snapshot every</label>${everySel('fev', f.everyMinutes)}</div>${thinHtml('f', f.thin, d.overview.counts.frequent)}
-        <div class="setting"><div><div class="setting-title">Also keep a plain copy every night</div><div class="setting-desc">The older nightly database backup.</div></div><label class="switch"><input type="checkbox" id="nen" ${s.enabled ? 'checked' : ''}><i></i></label></div>
+        <div class="setting"><div><div class="setting-title">Also keep a plain copy every night</div><div class="setting-desc">The older nightly database backup.</div></div><label class="switch"><input type="checkbox" id="nen" aria-label="Keep a plain copy every night" ${s.enabled ? 'checked' : ''}><i></i></label></div>
         <div class="grid g2">${num('nhr', 'Nightly hour (UTC)', s.hourUtc, 0, 23)}${num('nkeep', 'Keep nightly copies', s.keep, 1, 365)}</div>
         <div class="row wrap mt-md"><button class="btn" data-save>Save</button><button class="btn secondary" id="now">Take a snapshot now</button></div></div>
         <div class="card"><h3>Are snapshots protected?</h3><div class="setting-desc">${esc(d.plainNote)}</div><div class="hint">Backup folder: <span class="ident">${esc(d.localDir)}</span> (you can change it on the Destinations tab).</div></div>
@@ -51,7 +58,7 @@
     },
     offsite(pane, d) {
       const o = d.tiers.offsite;
-      pane.innerHTML = `<div class="card"><div class="row spread wrap"><div><h3>Offsite copies</h3><div class="setting-desc">A fresh snapshot, compressed and encrypted with your backup passphrase, sent away from this server so a lost disk or machine does not take your backups with it.</div></div><label class="switch"><input type="checkbox" id="oen" ${o.enabled ? 'checked' : ''}><i></i></label></div>
+      pane.innerHTML = `<div class="card"><div class="row spread wrap"><div><h3>Offsite copies</h3><div class="setting-desc">A fresh snapshot, compressed and encrypted with your backup passphrase, sent away from this server so a lost disk or machine does not take your backups with it.</div></div><label class="switch"><input type="checkbox" id="oen" aria-label="Send offsite copies on a schedule" ${o.enabled ? 'checked' : ''}><i></i></label></div>
         <div class="field mt-md"><label>Send a copy every</label>${everySel('oev', o.everyMinutes, 15)}</div>
         <div class="field"><label>Send them to</label>${destChecks(d, o.destinations)}</div>${thinHtml('o', o.thin, d.overview.counts.offsite)}
         <div class="row wrap mt-md"><button class="btn" data-save>Save</button><button class="btn secondary" id="now">Send one now</button></div></div>
@@ -59,16 +66,19 @@
       saveBtn(pane, () => Host.api('PUT', '/backups/tiers', { offsite: { enabled: pane.querySelector('#oen').checked, everyMinutes: UI.select.value(pane.querySelector('#oev')), destinations: chosen(pane), thin: readThin(pane, 'o') } }), 'Offsite settings saved');
       runBtn(pane, '#now', '/backups/run/offsite', 'Offsite copy sent and checked');
       B.remoteList(pane.querySelector('#list'), B.reloadStrip);
+      lockPane(pane, d.setup.locks.offsite);
     },
     full(pane, d) {
       const f = d.full, fs = d.fullStatus;
-      pane.innerHTML = `<div class="card"><div class="row spread wrap"><div><h3>Full-site backups</h3><div class="setting-desc">One passphrase-protected file with the whole site: every account, user and setting, plus the encryption key. Each one is opened and checked after it is written. Restore it on a new server with <span class="ident">node server.mjs restore-bundle</span>.</div></div><label class="switch"><input type="checkbox" id="fen" ${f.enabled ? 'checked' : ''}><i></i></label></div>
+      pane.innerHTML = `<div class="card"><div class="row spread wrap"><div><h3>Full-site backups</h3><div class="setting-desc">One passphrase-protected file with the whole site: every account, user and setting, plus the encryption key. Each one is opened and checked after it is written. Restore it on a new server with <span class="ident">node server.mjs restore-bundle</span>.</div></div></div>
+        <div class="setting"><div><div class="setting-title">Make a full-site backup on a schedule</div><div class="setting-desc">Turn this on to run the schedule below. You can still run one by hand at any time.</div></div><label class="switch"><input type="checkbox" id="fen" aria-label="Make a full-site backup on a schedule" ${f.enabled ? 'checked' : ''}><i></i></label></div>
         <div class="grid g2 mt-md"><div class="field"><label>How often</label>${UI.select.html({ id: 'ff', options: [['nightly', 'Every night'], ['weekly', 'Once a week']], value: f.frequency })}</div><div class="field"><label id="fwl">Weekly copy is taken on</label>${UI.select.html({ id: 'fwd', options: DAYS.map((x, i) => [i, x]), value: f.weekday })}</div>
           ${num('fhr', 'Hour (UTC)', f.hourUtc, 0, 23)}${num('fkd', 'Keep daily copies', f.keepDaily, 1, 90)}${num('fkw', 'Keep weekly copies', f.keepWeekly, 1, 52)}
           <div class="field"><label>Extra folder (optional)</label><input type="text" id="fob" value="${esc(f.offboxDir)}" placeholder="/backups" autocomplete="off"><div class="hint">A folder outside the data folder, for example a mounted NAS share.</div></div></div>
         <div class="field"><label>Also send them to</label>${destChecks(d, f.destinationIds || [])}</div>
         <div class="field"><label>Backup passphrase</label><input type="password" id="fpp" autocomplete="new-password" placeholder="${f.hasPassphrase ? 'Saved — leave blank to keep it' : 'At least 12 characters'}"><div class="hint">Kept encrypted on this server so backups can run unattended. Offsite copies and every destination use it too. You need it to restore, so keep your own copy somewhere safe.</div></div>
-        <div class="setting"><div><div class="setting-title">Email Host administrators if a backup fails</div></div><label class="switch"><input type="checkbox" id="fem" ${f.emailOnFailure ? 'checked' : ''}><i></i></label></div>
+        <div class="setting"><div><div class="setting-title">Email Host administrators if a backup fails</div></div><label class="switch"><input type="checkbox" id="fem" aria-label="Email Host administrators if a backup fails" ${f.emailOnFailure ? 'checked' : ''}><i></i></label></div>
+        ${d.setup.mail.ready ? '' : `<div class="banner" id="mail-warn">No mail is set up, so a failure email will not be sent. ${esc(d.setup.mail.note)}</div>`}
         <div class="row wrap mt-md"><button class="btn" data-save>Save</button><button class="btn secondary" id="now">Run one now</button><button class="btn secondary" id="hand">Make one with a new passphrase</button></div></div>
         <div class="card"><h3>Full-site backups on this server</h3><div class="mt-sm" id="list"></div></div>`;
       const gather = () => ({ enabled: pane.querySelector('#fen').checked, frequency: UI.select.value(pane.querySelector('#ff')), weekday: UI.select.value(pane.querySelector('#fwd')), hourUtc: pane.querySelector('#fhr').value, keepDaily: pane.querySelector('#fkd').value, keepWeekly: pane.querySelector('#fkw').value, offboxDir: pane.querySelector('#fob').value, destinationIds: chosen(pane), passphrase: pane.querySelector('#fpp').value, emailOnFailure: pane.querySelector('#fem').checked });
@@ -82,6 +92,7 @@
         if (ok) { toast('Full-site backup created'); B.reload(); }
       });
       B.localList(pane.querySelector('#list'), 'full', d.engine, B.reloadStrip);
+      lockPane(pane, d.setup.locks.full);
     },
     safety(pane, d) {
       const s = d.tiers.safety;
@@ -92,19 +103,22 @@
       saveBtn(pane, () => Host.api('PUT', '/backups/tiers', { safety: { keepDays: pane.querySelector('#sd').value, keepMin: pane.querySelector('#sm').value } }), 'Safety copy settings saved');
       B.localList(pane.querySelector('#list'), 'safety', d.engine, B.reloadStrip);
     },
-    destinations(pane, d) { B.destinationsPane(pane, d, () => B.reload()); },
+    destinations(pane, d) { B.destinationsPane(pane, d, () => B.reload()); lockPane(pane, d.setup.locks.destinations); },
   };
 
   Host.views.backups = async (main) => {
     let data = await Host.api('GET', '/backups');
     swap(main, `${Host.head('Backups', 'Frequent, small copies of the site, kept in layers and sent away from this server.')}
       ${data.engine !== 'sqlite' ? '<div class="banner mb-lg">You are on an external database. Backups here use pg_dump / mysqldump and need those tools in the container; test restore can only check the files, and managed databases usually have their own snapshots too.</div>' : ''}
-      <div id="strip"></div><div class="seg tabs mb-lg" id="tabs" role="tablist">${TABS.map(([k, l]) => `<button type="button" role="tab" data-t="${k}" class="${k === tab ? 'on' : ''}">${esc(l)}</button>`).join('')}</div><div id="pane"></div>`);
+      <div id="setup-panel" class="mb-lg"></div><div id="strip"></div><div class="seg tabs mb-lg" id="tabs" role="tablist">${TABS.map(([k, l]) => `<button type="button" role="tab" data-t="${k}" class="${k === tab ? 'on' : ''}">${esc(l)}</button>`).join('')}</div><div id="pane"></div>`);
+    const tabs = main.querySelector('#tabs'), goTab = (k) => { tab = k; paint(); tabs.scrollIntoView({ block: 'nearest' }); };
     const paintStrip = () => { main.querySelector('#strip').innerHTML = strip(data); };
-    const paint = () => { main.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab)); paintStrip(); panes[tab](main.querySelector('#pane'), data); };
+    const paintSetup = () => B.setupPanel(main.querySelector('#setup-panel'), data, () => B.reload(), goTab);
+    const paint = () => { B.engine = data.engine; main.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab)); UI.tabRow.sync(tabs); paintSetup(); paintStrip(); panes[tab](main.querySelector('#pane'), data); };
     B.reload = async () => { try { data = await Host.api('GET', '/backups'); paint(); } catch (e) { toast(e.message, true); } };
-    B.reloadStrip = async () => { try { data = await Host.api('GET', '/backups'); paintStrip(); } catch {} };
+    B.reloadStrip = async () => { try { data = await Host.api('GET', '/backups'); paintStrip(); paintSetup(); } catch {} };
     main.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => { if (tab !== b.dataset.t) { tab = b.dataset.t; paint(); } }));
+    UI.tabRow(tabs);
     paint();
   };
 })();

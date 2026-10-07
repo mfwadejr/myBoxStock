@@ -8,6 +8,7 @@ import { DEFAULT_THIN, thinPolicy } from './thin.mjs';
 import { setBackupDir } from './files.mjs';
 import { getPassphrase } from './passphrase.mjs';
 import { enabledDestinations } from './destinations/index.mjs';
+import { assertPassphraseReady } from './gate.mjs';
 
 const L = areaLogger('backup');
 export const DEFAULT_TIERS = {
@@ -51,7 +52,8 @@ export async function saveTiers(db, p, actor) {
     if (next.offsite.enabled) {
       if (!next.offsite.destinations.length) throw new Error('Choose at least one destination for the offsite copies.');
       if ((await enabledDestinations(db, next.offsite.destinations)).length !== next.offsite.destinations.length) throw new Error('One of the chosen destinations is turned off or no longer exists.');
-      if (!(await getPassphrase(db))) throw new Error('Set the backup passphrase (Full-site backups tab) before turning on offsite copies. They are encrypted with it.');
+      if (!(await getPassphrase(db))) throw new Error('Set the backup passphrase (Backup setup, step 1) before turning on offsite copies. They are encrypted with it.');
+      await assertPassphraseReady(db);
     }
   }
   if (p.safety) {

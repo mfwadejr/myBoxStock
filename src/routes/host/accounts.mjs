@@ -3,6 +3,7 @@
 // (the one exception is the write-only DELETE when an account is erased).
 import express from 'express';
 import { hostLog } from './context.mjs';
+import { normalizeIp } from '../../security/firewall/ip.mjs';
 import { hashPassword } from '../../auth/password.mjs';
 import { destroyAllFor } from '../../auth/session.mjs';
 import { token, sha256, newId } from '../../core/ids.mjs';
@@ -11,13 +12,16 @@ import { siteUrl } from '../../services/site/index.mjs';
 import { fail } from '../../core/messages.mjs';
 import { billingState, DAY } from '../../services/billing/state.mjs';
 import { sendConfirmation } from '../../services/verify/index.mjs';
-import { eraseAccount, restoreClosing } from '../../services/accounts/closing.mjs';
+import { eraseByHost, restoreClosing } from '../../services/accounts/closing.mjs';
+import { termsOf } from '../../services/legal/index.mjs';
 import { setPlan } from '../../services/billing/index.mjs';
+import { isLocked, unlock } from '../../auth/lockout.mjs';
+import { mailReady } from '../../services/mail/index.mjs';
 
 export function accountsRoutes(db) {
   const r = express.Router();
   const A = (req, level, event, message, a, data) => hostLog(req, level, event, message, { area: 'accounts', accountId: a?.id || null, data });
-  const getAccount = (id) => db.get('SELECT id, account_code, business_name, owner_email, status, plan, trial_ends_at, plan_until, plan_note, plan_changed_at, created_at, last_activity, closing_at, closing_by, host_link_allowed FROM accounts WHERE id = ?', [id]);
+  const getAccount = (id) => db.get('SELECT id, account_code, business_name, owner_email, status, plan, trial_ends_at, plan_until, plan_note, plan_changed_at, created_at, last_activity, closing_at, closing_by, host_link_allowed, terms_version, terms_accepted_at FROM accounts WHERE id = ?', [id]);
   // Every support action needs a short reason; it goes in the log next to who did it (see "Support history").
   const reasonOf = (req, res) => { const t = String(req.body?.reason ?? req.body?.note ?? '').trim(); if (t.length < 3) { res.status(400).json({ error: 'Say why, in a few words, so the log explains it.', code: 'REASON_REQUIRED' }); return null; } return t.slice(0, 200); };
   const userOf = (req) => db.get('SELECT id, account_id, username, login, email, role FROM account_users WHERE id = ? AND account_id = ?', [req.params.uid, req.params.id]);
@@ -60,10 +64,11 @@ export function accountsRoutes(db) {
     const sup = await db.all("SELECT ts, actor, event, message, raw FROM event_log WHERE account_id = ? AND area = 'accounts' AND (event LIKE 'user.%' OR event LIKE 'account.%' OR event LIKE 'plan.%') ORDER BY ts DESC LIMIT 50", [a.id]);
     const support = sup.map(e => { let reason = ''; try { reason = JSON.parse(e.raw)?.data?.reason || ''; } catch {} return { ts: Number(e.ts), actor: e.actor, event: e.event, message: e.message, reason }; });
     const receipts = await db.all('SELECT id, ts, amount_cents, currency, method, reference, note, period_end, actor FROM billing_receipts WHERE account_id = ? ORDER BY ts DESC LIMIT 50', [a.id]);
-    res.json({ support, receipts: receipts.map(x => ({ ...x, ts: Number(x.ts), amount_cents: Number(x.amount_cents), period_end: x.period_end ? Number(x.period_end) : null })), account: { ...a, billing: billingState(a) }, isOwner: req.subject.id === owner, users, events, history, data: { encrypted: !!enc, recordCount: Number(n.n) } });
+    const lockedOf = (u) => isLocked(u.login) || isLocked('mfa:' + u.id);
+    res.json({ mailReady: await mailReady(db), support, receipts: receipts.map(x => ({ ...x, ts: Number(x.ts), amount_cents: Number(x.amount_cents), period_end: x.period_end ? Number(x.period_end) : null })), account: { ...a, billing: billingState(a) }, terms: termsOf(a), isOwner: req.subject.id === owner, users: users.map(u => ({ ...u, locked: lockedOf(u) })), events, history, data: { encrypted: !!enc, recordCount: Number(n.n) } });
   });
 
-  // Owner administrator only: let this account's Administrators link a Host administrator sign-in (the account switcher). Switching off also removes existing links.
+  // Owner administrator only: let this account's Administrators link a Host administrator sign-in (the Host-link menu in the reseller app). Switching off also removes existing links.
   r.post('/:id/host-link', async (req, res) => {
     const owner = (await db.get('SELECT id FROM host_admins ORDER BY created_at, id LIMIT 1'))?.id;
     if (req.subject.id !== owner) return res.status(403).json({ error: 'Only the Owner administrator can do that.' });
@@ -94,9 +99,12 @@ export function accountsRoutes(db) {
   r.delete('/:id', async (req, res) => {
     const a = await getAccount(req.params.id); if (!a) return fail(res, 404, 'NOT_FOUND');
     if (req.body.confirm !== a.account_code) return res.status(400).json({ error: `Type the Reseller ID (${a.account_code}) to confirm.` });
-    await eraseAccount(db, a.id); // write-only erase; nothing is read
-    A(req, 'warn', 'account.deleted', `Account ${a.account_code} (${a.business_name}) permanently deleted`, a, { code: a.account_code });
-    res.json({ ok: true });
+    const reason = String(req.body?.reason || '').trim().slice(0, 200);
+    const m = await eraseByHost(db, a, { reason }); // write-only erase; nothing is read. Then one "account erased" email, which the delete never waits for.
+    const why = m.sent ? '' : m.why, tail = reason ? ` (reason: ${reason})` : '';
+    A(req, 'warn', 'account.deleted', `Account ${a.account_code} (${a.business_name}) permanently deleted${m.sent ? `, email queued to ${m.count} address${m.count === 1 ? '' : 'es'}` : `, email not sent: ${why}`}${tail}`, a, { code: a.account_code, reason, emailSent: !!m.sent, emailNotSentBecause: why });
+    if (m.sent) m.done.then((r) => { if (!r.ok) A(req, 'warn', 'account.erase_email_failed', `Account ${a.account_code} deleted, email not sent: ${r.why}${tail}`, a, { code: a.account_code, reason, emailNotSentBecause: r.why }); });
+    res.json({ ok: true, emailSent: !!m.sent, ...(why ? { emailNotSentBecause: why } : {}) });
   });
 
   // Change an account's plan: free (comped), trial (start or extend), or paid. Every change is kept in billing_events.
@@ -188,6 +196,15 @@ export function accountsRoutes(db) {
     await destroyAllFor(db, 'app', u.id, 'two-factor reset by host admin');
     if (u.email) { await enqueueMail(db, u.email, 'mfa_reset', { name: u.username }); processQueue(db).catch(() => {}); }
     A(req, 'warn', 'user.mfa_reset', `Two-factor reset for ${u.login}: ${reason}`, { id: u.account_id }, { login: u.login, reason });
+    res.json({ ok: true });
+  });
+  // Let a locked-out person try again now (clears the lockout and failed-attempt counter for the sign-in and for two-factor codes). Never touches a password.
+  r.post('/:id/users/:uid/unlock', async (req, res) => {
+    const u = await userOf(req); if (!u) return fail(res, 404, 'NOT_FOUND');
+    const reason = reasonOf(req, res); if (!reason) return;
+    const o = { actor: req.subject.username, ip: normalizeIp(req.ip), accountId: u.account_id, reason };
+    const a = unlock(u.login, o), b = unlock('mfa:' + u.id, o);
+    if (!a && !b) return fail(res, 400, 'NOT_LOCKED');
     res.json({ ok: true });
   });
   r.post('/:id/users/:uid/sign-out', async (req, res) => {

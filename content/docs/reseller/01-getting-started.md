@@ -1,9 +1,9 @@
 ---
 title: Getting started
 summary: What myBoxStock is, how to create your account, sign in, save your recovery key, find your way around the menu, and what to do in your first hour.
-keywords: start, account menu, name menu, site admin, sign out, more, more sheet, contents, search help, backup, begin, sign up, create account, register, reseller id, username, password, sign in, log in, new device, recovery key, menu, roles, administrator, standard, view, checklist, first steps, documentation, search help, confirm email, trial
+keywords: terms, privacy, agree, terms of service, privacy policy, legal, updated terms, start, account menu, name menu, site admin, sign out, more, more sheet, contents, search help, backup, begin, sign up, create account, register, reseller id, username, password, sign in, log in, new device, recovery key, menu, roles, administrator, standard, view, checklist, first steps, documentation, search help, confirm email, trial
 order: 1
-covers: nav:docs, Account menu, Site admin, name menu, More sheet, Contents menu, Nothing found, Backup and restore, Back up now, Documentation, Search the documentation, Create account, Sign in, Reseller ID, Username, Password, Business name, Email, Forgot password, Send link, Back to sign in, Two-factor code, Verify, Choose a new password, Update password, Unlock your data, Unlock, Use your recovery key, Restore access, Turn on encryption, Save your recovery key, Download, Print, I have saved my recovery key somewhere safe, Continue, Continue to sign in, Send it again, Sign out, Free trial, Trial ended, Restore account, Close, menu tour, roles, first-hour checklist
+covers: nav:docs, I agree to the Terms of Service and Privacy Policy, Terms of Service, Privacy Policy, Updated terms, Accept and continue, Sign out instead, Legal links, nav:docs, Account menu, Site admin, name menu, More sheet, Contents menu, Nothing found, Backup and restore, Back up now, Documentation, Search the documentation, Create account, Sign in, Reseller ID, Username, Password, Business name, Email, Forgot password, Send link, Back to sign in, Two-factor code, Verify, Choose a new password, Update password, Unlock your data, Unlock, Use your recovery key, Restore access, Turn on encryption, Save your recovery key, Download, Print, I have saved my recovery key somewhere safe, Continue, Continue to sign in, Send it again, Sign out, Free trial, Trial ended, Restore account, Close, menu tour, roles, first-hour checklist
 ---
 
 ## What myBoxStock is
@@ -18,6 +18,8 @@ Everything about your business that you type in, such as devices, costs, prices,
 
 That privacy comes with a responsibility that is yours alone. You own your data, and you are 100 percent responsible for it, for your recovery key, and for keeping your own exports. Nobody at the site can recover your data for you if the key and every password are lost. Please read [Your data, your responsibility](#/docs/your-data-your-responsibility) and [Security](#/docs/security) early on.
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. The person who runs your site sets this up, so if a message you expect never arrives, ask them to check it.
+
 ## Creating your account
 
 If your site accepts new sign-ups, the sign-in page has two tabs at the top, **Sign in** and **Create account**. (If you see no tabs, sign-ups are closed right now and you will need an invitation from someone who already has an account.)
@@ -27,9 +29,20 @@ If your site accepts new sign-ups, the sign-in page has two tabs at the top, **S
 3. Type your **Email**. Use an address you can read. It is used for your welcome message, for confirming your address, and for resetting your password.
 4. Choose a **Username**. Use 3 to 30 letters, numbers, dots, underscores or hyphens. Capital letters do not matter.
 5. Choose a **Password**. It needs at least 10 characters, with both letters and numbers.
-6. Press **Create account**.
+6. Tick **I agree to the Terms of Service and Privacy Policy**. The two names are links: they open the pages in a new tab, so you can read them without losing what you typed.
+7. Press **Create account**.
+
+The account cannot be created until the box is ticked. If you press **Create account** without ticking it, a red message under the box tells you to tick it, and nothing is created. The site records which version of the Terms and Privacy Policy you accepted and when, and nothing more about it.
 
 The next screen says **You're all set** and shows your **Reseller ID** in large type. It looks like three parts joined by hyphens, for example `amber-fox-4271`. We also email it to you. Write it down. Press **Continue to sign in**.
+
+### The Terms and Privacy Policy
+
+The legal pages are part of the app. The **Terms of Service**, **Privacy Policy**, **Data responsibility and acceptable use** and **Billing, trial and refund terms** are linked in the footer at the bottom of every page, under every sign-in screen, and in the sign-up form. Each page shows its **version** and its **effective date** at the top. In short: myBoxStock, its owner and supporting staff cannot see your customer data (inventory, customers, sales, receipts and prices) and are not responsible or liable for it. You own your data and are 100 percent responsible for it, for your recovery key, and for your own backup files and exports.
+
+#### When the terms change
+
+When the Terms or Privacy Policy are updated, every Administrator sees an **Updated terms** screen at their next sign-in, with links to read them. Tick the box and press **Accept and continue** to carry on. Until an Administrator accepts, the account cannot be used (you can still read this documentation); press **Sign out instead** if you are not ready. You are asked once for each new version. People with the Standard or View type are not asked, since the acceptance covers the whole account. Accounts that were created before the Terms were introduced are asked once in the same way.
 
 ### What the Reseller ID is, and why you need it
 

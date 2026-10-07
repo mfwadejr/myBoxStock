@@ -8,10 +8,11 @@ import { fail } from '../../core/messages.mjs';
 import { newId } from '../../core/ids.mjs';
 import { sendConfirmation } from '../../services/verify/index.mjs';
 import { normalizeIp } from '../../security/firewall/ip.mjs';
+import { INVITED } from '../../services/backup/team.mjs';
 
 export function usersRoutes(db) {
   const r = express.Router();
-  r.get('/', need('users.manage'), async (req, res) => res.json(await db.all(`SELECT id, username, login, email, role, disabled, totp_enabled, last_login,
+  r.get('/', need('users.manage'), async (req, res) => res.json(await db.all(`SELECT id, username, login, email, role, disabled, totp_enabled, last_login, (CASE WHEN pw_hash LIKE '${INVITED}%' THEN 1 ELSE 0 END) AS pending,
     (SELECT s.ip FROM sign_in_history s WHERE s.user_id = account_users.id AND s.result = 'signed_in' ORDER BY s.ts DESC LIMIT 1) AS last_ip,
     (SELECT COUNT(*) FROM sessions x WHERE x.realm = 'app' AND x.subject_id = account_users.id AND x.mfa_pending = 0 AND x.expires_at > ?) AS active_sessions
     FROM account_users WHERE account_id = ? ORDER BY created_at`, [Date.now(), req.subject.account_id])));
@@ -62,7 +63,7 @@ export function usersRoutes(db) {
     if (u.id === req.subject.id) return res.status(400).json({ error: 'You cannot delete yourself.' });
     if (req.body?.confirm !== u.login) return res.status(400).json({ error: `Type ${u.login} to confirm.` });
     if (u.role === 'Administrator') {
-      const others = await db.get("SELECT COUNT(*) AS n FROM account_users WHERE account_id = ? AND role = 'Administrator' AND id <> ?", [req.subject.account_id, u.id]);
+      const others = await db.get(`SELECT COUNT(*) AS n FROM account_users WHERE account_id = ? AND role = 'Administrator' AND id <> ? AND pw_hash NOT LIKE '${INVITED}%'`, [req.subject.account_id, u.id]);
       if (Number(others.n) < 1) return res.status(400).json({ error: 'An account needs at least one Administrator.' });
     }
     await db.tx(async (t) => {

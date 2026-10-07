@@ -20,6 +20,8 @@ Like everything else in myBoxStock, your customer list is encrypted in your brow
 
 > The page header shows how many customers you have and reminds you that only your team can read this list.
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. The person who runs your site sets this up, so if a message you expect never arrives, ask them to check it.
+
 ## Who can see and change customers
 
 What you can do depends on your user type (your role). The three types are explained in full on the [Team](#/docs/team) page.

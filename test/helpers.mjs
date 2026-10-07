@@ -36,6 +36,7 @@ export async function restartServer(srv, extraEnv = {}) {
 export class Client {
   constructor(base) { this.base = base; this.jar = {}; this.csrf = ''; this.headers = {}; }
   async req(method, url, body, { csrf = true } = {}) {
+    if (url === '/api/app/signup' && body && !('acceptTerms' in body)) body = { ...body, acceptTerms: true };   // sign-up needs the Terms box ticked; tests of the refusal pass acceptTerms: false
     const res = await fetch(this.base + url, { method, headers: { ...this.headers, 'Content-Type': 'application/json', Cookie: Object.entries(this.jar).map(([k, v]) => `${k}=${v}`).join('; '), ...(csrf && this.csrf ? { 'X-CSRF-Token': this.csrf } : {}) }, body: body ? JSON.stringify(body) : undefined });
     for (const c of res.headers.getSetCookie()) { const [kv] = c.split(';'), i = kv.indexOf('='), v = kv.slice(i + 1); if (/Max-Age=0/.test(c)) delete this.jar[kv.slice(0, i)]; else this.jar[kv.slice(0, i)] = v; }
     let data = {}; try { data = await res.json(); } catch {}

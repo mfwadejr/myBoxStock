@@ -20,6 +20,7 @@ export const AUDIT_TYPES = [
   { group: 'firewall', label: 'Host Console access limit changed', area: 'security', events: ['host_access.changed'] },
   { group: 'blocks', label: 'Ban created', area: 'security', events: ['ban.created'] },
   { group: 'blocks', label: 'Ban lifted', area: 'security', events: ['ban.lifted'] },
+  { group: 'blocks', label: 'Sign-in unlocked', area: 'security', events: ['lockout.lifted'] },
   { group: 'blocks', label: 'Host Console sign-in locked', area: 'auth', events: ['lockout.started'], hostRealm: true },
   { group: 'signins', label: 'Host Console sign-in', area: 'auth', events: ['login.ok'], hostRealm: true },
   { group: 'signins', label: 'Host Console failed sign-in', area: 'auth', events: ['login.failed', 'login.blocked', 'mfa.failed'], hostRealm: true },
@@ -36,6 +37,7 @@ export const AUDIT_TYPES = [
   { group: 'backups', label: 'Backup destination removed', area: 'host', events: ['backup.destination_deleted'] },
   { group: 'backups', label: 'Backup destination tested', area: 'host', events: ['backup.destination_test'] },
   { group: 'backups', label: 'Backup settings changed', area: 'host', events: ['backup.settings_saved'] },
+  { group: 'backups', label: 'Backup setup step done', area: 'host', events: ['backup.setup_passphrase', 'backup.setup_where', 'backup.setup_keep', 'backup.setup_prove'] },
 ];
 
 // SQL for "this event row belongs to the audit trail" (optionally only one group). Parameters are returned in order.

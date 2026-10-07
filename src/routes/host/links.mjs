@@ -1,4 +1,4 @@
-// ROUTES / host / links — the reseller accounts linked to the signed-in Host administrator (for the account switcher). Names only: no business data.
+// ROUTES / host / links — the reseller accounts linked to the signed-in Host administrator (for the Host-link menu in the reseller app). Names only: no business data.
 import express from 'express';
 import { hostLog } from './context.mjs';
 

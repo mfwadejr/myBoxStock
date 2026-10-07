@@ -1,9 +1,9 @@
 ---
 title: Security
 summary: Look after your own sign-in: change your password, turn on two-factor, confirm your email, manage the recovery key, and see your own devices.
-keywords: security, site admin, name menu, account menu, sign out, closing account, close account, erased, what backups keep, password, change password, two-factor, 2FA, authenticator, recovery codes, recovery key, email, confirm email, host administrator, link, export, close account, encryption, forgot password, temporary password, unlock
+keywords: security, terms, privacy policy, updated terms, accepted terms, site admin, name menu, account menu, sign out, closing account, close account, erased, what backups keep, password, change password, two-factor, 2FA, authenticator, recovery codes, recovery key, email, confirm email, host administrator, link, export, close account, encryption, forgot password, temporary password, unlock
 order: 10
-covers: nav:security, Site admin, name menu, account menu, Closing your account, Export everything first, Your password, Close this account, Restore account, closing account erase date, Reseller ID, username, Two-factor authentication, Set up, Turn off, authenticator code, recovery codes, I've saved them, Email address, Change email, Send confirmation, Send it again, Password, Change password, Current password, New password, Recovery key, Create new recovery key, Download, Print, I have saved my recovery key somewhere safe, Host administrator, Link Host administrator, Remove link, Your data, Export everything, Close my account, Close account, Restore account, Encryption, Where you're signed in, Recent sign-ins, Forgot password, Unlock your data
+covers: nav:security, Terms of Service, Privacy Policy, Updated terms, Accept and continue, Legal links, Site admin, name menu, account menu, Closing your account, Export everything first, Your password, Close this account, Restore account, closing account erase date, Reseller ID, username, Two-factor authentication, Set up, Turn off, authenticator code, recovery codes, I've saved them, Email address, Change email, Send confirmation, Send it again, Password, Change password, Current password, New password, Recovery key, Create new recovery key, Download, Print, I have saved my recovery key somewhere safe, Host administrator, Link Host administrator, Remove link, Your data, Export everything, Close my account, Close account, Restore account, Encryption, Where you're signed in, Recent sign-ins, Forgot password, Unlock your data, Account deleted by the Host, account erased email
 ---
 
 ## What the Security page is for
@@ -15,6 +15,8 @@ Why it matters: your account holds your stock, your customers and your sales his
 At the top of the page you see your **Reseller ID** and your **username**. The Reseller ID is the account name that looks like `amber-fox-4271`. You need both, plus your password, to sign in. Write the Reseller ID down somewhere safe; it was in your welcome email, and an Administrator can tell you if you lose it. The sign-in page remembers the Reseller ID on a browser you have used before, so you then only need your username and password.
 
 > If you have not confirmed your email address, a blue banner appears at the top of this page and of Home. See the email section below.
+
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. The person who runs your site sets this up, so if a message you expect never arrives, ask them to check it.
 
 ## Two-factor authentication
 
@@ -158,7 +160,7 @@ Only an Administrator can close the account. Here is exactly what happens.
 2. The account is locked straight away for **7 days**. People who are not Administrators are signed out and cannot sign in. Administrators can still sign in, but only to look around: reading, exporting and making a backup file still work, and anything that changes data is refused with "This account is closing, so changes are paused. An Administrator can restore it."
 3. An "account is closing" email with the erase date goes to the account's owner email and to the Administrator who closed it. A red banner with the date shows on every page.
 4. During the 7 days an Administrator can click **Restore account** in the red banner. The Host administrator can also bring it back for you.
-5. After the 7 days the site erases the account automatically (it checks when it starts and every hour). **There is no way back after that.** Everything is deleted: the people and their sign-in history, the devices, customers, sales and receipts, your keys and recovery key, your billing history and your restore point. An "account erased" email goes to the owner and the Administrators.
+5. After the 7 days the site erases the account automatically (it checks when it starts and every hour). **There is no way back after that.** Everything is deleted: the people and their sign-in history, the devices, customers, sales and receipts, your keys and recovery key, your billing history and your restore point. An "account erased" email goes to the owner and the Administrators. In rare cases the person who runs the site can also delete an account straight away, without the 7 days (for example when you ask them to). They cannot read your data and cannot bring the account back. If the site's email is set up, one "account erased" email then goes to the owner and the Administrators, saying the account was deleted by the site's Host, when, and the reason they gave if any. The delete never waits for that email, so if email is not set up nobody is emailed, which is one more reason to keep your own backup file and export.
 
 What stays behind:
 
@@ -188,6 +190,14 @@ For Administrators, add:
 5. Save the recovery key and confirm it.
 6. Make a backup file on the [Backup and restore](#/docs/backup-and-restore) page every week, and keep the file away from your device.
 7. Export everything now and then if you also want spreadsheets.
+
+## Terms and Privacy Policy
+
+When you created the account, you agreed to the **Terms of Service** and **Privacy Policy**. The footer at the bottom of every page links to them, together with **Data responsibility and acceptable use** and **Billing, trial and refund terms**. Each shows its version and effective date. The account records which version was accepted and when; the Host administrator can see that on the account's sheet, and nothing else about it.
+
+myBoxStock, its owner and supporting staff cannot see your customer data (inventory, customers, sales, receipts and prices) and are not responsible or liable for it. You own your data and are 100 percent responsible for it, for your recovery key, and for your own backup files and exports.
+
+If the terms change, Administrators are shown **Updated terms** at their next sign-in and must press **Accept and continue** before they can use the account. See [Getting started](#/docs/getting-started).
 
 ## If your plan is read-only
 

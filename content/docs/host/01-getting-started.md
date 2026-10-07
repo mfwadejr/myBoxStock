@@ -16,6 +16,8 @@ Your job as the Host is to keep the server healthy, safe and reachable, and to h
 
 That one fact explains many of the choices you will meet in the console: there is no "look at this customer's inventory" button, and a password reset never recovers their data on its own.
 
+> Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
+
 ## Your first sign-in
 
 When the server starts for the very first time it creates one administrator called `admin` with a temporary password. The password is printed once in the server's start-up output. With Docker you can see it by running `docker compose logs myboxstock`. Copy it straight away.
@@ -100,7 +102,7 @@ Work through these once. Each one has a full page behind it.
 
 1. **Set the site address.** Open [Settings](#/docs/settings) and fill in **Site address (used for every link in an email)**, for example `https://app.example.com`, without any path. Confirmation, reset and welcome emails all link to it, and the Overview warns "Email links will not work" until it is right.
 2. **Set up email.** Open [Email](#/docs/email), connect your outgoing mail and send a test. Without it customers cannot confirm their address or reset a password by email.
-3. **Check backups.** Open [Backups](#/docs/backups). Frequent snapshots are on by default. Save a backup passphrase, turn on a scheduled full-site backup, and set up a destination so a copy is kept somewhere other than the server. Then read [Recovery and emergencies](#/docs/recovery-and-emergencies). Your backup covers the server; customers must still keep their own exports and recovery keys.
+3. **Check backups.** Open [Backups](#/docs/backups) and follow **Backup setup** at the top: set and confirm the passphrase, say where copies go (a destination must pass Test connection), choose how much to keep, then run the first backup and test restore. Only then does the page say Protected. Frequent snapshots are on by default. Then read [Recovery and emergencies](#/docs/recovery-and-emergencies). Your backup covers the server; customers must still keep their own exports and recovery keys.
 4. **Check the firewall and Host Console access.** Open [Firewall](#/docs/firewall). Decide whether the Host Console should answer only to listed addresses. Add your own address first so you do not lock yourself out.
 5. **Turn on two-factor** for yourself (above) and add helpers only if you need them.
 6. **Decide on sign-ups and trial length** in [Settings](#/docs/settings): leave **Open sign-ups** on if you want new customers, and pick the **Free trial length for new sign-ups (days)**.

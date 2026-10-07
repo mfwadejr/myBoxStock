@@ -40,7 +40,8 @@
 @media (max-width: 640px) {
   .menu-btn { max-width: var(--width-xs); }
   .menu-scrim { display: block; position: fixed; inset: 0; z-index: var(--z-modal); background: var(--color-scrim); backdrop-filter: blur(var(--blur-sm)); -webkit-backdrop-filter: blur(var(--blur-sm)); animation: fade-in var(--dur-med) var(--ease); }
-  .menu-pop { top: auto; left: 0; right: 0; bottom: 0; width: 100%; max-width: none; max-height: var(--sheet-max-h-phone); padding: var(--space-sm) var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom)); border: 0; border-radius: var(--radius-xl) var(--radius-xl) 0 0; animation: rise-in var(--dur-med) var(--ease); }
+  .menu-pop { top: auto; left: 0; right: 0; bottom: 0; width: 100%; max-width: none; max-height: var(--sheet-max-h-phone); border: 0; border-radius: var(--radius-xl) var(--radius-xl) 0 0; animation: rise-in var(--dur-med) var(--ease); }
+  .menu-body { padding: var(--space-sm) var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom)); }
   .page-head { margin-bottom: var(--space-lg); }
   .card { padding: var(--space-lg); }
   .tablewrap { margin: 0; padding: 0; overflow: visible; }
@@ -61,13 +62,17 @@
   .check-head { display: none; }
   .check-row, .war-row, .cat-row, .step-row, .pay-row, .stock-row, .buy-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
   .check-row > :first-child, .war-row > :first-child, .cat-row > :first-child, .step-row > :first-child, .pay-row > :first-child, .stock-row > :first-child, .buy-row > :first-child { flex: 1 1 100%; min-width: 0; }
+  .reordering .check-row > :first-child, .reordering .war-row > :first-child, .reordering .step-row > :first-child, .reordering .pay-row > :first-child { flex-basis: calc(100% - var(--tap-min) - var(--space-sm)); }   /* Reorder on: the handle sits beside the name, not alone on a line */
+  .reordering .grip { order: 1; }
+  .reordering .check-row > :not(:first-child):not(.grip), .reordering .war-row > :not(:first-child):not(.grip), .reordering .step-row > :not(:first-child):not(.grip), .reordering .pay-row > :not(:first-child):not(.grip) { order: 2; }
   .check-row .check { display: inline-flex; align-items: center; gap: var(--space-xs); min-height: var(--tap-min); }
   .check-text { display: inline; font-size: var(--text-sm); color: var(--color-text-muted); }
   .card .row > input.grow { flex: 1 1 100%; }
   .cart-line { grid-template-columns: minmax(0, 1fr) var(--width-xs) var(--tap-min); }
   .cart-line > div:first-child { grid-column: 1 / -1; }
   .scrim { place-items: end center; padding: 0; }
-  .sheet { width: 100%; max-height: var(--sheet-max-h-phone); border-radius: var(--radius-xl) var(--radius-xl) 0 0; padding-bottom: calc(var(--sheet-padding) + env(safe-area-inset-bottom)); }
+  .sheet { width: 100%; max-height: var(--sheet-max-h-phone); border-radius: var(--radius-xl) var(--radius-xl) 0 0; }
+  .sheet-body { padding-bottom: calc(var(--sheet-padding) + env(safe-area-inset-bottom)); }
   .sheet .actions .btn { flex: 1; }
 }
 

@@ -16,7 +16,7 @@ test('browser: the Paid by list is editable in Settings and used at Quick sale',
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   try {
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
-    await page.fill('#bn', 'Pay Co'); await page.fill('#em', 'p@example.com'); await page.fill('#un', 'pam'); await page.fill('#pw', PW); await page.click('button.block');
+    await page.fill('#bn', 'Pay Co'); await page.fill('#em', 'p@example.com'); await page.fill('#un', 'pam'); await page.fill('#pw', PW); await page.check('#tc'); await page.click('button.block');
     await page.waitForSelector('#go'); const login = 'pam@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');
     await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.side');
