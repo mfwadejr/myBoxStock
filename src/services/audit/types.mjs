@@ -33,10 +33,15 @@ export const AUDIT_TYPES = [
   { group: 'backups', label: 'Backup downloaded', area: 'host', events: ['backup.download'] },
   { group: 'backups', label: 'Backup deleted', area: 'host', events: ['backup.delete'] },
   { group: 'backups', label: 'Backup test restore', area: 'host', events: ['backup.test_restore'] },
+  { group: 'backups', label: 'Backup file uploaded for testing', area: 'host', events: ['backup.file_upload'] },
+  { group: 'backups', label: 'Backup file tested', area: 'host', events: ['backup.file_test'] },
   { group: 'backups', label: 'Backup destination saved', area: 'host', events: ['backup.destination_saved'] },
   { group: 'backups', label: 'Backup destination removed', area: 'host', events: ['backup.destination_deleted'] },
   { group: 'backups', label: 'Backup destination tested', area: 'host', events: ['backup.destination_test'] },
   { group: 'backups', label: 'Backup settings changed', area: 'host', events: ['backup.settings_saved'] },
+  { group: 'backups', label: 'Backup passphrase checked', area: 'host', events: ['backup.passphrase_check'] },
+  { group: 'backups', label: 'Backup passphrase changed', area: 'host', events: ['backup.passphrase_change'] },
+  { group: 'backups', label: 'Backup passphrase reset', area: 'host', events: ['backup.passphrase_reset'] },
   { group: 'backups', label: 'Backup setup step done', area: 'host', events: ['backup.setup_passphrase', 'backup.setup_where', 'backup.setup_keep', 'backup.setup_prove'] },
 ];
 

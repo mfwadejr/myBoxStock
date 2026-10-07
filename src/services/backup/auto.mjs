@@ -1,19 +1,19 @@
 // SERVICES / backup / auto — scheduled full-site backups: nightly or weekly, passphrase kept sealed, verified after writing,
 // optionally copied to a folder outside the data folder, old copies pruned (14 daily + 8 weekly by default), failures emailed.
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { getSetting, setSetting } from '../../db/settings.mjs';
 import { seal, unseal } from '../../auth/secrets.mjs';
 import { areaLogger } from '../../logging/logger.mjs';
-import { createBundle, openBundle, MIN_PASSPHRASE } from './bundle.mjs';
+import { createBundle, extractBundle, keyOf, peekPart, MIN_PASSPHRASE } from './bundle.mjs';
 import { backupDir, deleteBackup } from './files.mjs';
 import { enqueueMail, processQueue } from '../mail/index.mjs';
 import { enabledDestinations, uploadVerified, clientFor } from './destinations/index.mjs';
 import { pruneRemoteCount, raiseFailing } from './runner.mjs';
 import { audit } from './audit.mjs';
-import { assertPassphraseReady } from './gate.mjs';
+import { assertPassphraseReady, coded } from './gate.mjs';
+import { jobStep } from './progress.mjs';
 
 const L = areaLogger('backup');
 export const DEFAULT_FULL = { enabled: false, frequency: 'nightly', hourUtc: 3, weekday: 0, keepDaily: 14, keepWeekly: 8, offboxDir: '', destinationIds: [], passphrase: '', emailOnFailure: true };
@@ -35,6 +35,7 @@ export async function saveFullConfig(db, p, actor) {
     passphrase: raw.passphrase,
   };
   if (typeof p.passphrase === 'string' && p.passphrase) {
+    if (raw.passphrase) throw coded('HOST_BACKUP_PASSPHRASE_EXISTS'); // changing it goes through Change passphrase (current one required, audited)
     if (p.passphrase.length < MIN_PASSPHRASE) throw new Error(`The backup passphrase must be at least ${MIN_PASSPHRASE} characters.`);
     next.passphrase = seal(p.passphrase);
   }
@@ -48,21 +49,20 @@ export async function saveFullConfig(db, p, actor) {
 }
 
 // Opens the finished file with the passphrase and checks that the database inside is really there and sound.
-export function verifyBundleFile(file, passphrase) {
-  const e = openBundle(fs.readFileSync(file), passphrase), m = JSON.parse(e['manifest.json'].toString());
-  if (!e['secret.key']?.length) throw new Error('The backup is missing its encryption key.');
-  if (m.engine === 'sqlite') {
-    const tmp = path.join(os.tmpdir(), `mbs-verify-${process.pid}-${Date.now()}.db`); fs.writeFileSync(tmp, e['database.db']);
-    try {
-      const d = new DatabaseSync(tmp, { readOnly: true });
+export async function verifyBundleFile(file, passphrase) {
+  const x = await extractBundle(file, passphrase), m = x.manifest; // streamed to a scratch folder; deleted below
+  try {
+    if (!keyOf(x)) throw new Error('The backup is missing its encryption key.');
+    if (m.engine === 'sqlite') {
+      const d = new DatabaseSync(x.files['database.db'], { readOnly: true });
       try {
         const ok = d.prepare('PRAGMA integrity_check').get(); if (Object.values(ok)[0] !== 'ok') throw new Error('The database inside the backup failed its integrity check.');
         return { engine: m.engine, accounts: Number(d.prepare('SELECT COUNT(*) AS n FROM accounts').get().n), createdAt: m.createdAt };
       } finally { d.close(); }
-    } finally { fs.rmSync(tmp, { force: true }); }
-  }
-  if (!e['database.sql']?.length || !/CREATE TABLE/i.test(e['database.sql'].toString('utf8', 0, 200000))) throw new Error('The database dump inside the backup looks empty.');
-  return { engine: m.engine, createdAt: m.createdAt };
+    }
+    if (!/CREATE TABLE/i.test(peekPart(x, 'database.sql'))) throw new Error('The database dump inside the backup looks empty.');
+    return { engine: m.engine, createdAt: m.createdAt };
+  } finally { x.cleanup(); }
 }
 
 const prune = (dir, tag, keep) => {
@@ -88,10 +88,10 @@ export async function runFullBackup(db, trigger = 'scheduled', actor = 'schedule
   try {
     if (!cfg.passphrase) throw new Error('No backup passphrase is stored. Enter one in Backups settings.');
     const name = await createBundle(db, cfg.passphrase, actor, tag), file = path.join(backupDir(), name);
-    const v = verifyBundleFile(file, cfg.passphrase), size = fs.statSync(file).size;
+    jobStep('Opening the new file to check it', 85, 95); const v = await verifyBundleFile(file, cfg.passphrase), size = fs.statSync(file).size;
     let weeklyName = null;
     if (cfg.frequency === 'nightly' && weekly) { weeklyName = name.replace('-fullsite-daily-', '-fullsite-weekly-'); fs.copyFileSync(file, path.join(backupDir(), weeklyName)); }
-    let offbox = null;
+    jobStep('Copying to the other places', 95, 99); let offbox = null;
     if (cfg.offboxDir) {
       fs.mkdirSync(cfg.offboxDir, { recursive: true });
       for (const n of [name, weeklyName].filter(Boolean)) { const dest = path.join(cfg.offboxDir, n); fs.copyFileSync(path.join(backupDir(), n), dest); if (fs.statSync(dest).size !== size) throw new Error(`The copy in ${cfg.offboxDir} is not the same size as the original.`); }

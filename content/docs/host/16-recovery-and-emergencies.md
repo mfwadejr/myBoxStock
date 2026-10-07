@@ -3,7 +3,7 @@ title: Recovery and emergencies
 summary: Calm, step-by-step help for the bad days: locked out of the Host Console, lost password, lost two-factor, restoring from a backup, a full disk, and email that has stopped, with the exact commands and where to run them.
 keywords: decrypt-backup, offsite copy, lost server, safety copy, bans survive restart, recovery, emergency, locked out, lockout, reset-host-admin, reset-server-options, HOST_ALLOW_ANY, lost password, forgot password, lost two-factor, lost authenticator, recovery code, owner, restore backup, restore-bundle, disk full, storage full, email stopped, docker exec, docker compose exec, not found, 404, secret.key, proxy
 order: 16
-covers: decrypt-backup, offsite copy, safety copy, Test restore, Restore, /data/backup, TRUST_PROXY fallback, restore announcement, reset-host-admin, reset-server-options, HOST_ALLOW_ANY, restore-bundle, BACKUP_PASSPHRASE, --force, docker exec, docker compose exec, locked out, allow-list, proxy setting, lost admin password, lost two-factor, Owner reset two-factor, restoring from backup, disk full, email stops
+covers: background job, job strip, Test a backup file, Restore this file, decrypt-backup, offsite copy, safety copy, Test restore, Restore, /data/backup, TRUST_PROXY fallback, restore announcement, reset-host-admin, reset-server-options, HOST_ALLOW_ANY, restore-bundle, BACKUP_PASSPHRASE, --force, docker exec, docker compose exec, locked out, allow-list, proxy setting, lost admin password, lost two-factor, Owner reset two-factor, restoring from backup, disk full, email stops, Reset (forgotten), Change passphrase, Check my passphrase, made with an earlier passphrase
 ---
 
 ## First, breathe
@@ -147,7 +147,7 @@ Pick the situation that fits.
 
 1. Open **Backups** and find the file. Local files on the **Frequent snapshots**, **Full-site backups** and **Safety copies** tabs have a **Restore** button. If you are unsure, press **Test restore** on the row first: it opens the file in a scratch copy, checks it and deletes the copy.
 2. Press **Restore**. The sheet names the file, shows when it was taken in UTC and your own time, and how long ago. Read it. Anything entered after that time will be lost.
-3. For a full-site `.mbsbak` file, type its **Backup passphrase**. Type `RESTORE` to confirm and press **Restore**.
+3. For a full-site `.mbsbak` file, type its **Backup passphrase**. Type `RESTORE` to confirm and press **Restore**. The restore runs as a background job with a progress bar, also shown in the job strip at the top of the Backups page; only one backup job runs at a time, so wait for any other to finish first.
 4. A safety copy of the site as it is now is taken first (it appears on the **Safety copies** tab). Then the site restarts, and the console reloads in a few seconds.
 5. After the restart the site posts a red announcement to every customer: "The site was restored from a backup taken ... UTC. Sales or changes made after that time may be missing. Please check your recent activity." Clear it in [Settings](#/docs/settings) when it is no longer needed.
 6. Tell your resellers. Those with a newer backup file of their own can recover recent work with **Add what is missing** on their Backup and restore page (see [Support and diagnostics](#/docs/support-and-diagnostics)).
@@ -166,6 +166,10 @@ The easiest way is the **Restore** button on the copy in the **Offsite copies** 
 
 An offsite copy is a snapshot, so it does not contain `secret.key`. Restoring it on the same server is fine. On a new server with a different key, two-factor secrets, the saved mail password, saved destination passwords and the saved passphrase cannot be read. People set up two-factor again and you re-enter the passwords.
 
+### You have a backup file somewhere else
+
+If the file is on your laptop or a drive, and the console still works, use **Test a backup file** on the **Full-site backups** tab of **Backups**. Choose the file (it is uploaded as a stream, or pick one you have copied into the server's backup folder), type its passphrase and press **Run test**. You see whether it opens, what is inside (accounts by plan and status, users by role, records per account) and how it compares with the live site, with any account that exists only on the live site shown first. After a pass, **Restore this file** takes a safety copy, asks you to type RESTORE and restores it. The report cannot show reseller records, because the Host cannot open them. See [Backups](#/docs/backups).
+
 ### The server is lost, new, empty, or you cannot sign in
 
 Use the command line and a full-site backup (`.mbsbak`), which includes the key. You need the file and its passphrase. If the file is only on a destination, download it first, or mount the NAS where you can reach it.
@@ -181,6 +185,8 @@ Use the command line and a full-site backup (`.mbsbak`), which includes the key.
 
 On success it says "Restored a sqlite backup made ... Start the server". For a PostgreSQL or MariaDB backup it places `restored-dump.sql` in the data folder for you to load with `psql` or `mysql`.
 
+If you have forgotten the backup passphrase, first try **Check my passphrase** (Backups, Backup setup) with your best guesses. If it is truly lost, **Reset (forgotten)** sets a new passphrase so future backups work, but every encrypted copy made with the old one can never be opened by anyone. A Test restore of such a copy says "made with an earlier passphrase" instead of leaving you to guess.
+
 A wrong passphrase or a damaged file gives "Wrong passphrase, or the backup file is damaged", and nothing is changed.
 
 > The `restore-bundle` command does not post the "site was restored" announcement to customers. Write your own notice in Settings.
@@ -191,7 +197,7 @@ If you have only plain snapshots or offsite copies and the server's `secret.key`
 
 ### Looking inside a full-site file without restoring it
 
-`decrypt-backup` also opens a full-site `.mbsbak` file. It writes only the database out of it, not the key. Use it only to look at the data. To rebuild a server use `restore-bundle`.
+`decrypt-backup` also opens a full-site `.mbsbak` file. It writes only the database out of it, not the key. Use it only to look at the data. To rebuild a server use `restore-bundle`. Both commands stream the file, so a very large backup does not need a large amount of memory, and nothing is written until the whole file has passed its authentication.
 
 ### If the encryption key is lost
 

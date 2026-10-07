@@ -3,7 +3,7 @@ title: Running the server
 summary: How myBoxStock is deployed and kept healthy: the Docker container, the data folder, every environment variable with its default, reverse proxies and Cloudflare, https, ports, the health check, choosing a database, and how to keep the data volume safe.
 keywords: nas volume, nfs, cifs, samba-client, smbclient, ssh2, decrypt-backup, backup folder, docker, zimaos, compose, docker-compose, container, data folder, volume, /data, environment variables, PORT, DATA_DIR, DB_CLIENT, DATABASE_URL, TRUST_PROXY, SECURE_COOKIES, PUBLIC_URL, APP_SECRET, LOG_DIR, reverse proxy, caddy, nginx, traefik, cloudflare, https, health check, healthz, sqlite, postgres, postgresql, mariadb, mysql, migrate-db, ports, resources, memory, disk
 order: 17
-covers: PORT, DATA_DIR, DB_CLIENT, DATABASE_URL, DB_POOL_MAX, TRUST_PROXY, CLOUDFLARE_IP, HOST_ALLOW_ANY, SECURE_COOKIES, MAIL_ALLOW_PRIVATE, PUBLIC_URL, APP_SECRET, LOG_DIR, LOG_LEVEL, LOG_MAX_MB, LOG_FILES, LOG_RETENTION_DAYS, LOG_CONSOLE, CLOSING_SWEEP_MS, BUILD_ID, BACKUP_PASSPHRASE, NODE_ENV, /healthz, docker-compose.yml, restart policy, migrate-db, decrypt-backup, /data/backup, /data/backups, nas-backups, driver_opts, samba-client, ssh2, NAS through Docker
+covers: BACKUP_UPLOAD_MAX_BYTES, PORT, DATA_DIR, DB_CLIENT, DATABASE_URL, DB_POOL_MAX, TRUST_PROXY, CLOUDFLARE_IP, HOST_ALLOW_ANY, SECURE_COOKIES, MAIL_ALLOW_PRIVATE, PUBLIC_URL, APP_SECRET, LOG_DIR, LOG_LEVEL, LOG_MAX_MB, LOG_FILES, LOG_RETENTION_DAYS, LOG_CONSOLE, CLOSING_SWEEP_MS, BUILD_ID, BACKUP_PASSPHRASE, NODE_ENV, /healthz, docker-compose.yml, restart policy, migrate-db, decrypt-backup, /data/backup, /data/backups, nas-backups, driver_opts, samba-client, ssh2, NAS through Docker
 ---
 
 ## The big picture
@@ -106,6 +106,7 @@ These are set in the `environment:` part of the compose file (or your platform's
 ### Housekeeping and one-off
 
 - **CLOSING_SWEEP_MS**: how often the server looks for accounts that have passed their closing date and erases them, in milliseconds. Default `3600000` (every hour). Customers who close an account get a 7-day locked period first.
+- **BACKUP_UPLOAD_MAX_BYTES**: the largest backup file the Host can upload to **Test a backup file** on the Backups page, in bytes. Default `8589934592` (8 GiB). A larger file can still be tested by copying it into the server's backup folder. The upload is written straight to disk and never held in memory, so this limit is about disk space, not memory.
 - **BACKUP_PASSPHRASE**: used only with the `restore-bundle` and `decrypt-backup` commands to give the backup's passphrase. Do not leave it set permanently. It is not the same as the passphrase saved on the Backups page, which is kept sealed in the database.
 
 No environment variable was added or removed in 0.20.0. Everything about backups is set on the Backups page.

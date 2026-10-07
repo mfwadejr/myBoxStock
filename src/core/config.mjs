@@ -21,6 +21,7 @@ export const config = {
   cloudflareIp: env.CLOUDFLARE_IP === '1',        // behind Cloudflare: take the visitor's address from CF-Connecting-IP (also a Host Settings option)
   hostAllowAny: env.HOST_ALLOW_ANY === '1',      // emergency switch: ignore the Host Console address list (use if you are locked out)
   secureCookies: env.SECURE_COOKIES === '1',
+  backupUploadMaxBytes: Number(env.BACKUP_UPLOAD_MAX_BYTES) || 8 * 1024 ** 3, // largest backup file the Host can upload to Test a backup file (8 GiB unless set)
   mailAllowPrivate: env.MAIL_ALLOW_PRIVATE === '1', // let resellers' own mail servers be on a private network (off: public servers only)
   publicUrl: env.PUBLIC_URL || '',
   secretKey: env.APP_SECRET || '',              // else a key is generated in DATA_DIR/secret.key

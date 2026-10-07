@@ -105,6 +105,7 @@ tr.click:hover td { background: var(--color-wash-faint); }
 }
 .scrim.closing { opacity: var(--opacity-none); }
 .sheet { display: flex; flex-direction: column; width: min(var(--sheet-w), 100%); max-height: var(--sheet-max-h); overflow: hidden; background: var(--color-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-overlay); animation: pop-in var(--dur-med) var(--ease); }   /* the rounded, shadowed frame never scrolls, so no scroll bar can overhang a corner */
+.sheet.wide { width: min(var(--sheet-w-wide), 100%); }   /* wide sheets: receipts in the reseller app, reports in the Host Console */
 .sheet-body { flex: 1 1 auto; min-height: var(--space-0); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: var(--sheet-padding); }   /* the inner area is what scrolls */
 .sheet h2 { margin-bottom: var(--space-xs); }
 .sheet .actions { display: flex; flex-wrap: wrap; gap: var(--space-md); justify-content: flex-end; margin-top: var(--space-xl); }

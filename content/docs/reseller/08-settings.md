@@ -3,7 +3,7 @@ title: Settings
 summary: Set up how myBoxStock works for your business - the details you record on each device, warranty periods, payment methods, makes and models, test checklist, discounts, locking, and your own email sending and wording.
 keywords: reorder, move rows, drag, drag handle, grip, six dots, change order, camera button, scan, settings, setup, configure, fields, device details, warranty periods, payment methods, makes, models, catalog, test checklist, discount limit, standard user, unlock, auto lock, idle, smtp, own mail server, email wording, logo, receipts, customer emails, export, close account, save changes
 order: 8
-covers: nav:settings, camera button on lookup and unique details, Save changes, Device details to track, Add a detail, Name, Track, Look up in sale, Must be unique, On sale record, Choices, Reorder, Drag handle, Remove, Warranty periods, Add a period, Length, Unit, Make default, Archive, Restore, Default, Payment methods, Add a method, Makes and models, Add a make, Rename or merge, Add model, Unlock behaviour, After a browser refresh, Lock automatically after, Email sending, Send from my own mail server, From name, From address, SMTP host, Port, Username, Password, Use TLS from the start of the connection, Send a test email to me, Customer emails, Choose logo, Remove logo, Subject, Heading, Body, Insert a detail, Back to default wording, Discounts, Most a Standard user can discount, Test checklist, Use a test checklist, Sell only tested devices, Add a step, Details, Required before sale, Add an item, Save choices, users.manage
+covers: nav:settings, camera button on lookup and unique details, Save changes, Device details to track, Add a detail, Name, Track, Look up in sale, Must be unique, On sale record, Choices, Reorder, Drag handle, Remove, Warranty periods, Add a period, Length, Unit, Make default, Archive, Restore, Default, Payment methods, Add a method, Makes and models, Add a make, Rename or merge, Add model, Unlock behaviour, After a browser refresh, Lock automatically after, Email sending, Send from my own mail server, From name, From address, SMTP host, Port, Username, Password, Use TLS from the start of the connection, Send a test email to me, Customer emails, Choose logo, Remove logo, Subject, Heading, Body, Insert a detail, Back to default wording, Discounts, Most a Standard user can discount, Test checklist, Use a test checklist, Sell only tested devices, Add a step, Details, Required before sale, Add an item, Save choices, users.manage, Add a step, Add a method
 ---
 
 ## What the Settings page is for
@@ -46,7 +46,8 @@ Each row has these controls:
 - **Must be unique** - tick to stop two devices having the same value. Great for UID and MAC address, since no two boxes should share them. Only text details can be unique.
 - **On sale record** - tick to copy this detail onto the sale and show it on the receipt. For example, ticking Serial number means the customer's receipt lists the serial number of the box they bought, which helps in warranty claims.
 - **Remove** (a cross) - removes the detail from the list. A confirmation says it stops showing in Inventory, Quick sale and new sale records, but what was already entered is kept and only hidden. It takes effect when you press **Save changes**.
-- **Reorder** (a switch at the top right of the card) - see "Changing the order of a list" below. It is off normally, so the rows are locked and the page has more room on a phone.
+- **Add a detail** - the button at the bottom of the list adds a new row.
+- **Reorder** (a switch at the top right of the card's header) - see "Changing the order of a list" below. It is off normally, so the rows are locked and the page has more room on a phone.
 
 For Number, Date and Yes / No details the Look up and Unique boxes are greyed out, because they only make sense for text.
 
@@ -70,7 +71,7 @@ You must have at least one detail that is both ticked **Track** and **Look up in
 
 ### Changing the order of a list
 
-Device details, warranty periods, payment methods and test steps each have a **Reorder** switch at the top right of their card. It starts off, and while it is off the rows are locked, so you cannot move one by accident and scrolling the page never drags a row.
+Device details, warranty periods, payment methods and test steps each have a **Reorder** switch at the top right of their card, in the same row as the title. The **Add** button stays at the bottom of each list. It starts off, and while it is off the rows are locked, so you cannot move one by accident and scrolling the page never drags a row.
 
 1. Turn **Reorder** on for the card. Every row now shows a handle made of six grey dots at its right end.
 2. Press and hold the handle (with a mouse, a pen or your finger) and drag the row up or down. On a phone the page scrolls by itself when you hold the row near the top or bottom of the screen. Only the handle moves a row; touching anywhere else on the row scrolls the page as usual.
@@ -94,11 +95,11 @@ Controls:
 - **Make default** - makes another period the pre-selected one. (Greyed out for an archived period.)
 - **Archive** and **Restore** - hide a period from Quick sale without deleting it, or bring it back. The default period cannot be archived; make another one the default first.
 - **Remove** (a cross) - deletes a period, only possible if no sale has used it. Once used, you can archive it instead.
-- **Reorder** - the switch at the top of the card; turn it on to change the order shown at Quick sale (see below).
+- **Reorder** - the switch at the top right of the card; turn it on to change the order shown at Quick sale (see below).
 
 ### Add a period
 
-1. Press **Add a period**.
+1. Press **Add a period** (at the bottom of the list).
 2. Enter a **Length** from 1 to 120.
 3. Choose the **Unit**: Days, Months or Years.
 4. Optionally type a **Name**. If you leave it blank the app names it for you, for example "6 months".
@@ -114,8 +115,8 @@ The choices under **Paid by** at Quick sale. The starting list is Cash, Card, Ba
 - **Make default** and the green **Default** tag - which method Quick sale pre-selects.
 - **Archive** and **Restore** - hide a method you no longer take, or bring it back. The default cannot be archived.
 - **Remove** (a cross) - only for a method no sale has used, and never the last remaining one.
-- **Reorder** - the switch at the top of the card; turn it on to change the order of the methods (see below).
-- **Add a method** - adds a blank row. Type its name, then press **Save changes**.
+- **Reorder** - the switch at the top right of the card; turn it on to change the order of the methods (see below).
+- **Add a method** - the button at the bottom of the list; it adds a blank row. Type its name, then press **Save changes**.
 
 Example: you start accepting a payment app. Press **Add a method**, type its name, and press **Save changes**. It is available at Quick sale straight away. Names must be unique and cannot be blank.
 
@@ -205,7 +206,7 @@ This card is the list of checks you do on each device before selling it, such as
 
 - **Use a test checklist** - turn this off if you do not test devices. The test record is then hidden in Inventory, Quick sale, receipts and CSV files. Nothing already recorded is deleted.
 - **Sell only tested devices** - when on, a device stays "Awaiting test" until its required steps are ticked (every step, if none are marked required). It is not counted as available and cannot be added to a sale. This option is greyed out when the checklist is off.
-- **Add a step** - adds a blank row; type what you check, for example "Remote tested". Greyed out when the checklist is off.
+- **Add a step** - the button at the bottom of the list; it adds a blank row. Type what you check, for example "Remote tested". Hidden when the checklist is off.
 
 Each step has:
 

@@ -34,6 +34,20 @@ const touchDrag = async (page, cdp, from, to) => {
 };
 const center = async (loc) => { const b = await loc.boundingBox(); return { x: b.x + b.width / 2, y: b.y + b.height / 2, b }; };
 
+// Layout: each Reorder switch sits in its card's header row (to the right of the title block, or wrapped under it on a phone); Add stays below the list.
+const ADD = { fields: 'addf', war: 'addw', pay: 'addp', steps: 'adds' };
+async function layout(page, wide) {
+  for (const l of Object.keys(ADD)) {
+    const r = await page.evaluate(([l, add]) => {
+      const sw = document.querySelector(`[data-reorder=${l}]`).closest('label').getBoundingClientRect(), head = document.querySelector(`[data-reorder=${l}]`).closest('.card-head'), h3 = head.querySelector('h3').getBoundingClientRect(),
+        list = document.querySelector(`[data-list=${l}]`).getBoundingClientRect(), btn = document.getElementById(add).getBoundingClientRect();
+      return { inHead: !!head, right: sw.left >= h3.right - 1 || sw.top >= h3.bottom - 1, switchRightHalf: sw.left > innerWidth / 2 || sw.top > h3.top + 4, addBelowList: btn.top >= list.bottom - 1, addAfterSwitch: btn.top > sw.bottom, tap: btn.height >= 43.5, noAddInHead: !head.contains(document.getElementById(add)) };
+    }, [l, ADD[l]]);
+    assert.ok(r.inHead && r.noAddInHead, `${l}: the switch is in the header and Add is not`); assert.ok(r.right, `${l}: switch is beside or under the title`); assert.ok(r.addBelowList, `${l}: Add is at the bottom of the list`); assert.ok(r.addAfterSwitch, `${l}: Add is below the switch`); if (!wide) assert.ok(r.tap, `${l}: Add is 44px tall on a phone`);
+    if (wide) assert.ok(r.switchRightHalf, `${l}: the switch is on the right side of the header`);
+  }
+}
+
 test('browser: Reorder switch, mouse drag, keyboard move, lock, and the saved order', { skip, timeout: 240000 }, async () => {
   const srv = await startServer(), br = await (pw.chromium || pw.default.chromium).launch({ executablePath: exe }), page = await br.newPage({ viewport: { width: 1280, height: 1000 } });
   const errors = []; page.on('pageerror', e => errors.push(e.message));
@@ -45,6 +59,7 @@ test('browser: Reorder switch, mouse drag, keyboard move, lock, and the saved or
     assert.equal(await page.locator('.move-btns, .icon-btn.move').count(), 0, 'the old up and down arrows are gone');
     assert.ok(!(await page.textContent('.check-head')).includes('Order'), 'no Order column while off');
     const f0 = await names(page, 'fl'); assert.ok(f0.length >= 3);
+    await layout(page, true); if (SHOTS) await page.screenshot({ path: `${SHOTS}/reorder-header-1280.png` });
     // switch on: a handle on every row, 44px
     await toggle(page, 'fields'); await page.waitForSelector('[data-list=fields] .grip');
     assert.equal(await grips(page, 'fields').count(), f0.length); assert.equal(await grips(page, 'steps').count(), 0, 'other lists stay locked');
@@ -112,6 +127,7 @@ test('browser: phone (375px) - touch drag, auto-scroll, no sideways scroll, chip
     await toggle(page, 'fields'); await toggle(page, 'war'); await toggle(page, 'pay'); await toggle(page, 'steps'); await page.waitForSelector('[data-list=steps] .grip');
     for (const l of ['fields', 'war', 'pay', 'steps']) { const n = await grips(page, l).count(); assert.ok(n >= 1); for (let i = 0; i < n; i++) { const b = await grips(page, l).nth(i).boundingBox(); assert.ok(b.width >= 43.5 && b.height >= 43.5, `${l} handle ${i} is 44px`); } }
     await noSideways(page, 'settings, reorder on');
+    await layout(page, false); if (SHOTS) await page.screenshot({ path: `${SHOTS}/reorder-header-375.png` });
     // touch: drag the first warranty period below the second with a finger
     const w0 = await names(page, 'wl'); await grips(page, 'war').first().scrollIntoViewIfNeeded();
     const a = await center(grips(page, 'war').nth(0)), b = await center(grips(page, 'war').nth(1)), y0 = await page.evaluate(() => scrollY);

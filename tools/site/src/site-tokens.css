@@ -1,0 +1,12 @@
+/* SITE TOKENS — values used only by the marketing site. Everything else comes from the app's tokens.css (copied in at build time). */
+:root {
+  --site-w: 1120px;
+  --prose-w: 680px;
+  --text-hero: 56px;
+  --text-hero-sm: 38px;
+  --logo-site: 40px;
+  --badge-size: 40px;
+  --shot-phone-w: 220px;
+  --shot-phone-w-sm: 120px;
+  --shot-wide-w: 560px;
+}

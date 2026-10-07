@@ -18,6 +18,7 @@ import { testRestore } from './testrestore.mjs';
 import { audit } from './audit.mjs';
 import { MIN_PASSPHRASE } from './bundle.mjs';
 import { testLatestOffsite } from './offsite.mjs';
+export { checkPassphrase, changePassphrase, resetPassphrase } from './passphrase.mjs';
 
 const L = areaLogger('backup');
 export const MAIL_NOTE = 'Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway.';
@@ -32,11 +33,12 @@ export async function getSetup(db) {
   const rec = await getSetupRecord(db), full = await getFullConfig(db), dests = await listDestinations(db), tiers = await getTiers(db);
   const legacy = rec ? !!rec.legacy : !!full.hasPassphrase, confirmed = legacy || !!rec?.passphraseConfirmed;
   const pass = !!full.hasPassphrase && confirmed, usable = dests.filter(d => !d.builtin && d.enabled && d.tested), anyDest = dests.some(d => !d.builtin);
-  const where = legacy || (pass && (rec?.offServer === false || (rec?.offServer === true && usable.length > 0)));
+  const ov = await backupOverview(db), offsiteExists = !!ov.offsite.exists;
+  // An install that predates the guided setup is only "where: done" when it really sends copies away or the Host has answered step 2; otherwise step 2 stays open.
+  const where = pass && (rec?.offServer === false || ((rec?.offServer === true || legacy) && usable.length > 0) || (legacy && offsiteExists));
   const keep = legacy || (where && !!rec?.keepChoice), prove = legacy || (keep && !!rec?.proven?.ok);
   const done = { passphrase: pass, where, keep, prove }, steps = []; let open = true;
   for (const [id, label] of STEPS) { steps.push({ id, label, done: done[id], locked: !open }); open = open && done[id]; }
-  const ov = await backupOverview(db), offsiteExists = !!ov.offsite.exists;
   const status = offsiteExists && rec?.offsiteVerified ? 'verified' : offsiteExists ? 'copy' : 'local';
   const reason = pass ? '' : 'Locked until the backup passphrase is set and confirmed (Backup setup, step 1). These copies are encrypted with it.';
   const dbBytes = await databaseBytes(db), disk = snapshot().disk;
@@ -45,10 +47,10 @@ export async function getSetup(db) {
     return { id, label: k.label, desc: k.desc, line: c.line, warning: c.warning };
   });
   return {
-    legacy, complete: Object.values(done).every(Boolean), steps, status,
+    legacy, complete: Object.values(done).every(Boolean), protected: status === 'verified', steps, status,
     statusLabel: status === 'verified' ? 'Off-site and verified' : status === 'copy' ? 'Copy off this server' : 'Local only (same disk)',
     statusNote: status === 'local' ? 'Copies are on the same disk as the database. If the disk or machine is lost, so are they.' : status === 'copy' ? 'A copy is held away from this server, but it has not been tested yet. Open an offsite copy and run Test restore.' : 'A copy is held away from this server and a test restore of it passed.',
-    passphrase: { set: !!full.hasPassphrase, confirmed, minLength: MIN_PASSPHRASE },
+    passphrase: { set: !!full.hasPassphrase, confirmed, minLength: MIN_PASSPHRASE, changedAt: rec?.passphraseHistory?.at(-1)?.at ?? null, lastAction: rec?.passphraseHistory?.at(-1)?.action ?? null },
     where: { offServer: rec?.offServer ?? (legacy ? (anyDest || offsiteExists) : null), tested: usable.map(d => d.name), hasDestination: anyDest },
     keep: { choice: rec?.keepChoice ?? null, options: keepOptions },
     prove: { at: rec?.proven?.at ?? null, ok: rec?.proven ? !!rec.proven.ok : legacy, checks: rec?.proven?.checks ?? [], name: rec?.proven?.name ?? '' },

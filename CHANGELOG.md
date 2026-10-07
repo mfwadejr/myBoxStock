@@ -3,6 +3,19 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.22.0] - 2026-10-07
+
+### Added
+- **Test a backup file (Host Console).** On Backups, Full-site backups. Upload a file from your computer (streamed to disk, with a stated size limit, `BACKUP_UPLOAD_MAX_BYTES`) or pick one already in the server's backup folder. The report shows file details, accounts by plan and status, users by role, a comparison with the live site and a searchable per-account table, and states that the Host cannot open reseller records. After a pass the same sheet offers **Restore this file** with the offsite-restore safeguards.
+- **Background jobs with progress (Host Console).** Test restore, restore, full-site backup and Test a backup file run in the background. A status strip on Backups shows the step and percentage, survives a reload and keeps the result until dismissed. Only one job runs at a time.
+- **Passphrase actions (Host Console).** Check my passphrase, Change passphrase and Reset (forgotten) sit right under step 1 of Backup setup. Reset warns that older copies stay unreadable. All are audited, never with the passphrase. A Test restore of an older copy says it was made with an earlier passphrase.
+- **Marketing site rewrite.** All pages describe current features, with real screenshots (fake data, laptop and phone), a Legal section of four DRAFT pages built from `content/legal`, and the same CSS tokens as the app. Built with `tools/site` into `myboxstock-site-v0.22.0.zip`.
+
+### Changed
+- **Full-site backups are streamed (`.mbsbak` format 2).** Written and read in 1 MiB authenticated chunks, so memory stays flat for multi-GB sites. Older `.mbsbak` files still open. Nothing from a file is used until its whole authentication passes.
+- **Reseller Settings.** The Reorder switch sits at the right of each section header; Add stays at the bottom.
+- **Protected chip.** Shows Protected only when copies leave the server and a test restore passed; otherwise Not protected yet.
+
 ## [0.21.0] - 2026-10-07
 
 ### Added

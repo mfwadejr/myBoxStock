@@ -22,6 +22,9 @@ export async function withBackupLock(label, fn) {
   busy = label; try { return { skipped: false, value: await fn() }; } finally { busy = ''; }
 }
 
+// Takes the one backup lock for a background job; returns the release function, or null when something else holds it.
+export function takeBackupLock(label) { if (busy) return null; busy = label; return () => { busy = ''; }; }
+
 export async function raiseFailing(db, title, detail) {
   try { const { raise } = await import('../alerts/index.mjs'); await raise(db, { kind: 'backup.failing', level: 'error', title: 'The scheduled backup is failing', detail: `${title}: ${String(detail).slice(0, 300)}` }); } catch (e) { L.error('alert.failed', `Could not raise the backup alert: ${e.message}`); }
 }

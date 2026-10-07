@@ -5,6 +5,8 @@ import { fail, MSG } from '../../core/messages.mjs';
 import * as bk from '../../services/backup/index.mjs';
 import { listDestinations, enabledDestinations, clientFor } from '../../services/backup/destinations/index.mjs';
 import { destinationsRoutes } from './backups-destinations.mjs';
+import { fileTestRoutes } from './backups-filetest.mjs';
+import { jobsRoutes } from './backups-jobs.mjs';
 import { takenAtFromName } from '../../services/backup/files.mjs';
 
 // A service error with a catalog code becomes fail(); anything else keeps its own plain-English message.
@@ -16,11 +18,16 @@ const PLAIN_NOTE = 'Snapshots in this server\u2019s backup folder are plain data
 export function backupsRoutes(db) {
   const r = express.Router(), H = (req, lvl, ev, msg, data) => hostLog(req, lvl, ev, msg, { data });
   r.use('/destinations', destinationsRoutes(db));
+  r.use('/file-test', fileTestRoutes(db));
+  r.use('/jobs', jobsRoutes(db));
   // Backup setup: four guided steps, each unlocked by the one before (see services/backup/setup.mjs).
   r.get('/setup', async (req, res) => res.json(await bk.getSetup(db)));
   r.post('/setup/passphrase', async (req, res) => {
     try { const out = await bk.setupPassphrase(db, req.body || {}, req.subject.username); res.json(out); } catch (e) { bad(res, e); }
   });
+  // Passphrase care (Backup setup, step 1): check it, change it (current one required) or reset it (forgotten). Answers never carry the passphrase.
+  for (const [path_, fn] of [['check', (b, who) => bk.checkPassphrase(db, b.passphrase, who)], ['change', (b, who) => bk.changePassphrase(db, b, who)], ['reset', (b, who) => bk.resetPassphrase(db, b, who)]])
+    r.post(`/setup/passphrase/${path_}`, async (req, res) => { try { const out = await fn(req.body || {}, req.subject.username); res.json({ ...out, setup: await bk.getSetup(db) }); } catch (e) { bad(res, e); } });
   r.post('/setup/where', async (req, res) => {
     try { const out = await bk.setupWhere(db, req.body || {}, req.subject.username); res.json(out); } catch (e) { bad(res, e); }
   });
@@ -50,7 +57,7 @@ export function backupsRoutes(db) {
     } catch (e) { bk.audit('backup.restore', `Restore from the offsite copy ${b.name} refused: ${e.message}`, { actor: req.subject.username, ip: req.ip, level: 'warn', data: { name: b.name, ok: false, source: 'offsite' } }); bad(res, e); }
   });
   r.get('/', async (req, res) => res.json({ backups: bk.listBackups(), schedule: await bk.getSchedule(db), full: await bk.getFullConfig(db), fullStatus: await bk.getFullStatus(db), engine: db.client, restorePending: bk.restorePending(),
-    tiers: await bk.getTiers(db), overview: await bk.backupOverview(db), destinations: await listDestinations(db), busy: bk.backupBusy(), setup: await bk.getSetup(db), plainNote: PLAIN_NOTE, localDir: bk.backupDir(), defaultDir: bk.defaultBackupDir() }));
+    tiers: await bk.getTiers(db), overview: await bk.backupOverview(db), destinations: await listDestinations(db), busy: bk.backupBusy(), job: bk.publicJob(bk.currentJob()), setup: await bk.getSetup(db), plainNote: PLAIN_NOTE, localDir: bk.backupDir(), defaultDir: bk.defaultBackupDir() }));
   // One page of a tier's files, newest first: { rows, total }.
   r.get('/files', (req, res) => {
     const tier = String(req.query.tier || 'frequent'); if (!TIERS.includes(tier)) return res.status(400).json({ error: 'Unknown list.' });
@@ -99,7 +106,7 @@ export function backupsRoutes(db) {
     if (req.body?.confirm !== 'RESTORE') return res.status(400).json({ error: 'Type RESTORE to confirm.' });
     try {
       const file = bk.backupPath(req.params.name); if (!file.endsWith('.mbsbak')) throw new Error('That is not a full-site backup.');
-      bk.stageBundleRestore(file, req.body?.passphrase || '', req.subject.username); // checks the passphrase before anything else happens
+      await bk.stageBundleRestore(file, req.body?.passphrase || '', req.subject.username); // checks the passphrase before anything else happens
       const pre = await bk.createBackup(db, 'pre-restore', req.subject.username);
       H(req, 'warn', 'backup.restore', `Full-site restore of ${req.params.name} requested (safety copy ${pre}); restarting`, { name: req.params.name, safetyCopy: pre });
       res.json({ ok: true, restarting: true }); setTimeout(() => process.exit(0), 600);

@@ -1,9 +1,9 @@
 ---
 title: Backups
 summary: How the Backups page protects the server: frequent snapshots, offsite copies, full-site backups and safety copies, where they go, how to set up each kind of destination, how to test and restore one, and how much space it all uses.
-keywords: backup setup, guided setup, hard gate, locked, protected, restore offsite, tabs, backup, backups, restore, snapshot, offsite, off-site, full-site, safety copy, destination, thinning, retention, passphrase, encryption, decrypt-backup, mbsenc, mbsbak, restore-bundle, NAS, SMB, S3, Backblaze, Wasabi, Cloudflare R2, Amazon S3, MinIO, SFTP, WebDAV, NFS, Docker volume, test connection, test restore, cost, disk space, nightly, verify, disaster
+keywords: background job, job progress, progress bar, one job at a time, test a backup file, upload backup, restore this file, streamed, streaming, large backups, backup setup, guided setup, hard gate, locked, protected, restore offsite, tabs, backup, backups, restore, snapshot, offsite, off-site, full-site, safety copy, destination, thinning, retention, passphrase, encryption, decrypt-backup, mbsenc, mbsbak, restore-bundle, NAS, SMB, S3, Backblaze, Wasabi, Cloudflare R2, Amazon S3, MinIO, SFTP, WebDAV, NFS, Docker volume, test connection, test restore, cost, disk space, nightly, verify, disaster
 order: 7
-covers: nav:backups, Status strip, Last backup, Next run, Offsite copy, Space used, At these settings you will hold about, Frequent snapshots, Offsite copies, Full-site backups, Safety copies, Destinations, Take a snapshot now, Send one now, Run one now, Take a snapshot every, Send a copy every, Send them to, Also send them to, Keep every copy for (hours), Then one an hour for (hours), Then one a day for (days), Then one a week for (weeks), Also keep a plain copy every night, Nightly hour (UTC), Keep nightly copies, Are snapshots protected, Snapshots on this server, Copies held at the destinations, How often, Every night, Once a week, Weekly copy is taken on, Backup runs on, Hour (UTC), Keep daily copies, Keep weekly copies, Extra folder (optional), Backup passphrase, Email Host administrators if a backup fails, Make one with a new passphrase, Create backup, Remove safety copies older than (days), Always keep the newest, Add a destination, Edit destination, Change folder, Backup folder on this server, Folder path, Test connection, Use this destination, Name, Type, Folder or mounted NAS, Windows / NAS share (SMB), S3-compatible storage, SFTP (SSH) server, WebDAV, Server, Share name, Folder on the share (optional), User name, Domain (optional), Endpoint, Region, Bucket, Folder prefix (optional), Access key, Secret key, Use path-style addresses, Port, Folder, Password, Private key (optional), Key passphrase (optional), WebDAV address, Server identity pinned, Download, Restore, Test restore, Delete, Restore this backup, Type RESTORE to confirm, Load more, Showing, decrypt-backup, restore-bundle, .mbsenc, .mbsbak, /data/backup, /data/backups, thinning, safety copy, offsite copy, snapshot, destination, How much will it use, Backup setup, Local only (same disk), Copy off this server, Off-site and verified, Protected, Not protected yet, Prove it, Recommended, Minimal, Custom, Set the passphrase, I have saved this passphrase somewhere other than this server, Go to Destinations, Run the first backup and test restore, Make a full-site backup on a schedule, Restore this copy, Restore from an offsite copy, Test again
+covers: nav:backups, background job, job strip, Running, View result, Dismiss, Another backup job is already running, Only one backup job runs at a time, Test a backup file, Choose file, Run test, Restore this file, A file from this computer, A file already in the server's backup folder, Test this file, Accounts by plan, Accounts by status, Users by role, Only on the live site, Accounts whose record counts differ, Every account in the file, Find a Reseller ID, Against live, Readable by this server, BACKUP_UPLOAD_MAX_BYTES, streamed backups, Status strip, Last backup, Next run, Offsite copy, Space used, At these settings you will hold about, Frequent snapshots, Offsite copies, Full-site backups, Safety copies, Destinations, Take a snapshot now, Send one now, Run one now, Take a snapshot every, Send a copy every, Send them to, Also send them to, Keep every copy for (hours), Then one an hour for (hours), Then one a day for (days), Then one a week for (weeks), Also keep a plain copy every night, Nightly hour (UTC), Keep nightly copies, Are snapshots protected, Snapshots on this server, Copies held at the destinations, How often, Every night, Once a week, Weekly copy is taken on, Backup runs on, Hour (UTC), Keep daily copies, Keep weekly copies, Extra folder (optional), Backup passphrase, Email Host administrators if a backup fails, Make one with a new passphrase, Create backup, Remove safety copies older than (days), Always keep the newest, Add a destination, Edit destination, Change folder, Backup folder on this server, Folder path, Test connection, Use this destination, Name, Type, Folder or mounted NAS, Windows / NAS share (SMB), S3-compatible storage, SFTP (SSH) server, WebDAV, Server, Share name, Folder on the share (optional), User name, Domain (optional), Endpoint, Region, Bucket, Folder prefix (optional), Access key, Secret key, Use path-style addresses, Port, Folder, Password, Private key (optional), Key passphrase (optional), WebDAV address, Server identity pinned, Download, Restore, Test restore, Delete, Restore this backup, Type RESTORE to confirm, Load more, Showing, decrypt-backup, restore-bundle, .mbsenc, .mbsbak, /data/backup, /data/backups, thinning, safety copy, offsite copy, snapshot, destination, How much will it use, Backup setup, Local only (same disk), Copy off this server, Off-site and verified, Protected, Not protected yet, Prove it, Recommended, Minimal, Custom, Set the passphrase, I have saved this passphrase somewhere other than this server, Go to Destinations, Run the first backup and test restore, Make a full-site backup on a schedule, Restore this copy, Restore from an offsite copy, Test again, Check my passphrase, Change passphrase, Reset (forgotten), Current passphrase, New passphrase, I understand that older copies stay unreadable, made with an earlier passphrase
 ---
 
 ## What this page is for
@@ -23,9 +23,19 @@ At the top of the page, **Backup setup** walks you through four steps. Each step
 3. **How much to keep.** Choose **Recommended**, **Minimal** or **Custom**. Each shows the estimated disk use worked out from your real database size. Recommended and Minimal write the thinning numbers for snapshots and offsite copies; Custom keeps your own.
 4. **Prove it.** **Run the first backup and test restore** makes a full-site backup, opens it as a test restore and, if copies go off this server, sends one, fetches it back and tests that as well. Only then does the page say **Protected**.
 
+Once a passphrase exists, three buttons sit right under step 1, always in view (the **Full-site backups** tab repeats **Check my passphrase** and **Change passphrase**):
+
+- **Check my passphrase**: type it and the server says whether it matches the saved one. Nothing is changed and the passphrase is never shown or stored.
+- **Change passphrase**: type the **Current passphrase**, then the **New passphrase** twice, and tick that you saved it elsewhere. A wrong current passphrase is refused. New copies use the new passphrase; copies made before the change still need the old one, so keep it.
+- **Reset (forgotten)**: for a lost passphrase. It sets a new one without asking for the old one, and shows a warning you must accept (**I understand that older copies stay unreadable**). Every encrypted copy made with the old passphrase can then never be opened by anyone. Only copies made from now on use the new one.
+
+Every check, change and reset is written to the audit trail (who and when, never the passphrase), and a wrong attempt is recorded as a warning. The page notes when the passphrase last changed.
+
+The chip beside the title says **Protected** only when copies really leave this server and a test restore of such a copy has passed. In every other case it says **Not protected yet**, and the status line below says where you stand, for example **Local only (same disk)**. An install that predates this setup is no exception: if it sends nothing away, step 2 is open for you to answer.
+
 A status line under the title always says where you stand: **Local only (same disk)**, **Copy off this server** (a copy is held away, not yet tested) or **Off-site and verified** (a copy is held away and a test restore of it passed).
 
-Installs that already had a passphrase before this setup existed show all four steps as done and nothing is locked.
+Installs that already had a passphrase before this setup existed show the passphrase, how much to keep and prove-it steps as done and nothing they use is locked. Step 2 shows as done only when that install really sends copies to a tested destination; otherwise it stays open until you answer it.
 
 If no mail is set up, the setup panel and the **Email Host administrators if a backup fails** switch warn that failure emails will not be sent. Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway.
 > Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
@@ -51,6 +61,17 @@ Above the tabs, four tiles and one line tell you at a glance whether things are 
 - **Space used**: how much disk the backups take on this server, and how much is free.
 
 If a kind of backup is failing, a red banner under the tiles says which one and why. The line underneath is the **cost line**, for example "At these settings you will hold about 2.4 GB here and 3.1 GB away from this server and upload about 180 MB a day." It turns red and adds a warning if the settings would not fit in the free disk. Read the section "How much will it use" below.
+
+## Long jobs run in the background
+
+Test restore, Restore, a full-site backup and Test a backup file can take a minute or more on a large site (a Test restore of a 3 GB snapshot takes about 50 seconds), longer than some reverse proxies wait for one request. So each of them starts as a **background job** on the server instead of one long request, and the page shows how it is going.
+
+- **The sheet** that started the job shows the step it is on in words ("Fetching the copy from the destination", "Decrypting the file and checking every part", "Taking a safety copy of the live site") and a progress bar. For a full-site file the bar follows the bytes read or written, so it moves steadily.
+- **The job strip** sits at the top of the Backups page, above the status tiles. While a job runs it shows its name, the step, the percentage and the bar, and the line "Only one backup job runs at a time". You can close the sheet, change tabs, reload the page or sign out and in again: the job keeps going on the server, and the strip finds it again.
+- **When it finishes** the strip says "finished", "did not pass" (a Test restore that found a problem with the file) or "failed" (the job itself could not run, with the plain reason, for example a passphrase that is too short), with **View result** and **Dismiss**. **View result** opens the same checks and report you would have seen in the sheet. The result stays on the server until you dismiss it, the next job starts or the server restarts. A passing offsite or file test whose sheet was closed cannot be used to restore from; run the test again from its own button, because a restore always needs a test made in the window you restore from.
+- **One job at a time.** If a job, a scheduled snapshot, an offsite copy or a full-site backup is already running, a second one is refused at once with "Another backup job is already running. Only one runs at a time." and the strip says what is running. Nothing is queued; start it again when the first has finished.
+- **A restore** ends with the job reporting "restoring": the site restarts, everyone is signed out, and this console reloads by itself after a few seconds. If the server restarts while some other job is running, that job did not finish and nothing was changed by it; the strip says so.
+- **Recorded.** Every job writes "Background job started" and "Background job finished" (or "FAILED") to the [Audit trail](#/docs/audit-trail), with who started it and how it ended, as well as the usual entries for the test or restore itself. A passphrase is never part of a job record or a log line.
 
 ## Where the files go
 
@@ -122,6 +143,12 @@ Open the **Full-site backups** tab. This is the backup you need to rebuild on a 
 
 A full-site backup is one `.mbsbak` file with the database, the key and a note of when and on which version it was made, all encrypted with your passphrase. With the passphrase it brings everyone back as they were, including passwords, two-factor, plans and settings. Without the passphrase nobody can open it, including you.
 
+### How a full-site file is written and opened
+
+Full-site files are written and opened as a stream, a piece at a time: the database snapshot is read, compressed, encrypted in 1 MiB sealed chunks and written straight to the file, so the server's memory use stays flat however large the database is. Earlier versions loaded everything into memory, which failed on very large sites. Files made by earlier versions still open exactly as before.
+
+When any part of the server opens a full-site file (the check after each backup, **Test restore**, **Restore**, **Test a backup file**, an offsite test or restore, and the `restore-bundle` command), nothing from the file is used until the whole file has passed its authentication. The contents go to a temporary scratch folder first. If the passphrase is wrong, or the file is cut short or changed anywhere, the scratch files are deleted and the server says "Wrong passphrase, or the backup file is damaged". Only after the last chunk checks out do the integrity check, the safety copy and the typed confirmation follow.
+
 ### Every field
 
 - **The switch** turns scheduled full-site backups on or off. It cannot be on until a passphrase has been saved.
@@ -131,7 +158,7 @@ A full-site backup is one `.mbsbak` file with the database, the key and a note o
 - **Keep daily copies**: 1 to 90, default 14. **Keep weekly copies**: 1 to 52, default 8.
 - **Extra folder (optional)**: a full path outside the data folder, such as a mounted NAS, where each file is also copied.
 - **Also send them to**: tick destinations. The file is already encrypted, so it is sent as it is.
-- **Backup passphrase**: at least 12 characters. Once saved the box says "Saved, leave blank to keep it".
+- **Backup passphrase**: at least 12 characters, typed here only the first time. Once saved, the box is replaced by **Check my passphrase** and **Change passphrase**, because a change needs the current passphrase.
 - **Email Host administrators if a backup fails**: on by default.
 - **Save**, **Run one now** (saves your settings and makes a backup), and **Make one with a new passphrase** (a one-off backup with a passphrase you type, which is not stored; its button is **Create backup**).
 
@@ -143,7 +170,8 @@ The same passphrase protects the full-site files and everything sent to a destin
 
 1. Choose at least 12 characters. Four or five unrelated words are easy to remember and hard to guess.
 2. Write it down and keep it away from the server, for example in a password manager.
-3. Do not change it casually. Older files still need the passphrase they were made with.
+3. Do not change it casually. Older files still need the passphrase they were made with. If you do change it, use **Change passphrase** and keep the old one as long as you keep the old copies.
+4. If it is forgotten, **Reset (forgotten)** gives you a new one for future copies, but older encrypted copies can never be opened.
 
 > If you lose the server and the passphrase, your encrypted backups cannot be opened by anyone. There is no recovery.
 
@@ -255,7 +283,7 @@ Restoring replaces the live database with the one in the backup. Everyone goes b
 3. The sheet **Restore this backup?** names the file, shows the exact time it was taken in UTC and your own time, and how long ago that was. It repeats that anything entered after it will be lost, that a safety copy is taken first, and that the site restarts.
 4. For a full-site `.mbsbak` file, type the **Backup passphrase**.
 5. Type `RESTORE` in **Type RESTORE to confirm**. The Restore button stays off until you do.
-6. Press **Restore**. The console reloads after a few seconds. Everyone is signed out.
+6. Press **Restore**. The sheet shows the progress, then the console reloads after a few seconds. Everyone is signed out. You can close the sheet while it works; the job strip at the top of the page keeps showing it (see "Long jobs run in the background").
 
 The restart relies on the container being set to restart itself. The standard compose file has `restart: unless-stopped`. Restoring from the page is offered for SQLite only. With PostgreSQL or MariaDB you load the dump yourself.
 
@@ -277,10 +305,25 @@ A backup you have never opened is a hope, not a plan. **Test restore** on any lo
 
 1. Press **Test restore** on a row.
 2. For a `.mbsbak` file, type the passphrase, or leave it empty to use the saved one.
-3. Press **Run test**.
+3. Press **Run test**. It runs as a background job: the sheet shows the step and a progress bar, and you can close it and read the result from the job strip.
 4. Read the result: a pass or fail message, and a line for each check such as "The database passes its integrity check" and "Accounts and users can be read" with the counts.
 
-For a full-site file it also checks that the passphrase opens it and that the key is inside. For a PostgreSQL or MariaDB dump it can only check that the file is complete. Offsite copies have their own test on the Offsite copies tab (below).
+For a full-site file it also checks that the passphrase opens it and that the key is inside. If it cannot be opened and the passphrase was changed or reset after the copy was made, the failed check says "This copy was made with an earlier passphrase", so you know to type the old one. For a PostgreSQL or MariaDB dump it can only check that the file is complete. Offsite copies have their own test on the Offsite copies tab (below).
+
+### Test a backup file
+
+The **Test a backup file** card sits on the **Full-site backups** tab. Use it for a backup that is held somewhere else, for example a full-site `.mbsbak` downloaded to your laptop, or the file you would use to rebuild after losing this server. It works even when the Backup setup steps are not done, because a file from a lost server needs none of them. It accepts `.mbsbak` full-site backups, `.mbsenc` encrypted copies and `.db` snapshots.
+
+1. Choose the file. **A file from this computer** with **Choose file** uploads it. The upload is streamed straight to a private holding folder on the server, never held in memory, with a progress bar. The card states the size limit (8 GiB unless the server sets `BACKUP_UPLOAD_MAX_BYTES`), and a larger file is refused with a plain message. **A file already in the server's backup folder** lists files placed in the backup folder by hand and lets you pick one with **Test this file**, with no upload at all.
+2. In the sheet, type the file's passphrase (leave it empty to use the one saved on this server; a `.db` snapshot needs none) and press **Run test**.
+3. The server opens the file in a scratch copy and shows the same Passed or Failed checks as **Test restore**: the file was read, the passphrase opens it and every part passed its authenticity check, the encryption key is inside, the database passes its integrity check, and its database and app version fit this server (a file from a newer version fails and asks you to update the server first).
+4. A report follows. **The file** gives its kind, when it was taken, its size, the app version, the database version, **Readable by this server** and a fingerprint. **Compared with the live site** puts the file beside the live numbers (accounts, users, devices, customers and sales). It shows first, in red, any account that exists only on the live site, because a restore would lose it; then a plain line when the file is older than the latest activity on the live site; then the accounts only in the file and the accounts **whose record counts differ**. **Inside the file** shows **Accounts by plan**, **Accounts by status** and **Users by role**. **Every account in the file** is a table with each Reseller ID, plan, users, devices, customers, sales, other records and how it compares with the live site; use **Find a Reseller ID** to search it. Long lists show 25 at a time with **Load more**.
+5. The report ends with a plain statement: the Host cannot open reseller records. The server holds only encrypted blobs and each blob's type, so it counts devices, customers and sales but cannot read them. Only a reseller's own **Test a backup file** (on their Backup page) proves that their data decrypts.
+6. Closing the sheet deletes the uploaded file and the test result. An uploaded file is also removed an hour after it arrived, and anything left in the holding folder is removed when the server starts.
+
+After a pass, the same sheet offers **Restore this file**, with the same safeguards as restoring an offsite copy: the button stays disabled, with the reason shown, until every check has passed and you have typed RESTORE; there is no override. The result is tied to that exact file (it is checked again before anything happens), a safety copy of the current database is taken first and kept on the **Safety copies** tab, the site then closes, restarts and signs everyone out, and resellers see the post-restore notice. Restoring from the console works on SQLite only.
+
+The audit trail records **Backup file uploaded for testing**, **Backup file tested** (with the file name, size and result, never the passphrase) and **Backup restored**.
 
 ### Restoring an offsite copy
 

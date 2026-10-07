@@ -76,23 +76,25 @@
           ${num('fhr', 'Hour (UTC)', f.hourUtc, 0, 23)}${num('fkd', 'Keep daily copies', f.keepDaily, 1, 90)}${num('fkw', 'Keep weekly copies', f.keepWeekly, 1, 52)}
           <div class="field"><label>Extra folder (optional)</label><input type="text" id="fob" value="${esc(f.offboxDir)}" placeholder="/backups" autocomplete="off"><div class="hint">A folder outside the data folder, for example a mounted NAS share.</div></div></div>
         <div class="field"><label>Also send them to</label>${destChecks(d, f.destinationIds || [])}</div>
-        <div class="field"><label>Backup passphrase</label><input type="password" id="fpp" autocomplete="new-password" placeholder="${f.hasPassphrase ? 'Saved — leave blank to keep it' : 'At least 12 characters'}"><div class="hint">Kept encrypted on this server so backups can run unattended. Offsite copies and every destination use it too. You need it to restore, so keep your own copy somewhere safe.</div></div>
+        ${f.hasPassphrase ? '<div class="field"><label>Backup passphrase</label><div class="setting-desc">Saved on this server (sealed). Offsite copies and every destination use it too. You need it to restore, so keep your own copy somewhere safe.</div><div class="row wrap mt-sm"><button class="btn secondary" id="fp-check">Check my passphrase</button><button class="btn secondary" id="fp-change">Change passphrase</button></div></div>' : '<div class="field"><label for="fpp">Backup passphrase</label><input type="password" id="fpp" autocomplete="new-password" placeholder="At least 12 characters"><div class="hint">Kept encrypted on this server so backups can run unattended. Offsite copies and every destination use it too. You need it to restore, so keep your own copy somewhere safe.</div></div>'}
         <div class="setting"><div><div class="setting-title">Email Host administrators if a backup fails</div></div><label class="switch"><input type="checkbox" id="fem" aria-label="Email Host administrators if a backup fails" ${f.emailOnFailure ? 'checked' : ''}><i></i></label></div>
         ${d.setup.mail.ready ? '' : `<div class="banner" id="mail-warn">No mail is set up, so a failure email will not be sent. ${esc(d.setup.mail.note)}</div>`}
         <div class="row wrap mt-md"><button class="btn" data-save>Save</button><button class="btn secondary" id="now">Run one now</button><button class="btn secondary" id="hand">Make one with a new passphrase</button></div></div>
         <div class="card"><h3>Full-site backups on this server</h3><div class="mt-sm" id="list"></div></div>`;
-      const gather = () => ({ enabled: pane.querySelector('#fen').checked, frequency: UI.select.value(pane.querySelector('#ff')), weekday: UI.select.value(pane.querySelector('#fwd')), hourUtc: pane.querySelector('#fhr').value, keepDaily: pane.querySelector('#fkd').value, keepWeekly: pane.querySelector('#fkw').value, offboxDir: pane.querySelector('#fob').value, destinationIds: chosen(pane), passphrase: pane.querySelector('#fpp').value, emailOnFailure: pane.querySelector('#fem').checked });
+      const gather = () => ({ enabled: pane.querySelector('#fen').checked, frequency: UI.select.value(pane.querySelector('#ff')), weekday: UI.select.value(pane.querySelector('#fwd')), hourUtc: pane.querySelector('#fhr').value, keepDaily: pane.querySelector('#fkd').value, keepWeekly: pane.querySelector('#fkw').value, offboxDir: pane.querySelector('#fob').value, destinationIds: chosen(pane), passphrase: pane.querySelector('#fpp')?.value || '', emailOnFailure: pane.querySelector('#fem').checked });
       const wl = () => { pane.querySelector('#fwl').textContent = UI.select.value(pane.querySelector('#ff')) === 'weekly' ? 'Backup runs on' : 'Weekly copy is taken on'; };
       pane.querySelector('#ff').addEventListener('change', wl); wl();
+      pane.querySelector('#fp-check')?.addEventListener('click', () => B.passSheet('check')); pane.querySelector('#fp-change')?.addEventListener('click', () => B.passSheet('change'));
       saveBtn(pane, () => Host.api('PUT', '/backups/full', gather()), 'Full-site settings saved');
-      pane.querySelector('#now').addEventListener('click', (e) => busy(e.currentTarget, async () => { try { await Host.api('PUT', '/backups/full', gather()); await Host.api('POST', '/backups/full/run'); toast('Backup finished and verified'); } catch (er) { toast(er.message, true); } await B.reload(); }));
+      pane.querySelector('#now').addEventListener('click', (e) => busy(e.currentTarget, async () => { try { await Host.api('PUT', '/backups/full', gather()); await B.jobs.start('full-backup'); toast('Backup started. Its progress is shown at the top of the page.'); } catch (er) { toast(er.message, true); } await B.reload(); }));
       pane.querySelector('#hand').addEventListener('click', async () => {
         const ok = await sheet(`<h2>Full-site backup</h2><div class="field mt-md"><label>Backup passphrase</label><input type="password" id="pp" autocomplete="new-password"><div class="hint">At least 12 characters. You will need it to restore. It is not stored.</div></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Create backup</button></div>`,
-          { onMount: (el, close) => el.querySelector('#go').addEventListener('click', async () => { try { await Host.api('POST', '/backups/bundle', { passphrase: el.querySelector('#pp').value }); close(true); } catch (e) { toast(e.message, true); } }) });
-        if (ok) { toast('Full-site backup created'); B.reload(); }
+          { onMount: (el, close) => el.querySelector('#go').addEventListener('click', async () => { try { await B.jobs.start('bundle', { passphrase: el.querySelector('#pp').value }); close(true); } catch (e) { toast(e.message, true); } }) });
+        if (ok) toast('Backup started. Its progress is shown at the top of the page.');
       });
       B.localList(pane.querySelector('#list'), 'full', d.engine, B.reloadStrip);
       lockPane(pane, d.setup.locks.full);
+      B.fileTestCard(pane); // added after the lock so it stays usable: a file from a lost server needs no setup
     },
     safety(pane, d) {
       const s = d.tiers.safety;
@@ -110,9 +112,9 @@
     let data = await Host.api('GET', '/backups');
     swap(main, `${Host.head('Backups', 'Frequent, small copies of the site, kept in layers and sent away from this server.')}
       ${data.engine !== 'sqlite' ? '<div class="banner mb-lg">You are on an external database. Backups here use pg_dump / mysqldump and need those tools in the container; test restore can only check the files, and managed databases usually have their own snapshots too.</div>' : ''}
-      <div id="setup-panel" class="mb-lg"></div><div id="strip"></div><div class="seg tabs mb-lg" id="tabs" role="tablist">${TABS.map(([k, l]) => `<button type="button" role="tab" data-t="${k}" class="${k === tab ? 'on' : ''}">${esc(l)}</button>`).join('')}</div><div id="pane"></div>`);
+      <div id="setup-panel" class="mb-lg"></div><div id="job-strip" aria-live="polite"></div><div id="strip"></div><div class="seg tabs mb-lg" id="tabs" role="tablist">${TABS.map(([k, l]) => `<button type="button" role="tab" data-t="${k}" class="${k === tab ? 'on' : ''}">${esc(l)}</button>`).join('')}</div><div id="pane"></div>`);
     const tabs = main.querySelector('#tabs'), goTab = (k) => { tab = k; paint(); tabs.scrollIntoView({ block: 'nearest' }); };
-    const paintStrip = () => { main.querySelector('#strip').innerHTML = strip(data); };
+    const paintStrip = () => { main.querySelector('#strip').innerHTML = strip(data); B.syncJob(data.job, data.busy); };
     const paintSetup = () => B.setupPanel(main.querySelector('#setup-panel'), data, () => B.reload(), goTab);
     const paint = () => { B.engine = data.engine; main.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab)); UI.tabRow.sync(tabs); paintSetup(); paintStrip(); panes[tab](main.querySelector('#pane'), data); };
     B.reload = async () => { try { data = await Host.api('GET', '/backups'); paint(); } catch (e) { toast(e.message, true); } };

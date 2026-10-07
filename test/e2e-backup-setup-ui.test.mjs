@@ -70,9 +70,30 @@ for (const [w, h, label] of [[375, 812, 'phone'], [1280, 800, 'laptop']]) {
       if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `setup-step4-${w}.png`), fullPage: true });
       // step 4: prove it, then and only then Protected
       assert.match(await page.textContent('#setup-state'), /Not protected yet/);
-      await page.click('#sv-go'); await page.waitForFunction(() => document.querySelector('#setup-state')?.textContent === 'Protected', null, { timeout: 90000 });
+      await page.click('#sv-go'); await page.waitForFunction(() => document.querySelector('[data-step=prove] .chip')?.textContent === 'Done', null, { timeout: 90000 });
+      assert.deepEqual(await page.locator('#setup .setup-step .chip').allTextContents(), ['Done', 'Done', 'Done', 'Done']); assert.match(await page.textContent('#setup-status'), /Local only \(same disk\)/);
+      assert.match(await page.textContent('#setup-state'), /Not protected yet/, 'all steps done but nothing leaves the server: never Protected above a Local only warning');
       assert.deepEqual(await page.locator('#setup .setup-step .chip').allTextContents(), ['Done', 'Done', 'Done', 'Done']); assert.match(await page.textContent('#setup-status'), /Local only \(same disk\)/);
       assert.ok(await overflow(page) <= 0); if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `setup-done-${w}.png`), fullPage: true });
+      // passphrase care sits in plain view under step 1 (no menu): Check, Change, Reset
+      const care = await page.locator('#pass-care button').allTextContents(); assert.deepEqual(care, ['Check my passphrase', 'Change passphrase', 'Reset (forgotten)']);
+      if (w <= 640) { const small = await page.evaluate(() => [...document.querySelectorAll('#pass-care .btn')].filter(b => b.getBoundingClientRect().height < 43.5).map(b => b.textContent.trim())); assert.deepEqual(small, [], 'passphrase buttons are 44px tall'); }
+      assert.ok(await overflow(page) <= 0); if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `setup-passphrase-care-${w}.png`), fullPage: true });
+      await page.click('#pc-check'); await page.fill('.sheet #pk-cur', 'not my passphrase'); await page.click('.sheet #pgo'); await page.waitForSelector('.sheet #pk-out .banner.red'); assert.match(await page.textContent('#pk-out'), /does not match/);
+      await page.fill('.sheet #pk-cur', PASS); await page.click('.sheet #pgo'); await page.waitForSelector('.sheet #pk-out .banner.blue'); assert.match(await page.textContent('#pk-out'), /matches the saved passphrase/);
+      if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `setup-passphrase-check-${w}.png`) });
+      await page.click('.sheet [data-cancel]'); await page.waitForSelector('.sheet', { state: 'detached' });
+      await page.click('#pc-change'); assert.match(await page.textContent('.sheet'), /older .*still need the old passphrase|before the change still need the old passphrase/);
+      await page.fill('.sheet #pc-cur', 'wrong current one'); await page.fill('.sheet #pc-new', PASS + ' two'); await page.fill('.sheet #pc-conf', PASS + ' two'); await page.check('.sheet #pc-saved'); await page.click('.sheet #pgo');
+      await page.waitForFunction(() => [...document.querySelectorAll('.toast.err')].some(t => /not the current backup passphrase/.test(t.textContent)));
+      if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `setup-passphrase-change-${w}.png`) });
+      await page.click('.sheet [data-cancel]'); await page.waitForSelector('.sheet', { state: 'detached' });
+      await page.click('#pc-reset'); assert.match(await page.textContent('.sheet'), /can never be opened again/); await page.fill('.sheet #pr-new', PASS + ' three'); await page.fill('.sheet #pr-conf', PASS + ' three'); await page.check('.sheet #pr-saved'); await page.click('.sheet #pgo');
+      await page.waitForFunction(() => [...document.querySelectorAll('.toast.err')].some(t => /older encrypted copy can never be opened/.test(t.textContent)), null, { timeout: 15000 });
+      if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `setup-passphrase-reset-${w}.png`) });
+      await page.click('.sheet [data-cancel]'); await page.waitForSelector('.sheet', { state: 'detached' });
+      await page.click('#tabs [data-t=full]'); await page.waitForSelector('#fp-change'); assert.equal(await page.locator('#fpp').count(), 0, 'the Full-site tab no longer swaps the passphrase without the current one'); assert.equal(await page.locator('#fp-check').count(), 1);
+      await page.click('#tabs [data-t=frequent]'); await page.waitForSelector('#setup');
 
       // an offsite copy to restore from (a folder outside the default one counts as a destination and is encrypted)
       const made = await c.req('POST', `${API}/destinations`, { type: 'folder', name: 'Store', enabled: false, settings: { path: store } }); assert.equal(made.status, 200, JSON.stringify(made.data));
@@ -107,6 +128,9 @@ for (const [w, h, label] of [[375, 812, 'phone'], [1280, 800, 'laptop']]) {
       await page.locator(`#list tr:has-text("${good}") [data-rtest]`).click(); await page.waitForFunction(() => /passed every check/.test(document.querySelector('.sheet #otest')?.textContent || ''));
       assert.equal(await page.locator('.sheet #ogo').count(), 0); assert.match(await page.textContent('.sheet h2'), /Test restore/);
       await page.click('.sheet [data-cancel]'); await page.waitForSelector('.sheet', { state: 'detached' });
+      // now a copy has left the server and its test passed: Protected, and only now
+      await page.goto(srv.base + '/host/#/backups'); await page.reload(); await page.waitForSelector('#setup .setup-step');
+      assert.match(await page.textContent('#setup-state'), /^Protected$/); assert.match(await page.textContent('#setup-status'), /Off-site and verified/);
       assert.deepEqual(errors, []); // (the 400s are the refused short passphrase and unsaved box on purpose)
     } finally { await br.close(); srv.stop(); fs.rmSync(store, { recursive: true, force: true }); }
   });

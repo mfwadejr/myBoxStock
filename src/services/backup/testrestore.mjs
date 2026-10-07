@@ -6,8 +6,10 @@ import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { areaLogger } from '../../logging/logger.mjs';
 import { backupPath } from './files.mjs';
-import { openBundle } from './bundle.mjs';
-import { getPassphrase } from './passphrase.mjs';
+import { extractBundle, keyOf, peekPart } from './bundle.mjs';
+import { getPassphrase, earlierPassphraseNote } from './passphrase.mjs';
+import { takenAtFromName } from './files.mjs';
+import { jobStep } from './progress.mjs';
 
 const L = areaLogger('backup');
 const ok = (label, detail = '') => ({ ok: true, label, detail }), bad = (label, detail = '') => ({ ok: false, label, detail });
@@ -33,21 +35,23 @@ export async function testRestore(db, name, { passphrase = '', actor = null } = 
   const src = backupPath(name), tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mbs-testrestore-')); let checks = [], counts = null, note = '';
   try {
     if (name.endsWith('.db')) {
-      const copy = path.join(tmp, 'copy.db'); fs.copyFileSync(src, copy); ({ checks, counts } = checkSqliteFile(copy));
+      jobStep('Copying the snapshot to a scratch copy', 5, 40); const copy = path.join(tmp, 'copy.db'); fs.copyFileSync(src, copy); jobStep('Checking the database', 40, 95); ({ checks, counts } = checkSqliteFile(copy));
     } else if (name.endsWith('.mbsbak')) {
-      const pass = passphrase || await getPassphrase(db); let e;
+      const pass = passphrase || await getPassphrase(db); let x;
       if (!pass) checks.push(bad('The passphrase opens the backup', 'No passphrase is saved. Type the backup passphrase and try again.'));
       else {
-        try { e = openBundle(fs.readFileSync(src), pass); checks.push(ok('The passphrase opens the backup')); } catch (er) { checks.push(bad('The passphrase opens the backup', er.message)); }
+        jobStep('Decrypting the backup and checking every part', 5, 85);
+        try { x = await extractBundle(src, pass, { dir: tmp }); checks.push(ok('The passphrase opens the backup', 'It decrypted, and the whole file passed its authenticity check, so it is complete and unchanged.')); } catch (er) { checks.push(bad('The passphrase opens the backup', (await earlierPassphraseNote(db, takenAtFromName(name, fs.statSync(src).mtimeMs))) || er.message)); }
       }
-      if (e) {
-        const m = JSON.parse(e['manifest.json'].toString());
-        checks.push(e['secret.key']?.length ? ok('The encryption key is inside') : bad('The encryption key is inside', 'The backup has no key, so two-factor secrets could not be read after a restore.'));
-        if (m.engine === 'sqlite') { const copy = path.join(tmp, 'copy.db'); fs.writeFileSync(copy, e['database.db']); const r = checkSqliteFile(copy); checks.push(...r.checks); counts = r.counts; }
-        else { const sql = e['database.sql']?.toString('utf8', 0, 200000) || ''; checks.push(/CREATE TABLE/i.test(sql) ? ok('The database dump looks complete') : bad('The database dump looks complete', 'It is empty or has no tables.')); note = 'This backup holds a PostgreSQL/MariaDB dump. It was opened and read, but a trial load needs a spare database server, so the dump itself was not loaded.'; }
+      if (x) {
+        const m = x.manifest;
+        checks.push(keyOf(x) ? ok('The encryption key is inside') : bad('The encryption key is inside', 'The backup has no key, so two-factor secrets could not be read after a restore.'));
+        jobStep('Checking the database', 85, 99);
+        if (m.engine === 'sqlite') { const r = checkSqliteFile(x.files['database.db']); checks.push(...r.checks); counts = r.counts; }
+        else { checks.push(/CREATE TABLE/i.test(peekPart(x, 'database.sql')) ? ok('The database dump looks complete') : bad('The database dump looks complete', 'It is empty or has no tables.')); note = 'This backup holds a PostgreSQL/MariaDB dump. It was opened and read, but a trial load needs a spare database server, so the dump itself was not loaded.'; }
       }
     } else {
-      const head = fs.readFileSync(src, { encoding: 'utf8', flag: 'r' }).slice(0, 200000);
+      const fd = fs.openSync(src, 'r'), hb = Buffer.alloc(200000), head = hb.toString('utf8', 0, fs.readSync(fd, hb, 0, 200000, 0)); fs.closeSync(fd);
       checks.push(fs.statSync(src).size > 0 && /CREATE TABLE/i.test(head) ? ok('The dump contains the table definitions') : bad('The dump contains the table definitions', 'The file is empty or has no tables.'));
       note = 'Test restore can only load SQLite backups into a scratch copy. For a PostgreSQL/MariaDB dump this checked that the file is complete; loading it needs a spare database server.';
     }

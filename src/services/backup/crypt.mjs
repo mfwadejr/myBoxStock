@@ -11,8 +11,9 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import zlib from 'node:zlib';
 import { pipeline } from 'node:stream/promises';
+import { jobBytes } from './progress.mjs';
 
-const MAGIC = Buffer.from('MBSENC1\n'), CHUNK = 1 << 20, KDF = { N: 1 << 15, r: 8, p: 1 };
+export const MAGIC_ENC = Buffer.from('MBSENC1\n'); const MAGIC = MAGIC_ENC, CHUNK = 1 << 20, KDF = { N: 1 << 15, r: 8, p: 1 };
 const key = (pass, salt, k = KDF) => crypto.scryptSync(pass, salt, 32, { N: k.N, r: k.r, p: k.p, maxmem: 128 * 1024 * 1024 });
 const nonce = (iv, n) => { const b = Buffer.from(iv); b.writeUInt32BE((b.readUInt32BE(8) ^ n) >>> 0, 8); return b; };
 const aad = (header, n, last) => { const b = Buffer.alloc(5); b.writeUInt32BE(n); b[4] = last ? 1 : 0; return Buffer.concat([header, b]); };
@@ -25,14 +26,15 @@ async function* rechunk(readable) {
   yield { data: buf, last: true };
 }
 
-export async function encryptFile(src, dest, passphrase) {
+// Encrypts a stream of plain bytes (gzip first, then 1 MiB sealed chunks) into `dest`. `magic` picks the file kind (copy or full-site backup).
+export async function encryptStreamTo(source, dest, passphrase, magic = MAGIC) {
   const salt = crypto.randomBytes(16), iv = crypto.randomBytes(12), k = key(passphrase, salt);
   const header = Buffer.from(JSON.stringify({ kdf: 'scrypt', ...KDF, salt: salt.toString('base64'), iv: iv.toString('base64'), chunk: CHUNK, gz: true })), lenBuf = Buffer.alloc(4); lenBuf.writeUInt32BE(header.length);
   const out = fs.createWriteStream(dest, { mode: 0o600 });
-  const gz = fs.createReadStream(src).pipe(zlib.createGzip());
+  const gz = zlib.createGzip(); source.on('error', (e) => gz.destroy(e)); source.pipe(gz);
   const write = (b) => new Promise((res, rej) => out.write(b, (e) => e ? rej(e) : res()));
   try {
-    await write(Buffer.concat([MAGIC, lenBuf, header]));
+    await write(Buffer.concat([magic, lenBuf, header]));
     let n = 0;
     for await (const { data, last } of rechunk(gz)) {
       const c = crypto.createCipheriv('aes-256-gcm', k, nonce(iv, n)); c.setAAD(aad(header, n, last));
@@ -40,32 +42,40 @@ export async function encryptFile(src, dest, passphrase) {
       await write(Buffer.concat([l, ct])); n++;
     }
     await new Promise((res, rej) => out.end((e) => e ? rej(e) : res()));
-  } catch (e) { out.destroy(); fs.rmSync(dest, { force: true }); throw e; }
+  } catch (e) { out.destroy(); gz.destroy(); source.destroy?.(); fs.rmSync(dest, { force: true }); throw e; }
 }
+export const encryptFile = (src, dest, passphrase) => encryptStreamTo(fs.createReadStream(src), dest, passphrase, MAGIC);
 
-export async function decryptFile(src, dest, passphrase) {
+// Opens a chunked file and pours the plain bytes into `sink` (a writable). Every chunk is authenticated before its bytes are passed on, and the
+// last chunk is marked as the last, so a cut file fails. The sink may already hold bytes when a later chunk fails: the caller must treat the
+// sink's output as unusable until this resolves, and throw it away when it rejects.
+export async function decryptStreamTo(src, sink, passphrase, { magic = MAGIC, notMine = 'This is not a myBoxStock encrypted backup copy.', damaged = 'Wrong passphrase, or the backup copy is damaged.' } = {}) {
   const fd = await fs.promises.open(src, 'r');
   try {
-    const st = await fd.stat(), head = Buffer.alloc(MAGIC.length + 4);
-    if (st.size < head.length + 20) throw new Error('This is not a myBoxStock encrypted backup copy.');
+    const st = await fd.stat(), head = Buffer.alloc(magic.length + 4);
+    if (st.size < head.length + 20) throw new Error(notMine);
     await fd.read(head, 0, head.length, 0);
-    if (!head.subarray(0, MAGIC.length).equals(MAGIC)) throw new Error('This is not a myBoxStock encrypted backup copy.');
-    const hl = head.readUInt32BE(MAGIC.length), header = Buffer.alloc(hl); await fd.read(header, 0, hl, head.length);
-    const h = JSON.parse(header.toString()), iv = Buffer.from(h.iv, 'base64'), k = key(passphrase, Buffer.from(h.salt, 'base64'), h);
-    const gunzip = zlib.createGunzip(), done = pipeline(gunzip, fs.createWriteStream(dest, { mode: 0o600 })); done.catch(() => {});
+    if (!head.subarray(0, magic.length).equals(magic)) throw new Error(notMine);
+    const hl = head.readUInt32BE(magic.length); if (hl > 4096 || head.length + hl > st.size) throw new Error(notMine);
+    const header = Buffer.alloc(hl); await fd.read(header, 0, hl, head.length);
+    const gunzip = zlib.createGunzip(), done = pipeline(gunzip, sink); done.catch(() => {});
     let pos = head.length + hl, n = 0;
     try {
+      const h = JSON.parse(header.toString()), iv = Buffer.from(h.iv, 'base64'), k = key(passphrase, Buffer.from(h.salt, 'base64'), h);
       while (pos < st.size) {
         const l = Buffer.alloc(4); await fd.read(l, 0, 4, pos); const len = l.readUInt32BE(0); pos += 4;
-        if (len < 16 || pos + len > st.size) throw new Error('truncated');
+        if (len < 16 || len > CHUNK + 64 || pos + len > st.size) throw new Error('truncated');
         const ct = Buffer.alloc(len); await fd.read(ct, 0, len, pos); pos += len;
         const d = crypto.createDecipheriv('aes-256-gcm', k, nonce(iv, n)); d.setAAD(aad(header, n, pos >= st.size)); d.setAuthTag(ct.subarray(len - 16));
         const plain = Buffer.concat([d.update(ct.subarray(0, len - 16)), d.final()]);
-        if (!gunzip.write(plain)) await new Promise(r => gunzip.once('drain', r));
-        n++;
+        await new Promise((res, rej) => gunzip.write(plain, (e) => e ? rej(e) : res())); // waits until it is taken: backpressure, and a failed sink stops the loop
+        n++; jobBytes(pos, st.size);
       }
       if (!n) throw new Error('empty');
       gunzip.end(); await done;
-    } catch (e) { gunzip.destroy(); await done.catch(() => {}); fs.rmSync(dest, { force: true }); throw new Error('Wrong passphrase, or the backup copy is damaged.'); }
-  } finally { await fd.close(); }
+    } catch (e) { gunzip.destroy(); await done.catch(() => {}); throw new Error(damaged); }
+  } finally { await fd.close(); if (!sink.destroyed && !sink.writableFinished) sink.destroy(); }
+}
+export async function decryptFile(src, dest, passphrase) {
+  try { await decryptStreamTo(src, fs.createWriteStream(dest, { mode: 0o600 }), passphrase); } catch (e) { fs.rmSync(dest, { force: true }); throw e; }
 }

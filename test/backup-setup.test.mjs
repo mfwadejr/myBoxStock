@@ -29,7 +29,7 @@ test.after(() => { srv?.stop(); dav?.close(); });
 test('a fresh install: only step 1 is open, everything that needs the passphrase is locked with a reason, and status says Local only', { skip: !sqlite && 'SQLite-only' }, async () => {
   const s = (await host.req('GET', `${API}/setup`)).data;
   assert.deepEqual(stepState(s), { passphrase: 'open', where: 'locked', keep: 'locked', prove: 'locked' });
-  assert.equal(s.complete, false); assert.equal(s.legacy, false); assert.equal(s.status, 'local'); assert.equal(s.statusLabel, 'Local only (same disk)');
+  assert.equal(s.complete, false); assert.equal(s.protected, false); assert.equal(s.legacy, false); assert.equal(s.status, 'local'); assert.equal(s.statusLabel, 'Local only (same disk)');
   for (const k of ['offsite', 'full', 'destinations']) assert.match(s.locks[k], /passphrase/);
   assert.equal(s.mail.ready, false); assert.equal(s.mail.note, 'Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway.');
   assert.deepEqual((await host.req('GET', API)).data.setup.steps.map(x => x.id), ['passphrase', 'where', 'keep', 'prove'], 'the page data carries the setup');
@@ -83,19 +83,67 @@ test('step 4: Prove it runs the first backup and a test restore, fetches the off
   const r = await host.req('POST', `${API}/setup/prove`, {}); assert.equal(r.status, 200, JSON.stringify(r.data)); assert.equal(r.data.ok, true, JSON.stringify(r.data.checks));
   assert.ok(r.data.checks.length >= 4 && r.data.checks.every(c => c.ok));
   const s = r.data.setup; assert.equal(s.complete, true); assert.deepEqual(stepState(s), { passphrase: 'done', where: 'done', keep: 'done', prove: 'done' });
-  assert.equal(s.status, 'verified'); assert.equal(s.statusLabel, 'Off-site and verified');
+  assert.equal(s.status, 'verified'); assert.equal(s.statusLabel, 'Off-site and verified'); assert.equal(s.protected, true, 'Protected only when copies leave the server and a test restore passed');
   assert.equal(fs.readdirSync(davDir()).filter(f => /offsite/.test(f)).length, 1, 'a copy is at the destination');
   await sleep(900); const audit = (await host.req('GET', '/api/host/audit?q=backup.setup')).data.rows; for (const e of ['backup.setup_where', 'backup.setup_keep', 'backup.setup_prove']) assert.ok(audit.some(x => x.event === e), e);
 });
 
-test('an install that already had a passphrase and destinations shows the setup as complete and nothing is locked', { skip: !sqlite && 'SQLite-only' }, async () => {
+test('an install that already had a passphrase keeps nothing locked, but is not shown as protected unless copies leave the server', { skip: !sqlite && 'SQLite-only' }, async () => {
   const b = await startServer(); const h = await login(b.base, b.hostPw);
   try {
     await h.req('POST', '/api/host/change-password', { current: b.hostPw, next: PW });
     assert.equal((await h.req('PUT', `${API}/full`, { enabled: false, passphrase: PASS, keepDaily: 14, keepWeekly: 8 })).status, 200);
-    const s = (await h.req('GET', `${API}/setup`)).data; assert.equal(s.legacy, true); assert.equal(s.complete, true); assert.deepEqual(stepState(s), { passphrase: 'done', where: 'done', keep: 'done', prove: 'done' });
+    const s = (await h.req('GET', `${API}/setup`)).data; assert.equal(s.legacy, true);
+    // an existing install that sends nothing away is NOT shown as protected: step 2 stays open and the chip logic follows status, not "all done"
+    assert.deepEqual(stepState(s), { passphrase: 'done', where: 'open', keep: 'done', prove: 'done' }); assert.equal(s.complete, false); assert.equal(s.protected, false); assert.equal(s.status, 'local'); assert.equal(s.statusLabel, 'Local only (same disk)');
     for (const k of ['offsite', 'full', 'destinations']) assert.equal(s.locks[k], '');
+    assert.equal((await h.req('POST', `${API}/setup/where`, { offServer: false })).data.complete, true, 'answering step 2 completes the steps');
+    assert.equal((await h.req('GET', `${API}/setup`)).data.protected, false, 'but complete is not protected: nothing leaves the server');
     assert.equal((await h.req('PUT', `${API}/full`, { enabled: true, passphrase: '', keepDaily: 14, keepWeekly: 8 })).status, 200, 'full-site backups can be turned on straight away');
+  } finally { b.stop(); }
+});
+
+// ---------------- passphrase care: check, change, reset ----------------
+test('Check, Change and Reset the backup passphrase: current one required, warnings, audit, never logged, and Test restore explains an earlier-passphrase copy', { skip: !sqlite && 'SQLite-only', timeout: 120000 }, async () => {
+  const b = await startServer(), h = await login(b.base, b.hostPw).catch(() => null);
+  try {
+    const hh = h || await login(b.base); await hh.req('POST', '/api/host/change-password', { current: b.hostPw, next: PW });
+    const P1 = 'first backup passphrase', P2 = 'second backup passphrase', P3 = 'third backup passphrase', pp = (x, body) => hh.req('POST', `${API}/setup/passphrase/${x}`, body);
+    assert.equal((await pp('check', { passphrase: P1 })).data.code, 'HOST_BACKUP_PASSPHRASE_NONE', 'nothing to check before one is set');
+    assert.equal((await hh.req('POST', `${API}/setup/passphrase`, { passphrase: P1, confirm: P1, saved: true })).status, 200);
+    // check
+    assert.equal((await pp('check', { passphrase: P1 })).data.match, true); assert.equal((await pp('check', { passphrase: P1 + 'x' })).data.match, false); assert.equal((await pp('check', {})).data.match, false);
+    // make a full-site copy under P1, so it is older than the change
+    const made = await hh.req('POST', `${API}/full/run`); assert.equal(made.status, 200, JSON.stringify(made.data)); const name = made.data.name;
+    await sleep(1100);
+    // change: wrong current refused (nothing changes), then the other checks, then success
+    assert.equal((await pp('change', { current: 'not it at all!', next: P2, confirm: P2, saved: true })).data.code, 'HOST_BACKUP_PASSPHRASE_WRONG');
+    assert.equal((await pp('change', { current: P1, next: 'short', confirm: 'short', saved: true })).data.code, 'HOST_BACKUP_PASSPHRASE_SHORT');
+    assert.equal((await pp('change', { current: P1, next: P2, confirm: P2 + 'x', saved: true })).data.code, 'HOST_BACKUP_PASSPHRASE_MISMATCH');
+    assert.equal((await pp('change', { current: P1, next: P2, confirm: P2, saved: false })).data.code, 'HOST_BACKUP_PASSPHRASE_UNSAVED');
+    assert.equal((await pp('change', { current: P1, next: P1, confirm: P1, saved: true })).data.code, 'HOST_BACKUP_PASSPHRASE_SAME');
+    assert.equal((await pp('check', { passphrase: P1 })).data.match, true, 'still the old one after every refusal');
+    const ch = await pp('change', { current: P1, next: P2, confirm: P2, saved: true }); assert.equal(ch.status, 200, JSON.stringify(ch.data));
+    assert.equal(ch.data.setup.passphrase.lastAction, 'change'); assert.ok(ch.data.setup.passphrase.changedAt);
+    assert.equal((await pp('check', { passphrase: P2 })).data.match, true); assert.equal((await pp('check', { passphrase: P1 })).data.match, false);
+    // the old Full-site field can no longer swap it without the current passphrase
+    assert.equal((await hh.req('PUT', `${API}/full`, { enabled: false, passphrase: P3 + 'zzz', keepDaily: 14, keepWeekly: 8 })).data.code, 'HOST_BACKUP_PASSPHRASE_EXISTS');
+    // Test restore of the copy made with the earlier passphrase says so
+    const t = (await hh.req('POST', `${API}/${encodeURIComponent(name)}/test-restore`, {})).data; assert.equal(t.ok, false);
+    assert.match(t.checks.find(c => !c.ok).detail, /made with an earlier passphrase.*changed on/); assert.match(t.summary, /earlier passphrase/);
+    assert.equal((await hh.req('POST', `${API}/${encodeURIComponent(name)}/test-restore`, { passphrase: P1 })).data.ok, true, 'the old passphrase still opens it');
+    // reset: needs the warning accepted; older copies are then unreadable for good
+    assert.equal((await pp('reset', { next: P3, confirm: P3, saved: true })).data.code, 'HOST_BACKUP_RESET_UNACK');
+    assert.equal((await pp('check', { passphrase: P3 })).data.match, false, 'nothing changed by the refusal');
+    const rs = await pp('reset', { next: P3, confirm: P3, saved: true, acknowledge: true }); assert.equal(rs.status, 200, JSON.stringify(rs.data)); assert.equal(rs.data.setup.passphrase.lastAction, 'reset');
+    assert.equal((await pp('check', { passphrase: P3 })).data.match, true);
+    const t2 = (await hh.req('POST', `${API}/${encodeURIComponent(name)}/test-restore`, {})).data; assert.equal(t2.ok, false); assert.match(t2.checks.find(c => !c.ok).detail, /earlier passphrase.*reset on/);
+    // audited by name and outcome, never with a passphrase
+    await sleep(900); const rows = (await hh.req('GET', '/api/host/audit?q=backup.passphrase')).data.rows, ev = rows.map(r => r.event);
+    for (const e of ['backup.passphrase_check', 'backup.passphrase_change', 'backup.passphrase_reset']) assert.ok(ev.includes(e), e);
+    assert.ok(rows.some(r => r.event === 'backup.passphrase_change' && r.level === 'warn' && r.actor === 'admin'), 'the wrong-current attempt is a warning');
+    const everything = allLogText(b.logDir) + JSON.stringify(rows); for (const x of [P1, P2, P3]) assert.ok(!everything.includes(x), 'no passphrase in any log or audit row');
+    const raw = new DatabaseSync(path.join(b.dir, 'myboxstock.db'), { readOnly: true }).prepare("SELECT v FROM settings WHERE k IN ('backup_full', 'backup_setup')").all().map(r => r.v).join(''); for (const x of [P1, P2, P3]) assert.ok(!raw.includes(x), 'sealed or absent at rest');
   } finally { b.stop(); }
 });
 

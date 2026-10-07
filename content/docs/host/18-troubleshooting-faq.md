@@ -3,7 +3,7 @@ title: Troubleshooting and FAQ
 summary: Problems you are likely to meet as the Host, grouped by symptom, with the cause, the fix and where to read more. Ends with a general FAQ.
 keywords: test connection, sftp identity, restore notice, lockouts persist, camera, scanning, diagnostics, destination, troubleshooting, problem, error, not found, locked out, blocked, proxy, email not arriving, resend, confirmation link, backup failed, restore, trial, read-only, two-factor, recovery, FAQ, help
 order: 18
-covers: Not Found, host_console.blocked, Reverse proxy in front of the site, Site is behind Cloudflare, Resend, Resend all failed, Site address, Health tab, Send a test, Run one now, Restore, Extend trial, Change plan, Set up two-factor, reset-host-admin, reset-server-options, HOST_ALLOW_ANY, Mark email as confirmed, Email a password reset link, Reset two-factor authentication, Recovery key, Test connection, Take a snapshot now, Send one now, Lift, Copy diagnostics, Try again, decrypt-backup, SFTP identity, Server identity pinned, restore notice, Backup is failing, Locked sign-ins, Unlock, Too many failed attempts
+covers: Test a backup file too large, Not Found, host_console.blocked, Reverse proxy in front of the site, Site is behind Cloudflare, Resend, Resend all failed, Site address, Health tab, Send a test, Run one now, Restore, Extend trial, Change plan, Set up two-factor, reset-host-admin, reset-server-options, HOST_ALLOW_ANY, Mark email as confirmed, Email a password reset link, Reset two-factor authentication, Recovery key, Test connection, Take a snapshot now, Send one now, Lift, Copy diagnostics, Try again, decrypt-backup, SFTP identity, Server identity pinned, restore notice, Backup is failing, Locked sign-ins, Unlock, Too many failed attempts
 ---
 
 ## How to use this page
@@ -154,6 +154,12 @@ Press **Test connection** on the destination's card. The message under it says w
 **Cause.** After a restore from the Backups page, the site posts an important (red) announcement to every customer: "The site was restored from a backup taken YYYY-MM-DD HH:MM UTC. Sales or changes made after that time may be missing. Please check your recent activity."
 
 **Fix.** Nothing is wrong. Clear the announcement in [Settings](#/docs/settings) (turn **Show the banner** off and press **Save announcement**) when resellers have had time to check. Resellers who made their own backup file after that time can recover recent work with **Add what is missing**. See [Support and diagnostics](#/docs/support-and-diagnostics). A restore made with the `restore-bundle` command does not post the notice.
+
+## Test a backup file refuses my file
+
+**Cause.** The card accepts `.mbsbak`, `.mbsenc` and `.db` files only, and an upload larger than the stated limit (8 GiB unless `BACKUP_UPLOAD_MAX_BYTES` is set) is refused, as is one that would not leave enough free disk space to open it. A wrong passphrase, or a file that was cut short or changed, fails the first check with "Wrong passphrase, or the backup file is damaged".
+
+**Fix.** For a file that is too large, copy it into the server's backup folder (for example with your NAS tools or `docker cp`) and pick it under **A file already in the server's backup folder**; nothing is uploaded. For a failed passphrase, try the passphrase that was current when the file was made. See [Backups](#/docs/backups).
 
 ## I need to restore a backup
 

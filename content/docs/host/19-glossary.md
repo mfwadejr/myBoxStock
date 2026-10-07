@@ -3,7 +3,7 @@ title: Glossary
 summary: Plain-English meanings of every term used in the Host Console, in alphabetical order, each with a link to the page that explains more.
 keywords: glossary, terms, meaning, definition, words, jargon, what is
 order: 19
-covers: Account menu, DMARC, Feed, Load more, Offsite copy, Passphrase, Restore point, Safety copy, Sender checks, Snapshot, Destination, Thinning, Test restore, DMARC, .mbsenc, .mbsbackup, .mbsbak, Account, Alert, Announcement banner, Audit trail, Authenticator app, Ban, Backup, CIDR, Cloudflare, Closing, Comped, DKIM, Database engine, Direct delivery, Docker, Export, Firewall, Free, Full-site backup, Health, Helper, HELO, Host, Host Console, Log, Log area, Migration, Off-box folder, Onboarding, Open sign-ups, Owner, Paid, Pipeline, Plan, Proxy, Rate limit, Read-only, Recovery codes, Recovery key, Reseller, Reseller ID, Restore, Site address, SMTP, SPF, Suspended, TLS, Temporary password, Trial, Two-factor, User type, Zero-knowledge, Locked sign-in
+covers: Background job, Job strip, Test a backup file, Account menu, DMARC, Feed, Load more, Offsite copy, Passphrase, Restore point, Safety copy, Sender checks, Snapshot, Destination, Thinning, Test restore, .mbsenc, .mbsbackup, .mbsbak, Account, Alert, Announcement banner, Audit trail, Authenticator app, Ban, Backup, CIDR, Cloudflare, Closing, Comped, DKIM, Database engine, Direct delivery, Docker, Export, Firewall, Free, Full-site backup, Health, Helper, HELO, Host, Host Console, Log, Log area, Migration, Off-box folder, Onboarding, Open sign-ups, Owner, Paid, Pipeline, Plan, Proxy, Rate limit, Read-only, Recovery codes, Recovery key, Reseller, Reseller ID, Restore, Site address, SMTP, SPF, Suspended, TLS, Temporary password, Trial, Two-factor, User type, Zero-knowledge, Locked sign-in, Check my passphrase, Change passphrase, Reset (forgotten)
 ---
 
 Words are listed from A to Z. Each entry is short, and the link at the end of it goes to the page that explains the subject in full.
@@ -32,6 +32,10 @@ A phone app that shows a six-digit code that changes every 30 seconds. It is the
 > Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
 
 ## B
+
+### Background job
+
+A long task on the Backups page (Test restore, Restore, a full-site backup, Test a backup file) that runs on the server while you do other things, with a step and a progress bar. Only one runs at a time. See [Backups](#/docs/backups).
 
 ### Backup
 A saved copy of the platform that you can restore if something goes wrong. The Host Console makes frequent snapshots, offsite copies, full-site backups and safety copies. More in [Backups](#/docs/backups).
@@ -94,7 +98,7 @@ The part of the Host Console that limits who can reach the site: rate limits, ad
 A plan with no end date, used for comped accounts. More in [Plans](#/docs/plans).
 
 ### Full-site backup
-A single `.mbsbak` file holding the whole site, protected by a passphrase you choose. It is what you use to move to a new server. More in [Backups](#/docs/backups).
+A single `.mbsbak` file holding the whole site, protected by a passphrase you choose. It is written and opened as a stream, so its size does not use up memory, and nothing in it is used until the whole file has passed its authentication. It is what you use to move to a new server. More in [Backups](#/docs/backups).
 
 
 ## H
@@ -117,6 +121,12 @@ The person or team who runs the server and signs in at `/host/`. Not to be confu
 ### Host Console
 The administration area at `/host/`. It handles accounts, backups, email, the firewall, settings and logs, and deliberately has no view of customers' business data. More in [Overview](#/docs/overview).
 
+
+## J
+
+### Job strip
+
+The panel at the top of the Backups page that shows the background job now running (its step and progress bar) or the one that just finished, with View result and Dismiss. See [Backups](#/docs/backups).
 
 ## L
 
@@ -169,7 +179,7 @@ The first Host administrator. The Owner adds and removes other administrators, r
 A plan with an end date set by you, usually the day the customer has paid through. When it passes the account becomes read-only. More in [Plans](#/docs/plans).
 
 ### Passphrase
-The long phrase (at least 12 characters) that protects full-site backups and everything sent to a destination. It is saved sealed on the server so backups run by themselves. You need it to open them, so keep your own copy away from the server. More in [Backups](#/docs/backups).
+The long phrase (at least 12 characters) that protects full-site backups and everything sent to a destination. It is saved sealed on the server so backups run by themselves. You need it to open them, so keep your own copy away from the server. You can check it, change it (with the current one) or reset it if forgotten, from Backup setup; a reset leaves older copies unreadable. More in [Backups](#/docs/backups).
 
 ### Pipeline
 The page showing sign-ups, trials, renewals and accounts that have gone quiet. It shows plan and contact details only. More in [Pipeline](#/docs/pipeline).
@@ -239,6 +249,9 @@ A one-time password the Host or the Owner can set for someone. It is shown once,
 
 ### Test restore
 A check that opens a backup in a scratch copy, tests it and deletes the copy, without touching the live site. Offsite copies are fetched from their destination first, and Restore on them stays disabled until the test passes. More in [Backups](#/docs/backups).
+
+### Test a backup file
+A card on the Full-site backups tab that opens a backup held somewhere else (uploaded as a stream, or already in the server's backup folder) in a scratch copy and reports what is inside and how it compares with the live site. After a pass it offers Restore this file. The Host cannot open reseller records, so it only counts them. More in [Backups](#/docs/backups).
 
 ### Backup setup
 The four guided steps at the top of Backups (passphrase, where copies go, how much to keep, prove it). Each step unlocks the next. More in [Backups](#/docs/backups).

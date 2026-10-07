@@ -46,11 +46,12 @@
   };
 
   // The Restore confirmation: exactly which file, when it was taken, how much will be lost, and what happens next.
+  // Pressing Restore starts a background job; the sheet shows its progress and the page's status strip keeps it if the sheet is closed.
   B.restoreSheet = async (name) => {
     let info; try { info = await Host.api('GET', `/backups/${encodeURIComponent(name)}/restore-info`); } catch (e) { return toast(e.message, true); }
     if (!info.canRestore) return sheet(`<h2>Restore</h2><p class="muted">${esc(info.reason)}</p><div class="actions"><button class="btn" data-cancel>OK</button></div>`);
-    const full = info.needsPassphrase;
-    const ok = await sheet(`<h2>Restore this backup?</h2>
+    const full = info.needsPassphrase; let h = null;
+    await sheet(`<h2>Restore this backup?</h2>
       <div class="banner red">Everyone goes back to this backup. Anything entered after it was taken will be lost.</div>
       <div class="setting"><div><div class="setting-title">File</div></div><div class="ident">${esc(info.name)}</div></div>
       <div class="setting"><div><div class="setting-title">Taken</div></div><div class="tab-num">${esc(info.takenAtText)} (${esc(fmt.date(info.takenAt))} your time)</div></div>
@@ -58,68 +59,83 @@
       <ul class="hint"><li>A safety copy of the site as it is now is taken first.</li><li>The site restarts and everyone is signed out.</li><li>A notice is shown to every customer afterwards: the site was restored from this backup and recent entries may be missing.</li></ul>
       ${full ? '<div class="field mt-md"><label>Backup passphrase</label><input type="password" id="pp" autocomplete="off"></div>' : ''}
       <div class="field mt-md"><label>Type RESTORE to confirm</label><input type="text" id="cf" autocomplete="off" autocapitalize="characters"></div>
-      <div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn danger" id="go" disabled>Restore</button></div>`,
+      <div id="rjob" class="mt-md"></div>
+      <div class="actions"><button class="btn secondary" data-cancel>Close</button><button class="btn danger" id="go" disabled>Restore</button></div>`,
     { onMount: (el, close) => {
-      const go = el.querySelector('#go'), cf = el.querySelector('#cf'); cf.addEventListener('input', () => { go.disabled = cf.value !== 'RESTORE'; });
-      go.addEventListener('click', () => busy(go, async () => { try { await Host.api('POST', `/backups/${encodeURIComponent(name)}/${full ? 'restore-bundle' : 'restore'}`, { confirm: 'RESTORE', passphrase: el.querySelector('#pp')?.value || '' }); close(true); } catch (e) { toast(e.message, true); } }));
+      const go = el.querySelector('#go'), cf = el.querySelector('#cf'), box = el.querySelector('#rjob');
+      cf.addEventListener('input', () => { go.disabled = !!h || cf.value !== 'RESTORE'; });
+      go.addEventListener('click', () => {
+        go.disabled = true; box.innerHTML = B.progressHtml();
+        h = B.jobs.run('restore', { name, confirm: 'RESTORE', passphrase: el.querySelector('#pp')?.value || '' }, (j) => B.progressPaint(box, j));
+        const again = (msg) => { h = null; go.disabled = cf.value !== 'RESTORE'; box.innerHTML = `<div class="banner red" role="alert">${esc(msg)}</div>`; };
+        h.done.then((j) => (j.status === 'failed' ? again(j.error.message) : close(true)), (e) => again(e.message));
+      });
     } });
-    if (ok) { toast('Restoring… the console will reload'); setTimeout(() => location.reload(), 4500); }
+    h?.release(); // closing the sheet does not stop the job: the status strip keeps showing it
   };
 
-  // Test restore: opens the backup in a scratch copy and shows what it found.
-  B.testSheet = (name) => sheet(`<h2>Test restore</h2><p class="muted"><span class="ident">${esc(name)}</span></p><div id="tbody"><p class="hint">Opens a scratch copy of this backup, checks it, and deletes the copy. The live site is not touched.</p>
+  // Shows a finished check list (and a note) in a sheet's result box. `r` is a test result: { ok, summary, checks, note }.
+  B.testResultHtml = (r) => `<div class="banner ${r.ok ? 'blue' : 'red'}" role="status">${esc(r.summary)}</div>${B.checkRows(r.checks)}${r.note ? `<p class="hint">${esc(r.note)}</p>` : ''}`;
+
+  // Test restore: opens the backup in a scratch copy (a background job) and shows what it found.
+  B.testSheet = async (name) => {
+    let h = null;
+    await sheet(`<h2>Test restore</h2><p class="muted"><span class="ident">${esc(name)}</span></p><div id="tbody"><p class="hint">Opens a scratch copy of this backup, checks it, and deletes the copy. The live site is not touched. It runs in the background, so you can close this window and watch the top of the page.</p>
       ${name.endsWith('.mbsbak') ? '<div class="field"><label>Backup passphrase</label><input type="password" id="pp" autocomplete="off" placeholder="Leave blank to use the saved passphrase"></div>' : ''}</div>
       <div class="actions"><button class="btn secondary" data-cancel>Close</button><button class="btn" id="go">Run test</button></div>`, {
-    onMount: (el) => {
-      const go = el.querySelector('#go'), body = el.querySelector('#tbody');
-      go.addEventListener('click', () => busy(go, async () => {
-        body.innerHTML = '<p class="hint">Checking…</p>';
-        try {
-          const r = await Host.api('POST', `/backups/${encodeURIComponent(name)}/test-restore`, { passphrase: el.querySelector('#pp')?.value || '' });
-          body.innerHTML = `<div class="banner ${r.ok ? 'blue' : 'red'}">${esc(r.summary)}</div>${r.checks.map(c => `<div class="setting"><div><div class="setting-title">${esc(c.label)}</div>${c.detail ? `<div class="setting-desc">${esc(c.detail)}</div>` : ''}</div><span class="chip ${c.ok ? 'green' : 'red'}">${c.ok ? 'Passed' : 'Failed'}</span></div>`).join('')}${r.note ? `<p class="hint">${esc(r.note)}</p>` : ''}`;
-        } catch (e) { body.innerHTML = `<div class="banner red">${esc(e.message)}</div>`; }
-      }));
-    },
-  });
+      onMount: (el) => {
+        const go = el.querySelector('#go'), body = el.querySelector('#tbody');
+        go.addEventListener('click', () => {
+          go.disabled = true; const pass = el.querySelector('#pp')?.value || ''; body.innerHTML = B.progressHtml();
+          h = B.jobs.run('test-restore', { name, passphrase: pass }, (j) => B.progressPaint(body, j));
+          h.done.then((j) => { go.disabled = false; body.innerHTML = j.status === 'failed' ? `<div class="banner red" role="alert">${esc(j.error.message)}</div>` : B.testResultHtml(j.result); }, (e) => { go.disabled = false; body.innerHTML = `<div class="banner red" role="alert">${esc(e.message)}</div>`; });
+        });
+      },
+    });
+    h?.release();
+  };
 
-  // A copy held at a destination: it is fetched and tested first (the sheet starts the test by itself). "Restore this copy" stays disabled,
+  // A copy held at a destination: it is fetched and tested first (the sheet starts the test by itself, as a background job). "Restore this copy" stays disabled,
   // with the reason shown, until every check has passed; the result is valid only while this sheet is open and for this exact file.
   // `restore: false` makes it the stand-alone Test restore (same checks, nothing to restore).
   B.offsiteSheet = async (dest, name, where, { restore = true } = {}) => {
-    let token = null;
+    let token = null, h = null, rh = null;
     await sheet(`<h2>${restore ? 'Restore from an offsite copy' : 'Test restore'}</h2><p class="muted"><span class="ident">${esc(name)}</span><br>${esc(where)}</p>
       <div class="field"><label for="opp">Backup passphrase</label><input type="password" id="opp" autocomplete="off" placeholder="Leave blank to use the saved passphrase"><div class="hint">Only needed if the passphrase was changed after this copy was made.</div></div>
       <div id="otest"></div>
       ${restore ? `<div id="orest" class="mt-lg"><div class="banner red">Everyone goes back to this copy. Anything entered after it was taken will be lost.</div>
         <ul class="hint"><li>A safety copy of the site as it is now is taken first, and kept on the Safety copies tab, so this restore can be undone.</li><li>The site closes while it restores, then restarts, and everyone is signed out. This console reloads.</li><li>A notice is shown to every customer afterwards: the site was restored from a backup and recent entries may be missing.</li></ul>
         <div class="field mt-md"><label for="ocf">Type RESTORE to confirm</label><input type="text" id="ocf" autocomplete="off" autocapitalize="characters"></div>
-        <p class="hint" id="owhy"></p></div>` : ''}
+        <p class="hint" id="owhy"></p><div id="orjob"></div></div>` : ''}
       <div class="actions"><button class="btn secondary" data-cancel>Close</button><button class="btn secondary" id="oagain">Test again</button>${restore ? '<button class="btn danger" id="ogo" disabled>Restore this copy</button>' : ''}</div>`, {
       onMount: (el, close) => {
-        const out = el.querySelector('#otest'), go = el.querySelector('#ogo'), cf = el.querySelector('#ocf'), why = el.querySelector('#owhy'), again = el.querySelector('#oagain');
+        const out = el.querySelector('#otest'), go = el.querySelector('#ogo'), cf = el.querySelector('#ocf'), why = el.querySelector('#owhy'), again = el.querySelector('#oagain'), rbox = el.querySelector('#orjob');
         let passed = false, reason = 'Testing the copy…';
         const sync = () => {
           if (!go) return;
-          const typed = cf.value === 'RESTORE'; go.disabled = !(passed && typed);
+          const typed = cf.value === 'RESTORE'; go.disabled = !(passed && typed && !rh);
           why.textContent = passed ? (typed ? '' : 'Type RESTORE to turn the button on.') : `Restore is off: ${reason}`;
         };
-        const run = async () => {
-          passed = false; token = null; reason = 'Testing the copy…'; sync(); out.innerHTML = '<p class="hint" role="status">Fetching the copy and testing it. The live site is not touched…</p>'; again.disabled = true;
-          try {
-            const r = await Host.api('POST', '/backups/offsite/test', { destination: dest, name, passphrase: el.querySelector('#opp').value });
-            passed = r.ok; token = r.token || null; reason = r.ok ? '' : r.summary;
-            out.innerHTML = `<div class="banner ${r.ok ? 'blue' : 'red'}" role="status">${esc(r.summary)}</div>${r.checks.map(c => `<div class="setting"><div><div class="setting-title">${esc(c.label)}</div>${c.detail ? `<div class="setting-desc">${esc(c.detail)}</div>` : ''}</div><span class="chip ${c.ok ? 'green' : 'red'}">${c.ok ? 'Passed' : 'Failed'}</span></div>`).join('')}`;
-          } catch (e) { reason = e.message; out.innerHTML = `<div class="banner red">${esc(e.message)}</div>`; }
-          again.disabled = false; sync();
+        const run = () => {
+          passed = false; token = null; reason = 'Testing the copy…'; sync(); out.innerHTML = B.progressHtml(); again.disabled = true;
+          h = B.jobs.run('offsite-test', { destination: dest, name, passphrase: el.querySelector('#opp').value }, (j) => B.progressPaint(out, j));
+          h.done.then((j) => {
+            if (j.status === 'failed') { reason = j.error.message; out.innerHTML = `<div class="banner red" role="alert">${esc(j.error.message)}</div>`; }
+            else { const r = j.result; passed = r.ok; token = r.token || null; reason = r.ok ? '' : r.summary; out.innerHTML = B.testResultHtml(r); }
+            again.disabled = false; sync();
+          }, (e) => { reason = e.message; out.innerHTML = `<div class="banner red" role="alert">${esc(e.message)}</div>`; again.disabled = false; sync(); });
         };
         again.addEventListener('click', run); cf?.addEventListener('input', sync);
-        go?.addEventListener('click', () => busy(go, async () => { try { await Host.api('POST', '/backups/offsite/restore', { destination: dest, name, token, confirm: 'RESTORE', passphrase: el.querySelector('#opp').value }); token = null; close(true); } catch (e) { toast(e.message, true); } }));
+        go?.addEventListener('click', () => {
+          go.disabled = true; rbox.innerHTML = B.progressHtml('orp');
+          rh = B.jobs.run('offsite-restore', { destination: dest, name, token, confirm: 'RESTORE', passphrase: el.querySelector('#opp').value }, (j) => B.progressPaint(rbox, j));
+          rh.done.then((j) => { if (j.status === 'failed') { rh = null; rbox.innerHTML = `<div class="banner red" role="alert">${esc(j.error.message)}</div>`; sync(); } else { token = null; close(true); } }, (e) => { rh = null; rbox.innerHTML = `<div class="banner red" role="alert">${esc(e.message)}</div>`; sync(); });
+        });
         run();
       },
-    }).then(async (done) => {
-      if (token) { try { await Host.api('DELETE', `/backups/offsite/token/${token}`); } catch {} } // closing the sheet ends the test result
-      if (done) { toast('Restoring… the console will reload'); setTimeout(() => location.reload(), 4500); }
     });
+    h?.release(); rh?.release();
+    if (token) { try { await Host.api('DELETE', `/backups/offsite/token/${token}`); } catch {} } // closing the sheet ends the test result
   };
 
   // Rows for copies held at a destination.
