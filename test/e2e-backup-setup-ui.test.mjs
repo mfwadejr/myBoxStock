@@ -62,7 +62,7 @@ for (const [w, h, label] of [[375, 812, 'phone'], [1280, 800, 'laptop']]) {
       await page.click('#tabs [data-t=destinations]'); await page.waitForSelector('#add'); assert.equal(await page.locator('#add').isDisabled(), false, 'the Destinations tab is unlocked now');
 
       // step 2: this server only is a deliberate, acknowledged choice
-      await page.check('#setup input[name=sw][value=no]'); assert.match(await page.textContent('#sw-more'), /lost with the disk/); await page.click('#sw-go');
+      await page.check('#setup input[name=sw][value=no]'); assert.match(await page.textContent('#sw-more'), /add a destination later/); assert.equal(await page.locator('#sw-more .banner').count(), 0, 'no second warning banner under step 2'); assert.equal(await page.locator('#setup .banner.red').count(), 1, 'only the status line is red'); await page.click('#sw-go');
       await page.waitForFunction(() => document.querySelector('[data-step=keep] .chip')?.textContent === 'Next'); assert.equal(await chipOf(page, 'where'), 'Done');
       // step 3: the choices show the estimate
       assert.match(await page.textContent('[data-step=keep]'), /At these settings you will hold about/); assert.equal(await page.locator('#setup input[name=sk]').count(), 3);

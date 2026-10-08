@@ -3,6 +3,12 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.22.1] - 2026-10-07
+
+### Fixed
+- **Backup setup (Host Console).** Choosing "keep copies on this server only" no longer shows a second red warning under step 2; it shows a plain note, and the red "Local only (same disk)" status line above remains the single warning. On an existing install that sends nothing off the server, steps 3 and 4 now say **Not proven yet** instead of **Done** until the first backup and test restore has passed.
+- **Host Email, Health tab.** The row of four numbers had no space above or below it and touched the cards around it. It now uses the standard spacing.
+
 ## [0.22.0] - 2026-10-07
 
 ### Added

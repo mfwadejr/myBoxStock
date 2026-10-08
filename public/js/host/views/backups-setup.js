@@ -3,7 +3,7 @@
 (() => {
   const { esc, fmt, toast, busy, sheet } = UI;
   const B = Host.backups = Host.backups || {};
-  const chipFor = (s) => s.done ? '<span class="chip green">Done</span>' : s.locked ? '<span class="chip">Locked</span>' : '<span class="chip blue">Next</span>';
+  const chipFor = (s, d) => s.done ? (d && d.legacy && !d.protected && ((s.id === 'prove' && !d.prove.at) || (s.id === 'keep' && !d.keep.choice)) ? '<span class="chip amber">Not proven yet</span>' : '<span class="chip green">Done</span>') : s.locked ? '<span class="chip">Locked</span>' : '<span class="chip blue">Next</span>';
   const checkRows = (checks) => checks.map(c => `<div class="setting"><div><div class="setting-title">${esc(c.label)}</div>${c.detail ? `<div class="setting-desc">${esc(c.detail)}</div>` : ''}</div><span class="chip ${c.ok ? 'green' : 'red'}">${c.ok ? 'Passed' : 'Failed'}</span></div>`).join('');
   const MAIL = (s) => s.mail.ready ? '' : `<div class="banner mt-md" id="setup-mail">Failure emails will not be sent: no mail is set up. ${esc(s.mail.note)}</div>`;
 
@@ -54,7 +54,7 @@
     passphrase: (s) => 'The passphrase is set and confirmed as saved elsewhere.',
     where: (s) => s.where.offServer ? `Copies also go off this server${s.where.tested.length ? ` (${s.where.tested.join(', ')})` : ''}.` : 'Copies stay on this server only.',
     keep: (s) => s.legacy && !s.keep.choice ? 'Existing settings are kept.' : `${(s.keep.options.find(o => o.id === s.keep.choice) || {}).label || 'Custom'} retention.`,
-    prove: (s) => s.prove.at ? `First backup and test restore passed ${fmt.ago(s.prove.at)}.` : 'Existing install: shown as complete. You can run the check again at any time.',
+    prove: (s) => s.prove.at ? `First backup and test restore passed ${fmt.ago(s.prove.at)}.` : 'Existing install: not proven yet. Run the check to make a backup and test restore.',
   };
 
   B.setupPanel = (el, d, reload, goTab) => {
@@ -62,7 +62,7 @@
     el.innerHTML = `<div class="card" id="setup"><div class="row spread wrap"><div><h3>Backup setup</h3><div class="setting-desc">Four short steps. Each one unlocks the next, so nothing is turned on before what it depends on is ready.</div></div>
         <span class="chip ${s.protected ? 'green' : 'amber'}" id="setup-state">${s.protected ? 'Protected' : 'Not protected yet'}</span></div>
       <div class="banner ${tone} mt-md" id="setup-status"><b>${esc(s.statusLabel)}.</b> ${esc(s.statusNote)}</div>${MAIL(s)}
-      ${s.steps.map((st, i) => `<div class="setup-step ${st.locked ? 'locked' : ''}" data-step="${st.id}"><div class="row spread wrap"><div class="setting-title">${i + 1}. ${esc(st.label)}</div>${chipFor(st)}</div>
+      ${s.steps.map((st, i) => `<div class="setup-step ${st.locked ? 'locked' : ''}" data-step="${st.id}"><div class="row spread wrap"><div class="setting-title">${i + 1}. ${esc(st.label)}</div>${chipFor(st, s)}</div>
         ${st.done ? `<div class="setting-desc">${esc(summary[st.id](s))}</div>${st.id === 'passphrase' ? passRow(s) : ''}${st.id === 'prove' ? '<div class="row wrap mt-sm"><button class="btn secondary small" id="sv-go">Run it again</button></div><div id="sv-out" class="mt-sm"></div>' : ''}`
           : st.locked ? `<div class="setting-desc">Locked until step ${i} is done.</div>` : `<div class="mt-sm" data-body>${bodies[st.id](s)}</div>`}</div>`).join('')}</div>`;
     const api = async (path, body) => { try { const r = await Host.api('POST', `/backups/setup/${path}`, body); toast('Saved'); await reload(); return r; } catch (e) { toast(e.message, true); } };
@@ -70,7 +70,7 @@
     el.querySelector('#sp-go')?.addEventListener('click', (e) => busy(e.currentTarget, () => api('passphrase', { passphrase: el.querySelector('#sp-pass')?.value || '', confirm: el.querySelector('#sp-conf')?.value || '', saved: el.querySelector('#sp-saved').checked })));
     for (const k of ['check', 'change', 'reset']) el.querySelector(`#pc-${k}`)?.addEventListener('click', () => B.passSheet(k));
     el.querySelector('#sw-go')?.addEventListener('click', (e) => busy(e.currentTarget, () => api('where', { offServer: val('sw') === 'yes' ? true : val('sw') === 'no' ? false : null })));
-    const more = el.querySelector('#sw-more'), moreText = () => { more.innerHTML = val('sw') === 'yes' ? `<div class="banner blue">Add a destination on the Destinations tab, press Test connection until it passes, then switch it on. This step finishes when a destination has passed its test.${s.where.tested.length ? ` Passed so far: ${esc(s.where.tested.join(', '))}.` : ''}</div><div class="row wrap mt-sm"><button class="btn secondary small" id="sw-dest">Go to Destinations</button></div>` : val('sw') === 'no' ? '<div class="banner red">Copies on the same disk are lost with the disk. You can add a destination later.</div>' : ''; more.querySelector('#sw-dest')?.addEventListener('click', () => goTab('destinations')); };
+    const more = el.querySelector('#sw-more'), moreText = () => { more.innerHTML = val('sw') === 'yes' ? `<div class="banner blue">Add a destination on the Destinations tab, press Test connection until it passes, then switch it on. This step finishes when a destination has passed its test.${s.where.tested.length ? ` Passed so far: ${esc(s.where.tested.join(', '))}.` : ''}</div><div class="row wrap mt-sm"><button class="btn secondary small" id="sw-dest">Go to Destinations</button></div>` : val('sw') === 'no' ? '<div class="setting-desc">You can add a destination later.</div>' : ''; more.querySelector('#sw-dest')?.addEventListener('click', () => goTab('destinations')); };
     if (more) { el.querySelectorAll('input[name=sw]').forEach(i => i.addEventListener('change', moreText)); moreText(); }
     el.querySelector('#sk-go')?.addEventListener('click', (e) => busy(e.currentTarget, () => api('keep', { choice: val('sk') })));
     el.querySelector('#sv-go')?.addEventListener('click', (e) => busy(e.currentTarget, async () => {
