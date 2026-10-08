@@ -12,12 +12,26 @@ import * as sup from '../../services/support/index.mjs';
 
 const PAGE = 100, MAIL_OFF = 'Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway.';
 
+// support.viewed is written for the first view of a ticket by a Host administrator each (UTC) day. The map answers at once (log rows reach the database a moment
+// later); after a restart the event log is asked.
+const seenToday = new Map();
+async function firstViewTodayIn(db, req, t) {
+  const day = new Date().toISOString().slice(0, 10), key = `${req.subject.id}:${t.id}`;
+  for (const [k, v] of seenToday) if (v !== day) seenToday.delete(k);
+  if (seenToday.get(key) === day) return false;
+  seenToday.set(key, day);
+  const start = Date.parse(day + 'T00:00:00Z');
+  const had = await db.get("SELECT 1 AS x FROM event_log WHERE area = 'host' AND event = 'support.viewed' AND actor = ? AND message = ? AND ts >= ? LIMIT 1", [req.subject.username, `Opened support ticket ${sup.label(t.number)}`, start]);
+  return !had;
+}
+
 export function supportRoutes(db) {
   const r = express.Router();
   const log = (req, event, msg, t, data = {}) => hostLog(req, 'info', event, msg, { accountId: t?.account_id || null, data: { ...(t ? { ticket: sup.label(t.number) } : {}), ...data } });
   const wrap = (fn) => async (req, res, next) => { try { await fn(req, res, next); } catch (e) { if (e?.code) return fail(res, e.status || 400, e.code, e.extra); next(e); } };
   const ownerId = async () => (await db.get('SELECT id FROM host_admins ORDER BY created_at, id LIMIT 1'))?.id;
   const ticketOf = async (req, res) => { const t = await db.get('SELECT * FROM support_tickets WHERE number = ?', [Number(req.params.no) || 0]); if (!t) fail(res, 404, 'NOT_FOUND'); return t; };
+  const firstViewToday = (req, t) => firstViewTodayIn(db, req, t);
   const staff = () => db.all('SELECT id, username FROM host_admins ORDER BY username');
 
   r.get('/summary', wrap(async (req, res) => res.json(await sup.summary(db, await sup.getSupportSettings(db)))));
@@ -68,7 +82,7 @@ export function supportRoutes(db) {
     const person = t.requester_id ? await db.get('SELECT username, role, email, disabled FROM account_users WHERE id = ?', [t.requester_id]) : null;
     const others = await db.all('SELECT number, subject, status, created_at FROM support_tickets WHERE account_id = ? AND id <> ? ORDER BY created_at DESC LIMIT 25', [t.account_id || '-', t.id]);
     const b = acc ? billingState(acc) : null, note = t.account_id ? await db.get('SELECT body, updated_at, updated_by FROM support_notes WHERE account_id = ?', [t.account_id]) : null;
-    log(req, 'support.viewed', `Opened support ticket ${sup.label(t.number)}`, t);
+    if (await firstViewToday(req, t)) log(req, 'support.viewed', `Opened support ticket ${sup.label(t.number)}`, t);   // once per administrator per ticket per day; every real action is logged every time
     res.json({
       ticket: { ...sup.shape({ ...t, assignee_name: t.assignee_id ? (await db.get('SELECT username FROM host_admins WHERE id = ?', [t.assignee_id]))?.username : null }, s, now), source: t.source }, now,
       messages: await sup.thread(db, t.id, { forHost: true }),

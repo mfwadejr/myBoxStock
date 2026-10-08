@@ -3,7 +3,7 @@ title: Overview
 summary: A live picture of the server: how many accounts and people, whether backups are healthy, plan counts, CPU, memory and storage, firewall activity and email.
 keywords: dashboard, home, overview, accounts count, users, signed in now, database, backup status, cpu, memory, storage, disk, load, uptime, version, firewall, blocked, rate-limited, banned, mail queue, banner, restore staged
 order: 2
-covers: nav:overview, Last snapshot, Last full-site backup, Last test restore, Copy off this server, Backup space left, Not protected yet, need attention, Background job, Accounts, Users, Signed in now, Database, Backups card, Plans card, on trial, ending within 7 days, free, paid, ended, CPU, Memory, Storage, Server, Protection, blocked, rate-limited, banned now, mail sent queued failed, Email links will not work banner, database restore staged banner, Alerts banner, Set the site address, Support card, Open Support, waiting on Host, unassigned
+covers: nav:overview, red number, Last snapshot, Last full-site backup, Last test restore, Copy off this server, Backup space left, Not protected yet, need attention, Background job, Accounts, Users, Signed in now, Database, Backups card, Plans card, on trial, ending within 7 days, free, paid, ended, CPU, Memory, Storage, Server, Protection, blocked, rate-limited, banned now, mail sent queued failed, Email links will not work banner, database restore staged banner, Alerts banner, Set the site address, Support card, Open Support, waiting on Host, unassigned
 ---
 
 ## What this page is for
@@ -93,7 +93,7 @@ These are the same numbers explained on [Plans](#/docs/plans) and listed by name
 
 ## The Support card
 
-Below the Plans card, the **Support** card shows the state of the ticket queue: how many tickets are open, how many are waiting on you, how many are overdue (past the response target of business days set in Support settings) and how many nobody has taken. **Open Support** goes to the ticket list. An overdue ticket also raises an alert. See [Support tickets](#/docs/support-tickets).
+Below the Plans card, the **Support** card shows the state of the ticket queue: how many tickets are open, how many are waiting on you, how many are overdue (past the response target of business days set in Support settings) and how many nobody has taken. **Open Support** goes to the ticket list. An overdue ticket also raises an alert. The same number of tickets waiting on you (Open or Waiting on Host) is shown as a red number on the **Support** item in the left menu, and on the **More** button on a phone or tablet. It disappears when it reaches zero, refreshes when a page loads and every couple of minutes, and updates right after you reply or change a status. See [Support tickets](#/docs/support-tickets).
 
 ## CPU, Memory and Storage
 

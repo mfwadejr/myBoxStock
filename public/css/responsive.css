@@ -94,3 +94,5 @@
 }
 
 @media (max-width: 640px) { .feed { max-height: none; overflow-y: visible; } }   /* phones: the page scrolls, not a box inside it */
+
+@media (max-width: 640px) { .facts { grid-template-columns: minmax(0, 1fr); } .facts dd { margin-bottom: var(--space-sm); } }   /* phones: a fact's label sits above its value */

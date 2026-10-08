@@ -11,6 +11,7 @@ export const AUDIT_GROUPS = [
   { id: 'twofactor', label: 'Two-factor' },
   { id: 'backups', label: 'Backups' },
   { id: 'support', label: 'Support tickets' },
+  { id: 'retention', label: 'Data and retention' },
 ];
 
 export const AUDIT_TYPES = [
@@ -53,6 +54,11 @@ export const AUDIT_TYPES = [
   { group: 'support', label: 'Ticket closed automatically', area: 'host', events: ['support.auto_closed'] },
   { group: 'support', label: 'Support settings changed', area: 'host', events: ['support.settings'] },
   { group: 'support', label: 'Host note on a reseller saved', area: 'host', events: ['support.account_note'] },
+  { group: 'retention', label: 'Retention rule changed', area: 'host', events: ['retention.rule'] },
+  { group: 'retention', label: 'Automatic pruning changed', area: 'host', events: ['retention.auto'] },
+  { group: 'retention', label: 'Data pruned', area: 'host', events: ['retention.pruned'] },
+  { group: 'retention', label: 'Database compacted', area: 'host', events: ['retention.compacted'] },
+  { group: 'retention', label: 'Retention change refused', area: 'host', events: ['retention.refused'] },
   { group: 'support', label: 'Closed tickets purged', area: 'host', events: ['support.purge'] },
 ];
 
@@ -60,7 +66,7 @@ export const AUDIT_TYPES = [
 // SQL for "this event row belongs to the audit trail" (optionally only one group). Parameters are returned in order.
 export function auditScope(group = '') {
   const parts = [], params = [];
-  if (!group || group === 'actions') { parts.push(`(e.area IN (${ACTION_AREAS.map(() => '?').join(',')}) AND e.actor IS NOT NULL AND e.actor <> '' AND e.event NOT LIKE 'backup.%' AND e.event NOT LIKE 'support.%')`); params.push(...ACTION_AREAS); }
+  if (!group || group === 'actions') { parts.push(`(e.area IN (${ACTION_AREAS.map(() => '?').join(',')}) AND e.actor IS NOT NULL AND e.actor <> '' AND e.event NOT LIKE 'backup.%' AND e.event NOT LIKE 'support.%' AND e.event NOT LIKE 'retention.%')`); params.push(...ACTION_AREAS); }
   for (const t of AUDIT_TYPES.filter(x => !group || x.group === group)) {
     parts.push(`(e.area = ? AND e.event IN (${t.events.map(() => '?').join(',')})${t.hostRealm ? ` AND e.raw LIKE '%"realm":"host"%'` : ''})`); params.push(t.area, ...t.events);
   }

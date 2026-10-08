@@ -291,7 +291,7 @@ You back up the whole platform, which holds each customer's data in the form the
 
 ### How long are logs kept?
 
-By default the database copy of the activity log keeps 90 days, which you can change under Server options in Settings (**Keep the activity log (days)**). Sign-in history per account has its own setting. The [Audit trail](#/docs/audit-trail) records what each Host administrator did, firewall and ban changes, and Host Console sign-ins.
+By default the database copy of the activity log keeps 90 days, which the Owner can change on [Data and retention](#/docs/data-and-retention) (or under Server options in Settings, **Keep the activity log (days)**). The audit trail is kept apart and forever by default. Sign-in history per account has its own setting. The [Audit trail](#/docs/audit-trail) records what each Host administrator did, firewall and ban changes, and Host Console sign-ins.
 
 ### Should I use SQLite or PostgreSQL?
 

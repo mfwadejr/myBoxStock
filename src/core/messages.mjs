@@ -98,6 +98,14 @@ export const MSG = {
   SUPPORT_OWNER_ONLY: 'Only the Owner administrator can purge tickets.',
   SUPPORT_PURGE_CONFIRM: 'Type PURGE to confirm.',
   SUPPORT_PURGE_BAD: 'Enter how many days a ticket must have been closed, from 0 to 3650.',
+  RETENTION_OWNER_ONLY: 'Only the Owner administrator can change retention rules, prune data or compact the database. Other administrators can read this page.',
+  RETENTION_BAD: 'That retention value is not valid.',
+  RETENTION_KIND: 'That kind of data cannot be changed here.',
+  RETENTION_AUDIT_FLOOR: 'The audit trail must be kept for at least 365 days. Enter 0 to keep it forever, or 365 or more.',
+  RETENTION_CONFIRM: 'Type PRUNE to confirm.',
+  RETENTION_COMPACT_SQLITE: 'Compacting is only needed for the built-in SQLite database. A PostgreSQL or MariaDB server reuses its own free space.',
+  RETENTION_COMPACT_SPACE: 'There is not enough free disk space to compact the database safely. Compacting needs room for a second copy of the database. Free some space, then try again.',
+  RETENTION_COMPACT_FAILED: 'The database could not be compacted. Nothing was lost; try again when the site is quiet.',
   UNKNOWN_LOG_AREA: 'That log area does not exist.',
 };
 export const fail = (res, status, code, extra = {}) => res.status(status).json({ error: MSG[code], code, ...extra });

@@ -91,7 +91,7 @@
   const billingChip = (b) => b.state === 'trial' ? `<span class="chip blue">Free trial · ${b.daysLeft} day${b.daysLeft === 1 ? '' : 's'} left</span>`
     : !b.canWrite ? '<span class="chip red">Trial ended — read-only</span>' : '';
   // [key, label, permission needed to see it]
-  const NAV = [['home', 'Home', null], ['sell', 'Quick sale', 'sales.write'], ['inventory', 'Inventory', 'inventory.read'], ['customers', 'Customers', 'customers.read'], ['sales', 'Sales', 'sales.read'], ['team', 'Team', 'users.manage'], ['settings', 'Settings', 'users.manage'], ['backup', 'Backup and restore', 'users.manage'], ['activity', 'Activity', 'users.manage'], ['security', 'Security', null], ['docs', 'Documentation', null]];
+  const NAV = [['home', 'Home', null], ['sell', 'Quick sale', 'sales.write'], ['inventory', 'Inventory', 'inventory.read'], ['customers', 'Customers', 'customers.read'], ['sales', 'Sales', 'sales.read'], ['team', 'Team', 'users.manage'], ['settings', 'Settings', 'users.manage'], ['backup', 'Backup and restore', 'users.manage'], ['activity', 'Activity', 'users.manage'], ['security', 'Security', null], ['docs', 'Documentation', null], ['support', 'Support', null]];
   const PRIMARY = ['home', 'sell', 'inventory', 'customers']; // the phone tab bar; everything else is under More
   const visibleNav = () => NAV.filter(([, , p]) => !p || AccountApp.can(p)).map(([k, l]) => [k, l]);
   AccountApp.showShell = () => shell();
@@ -104,7 +104,7 @@
     AccountApp.menu = UI.menu.mount(root.querySelector('#acct'), { name: me.username, head: `<b>${esc(me.username)}</b><span>${esc(me.role)}</span><span>${esc(me.businessName)}</span>`, items: menuItems(0),
       pick: (id) => { if (id === 'support') location.hash = '#/support'; else if (id === 'host') window.open('/host/', '_blank', 'noopener'); else if (id === 'out') AccountApp.signOut(); } });
     // The number of replies from the myBoxStock team that have not been read yet, shown beside the name and beside Support in the menu.
-    AccountApp.supportBadge = async () => { try { const { n } = await AccountApp.api('GET', '/support/unread'); AccountApp.menu?.update({ badge: n, items: menuItems(n) }); } catch {} };
+    AccountApp.supportBadge = async () => { try { const { n } = await AccountApp.api('GET', '/support/unread'); AccountApp.menu?.update({ badge: n, items: menuItems(n) }); UI.tabbar.setBadges(root, PRIMARY, { support: n }, 'new replies'); } catch {} };
     clearInterval(AccountApp.badgeTimer); AccountApp.badgeTimer = setInterval(() => AccountApp.supportBadge(), 120000);
     window.removeEventListener('hashchange', AccountApp.route); window.addEventListener('hashchange', AccountApp.route); AccountApp.route();
   }

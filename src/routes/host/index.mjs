@@ -18,6 +18,7 @@ import { docsRoutes } from '../docs.mjs';
 import { auditRoutes } from './audit.mjs';
 import { onboardingRoutes } from './onboarding.mjs';
 import { supportRoutes } from './support.mjs';
+import { retentionRoutes } from './retention.mjs';
 
 export function hostRouter(db) {
   const r = express.Router();
@@ -35,6 +36,6 @@ export function hostRouter(db) {
   r.use('/dashboard', dashboardRoutes(db)); r.use('/accounts', accountsRoutes(db)); r.use('/business', businessRoutes(db)); r.use('/backups', backupsRoutes(db));
   r.use('/mail', mailRoutes(db)); r.use('/firewall', firewallRoutes(db)); r.use('/settings', settingsRoutes(db));
   r.use('/admins', adminsRoutes(db)); r.use('/logs', logsRoutes(db)); r.use('/links', linksRoutes(db));
-  r.use('/alerts', alertsRoutes(db)); r.use('/updates', updatesRoutes(db)); r.use('/audit', auditRoutes(db)); r.use('/docs', docsRoutes('host')); r.use('/onboarding', onboardingRoutes(db)); r.use('/support', supportRoutes(db));
+  r.use('/alerts', alertsRoutes(db)); r.use('/updates', updatesRoutes(db)); r.use('/audit', auditRoutes(db)); r.use('/docs', docsRoutes('host')); r.use('/onboarding', onboardingRoutes(db)); r.use('/support', supportRoutes(db)); r.use('/retention', retentionRoutes(db));
   return r;
 }

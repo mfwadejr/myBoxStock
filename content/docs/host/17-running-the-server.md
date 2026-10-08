@@ -102,7 +102,7 @@ These are set in the `environment:` part of the compose file (or your platform's
 - **LOG_LEVEL**: `debug`, `info`, `warn` or `error`. Default `info`.
 - **LOG_MAX_MB**: the size a log file reaches before it rotates. Default `10`.
 - **LOG_FILES**: how many rotated files are kept per log. Default `5`.
-- **LOG_RETENTION_DAYS**: how long the searchable database copy is kept. Default `90`.
+- **LOG_RETENTION_DAYS**: how long the searchable database copy of the activity log is kept. Default `90`. It is only the starting value: the age is now shown and changed on the [Data and retention](#/docs/data-and-retention) page (or in Settings), and a saved value wins. It does not apply to the audit trail, which is kept forever by default and has its own rule there.
 - **LOG_CONSOLE**: lines are also printed to the container's output (what `docker logs` shows) unless this is set to `0`.
 
 ### Housekeeping and one-off

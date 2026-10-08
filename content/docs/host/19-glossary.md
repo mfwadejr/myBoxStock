@@ -3,7 +3,7 @@ title: Glossary
 summary: Plain-English meanings of every term used in the Host Console, in alphabetical order, each with a link to the page that explains more.
 keywords: glossary, terms, meaning, definition, words, jargon, what is
 order: 19
-covers: Backups card, Backup health, Background job, Job strip, Test a backup file, Account menu, DMARC, Feed, Load more, Offsite copy, Passphrase, Restore point, Safety copy, Sender checks, Snapshot, Destination, Thinning, Test restore, .mbsenc, .mbsbackup, .mbsbak, Account, Alert, Announcement banner, Audit trail, Authenticator app, Ban, Backup, CIDR, Cloudflare, Closing, Comped, DKIM, Database engine, Direct delivery, Docker, Export, Firewall, Free, Full-site backup, Health, Helper, HELO, Host, Host Console, Log, Log area, Migration, Off-box folder, Onboarding, Open sign-ups, Owner, Paid, Pipeline, Plan, Proxy, Rate limit, Read-only, Recovery codes, Recovery key, Reseller, Reseller ID, Restore, Site address, SMTP, SPF, Suspended, TLS, Temporary password, Trial, Two-factor, User type, Zero-knowledge, Locked sign-in, Check my passphrase, Change passphrase, Reset (forgotten), Disaster recovery, Canned reply, Host note, Purge, Response target, Support ticket
+covers: Backups card, Backup health, Background job, Job strip, Test a backup file, Account menu, DMARC, Feed, Load more, Offsite copy, Passphrase, Restore point, Safety copy, Sender checks, Snapshot, Destination, Thinning, Test restore, .mbsenc, .mbsbackup, .mbsbak, Account, Alert, Announcement banner, Audit trail, Authenticator app, Ban, Backup, CIDR, Cloudflare, Closing, Comped, DKIM, Database engine, Direct delivery, Docker, Export, Firewall, Free, Full-site backup, Health, Helper, HELO, Host, Host Console, Log, Log area, Migration, Off-box folder, Onboarding, Open sign-ups, Owner, Paid, Pipeline, Plan, Proxy, Rate limit, Read-only, Recovery codes, Recovery key, Reseller, Reseller ID, Restore, Site address, SMTP, SPF, Suspended, TLS, Temporary password, Trial, Two-factor, User type, Zero-knowledge, Locked sign-in, Check my passphrase, Change passphrase, Reset (forgotten), Disaster recovery, Canned reply, Host note, Purge, Response target, Support ticket, Compact the database, Data and retention, Prune, Retention rule, Audit trail retention
 ---
 
 Words are listed from A to Z. Each entry is short, and the link at the end of it goes to the page that explains the subject in full.
@@ -61,7 +61,13 @@ An account on the Free plan that you have granted without payment. It never expi
 ### Canned reply
 A ready-made answer you can insert into a support ticket reply and edit before sending. You define them in Support settings. More in [Support tickets](#/docs/support-tickets).
 
+### Compact the database
+Rewriting the SQLite database file so the space left by deleted rows goes back to the disk. Run by the Owner from Data and retention as a background job. More in [Data and retention](#/docs/data-and-retention).
+
 ## D
+
+### Data and retention
+The Host page that shows what is using space, the retention rule for each kind of Host-side data, Prune now, Compact the database and automatic nightly pruning. More in [Data and retention](#/docs/data-and-retention).
 
 ### Database engine
 The software that stores the platform's data. SQLite is built in and suits testing. PostgreSQL or MariaDB suit many users at once. More in [Settings](#/docs/settings) and [Running the server](#/docs/running-the-server).
@@ -193,11 +199,14 @@ The page showing sign-ups, trials, renewals and accounts that have gone quiet. I
 ### Plan
 An account's commercial state: trial, free or paid. The Plans page also records prices and limits for the future. Nothing is charged by the app yet. More in [Plans](#/docs/plans).
 
+### Prune
+Removing Host-side data that is older than its retention rule, after a preview and a typed PRUNE, by the Owner or by the nightly run. More in [Data and retention](#/docs/data-and-retention).
+
 ### Proxy
 A server standing between visitors and your site and passing requests on. The site must know how many there are to read the true visitor address. More in [Settings](#/docs/settings).
 
 ### Purge
-The permanent deletion of closed support tickets by the Owner administrator, after typing PURGE. Nothing is purged automatically. More in [Support tickets](#/docs/support-tickets).
+The permanent deletion of closed support tickets by the Owner administrator, after typing PURGE. Nothing is purged automatically unless an automatic age is set on Data and retention. More in [Support tickets](#/docs/support-tickets).
 
 ## R
 

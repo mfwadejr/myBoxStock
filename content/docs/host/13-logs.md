@@ -147,7 +147,7 @@ Two separate rules apply:
 - The database copy that this screen reads is deleted once it is older than the retention period. The default is 90 days, and you can change it at any time with **Keep the activity log (days)** on the [Settings](#/docs/settings) screen (7 to 730 days). The clean-up runs about once a day, so an entry may stay a little beyond its date, and a note "Removed N log rows" appears in the system area when it runs.
 - The files on disk rotate by size as described above, not by age.
 
-The Audit trail is built from the same stored log. If you shorten the retention period, older audit entries disappear too.
+The Audit trail is read from the same stored log, but it is kept on its own rule. The 90-day (or whatever you set) trimming never removes audit entries: they stay forever unless the Owner sets a longer-than-a-year limit on [Data and retention](#/docs/data-and-retention). You can also see and change the activity-log age there.
 
 ## Log detail: what gets recorded
 

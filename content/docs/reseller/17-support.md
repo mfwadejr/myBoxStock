@@ -3,14 +3,14 @@ title: Support
 summary: Ask the myBoxStock team for help from inside your account: open a ticket, attach screenshots and diagnostics, follow replies, and understand who can see which tickets and what the team can read.
 keywords: support, help, ticket, tickets, new ticket, reply, screenshot, diagnostics, attach diagnostics, status, waiting on you, resolved, closed, privacy, badge, red number, contact, question, problem, billing, account menu
 order: 17
-covers: nav:support, Support, My tickets, Tickets for this account, New ticket, Category, Subject, Message, Add screenshot, Attach diagnostics, Remove diagnostics, Send ticket, Send reply, New reply, Waiting on you, Waiting on myBoxStock, Resolved, Closed, Opened by, All tickets, Conversation
+covers: nav:support, Support menu item, More button, Screenshot viewer, Open in new tab, Download, Previous, Next, Support, My tickets, Tickets for this account, New ticket, Category, Subject, Message, Add screenshot, Attach diagnostics, Remove diagnostics, Send ticket, Send reply, New reply, Waiting on you, Waiting on myBoxStock, Resolved, Closed, Opened by, All tickets, Conversation
 ---
 
 ## What Support is for
 
 If something does not work, you are stuck, a bill looks wrong or you want to ask a question, open a ticket. A ticket is a conversation between you and the myBoxStock team that stays in one place, with a number such as T-1042, so nothing gets lost in an inbox.
 
-Open it from the **account menu**: click your name at the top right (on a phone, your name at the top of the screen) and choose **Support**. Everyone who can sign in to the account can open tickets, whether they are an Administrator, a Standard user or a View user. Support also still works when a trial has ended or an account is closing, because that is when people most need to ask.
+Open it from the **Support** item, the last item in the left menu after Documentation (on a phone or tablet it is in the **More** sheet). You can also click your name at the top right (on a phone, your name at the top of the screen) and choose **Support** in the **account menu**. Everyone who can sign in to the account can open tickets, whether they are an Administrator, a Standard user or a View user. Support also still works when a trial has ended or an account is closing, because that is when people most need to ask.
 
 ## What the team can read
 
@@ -55,11 +55,20 @@ Diagnostics are off unless you switch them on. The button shows exactly what wou
 
 ## Following a ticket
 
-When the team replies, a red number appears beside your name in the top bar and beside **Support** in the account menu. The Support list marks the ticket with **New reply**. Open it to read the **Conversation**: your messages, and the team's replies shaded blue. The number clears once you have read the ticket.
+When the team replies, a red number appears beside your name in the top bar, beside **Support** in the account menu and beside **Support** in the left menu. On a phone or tablet it also shows on the **More** button, so you can see a reply without opening the sheet. The Support list marks the ticket with **New reply**. Open it to read the **Conversation**: your messages, and the team's replies shaded blue. The number clears once you have read the ticket.
 
 If the site has email set up and your account has an email address, you are also emailed that there is a reply. The email does not contain the reply, only the ticket number and a button to open the app. If you do not get emails, the red number still tells you.
 
 To answer, type in the **Reply** box and choose **Send reply**. Screenshots and diagnostics can be attached to replies too. Replying to a Resolved ticket opens it again.
+
+## Looking at a screenshot
+
+Click or tap a screenshot in a conversation, or the small preview of a picture you are about to send, and it opens in the **Screenshot viewer**, a window on top of the ticket. Nothing leaves the page. The picture is scaled to fit the window; tap or click it once to see it at full size and again to fit it back.
+
+- **Close**, the Escape key, a tap outside the window and the back gesture on a phone all close the viewer and return you to the same place in the ticket.
+- When one message has several screenshots, **Previous** and **Next** move between them and a count such as "2 of 3" shows where you are. The left and right arrow keys work too.
+- **Download** saves the picture to your device.
+- **Open in new tab** (a small link) opens the raw picture in a browser tab, in case you want that. It is secondary on purpose, because the viewer is the normal way.
 
 ## Tips for quick answers
 

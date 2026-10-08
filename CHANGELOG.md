@@ -3,6 +3,19 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.24.0] - 2026-10-08
+
+### Added
+- **Data and retention (Host Console).** A new page that shows what is using space (database and its biggest tables, log files, backups, ticket screenshots, temporary files, free disk) and holds one retention rule per kind of Host-side data: activity logs (the long-hidden 90 days is now visible and changeable), audit trail, closed support tickets, mail history, temporary files, and a link to the backup rules on Backups. **Prune now** shows a preview (rows, size, oldest date) and needs a typed confirmation. **Compact the database** frees the disk space that deleting rows does not (SQLite), runs as a background job with a progress strip, checks free space first and will not start during a backup or restore. Nightly automatic pruning is on for logs, mail history and temporary files and off for tickets and the audit trail, configurable per rule. Only the Owner can change rules, prune or compact; other Host administrators can read the page. Customer business data is never touched. Every change and prune is audited, and those audit entries are never pruned.
+- **Support in the reseller left menu.** Support is now the last item in the left menu (in the More sheet on phones and tablets, with the red reply count on the More button too), as well as in the account menu. Every user type sees it.
+- **Red count on Support in the Host Console menu.** The number of tickets waiting on the Host, hidden at zero, refreshed every two minutes.
+- **Screenshot viewer in tickets.** Screenshots open in an overlay on top of the ticket (fit to window, tap to zoom, Previous and Next, Download, Esc, tap outside or the back gesture to close) instead of taking over the browser tab.
+
+### Changed
+- **Audit trail kept separately and longer.** Host administrator actions are no longer trimmed with the activity log. They are kept forever by default; the Owner can set a time, never shorter than one year. Existing entries are kept. Opening a ticket is logged once per administrator per ticket per day; every real action is still logged each time.
+- **Page loads no longer trip the request limit.** The site-wide request limit now counts API calls and sign-ins only; scripts, styles and images (/css, /js, /assets) are not counted. Before, about four reloads in a minute from one address could return a blank page.
+- **Ticket page alignment.** Every label-and-value block uses one label width so values line up across cards; on a phone the label sits above its value.
+
 ## [0.23.0] - 2026-10-07
 
 ### Added

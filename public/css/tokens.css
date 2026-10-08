@@ -206,6 +206,9 @@
   --width-receipt: 380px;
   --textarea-min-h: 88px;
   --shot-max-h: 240px;        /* a ticket screenshot shown in a conversation */
+  --facts-label-w: var(--width-date);   /* one label column for every .facts block, so values line up across cards */
+  --viewer-max-h: 60dvh;      /* the screenshot viewer: the picture is scaled to fit inside this height */
+  --thumb-size: 56px;         /* a small preview of a screenshot waiting to be sent */
   --pick-list-max-h: 220px;
   --recovery-key-w: 28ch;
   --mail-preview-h: 560px;

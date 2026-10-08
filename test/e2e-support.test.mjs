@@ -12,6 +12,9 @@ let pw; try { pw = await import('playwright'); } catch { try { pw = await import
 const skip = !(pw && fs.existsSync(exe)) ? 'no browser available' : false;
 const PW = 'Sup3rSecretPass!', SHOTS = process.env.SHOT_DIR || '';
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
+// the red count on the Support row of the left menu (laptop) or on the More button (phone); '' when none is shown
+const navCount = (page) => page.evaluate(() => (document.querySelector(innerWidth > 820 ? '.side a[data-k=support] .nav-count' : '.tabbar [data-more] .nav-count')?.textContent || '').trim());
+const waitCount = (page, want) => page.waitForFunction(([w, wide]) => ((document.querySelector(wide ? '.side a[data-k=support] .nav-count' : '.tabbar [data-more] .nav-count')?.textContent || '').trim()) === w, [want, page.viewportSize().width > 820]);
 const overflow = (page) => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
 // every visible control is at least 44px tall on a phone
 const smallTaps = (page) => page.evaluate(() => [...document.querySelectorAll('.main .btn, .main .select-btn, .main input:not([type=file]):not([type=checkbox]), .main textarea, .main .seg button, .main tr.click, .menu-item, .sheet .btn, .sheet input, .sheet textarea')]
@@ -61,6 +64,7 @@ for (const [w, h, label] of [[375, 812, 'phone'], [1280, 800, 'laptop']]) {
       await hp.goto(srv.base + '/host/'); await hp.waitForSelector('input'); const ins = await hp.$$('input'); await ins[0].fill('admin'); await ins[1].fill(PW); await hp.keyboard.press('Enter'); await hp.waitForSelector('.main');
       await hp.goto(srv.base + '/host/#/overview'); await hp.waitForSelector('.card:has-text("Support")');
       assert.match(await hp.textContent('.main'), /1 open/); assert.match(await hp.textContent('.main'), /1 waiting on Host/); assert.match(await hp.textContent('.main'), /0 overdue/); assert.match(await hp.textContent('.main'), /1 unassigned/);
+      await waitCount(hp, '1'); assert.equal(await navCount(hp), '1', 'Host menu count matches the Overview card (1 waiting on Host)');
       assert.ok(await overflow(hp) <= 0, 'overview fits'); await shot(hp, 'host-overview');
       await hp.goto(srv.base + '/host/#/support'); await hp.waitForSelector('#tbl tr.click'); assert.equal(await hp.locator('#tbl tr.click').count(), 1);
       const row = await hp.textContent('#tbl tr.click'); assert.match(row, /T-1001/); assert.match(row, /The scanner will not focus/); assert.match(row, /Support Co/); assert.match(row, /Open/); assert.match(row, /Normal/); assert.match(row, /Unassigned/);
@@ -83,16 +87,16 @@ for (const [w, h, label] of [[375, 812, 'phone'], [1280, 800, 'laptop']]) {
       assert.match(await hp.textContent('#rh'), /Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway\./);
       await hp.click('#cr'); await hp.click('.select.open .select-option >> text=Looking into it'); assert.match(await hp.inputValue('#rb'), /We are looking into this/); await hp.fill('#rb', 'We are looking into this. Please check Settings, Camera, for this site.');
       await hp.click('#send'); await hp.waitForSelector('.msg.team:has-text("Please check Settings")'); await hp.waitForSelector('.toast:has-text("Emails and alerts only work after the Email section")');
-      assert.match(await hp.textContent('.card >> nth=0'), /Waiting on reseller/); await shot(hp, 'host-ticket-replied');
+      assert.match(await hp.textContent('.card >> nth=0'), /Waiting on reseller/); await waitCount(hp, ''); assert.equal(await navCount(hp), '', 'Host count hides at zero right after the reply'); await shot(hp, 'host-ticket-replied');
 
       // ---- back to the reseller: a red number on the menu, the reply, no internal note
       await rp.goto(srv.base + '/app/#/support'); await rp.waitForSelector('tr.click'); await rp.waitForSelector('.menu-btn .chip.red');
-      assert.equal((await rp.textContent('.menu-btn .chip.red')).trim(), '1'); assert.match(await rp.textContent('tr.click'), /New reply/); assert.match(await rp.textContent('tr.click'), /Waiting on you/);
+      assert.equal((await rp.textContent('.menu-btn .chip.red')).trim(), '1'); await waitCount(rp, '1'); assert.equal(await navCount(rp), '1', 'the reseller left menu (or More) shows the same count'); assert.match(await rp.textContent('tr.click'), /New reply/); assert.match(await rp.textContent('tr.click'), /Waiting on you/);
       assert.ok(await overflow(rp) <= 0); await shot(rp, 'reseller-list-badge');
       await rp.click('.menu-btn'); await rp.waitForSelector('.menu-pop'); assert.equal((await rp.textContent('.menu-item >> text=Support')).trim(), 'Support1'); await rp.keyboard.press('Escape');
       await rp.click('tr.click'); await rp.waitForSelector('.msg.team'); const thread = await rp.textContent('.thread');
       assert.match(thread, /Please check Settings/); assert.match(thread, /myBoxStock support/); assert.doesNotMatch(thread, /HOST-ONLY/); assert.doesNotMatch(await rp.textContent('body'), /HOST-ONLY|Assigned to|High/);
-      await rp.waitForFunction(() => !document.querySelector('.menu-btn .chip.red')); await shot(rp, 'reseller-reply');
+      await rp.waitForFunction(() => !document.querySelector('.menu-btn .chip.red')); await waitCount(rp, ''); await shot(rp, 'reseller-reply');
       await rp.fill('#rm', 'Thanks, that fixed it!'); await rp.click('#go'); await rp.waitForSelector('.msg >> text=Thanks, that fixed it!'); assert.ok(await overflow(rp) <= 0);
 
       // ---- Host: the account has a Tickets tab and a Host notes tab; then settings

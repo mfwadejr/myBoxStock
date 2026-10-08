@@ -378,3 +378,7 @@ Related: [Recovery and emergencies](#/docs/recovery-and-emergencies), [Running t
 The Host [Overview](#/docs/overview) has a **Backups** card that reads from this page: the last snapshot, the last full-site backup, the last test restore and how old it is, whether a copy is held off this server, how each destination is doing (last send, last failure), the space left for backups, and the Protected state from Backup setup. Five backup alerts watch the same facts and email the Owner once if Email is set up: no recent full-site backup, a destination failing, no test restore in 30 days, the backup folder nearly full, and a failed background job. See [Alerts](#/docs/alerts).
 
 Every Test restore you run here, from a snapshot, a full-site backup or an offsite copy, is remembered with its time, so the card can show its age. A failed test is shown but never hides the last one that passed. Run a Test restore at least every 30 days.
+
+## Where the retention rules are shown
+
+How long backup copies are kept is set here on the Backups page (thinning of snapshots, safety copies, offsite copies). The [Data and retention](#/docs/data-and-retention) page shows those rules next to the other retention rules and links back here, so they are not defined twice. Backups are never pruned from the Data and retention page. Deleting rows there does not shrink the database file by itself; **Compact the database** does, and it runs as a background job like the others on this page, never at the same time as a backup or restore.

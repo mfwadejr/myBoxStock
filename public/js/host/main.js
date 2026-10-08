@@ -41,7 +41,7 @@
   }
 
   // The account menu: name, role, linked reseller accounts (for administrators who also run one, linked from inside that account) and Sign out. The links are refreshed on every page change so removed accounts drop out.
-  const signOut = async () => { await Host.api('POST', '/logout'); Host.me = null; clearInterval(Host.timer); loginScreen(); };
+  const signOut = async () => { await Host.api('POST', '/logout'); Host.me = null; clearInterval(Host.timer); clearInterval(Host.supportTimer); loginScreen(); };
   const menuItems = (accounts) => [...(accounts.length ? [{ heading: 'Reseller accounts' }, ...accounts.map(a => ({ id: `u:${a.login}`, label: a.businessName }))] : []), { id: 'out', label: 'Sign out', sep: accounts.length > 0 }];
   Host.refreshMenu = () => Host.api('GET', '/links').then(({ accounts }) => Host.menu?.update({ items: menuItems(accounts) })).catch(() => {});
 
@@ -52,8 +52,13 @@
     UI.tabbar.bind(root, Host.nav, PRIMARY, Host.icons);
     Host.menu = UI.menu.mount(root.querySelector('#acct'), { name: Host.me.username, head: `<b>${esc(Host.me.username)}</b><span>Host administrator</span>`, items: menuItems([]),
       pick: (id) => { if (id === 'out') signOut(); else if (id.startsWith('u:')) window.open(`/app/#/u/${encodeURIComponent(id.slice(2))}`, '_blank', 'noopener'); } });
+    clearInterval(Host.supportTimer); Host.supportTimer = setInterval(() => Host.supportBadge(), 120000);
     window.removeEventListener('hashchange', Host.route); window.addEventListener('hashchange', Host.route); Host.route();
   }
+  // The red number beside Support (and on the phone More button): tickets waiting on the Host, the same count as the Overview Support card. It hides at zero.
+  Host.supportBadge = async () => {
+    try { const s = await Host.api('GET', '/support/summary'); UI.tabbar.setBadges(root, PRIMARY, { support: s.awaitingHost }, s.overdue ? `tickets waiting on the Host, ${s.overdue} overdue` : 'tickets waiting on the Host'); } catch {}
+  };
   // A banner at the top of every page while something needs attention (set-aside alerts do not count).
   Host.alertBanner = async () => {
     const main = root.querySelector('#main'); if (!main) return;
@@ -68,7 +73,7 @@
     Host.refreshMenu();
     const main = root.querySelector('#main'); if (!main) return;
     Host.current = k;
-    try { await Host.views[k](main); Host.alertBanner(); } catch (e) { if (e.status === 401) return boot(); if (e.data?.code === 'MFA_SETUP_REQUIRED') return mfaSetupScreen(); swap(main, `<div class="card"><p class="banner red">${esc(e.message)}</p></div>`); }
+    try { await Host.views[k](main); Host.alertBanner(); Host.supportBadge(); } catch (e) { if (e.status === 401) return boot(); if (e.data?.code === 'MFA_SETUP_REQUIRED') return mfaSetupScreen(); swap(main, `<div class="card"><p class="banner red">${esc(e.message)}</p></div>`); }
   };
   boot();
 })();

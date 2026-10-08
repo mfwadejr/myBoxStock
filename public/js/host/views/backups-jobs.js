@@ -27,7 +27,7 @@
     if (job?.restarting && !J.restarting) { J.restarting = true; toast('Restoring… the console will reload'); setTimeout(() => location.reload(), RELOAD_MS); }
     if (job && was && was.id === job.id && was.status === 'running' && job.status !== 'running') {
       if (!J.subs.size) toast(job.status === 'failed' ? job.error.message : job.summary, job.status === 'failed' || job.ok === false);
-      if (job.kind === 'full-backup' || job.kind === 'bundle') B.reload?.(); else B.reloadStrip?.(); // a new backup file: redraw the lists too
+      if (job.kind === 'compact') B.afterCompact?.(); else if (job.kind === 'full-backup' || job.kind === 'bundle') B.reload?.(); else B.reloadStrip?.(); // a new backup file: redraw the lists too
     }
     B.paintJobStrip?.();
   };

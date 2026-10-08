@@ -3,7 +3,7 @@ import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config } from './src/core/config.mjs';
-import { areaLogger, attachLogDb, closeLogs, pruneEventLog } from './src/logging/logger.mjs';
+import { areaLogger, attachLogDb, closeLogs } from './src/logging/logger.mjs';
 import { accessLog } from './src/logging/access-log.mjs';
 import { runCli } from './src/cli/commands.mjs';
 import { ensureHostAdmin } from './src/cli/host-admin.mjs';
@@ -23,6 +23,7 @@ import { appRouter } from './src/routes/app/index.mjs';
 import { legalPages } from './src/routes/legal-pages.mjs';
 import { startAlertWorker } from './src/services/alerts/index.mjs';
 import { recordStartup, startUpdateWorker } from './src/services/updates/index.mjs';
+import { startRetentionWorker } from './src/services/retention/index.mjs';
 import { cloudflareAddress } from './src/security/cloudflare-middleware.mjs';
 
 if (await runCli(process.argv[2])) process.exit(process.exitCode || 0);
@@ -46,7 +47,7 @@ setInterval(() => sweepExpired(db).catch(() => {}), 3600e3).unref();
 purgeSignInHistory(db).catch(() => {});
 setInterval(() => purgeSignInHistory(db).catch(() => {}), 6 * 3600e3).unref();
 setInterval(() => purgeExpired(db).catch(() => {}), 3600e3).unref();
-setInterval(() => pruneEventLog().then(n => n && L.info('log.pruned', `Removed ${n} log rows older than ${config.log.retentionDays} days`)).catch(() => {}), 24 * 3600e3).unref();
+startRetentionWorker(db); // nightly pruning of the rows switched on in Host > Data and retention (activity log, mail history, temporary files by default)
 
 const app = express();
 app.disable('x-powered-by');

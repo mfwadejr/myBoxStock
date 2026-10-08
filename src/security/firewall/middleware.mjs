@@ -6,6 +6,8 @@ import { getLimits, getRules, ruleAppliesToAppPort } from './config.mjs';
 import { overLimit, recordViolation, banUntil, countBlocked, countLimited, logThrottled } from './ratelimit.mjs';
 
 const isAuthPath = (p) => /\/(login|login\/mfa|forgot|reset|signup)$/.test(p);
+// Page files (scripts, styles, images) are not counted by the request-flood counter: one page load asks for about 70 of them, so a few reloads from an office would trip the limit.
+const isStaticPath = (p) => /^\/(css|js|assets)\//.test(p);
 const isHostPath = (p) => p.startsWith('/api/host') || p.startsWith('/host');
 
 export function firewallMiddleware(req, res, next) {
@@ -18,7 +20,7 @@ export function firewallMiddleware(req, res, next) {
 
   const until = banUntil(ip);
   if (until) { countBlocked(); logThrottled(`ban:${ip}`, 'warn', 'request.banned', `Refused ${ip} — temporarily banned (${req.method} ${req.path})`, { ip }); res.set('Retry-After', String(Math.ceil((until - Date.now()) / 1000))); return res.status(429).json({ error: 'Too many requests. Try again later.' }); }
-  if (overLimit(`g:${ip}`, lim.windowSec * 1000, lim.maxRequests)) {
+  if (!isStaticPath(req.path) && overLimit(`g:${ip}`, lim.windowSec * 1000, lim.maxRequests)) {
     countLimited(); recordViolation(ip, 'request flood'); logThrottled(`rl:${ip}`, 'warn', 'rate_limit.requests', `Rate limit hit by ${ip}: more than ${lim.maxRequests} requests in ${lim.windowSec}s`, { ip, data: { limit: lim.maxRequests, windowSec: lim.windowSec } });
     res.set('Retry-After', String(lim.windowSec)); return res.status(429).json({ error: MSG.RATE_LIMITED, code: 'RATE_LIMITED' });
   }

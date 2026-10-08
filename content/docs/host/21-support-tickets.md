@@ -3,7 +3,7 @@ title: Support tickets
 summary: Work the tickets that signed-in resellers open from their app: the list and its filters, a ticket with its requester panel, replies and internal notes, statuses, the response target, Host notes, Support settings and the Owner-only purge.
 keywords: support, ticket, tickets, T-1042, reply, internal note, canned reply, status, waiting on reseller, waiting on host, resolved, closed, priority, category, assignee, response target, overdue, business days, screenshot, attachment, host notes, purge, retention, requester, rate limit, open tickets cap
 order: 22
-covers: nav:support, Support, Tickets, Settings, Active tickets, Overdue, Waiting on Host, Waiting on reseller, Resolved, Closed, Assigned to, Time waiting, Requester, Their other tickets, Host note, Host notes, Reply to reseller, Internal note, Insert a canned reply, After sending set the status to, Add screenshot, Categories and priorities, Canned replies, Targets and limits, Response target, Days before Resolved closes by itself, Screenshots per message, Largest screenshot, New tickets per account per hour, Open tickets per account, Retention, Purge closed tickets, Support tickets are waiting for a reply, Ticket reply sent
+covers: nav:support, Screenshot viewer, Open in new tab, Download, Previous, Next, Support red number, Support, Tickets, Settings, Active tickets, Overdue, Waiting on Host, Waiting on reseller, Resolved, Closed, Assigned to, Time waiting, Requester, Their other tickets, Host note, Host notes, Reply to reseller, Internal note, Insert a canned reply, After sending set the status to, Add screenshot, Categories and priorities, Canned replies, Targets and limits, Response target, Days before Resolved closes by itself, Screenshots per message, Largest screenshot, New tickets per account per hour, Open tickets per account, Retention, Purge closed tickets, Support tickets are waiting for a reply, Ticket reply sent
 ---
 
 ## What this page is for
@@ -53,7 +53,15 @@ Under the conversation, switch between **Reply to reseller** and **Internal note
 - **Insert a canned reply** adds a ready-made text to the box. You can edit it before sending.
 - **Add screenshot** attaches PNG or JPG pictures, within the limits you set.
 
+The **Support** item in the left menu shows a red number: the tickets waiting on you (Open or Waiting on Host), the same count as the Overview Support card. It hides at zero, updates when a page loads and every couple of minutes, and right after you reply or change a status. On a phone or tablet, where Support is under **More**, the number shows on the **More** button too.
+
+The ticket page lines up its facts: the Requester card and the ticket details card use one label column, so the values start at the same place, and on a phone each label sits above its value.
+
 When a reply is sent, the reseller sees a red number beside their name in the app. If Email is set up and the person has an address, they are also emailed that there is a reply. The email names the ticket but does not contain the reply. If Email is not set up, the confirmation says so: emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. The in-app number always works.
+
+## Screenshots in the viewer
+
+Click or tap a screenshot in the conversation, or the small preview of a picture you are attaching, to open the **Screenshot viewer** on top of the ticket. It scales the picture to fit; tap it to zoom to full size and again to zoom out. **Close**, Escape, a click outside and the back gesture on a phone all close it and return you to the same place in the ticket. When a message has several screenshots, **Previous** and **Next** show a count such as "2 of 3". **Download** saves the picture and a small **Open in new tab** link opens the raw image. The pictures are served exactly as before (checked by content, never run as a page), and a screenshot attached to an internal note still cannot be fetched by the reseller.
 
 ## Statuses
 
@@ -85,12 +93,15 @@ Screenshots are checked by their actual contents, not their file name, so a rena
 
 ## Retention and purging
 
-Closed tickets are kept, with their messages and screenshots, until the Owner administrator purges them. Nothing purges by itself. Under **Retention**, the Owner can use **Purge closed tickets**: choose how many days a ticket must have been closed (0 means every closed ticket), see how many match, type PURGE to confirm, and the tickets are deleted for good. Other administrators see the count but cannot purge, and a refused attempt is recorded. Only closed tickets can be purged. Backups made earlier still hold the tickets until they age out.
+Closed tickets are kept, with their messages and screenshots, until the Owner administrator purges them. Nothing purges by itself unless the Owner sets an automatic age for closed tickets on [Data and retention](#/docs/data-and-retention) (off by default). That page also has **Prune now** for closed tickets, with a preview first. Under **Retention**, the Owner can use **Purge closed tickets**: choose how many days a ticket must have been closed (0 means every closed ticket), see how many match, type PURGE to confirm, and the tickets are deleted for good. Other administrators see the count but cannot purge, and a refused attempt is recorded. Only closed tickets can be purged. Backups made earlier still hold the tickets until they age out.
 
 When a reseller's account is erased, its open tickets are closed and the tickets stay, with the account's name and Reseller ID copied onto them, until purged. The Terms and Privacy Policy say that tickets can be read by myBoxStock and that closed tickets are kept until purged.
 
 ## The audit trail
 
-Everything you do here is recorded under the **Support tickets** filter of the [Audit trail](#/docs/audit-trail): opening a ticket, replies, notes, status, priority, category and assignment changes, automatic closing, settings, Host notes and purges. The entries name who did it and which reseller it concerned.
+Everything you do here is recorded under the **Support tickets** filter of the [Audit trail](#/docs/audit-trail): opening a ticket (once per administrator per ticket per day), replies, notes, status, priority, category and assignment changes, automatic closing, settings, Host notes and purges. The entries name who did it and which reseller it concerned.
 
 > Reply in plain words and keep it short. Ask for diagnostics when you need the version and warnings, and remind resellers not to paste passwords or recovery keys. See also [Support and diagnostics](#/docs/support-and-diagnostics).
+
+
+Opening a ticket is logged as **Ticket opened by the Host** only the first time each Host administrator opens that ticket on a given day, so reading a long conversation does not fill the trail. Every real action (reply, internal note, status, priority, category, assignment, purge) is logged every time.

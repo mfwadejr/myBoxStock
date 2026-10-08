@@ -71,10 +71,4 @@ export async function flush() {
   } finally { flushing = false; }
 }
 export async function closeLogs() { await flush(); await Promise.all([...files.values()].map(f => f.close())); }
-
-// Delete database copies older than the retention window (files rotate by size instead).
-export async function pruneEventLog() {
-  if (!db) return 0;
-  const r = await db.run('DELETE FROM event_log WHERE ts < ?', [Date.now() - config.log.retentionDays * 86400000]);
-  return r.changes;
-}
+// Pruning of the database copy lives in services/retention (it keeps the audit trail out of the activity-log trimming).

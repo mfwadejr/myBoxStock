@@ -28,3 +28,21 @@ test('host console access list', async () => {
     assert.notEqual(open.status, 404);
   } finally { srv.stop(); }
 });
+
+test('page files (css, js, assets) are not counted by the request limit while API calls still are', async () => {
+  const srv = await startServer({ TRUST_PROXY: '1' }), ip = { 'X-Forwarded-For': '203.0.113.77' }, admin = { 'X-Forwarded-For': '203.0.113.5' };
+  try {
+    const host = new Client(srv.base); host.headers = admin;
+    await host.req('POST', '/api/host/login', { login: 'admin', password: srv.hostPw }); await host.req('POST', '/api/host/change-password', { current: srv.hostPw, next: 'Str0ng-Pass-9876' });
+    assert.equal((await host.req('PUT', '/api/host/firewall/limits', { enabled: true, windowSec: 60, maxRequests: 20, authMaxAttempts: 10, authWindowSec: 300, banAfterViolations: 100, banMinutes: 1 })).status, 200);
+    // a reload loop: 60 page loads of ~70 files each from one address, all served
+    const files = ['/css/tokens.css', '/js/shared/core.js', '/assets/logo-512.png'], codes = new Set();
+    for (let i = 0; i < 200; i++) codes.add((await fetch(srv.base + files[i % 3], { headers: ip })).status);
+    assert.deepEqual([...codes], [200], 'static files are never limited');
+    // the same address still gets limited on API calls, and on the page addresses themselves
+    const api = []; for (let i = 0; i < 40; i++) api.push((await fetch(srv.base + '/api/app/me', { headers: ip })).status);
+    assert.ok(api.includes(429), 'API calls are still counted: ' + [...new Set(api)]);
+    assert.equal((await fetch(srv.base + '/css/tokens.css', { headers: ip })).status, 200, 'and static files still load for an address that hit the limit');
+    const r = await host.req('GET', '/api/host/firewall'); assert.ok(r.data.stats.limited >= 1);
+  } finally { srv.stop(); }
+});

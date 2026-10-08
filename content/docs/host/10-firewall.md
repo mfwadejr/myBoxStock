@@ -40,13 +40,19 @@ Each request goes through the same gate, in this order. Knowing it makes the res
 5. If the address has made more requests than allowed in the time window, it is refused and counted as a violation.
 6. If the request is a sign-in, sign-up or password reset attempt and the address has made too many of those, it is refused and counted as a violation.
 
+## What is counted and what is not
+
+The **Requests per IP** limit counts the requests people and programs make to the app and the API. It does **not** count the page's own files: everything under `/css`, `/js` and `/assets` (styles, scripts and images). One page load asks for about 70 of those files, so counting them would let a few reloads from one office address trip the limit and show a blank page. Those files are never rate-limited. A banned address is still refused everywhere, and Block rules still apply to every path.
+
+Everything else is still counted: API calls, sign-ins, sign-up, password resets and the page addresses themselves. The sign-in attempt limit is unchanged.
+
 ## Rate limiting
 
 Rate limiting slows down floods and password guessing. It counts requests from each address over a short time window, and refuses extra ones. Your own address is shown in the description as "Your address". The switch on the right turns the whole feature on or off. It is on by default.
 
 ### The fields
 
-- **Requests per IP** is how many requests of any kind one address may make in a window. Default 300. Allowed range 10 to 100,000.
+- **Requests per IP** is how many requests one address may make in a window, not counting the page's style, script and image files (see above). Default 300. Allowed range 10 to 100,000.
 - **...per window (seconds)** is the length of that window in seconds. Default 60. Range 1 to 3,600. So the default means up to 300 requests per minute per address.
 - **Sign-in attempts per IP** is how many sign-in, two-factor, sign-up and password reset attempts one address may make in its own window. Default 10. Range 1 to 1,000.
 - **...per window (seconds)** (the second one) is that window. Default 300, which is five minutes. Range 10 to 86,400.

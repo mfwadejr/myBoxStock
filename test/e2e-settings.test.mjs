@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startServer, fillLogin, Client } from './helpers.mjs';
+import { startServer, fillLogin } from './helpers.mjs';
 
 const exe = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium';
 let pw; try { pw = await import('playwright'); } catch { try { pw = await import('/opt/npm-tools/node_modules/playwright/index.mjs'); } catch {} }
@@ -13,9 +13,6 @@ test('browser: remove a built-in detail, warranty countdown, unlock behaviour', 
   const srv = await startServer(), br = await (pw.chromium || pw.default.chromium).launch({ executablePath: exe }), page = await br.newPage({ viewport: { width: 1280, height: 900 } });
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   try {
-    // each page load asks for about 70 files and the default limit is 300 requests a minute per address; this test reloads many times, so the limit is turned off for it
-    const hc = new Client(srv.base); await hc.req('POST', '/api/host/login', { login: 'admin', password: srv.hostPw }); await hc.req('POST', '/api/host/change-password', { current: srv.hostPw, next: 'Sup3rSecretPass!' });
-    await hc.req('PUT', '/api/host/firewall/limits', { enabled: false, windowSec: 60, maxRequests: 100000, authMaxAttempts: 1000, authWindowSec: 60, banAfterViolations: 1000, banMinutes: 1 });
     await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
     await page.fill('#bn', 'Warranty Co'); await page.fill('#em', 'w@example.com'); await page.fill('#un', 'wanda'); await page.fill('#pw', PW); await page.check('#tc'); await page.click('button.block');
     await page.waitForSelector('#go'); const login = 'wanda@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');

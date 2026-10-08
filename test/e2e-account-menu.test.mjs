@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startServer, fillLogin } from './helpers.mjs';
+import { startServer, Client, fillLogin } from './helpers.mjs';
 
 const exe = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium';
 let pw; try { pw = await import('playwright'); } catch { try { pw = await import('/opt/npm-tools/node_modules/playwright/index.mjs'); } catch {} }
@@ -77,6 +77,48 @@ test('browser: Host Console account menu', { skip, timeout: 300000 }, async () =
     for (const [name, w, h] of SIZES) { await page.setViewportSize({ width: w, height: h }); await page.waitForTimeout(150); await exercise(page, w, `host ${name}`, ['Sign out']);
       if (w !== 768) { await page.locator('.menu-btn').click(); await page.waitForSelector('.menu-pop'); await page.waitForTimeout(500); await page.screenshot({ path: `${SHOTS}/menu-host-${w}.png` }); await page.keyboard.press('Escape'); } }
     await page.locator('.menu-btn').click(); await page.locator('.menu-item', { hasText: 'Sign out' }).click(); await page.waitForSelector('#u'); assert.equal(await page.locator('.menu-btn').count(), 0);
+    assert.deepEqual(errors, []);
+  } finally { await br.close(); await srv.stop(); }
+});
+
+test('browser: Support is the last item of the reseller left menu and in More, with the red count; every user type sees it; the account menu entry still works', { skip, timeout: 300000 }, async () => {
+  const srv = await startServer(), br = await (pw.chromium || pw.default.chromium).launch({ executablePath: exe }), page = await br.newPage({ viewport: { width: 1280, height: 800 } });
+  page.setDefaultTimeout(20000); const errors = []; page.on('pageerror', e => errors.push(e.message));
+  try {
+    const host = new Client(srv.base); await host.req('POST', '/api/host/login', { login: 'admin', password: srv.hostPw }); await host.req('POST', '/api/host/change-password', { current: srv.hostPw, next: PW });
+    await page.goto(srv.base + '/app/'); await page.click('[data-mode=signup]');
+    await page.fill('#bn', 'Menu Co'); await page.fill('#em', 'm@example.com'); await page.fill('#un', 'mona'); await page.fill('#pw', PW); await page.check('#tc'); await page.click('button.block');
+    await page.waitForSelector('#go'); const login = 'mona@' + (await page.textContent('.codeblock')).trim(); await page.click('#go');
+    await fillLogin(page, login); await page.fill('#p', PW); await page.click('button.block');
+    await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.menu-btn');
+    const sideKeys = () => page.$$eval('.side a', as => as.map(a => a.dataset.k)), moreKeys = async () => { await page.click('[data-more]'); await page.waitForSelector('.sheet-menu'); const k = await page.$$eval('.sheet-menu a', as => as.map(a => a.dataset.k)); return k; };
+    // laptop: the very last row, after Documentation, with an icon
+    let keys = await sideKeys(); assert.equal(keys.at(-1), 'support'); assert.equal(keys.at(-2), 'docs');
+    assert.equal((await page.textContent('.side a:last-child')).trim(), 'Support'); assert.equal(await page.locator('.side a:last-child svg.icon').count(), 1, 'an icon like the others');
+    // Standard and View users have no permission gate on it
+    for (const perms of [['inventory.read', 'customers.read', 'sales.read', 'sales.write'], ['inventory.read']]) {
+      await page.evaluate((p) => { AccountApp.me.perms = p; AccountApp.showShell(); }, perms); await page.waitForSelector('.side a');
+      keys = await sideKeys(); assert.equal(keys.at(-1), 'support', `last for ${perms.length} permissions`); assert.ok(!keys.includes('team'), 'a smaller menu');
+    }
+    await page.evaluate(() => { AccountApp.me.perms = ['*']; AccountApp.showShell(); }); await page.waitForSelector('.side a');
+    // clicking it opens Support; the account menu entry still works too
+    await page.click('.side a[data-k=support]'); await page.waitForSelector('h1:has-text("Support")'); assert.equal(await page.locator('.side a.active').getAttribute('data-k'), 'support');
+    await page.click('.side a[data-k=home]'); await page.waitForSelector('.page-head'); await page.click('.menu-btn'); await page.click('.menu-item >> text=Support'); await page.waitForSelector('h1:has-text("Support")'); assert.match(page.url(), /#\/support$/);
+    // no count while there are no replies
+    assert.equal(await page.locator('.nav-count').count(), 0);
+    // a reply from the Host: the count appears on the item (laptop) and on the item and on More (phone)
+    const t = await page.evaluate(() => AccountApp.api('POST', '/support/tickets', { category: 'Question', subject: 'Menu count', message: 'Hello', attachmentIds: [] })); const no = t.ticket.number;
+    assert.equal((await host.req('POST', `/api/host/support/tickets/${no}/reply`, { message: 'Hi there', status: 'waiting_reseller' })).status, 200);
+    await page.click('.side a[data-k=home]'); await page.waitForSelector('.side a[data-k=support] .nav-count'); assert.equal((await page.textContent('.side a[data-k=support] .nav-count')).trim(), '1');
+    assert.equal(await page.locator('.menu-btn .chip.red').textContent(), '1'); assert.ok(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth) <= 1);
+    await page.setViewportSize({ width: 375, height: 812 }); await page.waitForTimeout(150);
+    assert.equal((await page.textContent('.tabbar [data-more] .nav-count')).trim(), '1', 'the count is on the More button');
+    assert.equal(await page.locator('.tabbar a .nav-count').count(), 0, 'not on the bar pages');
+    keys = await moreKeys(); assert.equal(keys.at(-1), 'support', 'Support is the last row of the More sheet'); assert.equal((await page.textContent('.sheet-menu a[data-k=support] .nav-count')).trim(), '1');
+    const box = await page.locator('[data-more]').boundingBox(), chip = await page.locator('[data-more] .nav-count').boundingBox(); assert.ok(chip.x + chip.width <= 375 && chip.y >= box.y - 1, 'the chip sits on the button inside the screen');
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth) <= 1, 'no sideways scroll on the phone');
+    await page.click('.sheet-menu a[data-k=support]'); await page.waitForSelector('h1:has-text("Support")'); await page.waitForSelector('.scrim', { state: 'detached' });
+    await page.click('tr.click'); await page.waitForSelector('.msg.team'); await page.waitForFunction(() => !document.querySelector('.nav-count'));
     assert.deepEqual(errors, []);
   } finally { await br.close(); await srv.stop(); }
 });

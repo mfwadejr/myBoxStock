@@ -3,7 +3,7 @@ title: Getting started
 summary: What myBoxStock is, how to create your account, sign in, save your recovery key, find your way around the menu, and what to do in your first hour.
 keywords: terms, privacy, agree, terms of service, privacy policy, legal, updated terms, start, account menu, name menu, site admin, sign out, more, more sheet, contents, search help, backup, begin, sign up, create account, register, reseller id, username, password, sign in, log in, new device, recovery key, menu, roles, administrator, standard, view, checklist, first steps, documentation, search help, confirm email, trial
 order: 1
-covers: Get set up card, nav:docs, I agree to the Terms of Service and Privacy Policy, Terms of Service, Privacy Policy, Updated terms, Accept and continue, Sign out instead, Legal links, nav:docs, Account menu, Site admin, name menu, More sheet, Contents menu, Nothing found, Backup and restore, Back up now, Documentation, Search the documentation, Create account, Sign in, Reseller ID, Username, Password, Business name, Email, Forgot password, Send link, Back to sign in, Two-factor code, Verify, Choose a new password, Update password, Unlock your data, Unlock, Use your recovery key, Restore access, Turn on encryption, Save your recovery key, Download, Print, I have saved my recovery key somewhere safe, Continue, Continue to sign in, Send it again, Sign out, Free trial, Trial ended, Restore account, Close, menu tour, roles, first-hour checklist
+covers: Support menu item, More button, Get set up card, nav:docs, I agree to the Terms of Service and Privacy Policy, Terms of Service, Privacy Policy, Updated terms, Accept and continue, Sign out instead, Legal links, nav:docs, Account menu, Site admin, name menu, More sheet, Contents menu, Nothing found, Backup and restore, Back up now, Documentation, Search the documentation, Create account, Sign in, Reseller ID, Username, Password, Business name, Email, Forgot password, Send link, Back to sign in, Two-factor code, Verify, Choose a new password, Update password, Unlock your data, Unlock, Use your recovery key, Restore access, Turn on encryption, Save your recovery key, Download, Print, I have saved my recovery key somewhere safe, Continue, Continue to sign in, Send it again, Sign out, Free trial, Trial ended, Restore account, Close, menu tour, roles, first-hour checklist
 ---
 
 ## What myBoxStock is
@@ -121,6 +121,7 @@ Your menu lists the places in the app. What you see depends on your user type, s
 - **Activity**: who signed in and from which devices. Administrators only. See [Activity](#/docs/activity).
 - **Security**: your password, two-factor sign-in, your recovery key and exports. Everybody has this. See [Security](#/docs/security).
 - **Documentation**: this help. Everybody has this.
+- **Support**: the last item in the menu, with a small red number on its right when the myBoxStock team has replied to one of your tickets. Everybody has this, whatever their user type. It is also still in the account menu. See [Support](#/docs/support).
 
 ### Your account menu
 
@@ -187,7 +188,7 @@ To search, click the box labelled **Search the documentation** and type at least
 
 Most resellers make sales from a phone, so the whole app is built to work well on iPhones, iPads, Android phones and tablets as well as laptops and desktops. The screen adjusts to its size; you do not need a separate app.
 
-- On a phone or tablet, the main pages (Home, Quick sale, Inventory and Customers) are in a bar along the bottom of the screen, within easy reach of your thumb. Tap **More** to open a sheet with the other pages (Sales, Team, Settings, Backup and restore, Activity, Security and Documentation). The More sheet is only for moving between pages. To sign out, use your account menu at the top right.
+- On a phone or tablet, the main pages (Home, Quick sale, Inventory and Customers) are in a bar along the bottom of the screen, within easy reach of your thumb. Tap **More** to open a sheet with the other pages (Sales, Team, Settings, Backup and restore, Activity, Security, Documentation and Support). When there is a new reply, the same red number shows on the **More** button as well as beside **Support** in the sheet, so you see it without opening anything. The More sheet is only for moving between pages. To sign out, use your account menu at the top right.
 - On a laptop or desktop the same pages are listed down the side of the screen.
 - Lists such as Inventory, Sales and Customers turn into one card per item on a phone, with each detail labelled, so there is no sideways scrolling. Tap a card to open it.
 - Forms and pop-ups slide up from the bottom of a phone screen. Buttons and fields are large enough to tap comfortably, and text in fields is big enough that the phone does not zoom in when you tap one.
