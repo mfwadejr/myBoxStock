@@ -2,6 +2,7 @@
 // Test: fetch the copy, check it is complete (size, checksum, authenticated decryption), open it in a scratch copy, run the database integrity check,
 // check the migrations and app version fit this server, count what is inside and compare with the live site. Then the scratch copy is deleted.
 // The live database is only ever counted, never changed. A passing test gives a one-time token tied to that exact file; the restore needs it.
+import { recordTestResult } from './health.mjs';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -131,6 +132,7 @@ export async function testOffsiteCopy(db, destId, name, { passphrase = '', actor
   finally { fs.rmSync(dir, { recursive: true, force: true }); }
   if (!fs.existsSync(dir)) checks.push(ok('The scratch copy was deleted', 'The live site was not touched.'));
   const pass_ = checks.every(c => c.ok), failed = checks.find(c => !c.ok);
+  await recordTestResult(db, { ok: pass_, name, kind: 'off-server copy' });
   let token = null;
   if (pass_ && fetched) {
     sweep(); for (const [k, v] of tokens) if (v.actor === actor && v.name === name && v.dest === destId) tokens.delete(k);

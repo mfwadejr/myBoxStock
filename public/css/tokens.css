@@ -205,6 +205,7 @@
   --sheet-w-wide: 640px;
   --width-receipt: 380px;
   --textarea-min-h: 88px;
+  --shot-max-h: 240px;        /* a ticket screenshot shown in a conversation */
   --pick-list-max-h: 220px;
   --recovery-key-w: 28ch;
   --mail-preview-h: 560px;

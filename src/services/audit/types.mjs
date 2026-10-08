@@ -10,6 +10,7 @@ export const AUDIT_GROUPS = [
   { id: 'signins', label: 'Host Console sign-ins' },
   { id: 'twofactor', label: 'Two-factor' },
   { id: 'backups', label: 'Backups' },
+  { id: 'support', label: 'Support tickets' },
 ];
 
 export const AUDIT_TYPES = [
@@ -43,12 +44,23 @@ export const AUDIT_TYPES = [
   { group: 'backups', label: 'Backup passphrase changed', area: 'host', events: ['backup.passphrase_change'] },
   { group: 'backups', label: 'Backup passphrase reset', area: 'host', events: ['backup.passphrase_reset'] },
   { group: 'backups', label: 'Backup setup step done', area: 'host', events: ['backup.setup_passphrase', 'backup.setup_where', 'backup.setup_keep', 'backup.setup_prove'] },
+  { group: 'support', label: 'Ticket opened by the Host', area: 'host', events: ['support.viewed'] },
+  { group: 'support', label: 'Ticket reply sent', area: 'host', events: ['support.reply'] },
+  { group: 'support', label: 'Internal note added', area: 'host', events: ['support.note'] },
+  { group: 'support', label: 'Ticket status changed', area: 'host', events: ['support.status'] },
+  { group: 'support', label: 'Ticket priority or category changed', area: 'host', events: ['support.priority', 'support.category'] },
+  { group: 'support', label: 'Ticket assigned', area: 'host', events: ['support.assign'] },
+  { group: 'support', label: 'Ticket closed automatically', area: 'host', events: ['support.auto_closed'] },
+  { group: 'support', label: 'Support settings changed', area: 'host', events: ['support.settings'] },
+  { group: 'support', label: 'Host note on a reseller saved', area: 'host', events: ['support.account_note'] },
+  { group: 'support', label: 'Closed tickets purged', area: 'host', events: ['support.purge'] },
 ];
+
 
 // SQL for "this event row belongs to the audit trail" (optionally only one group). Parameters are returned in order.
 export function auditScope(group = '') {
   const parts = [], params = [];
-  if (!group || group === 'actions') { parts.push(`(e.area IN (${ACTION_AREAS.map(() => '?').join(',')}) AND e.actor IS NOT NULL AND e.actor <> '' AND e.event NOT LIKE 'backup.%')`); params.push(...ACTION_AREAS); }
+  if (!group || group === 'actions') { parts.push(`(e.area IN (${ACTION_AREAS.map(() => '?').join(',')}) AND e.actor IS NOT NULL AND e.actor <> '' AND e.event NOT LIKE 'backup.%' AND e.event NOT LIKE 'support.%')`); params.push(...ACTION_AREAS); }
   for (const t of AUDIT_TYPES.filter(x => !group || x.group === group)) {
     parts.push(`(e.area = ? AND e.event IN (${t.events.map(() => '?').join(',')})${t.hostRealm ? ` AND e.raw LIKE '%"realm":"host"%'` : ''})`); params.push(t.area, ...t.events);
   }

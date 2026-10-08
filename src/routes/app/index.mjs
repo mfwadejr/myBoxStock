@@ -13,6 +13,7 @@ import { accountRoutes } from './account.mjs';
 import { backupRoutes, diagnosticsRoutes } from './backup.mjs';
 import { termsRoutes, termsGate } from './terms.mjs';
 import { hostLinkRoutes } from './hostlink.mjs';
+import { supportRoutes } from './support.mjs';
 import { docsRoutes } from '../docs.mjs';
 import { loadUser } from './context.mjs';
 import { log } from '../../logging/logger.mjs';
@@ -30,13 +31,14 @@ export function appRouter(db) {
   r.use('/terms', termsRoutes(db)); r.use(termsGate);   // updated terms: an Administrator accepts first (before the closing and read-only checks, which must not stop this)
   // A closing account is read-only for its Administrators (so they can still export) until it is restored or erased.
   r.use((req, res, next) => {
-    if (!req.subject.closing_at || req.method === 'GET' || req.method === 'HEAD' || ['/account/restore', '/account/export-note', '/backup/made'].includes(req.path)) return next();
+    if (!req.subject.closing_at || req.method === 'GET' || req.method === 'HEAD' || ['/account/restore', '/account/export-note', '/backup/made'].includes(req.path) || req.path.startsWith('/support/')) return next();
     log('tenant', 'warn', 'account.closing_locked', `${req.subject.login} tried ${req.method} ${fullPath(req)} but the account is closing`, { actor: req.subject.login, accountId: req.subject.account_id });
     fail(res, 423, 'ACCOUNT_CLOSING_LOCKED');
   });
   r.use('/docs', docsRoutes('reseller'));
   r.get('/announcement', async (req, res) => res.json({ announcement: await activeAnnouncement(db) }));
   r.use('/account', accountRoutes(db)); // closing is allowed even when a trial has ended
+  r.use('/support', supportRoutes(db)); // so is asking for help: a read-only or closing account can still write to support
   // Ended trials and paid periods are read-only: viewing still works, changes are refused (data is never deleted).
   r.use((req, res, next) => {
     if (req.subject.billing.canWrite || req.method === 'GET' || req.method === 'HEAD' || req.path === '/backup/made') return next();   // a read-only account can still make a backup

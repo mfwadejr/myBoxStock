@@ -222,3 +222,34 @@ details[open] > summary { margin-bottom: var(--space-xs); }
 .more-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); padding-top: var(--space-md); }
 .pager { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); flex-wrap: wrap; padding-top: var(--space-md); }
 .feed.tablewrap th { position: sticky; top: var(--space-0); z-index: var(--z-raised); background: var(--color-surface); }   /* column titles stay visible while a feed scrolls */
+
+/* ---- documentation: print only the "Printable ..." section of a page, on one sheet ---- */
+@media print {
+  html.printing-doc .topbar, html.printing-doc .side, html.printing-doc .toasts, html.printing-doc .version-badge, html.printing-doc .page-head, html.printing-doc .doc-toc, html.printing-doc .doc-pager, html.printing-doc .no-print, html.printing-doc .doc-main > .card:not(.doc), html.printing-doc .doc > :not(.doc-print) { display: none; }
+  html.printing-doc .doc-layout { display: block; }
+  html.printing-doc .doc, html.printing-doc body { box-shadow: none; background: var(--color-surface); }
+  html.printing-doc .doc-print { font-size: var(--text-sm); line-height: var(--leading-code); }
+  html.printing-doc .doc-print li { margin-bottom: var(--space-xs); break-inside: avoid; }
+}
+/* ---- support tickets (reseller Support and the Host Support section): the conversation, screenshots, the two-column ticket page ---- */
+.thread { display: flex; flex-direction: column; gap: var(--space-md); }
+.msg { min-width: 0; padding: var(--space-md) var(--space-lg); border: var(--border-default); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+.msg.team { border-color: transparent; background: var(--color-primary-soft); }   /* a reply from myBoxStock */
+.msg.note { border-color: transparent; background: var(--color-warning-soft); }   /* a Host-only note: the reseller never gets this one */
+.msg.system { padding: var(--space-0); border: 0; background: none; color: var(--color-text-faint); font-size: var(--text-sm); text-align: center; }
+.msg-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-xs); color: var(--color-text-muted); font-size: var(--text-xs); }
+.msg-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.msg summary { padding: var(--space-md) var(--space-0); color: var(--color-text-muted); font-size: var(--text-sm); }
+.shots { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-sm); }
+.shot { display: block; max-width: 100%; max-height: var(--shot-max-h); border: var(--border-default); border-radius: var(--radius-sm); background: var(--color-surface); }
+.attached { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
+.attached:not(:empty) { margin-top: var(--space-sm); }
+.support-layout { display: grid; grid-template-columns: minmax(0, 1fr) var(--width-lg); gap: var(--space-lg); align-items: start; }
+.support-col { display: flex; flex-direction: column; gap: var(--space-lg); min-width: 0; }
+.support-col > .card + .card { margin-top: var(--space-0); }
+.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--space-xs) var(--space-md); margin: var(--space-0); }
+.facts dt { color: var(--color-text-faint); font-size: var(--text-sm); }
+.facts dd { margin: var(--space-0); overflow-wrap: anywhere; }
+.menu-item .chip { margin-left: auto; }
+.menu-btn [data-badge]:empty { display: none; }   /* the count of new replies in the account menu */
+@media (max-width: 980px) { .support-layout { grid-template-columns: minmax(0, 1fr); } }

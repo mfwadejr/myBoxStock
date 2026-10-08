@@ -22,3 +22,4 @@ export { passphraseReady, assertPassphraseReady, coded } from './gate.mjs';
 export { startJob, publicJob, currentJob, getJob, dismissJob, detachJob } from './jobs.mjs';
 export { JOB_KINDS } from './jobkinds.mjs';
 export { testBackupFile, restoreBackupFile, receiveUpload, discardUpload, folderFiles, cleanIncoming, uploadLimit, dropToken as dropFileToken } from './filetest.mjs';
+export { backupHealth, recordTestResult, TEST_WINDOW_DAYS, isSpaceLow } from './health.mjs';

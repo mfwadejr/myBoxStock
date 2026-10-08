@@ -3,6 +3,14 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.23.0] - 2026-10-07
+
+### Added
+- **Support tickets (internal).** Resellers get a Support section in the account menu: My tickets, New ticket (category, subject, message, optional screenshots, optional "attach diagnostics"), a thread with a reply box and a badge when the Host replies. All user types can open tickets; Standard and View users see only their own, Administrators see all of the account's tickets. The Host Console gets a Support section with a ticket list (filters and search), a ticket page with the requester panel (reseller, plan and status, who opened it, app version, device, their other tickets), the thread, Host-only notes, canned replies, assignee, priority, category and status, plus a Tickets tab and a Host notes area on each account. A reseller reply reopens a Resolved ticket; Resolved tickets auto-close. The Overview shows open, waiting, overdue and unassigned counts, and an overdue Alert is raised when no one has replied past the response target. Support settings (categories, priorities, canned replies, response target, auto-close days, screenshot limits, ticket limits) are defined by the Host. Closed tickets are kept until the Owner purges them (Owner only, typed PURGE). Tickets are readable by the Host, unlike customer data, and the form says not to paste customer details, passwords or the recovery key. Migration 17. Everything the Host does on a ticket is audited. Email notifications only work after Email is set up.
+- **Backup health on the Host Overview.** A Backups card shows the last snapshot, last full-site backup, last test restore, whether a copy is held off the server, destinations, backup space left, the Protected state and the background job. Five grouped alerts: no recent full-site backup, a destination failing, no test restore in 30 days, backup space low, a background job failed.
+- **Get set up checklist (reseller Home).** Administrators see a dismissible checklist: first device, payment methods, first sale, team member (optional), first backup, Test a backup file, recovery key. Ticks are worked out in the browser; the Host sees nothing.
+- **Disaster recovery page (Host documentation).** A runbook for a dead disk, lost server, damaged database, lost passphrase or key, and a bad update, with a printable one-page checklist.
+
 ## [0.22.1] - 2026-10-07
 
 ### Fixed

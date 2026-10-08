@@ -3,7 +3,7 @@ title: Audit trail
 summary: A plain record of what each Host administrator did and who signed in to the Host Console: settings, accounts, firewall rules, bans, sign-ins and two-factor changes. This page explains every kind of entry, how it differs from Logs, and how to answer "who changed that?".
 keywords: type filter, system, firewall changes, bans, lockouts, sign-ins, two-factor, audit trail, audit, who changed, who did this, administrator actions, accountability, history, support history, settings changed, suspended, reset password, everyone, actor filter, search, load more
 order: 14
-covers: nav:audit, Everyone, All kinds of entry, Type filter, Settings and accounts, Firewall and access, Bans and lockouts, Host Console sign-ins, Two-factor, System, Firewall rule added, Firewall rule changed, Firewall rule removed, Rate-limit settings changed, Host Console access limit changed, Ban created, Ban lifted, Host Console sign-in locked, Host Console sign-in, Host Console failed sign-in, Host Console sign-out, Two-factor turned on, Two-factor turned off, Two-factor recovery code used, Showing N of M actions, actor filter, Last 24 hours, Last 7 days, Last 30 days, All time, Search actions people addresses Reseller IDs, Load more, Sign-in unlocked, account erased email, deleted email not sent
+covers: nav:audit, Everyone, All kinds of entry, Type filter, Settings and accounts, Firewall and access, Bans and lockouts, Host Console sign-ins, Two-factor, System, Firewall rule added, Firewall rule changed, Firewall rule removed, Rate-limit settings changed, Host Console access limit changed, Ban created, Ban lifted, Host Console sign-in locked, Host Console sign-in, Host Console failed sign-in, Host Console sign-out, Two-factor turned on, Two-factor turned off, Two-factor recovery code used, Showing N of M actions, actor filter, Last 24 hours, Last 7 days, Last 30 days, All time, Search actions people addresses Reseller IDs, Load more, Sign-in unlocked, account erased email, deleted email not sent, Support tickets filter, Closed tickets purged
 ---
 
 ## What the Audit trail is
@@ -61,6 +61,10 @@ Debug-level lines are never shown.
 Each entry says who, what, when and from which address. Reseller sign-ins never appear here, and neither does anything from inside a reseller's account. Only your own console's sign-ins are listed.
 
 Because the Audit trail follows the same retention rules as Logs, if you set the activity log to be kept for 90 days, audit entries older than 90 days are gone.
+
+### Support tickets
+
+The **Support tickets** filter shows everything done in Support: opening a ticket, replies, internal notes, status, priority, category and assignment changes, tickets closed automatically, changes to Support settings, Host notes on a reseller, and purges of closed tickets (including a purge that was refused because the person was not the Owner). Each entry names the administrator and the reseller. A reseller opening a ticket or replying is not a Host action and is not listed. See [Support tickets](#/docs/support-tickets).
 
 ## What is not in the Audit trail
 

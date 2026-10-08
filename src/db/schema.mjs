@@ -65,7 +65,8 @@ export const INDEXES = [
 
 // Order matters when copying between databases (parents before children).
 export const COPY_ORDER = ['settings', 'host_admins', 'accounts', 'billing_events', 'account_users', 'sign_in_history', 'account_keys', 'account_recovery', 'account_roles', 'inventory_items', 'records',
-  'firewall_rules', 'mail_queue', 'event_log', 'password_resets', 'sessions', 'admin_links', 'email_confirmations', 'billing_receipts', 'receipt_mail_usage', 'alerts', 'security_blocks', 'restore_points', 'restore_point_records'];
+  'firewall_rules', 'mail_queue', 'event_log', 'password_resets', 'sessions', 'admin_links', 'email_confirmations', 'billing_receipts', 'receipt_mail_usage', 'alerts', 'security_blocks', 'restore_points', 'restore_point_records',
+  'support_tickets', 'support_messages', 'support_attachments', 'support_notes', 'support_views'];
 
 // Versioned migrations. Each runs once, in order, and is recorded in schema_migrations.
 // Fresh installs run all of them; existing installs run only the ones they are missing. Never edit an applied migration — add a new one.
@@ -166,6 +167,31 @@ const MIGRATIONS = [
     // Which version of the Terms and Privacy Policy the account owner accepted, and when. Nothing else: no extra personal data. Existing accounts stay empty and are asked once at their next Administrator sign-in.
     await db.exec(`ALTER TABLE accounts ADD COLUMN terms_version ${s(40)}`);
     await db.exec('ALTER TABLE accounts ADD COLUMN terms_accepted_at BIGINT');
+  } },
+  { id: 17, name: 'support tickets (internal): tickets, messages, screenshots, Host notes and read marks', up: async (db) => {
+    // Tickets are written by signed-in resellers and read by the Host (unlike the encrypted account data). Text is plain; screenshots are stored in the database as base64 text,
+    // so every snapshot, full-site backup and database dump carries them. account_id, account_code and account_name are copied onto the ticket so it survives the account's erase
+    // and so a later public (no-account) form can attach: source says where it came from, account_id and requester_id may be empty, contact_token_hash is for a secret ticket link.
+    const big = db.client === 'mysql' ? 'LONGTEXT' : 'TEXT';
+    await db.exec(`CREATE TABLE support_tickets (
+      id ${id} PRIMARY KEY, number INTEGER NOT NULL UNIQUE, source ${s(12)} NOT NULL, account_id ${s(40)}, account_code ${s(20)}, account_name ${s()},
+      requester_id ${s(40)}, requester_username ${s(100)}, requester_role ${s(40)}, requester_email ${s()}, contact_token_hash ${s(64)},
+      subject ${s(200)} NOT NULL, category ${s(60)} NOT NULL, priority ${s(40)} NOT NULL, status ${s(20)} NOT NULL, assignee_id ${s(40)},
+      app_version ${s(40)}, device ${s(100)}, created_at BIGINT NOT NULL, updated_at BIGINT NOT NULL, last_requester_at BIGINT, last_host_at BIGINT, resolved_at BIGINT, closed_at BIGINT)`);
+    await db.exec('CREATE INDEX idx_tickets_status ON support_tickets (status, updated_at)');
+    await db.exec('CREATE INDEX idx_tickets_account ON support_tickets (account_id, created_at)');
+    await db.exec('CREATE INDEX idx_tickets_requester ON support_tickets (requester_id)');
+    // side: requester | host | system. internal 1 = a Host-only note or log line that the reseller never sees.
+    await db.exec(`CREATE TABLE support_messages (
+      id ${id} PRIMARY KEY, ticket_id ${id} NOT NULL, ts BIGINT NOT NULL, side ${s(10)} NOT NULL, internal INTEGER NOT NULL DEFAULT 0, author_id ${s(40)}, author_name ${s(100)}, body TEXT NOT NULL, diagnostics TEXT)`);
+    await db.exec('CREATE INDEX idx_support_msg_ticket ON support_messages (ticket_id, ts)');
+    // ticket_id and message_id stay empty while a screenshot is uploaded but not yet sent; those are removed after an hour.
+    await db.exec(`CREATE TABLE support_attachments (
+      id ${id} PRIMARY KEY, ticket_id ${s(40)}, message_id ${s(40)}, account_id ${s(40)}, owner_kind ${s(8)} NOT NULL, owner_id ${s(40)} NOT NULL, name ${s(120)} NOT NULL, mime ${s(20)} NOT NULL, size INTEGER NOT NULL, data ${big} NOT NULL, created_at BIGINT NOT NULL)`);
+    await db.exec('CREATE INDEX idx_support_att_ticket ON support_attachments (ticket_id)');
+    await db.exec('CREATE INDEX idx_support_att_owner ON support_attachments (owner_kind, owner_id)');
+    await db.exec(`CREATE TABLE support_notes (account_id ${id} PRIMARY KEY, body TEXT NOT NULL, updated_at BIGINT NOT NULL, updated_by ${s(100)})`);
+    await db.exec(`CREATE TABLE support_views (ticket_id ${id} NOT NULL, user_id ${id} NOT NULL, seen_at BIGINT NOT NULL, PRIMARY KEY (ticket_id, user_id))`);
   } },
 ];
 

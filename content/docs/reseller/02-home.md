@@ -3,7 +3,7 @@ title: Home
 summary: Your daily dashboard: how many devices you have ready to sell, what you sold and earned this month, which models are running low, and your latest sales.
 keywords: home, backup reminder, back up now, not today, site restored, dashboard, overview, stats, available devices, revenue, profit, low stock, reorder, recent sales, this month, banner, trial, read-only, receipt
 order: 2
-covers: nav:home, Backup reminder, Back up now, Not today, Your last backup was, You have not made a backup yet, site restored banner, Quick sale, Available devices, Devices sold this month, Revenue this month, Profit this month, Low stock, Recent sales, Date, Receipt, Customer, Total, Walk-in, email confirmation banner, Send it again, announcement banner, Close, closing account banner, Restore account, records could not be opened, free trial chip, Trial ended read-only
+covers: nav:home, Get set up, Dismiss, Add your first device, Check your payment methods, Make your first sale, Add a team member, Make your first backup, Save your recovery key, Backup reminder, Back up now, Not today, Your last backup was, You have not made a backup yet, site restored banner, Quick sale, Available devices, Devices sold this month, Revenue this month, Profit this month, Low stock, Recent sales, Date, Receipt, Customer, Total, Walk-in, email confirmation banner, Send it again, announcement banner, Close, closing account banner, Restore account, records could not be opened, free trial chip, Trial ended read-only
 ---
 
 ## What Home is for
@@ -23,6 +23,22 @@ At the top you will see the word **Home**, your business name, and the current m
 ### The Quick sale button
 
 If you are allowed to record sales, a **Quick sale** button sits in the page heading. Pressing it opens [Quick sale](#/docs/quick-sale), where you add devices, choose a customer and finish a sale. It saves a trip to the menu when a customer is standing in front of you.
+
+## The Get set up card
+
+When your account is new, Administrators see a card called **Get set up** at the top of Home, above the four tiles. It lists the steps that make an account useful and safe, with **Done**, **To do** or **Optional** beside each, and a chip such as "3 of 7 done".
+
+- **Add your first device**: ticks once you have at least one device in Inventory.
+- **Check your payment methods**: ticks once the "Paid by" choices in Settings differ from the ones you started with, or you have recorded a sale.
+- **Make your first sale**: ticks after your first sale in Quick sale.
+- **Add a team member**: optional. Ticks when someone besides you has a sign-in. It does not hold the card open.
+- **Make your first backup**: ticks after you save a backup file with **Back up now**.
+- **Test a backup file**: ticks after a backup file passes **Test a backup file** on Backup and restore. A test sends and changes nothing, so this one is remembered by the browser you tested in, and it ticks on that device.
+- **Save your recovery key**: ticks once you confirmed you saved it.
+
+Each step that is not done has a button that takes you to the right page. When every step except the optional one is done, the card disappears by itself. Press **Dismiss** to hide it sooner. Both choices are remembered for the whole account, on every device.
+
+Only Administrators see the card. Standard and View users never do. The ticks are worked out in your browser from your own records, so the site's Host does not see them. The only thing the site is told is that the card was dismissed, so it can appear in the activity log. No business data is sent.
 
 ## The four tiles
 

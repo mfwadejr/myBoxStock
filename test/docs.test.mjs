@@ -76,3 +76,22 @@ test('the documentation viewer has one layout: contents menu and an open topic, 
   assert.ok(!/grid g\d|class="card doc-hit"/.test(src), 'no grid of topic cards');
   for (const realm of ['reseller', 'host']) assert.equal(load(realm)[0].slug, 'getting-started', `${realm}: the landing page opens Getting started`);
 });
+
+test('host docs: the Disaster recovery runbook covers every case, is cross-linked and ends with a printable checklist', () => {
+  const pages = load('host'), dr = pages.find(p => p.slug === 'disaster-recovery'), body = dr.body;
+  assert.ok(dr, 'the page exists');
+  for (const h of ['Dead disk', 'Lost server', 'Damaged database', 'Lost passphrase or key', 'Bad update', 'What to have in hand', 'Stand up a new container', 'Test the file first', 'Restore', 'What customers will and will not have lost', 'Checks afterward', 'Printable checklist']) assert.ok(body.includes(`## ${h}`) || body.includes(`### ${h}`), `has the section ${h}`);
+  for (const t of ['Test a backup file', 'secret.key', 'restore-bundle', 'zimaos/docker-compose.yml', 'Custom Install']) assert.ok(body.includes(t), `mentions ${t}`);
+  for (const slug of ['recovery-and-emergencies', 'backups', 'running-the-server']) assert.ok(body.includes(`(#/docs/${slug})`), `links to ${slug}`);
+  for (const slug of ['backups', 'recovery-and-emergencies', 'running-the-server', 'overview', 'glossary']) assert.ok(pages.find(p => p.slug === slug).body.includes('(#/docs/disaster-recovery)'), `${slug} links back to it`);
+  assert.ok(body.trimEnd().split('\n').at(-1).startsWith('- ') && body.indexOf('## Printable checklist') > body.indexOf('## Checks afterward'), 'the checklist is the last section');
+  assert.ok(search('host', 'dead disk').some(r => r.slug === 'disaster-recovery') && search('host', 'printable checklist').some(r => r.slug === 'disaster-recovery'));
+  const css = fs.readFileSync(path.join(ROOT, 'public/css/components.css'), 'utf8'); assert.ok(/@media print[\s\S]*printing-doc[\s\S]*doc-print/.test(css), 'print styles live in the stylesheet');
+});
+
+test('reseller docs: the Get set up card is explained on Home and Getting started and defined in the glossary', () => {
+  const r = load('reseller'), home = r.find(p => p.slug === 'home'), gs = r.find(p => p.slug === 'getting-started'), gl = r.find(p => p.slug === 'glossary');
+  for (const t of ['Get set up', 'Add your first device', 'Check your payment methods', 'Make your first sale', 'Add a team member', 'Make your first backup', 'Test a backup file', 'Save your recovery key', 'Dismiss', 'Administrators']) assert.ok(home.body.includes(t), `Home mentions ${t}`);
+  assert.ok(gs.body.includes('Get set up') && gl.body.includes('### Get set up card'));
+  assert.ok(search('reseller', 'Get set up').some(x => x.slug === 'home'));
+});

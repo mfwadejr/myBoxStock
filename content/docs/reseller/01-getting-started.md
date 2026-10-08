@@ -3,7 +3,7 @@ title: Getting started
 summary: What myBoxStock is, how to create your account, sign in, save your recovery key, find your way around the menu, and what to do in your first hour.
 keywords: terms, privacy, agree, terms of service, privacy policy, legal, updated terms, start, account menu, name menu, site admin, sign out, more, more sheet, contents, search help, backup, begin, sign up, create account, register, reseller id, username, password, sign in, log in, new device, recovery key, menu, roles, administrator, standard, view, checklist, first steps, documentation, search help, confirm email, trial
 order: 1
-covers: nav:docs, I agree to the Terms of Service and Privacy Policy, Terms of Service, Privacy Policy, Updated terms, Accept and continue, Sign out instead, Legal links, nav:docs, Account menu, Site admin, name menu, More sheet, Contents menu, Nothing found, Backup and restore, Back up now, Documentation, Search the documentation, Create account, Sign in, Reseller ID, Username, Password, Business name, Email, Forgot password, Send link, Back to sign in, Two-factor code, Verify, Choose a new password, Update password, Unlock your data, Unlock, Use your recovery key, Restore access, Turn on encryption, Save your recovery key, Download, Print, I have saved my recovery key somewhere safe, Continue, Continue to sign in, Send it again, Sign out, Free trial, Trial ended, Restore account, Close, menu tour, roles, first-hour checklist
+covers: Get set up card, nav:docs, I agree to the Terms of Service and Privacy Policy, Terms of Service, Privacy Policy, Updated terms, Accept and continue, Sign out instead, Legal links, nav:docs, Account menu, Site admin, name menu, More sheet, Contents menu, Nothing found, Backup and restore, Back up now, Documentation, Search the documentation, Create account, Sign in, Reseller ID, Username, Password, Business name, Email, Forgot password, Send link, Back to sign in, Two-factor code, Verify, Choose a new password, Update password, Unlock your data, Unlock, Use your recovery key, Restore access, Turn on encryption, Save your recovery key, Download, Print, I have saved my recovery key somewhere safe, Continue, Continue to sign in, Send it again, Sign out, Free trial, Trial ended, Restore account, Close, menu tour, roles, first-hour checklist
 ---
 
 ## What myBoxStock is
@@ -148,6 +148,8 @@ Every person in your business has a user type. An **Administrator** can do every
 
 ## Your first-hour checklist
 
+Administrators also see a **Get set up** card on Home that ticks these steps off for you as you do them (a device, payment methods, a first sale, a team member if you want one, a backup, a tested backup file and your recovery key). **Dismiss** hides it. See [Home](#/docs/home).
+
 1. Create your account, write down your Reseller ID, and confirm your email.
 2. Save your recovery key and put it somewhere safe (and tell one other trusted person where it is).
 3. Open [Settings](#/docs/settings) and decide which device details you track. UID, Serial number and MAC address are scannable identifiers; Condition and Supplier are also there. Turn off what you do not need.
@@ -157,7 +159,7 @@ Every person in your business has a user type. An **Administrator** can do every
 7. Add your regular customers in [Customers](#/docs/customers), or simply create them as you sell.
 8. Record a practice sale in [Quick sale](#/docs/quick-sale), look at the receipt, and void it from [Sales](#/docs/sales) if it was only a test.
 9. If other people will help, add them in [Team](#/docs/team) with the right user type.
-10. Make your first backup: open [Backup and restore](#/docs/backup-and-restore), press **Back up now**, and keep the file somewhere you control. Do it again every week. Home reminds you after 7 days.
+10. Make your first backup: open [Backup and restore](#/docs/backup-and-restore), press **Back up now**, and keep the file somewhere you control. Then press **Test file** under Test a backup file to prove it opens. Do it again every week. Home reminds you after 7 days.
 11. If you work from a phone, try the camera button in the Serial number box in Add device. See [Scanning with your phone camera](#/docs/scanning-with-your-phone).
 
 ## Using this Documentation

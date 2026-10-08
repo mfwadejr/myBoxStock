@@ -25,6 +25,12 @@ export function accountRoutes(db) {
   });
   // The export and the customer erase happen in the browser; these only leave a note in the log (counts, never contents).
   r.post('/export-note', need('users.manage'), (req, res) => { tenantLog(req, 'data.exported', `${req.subject.login} exported all account data (built in their browser)`); res.json({ ok: true }); });
+  // The first-run checklist (Home): the browser says the checklist was dismissed. Events only; the ticks themselves are worked out in the browser.
+  const FIRSTRUN = { dismissed: 'dismissed the first-run checklist' };
+  r.post('/firstrun-note', need('users.manage'), (req, res) => {
+    const e = String(req.body?.event || ''); if (!Object.hasOwn(FIRSTRUN, e)) return fail(res, 400, 'FIRSTRUN_BAD');
+    tenantLog(req, `firstrun.${e}`, `${req.subject.login}: ${FIRSTRUN[e]}`); res.json({ ok: true });
+  });
   r.post('/erase-note', need('customers.write'), (req, res) => { tenantLog(req, 'customer.erased', `${req.subject.login} erased one customer's personal details (${Math.max(0, Number(req.body.sales) || 0)} sales kept)`, { sales: Number(req.body.sales) || 0 }); res.json({ ok: true }); });
   return r;
 }

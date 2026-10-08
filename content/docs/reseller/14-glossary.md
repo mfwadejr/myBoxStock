@@ -3,7 +3,7 @@ title: Glossary
 summary: A to Z meanings of the words and labels you see in myBoxStock, each with a link to the page that explains more.
 keywords: glossary, tap to aim, confirm each scan, use this, backup file, mbsbackup, account menu, scan box, aim line, preset, restore point, diagnostics, add what is missing, replace everything, meaning, definition, terms, words, what does it mean, reseller id, recovery key, administrator, standard, view, trial, read-only, void, sku, uid, mac, serial, two-factor, authenticator, export, receipt, catalog, warranty
 order: 14
-covers: Tap to aim, Confirm each scan, Account menu, Add what is missing, Aim line, Backup file, .mbsbackup, Diagnostics, Preset, Replace everything, Restore point, Scan box, Account, Activity, Administrator, Archive, Authenticator, Available, Bulk scan, Catalog, Cost, Customer, Date received, Discount, Disabled, Encryption, Erase, Export, Free trial, Idle lock, Import, Inventory, Look up in sale, Make, Model, Paid by, Password, Quick sale, Read-only, Receipt, Recovery code, Recovery key, Required before sale, Reseller ID, Reorder level, Reserved, Reset access, Returned, Sale, Selling price, Session, Settings, Standard, Status, Suspended, Team, Test checklist, Tested on, Trial, Two-factor, UID, Unlock, User type, Username, View, Void, Warranty, Awaiting test, Pending invitation, Test a backup file, Reorder switch, Drag handle
+covers: Get set up card, Tap to aim, Confirm each scan, Account menu, Add what is missing, Aim line, Backup file, .mbsbackup, Diagnostics, Preset, Replace everything, Restore point, Scan box, Account, Activity, Administrator, Archive, Authenticator, Available, Bulk scan, Catalog, Cost, Customer, Date received, Discount, Disabled, Encryption, Erase, Export, Free trial, Idle lock, Import, Inventory, Look up in sale, Make, Model, Paid by, Password, Quick sale, Read-only, Receipt, Recovery code, Recovery key, Required before sale, Reseller ID, Reorder level, Reserved, Reset access, Returned, Sale, Selling price, Session, Settings, Standard, Status, Suspended, Team, Test checklist, Tested on, Trial, Two-factor, UID, Unlock, User type, Username, View, Void, Warranty, Awaiting test, Pending invitation, Test a backup file, Reorder switch, Drag handle, Support, Ticket
 ---
 
 Words are listed in alphabetical order. A word in bold inside a definition has its own entry.
@@ -103,6 +103,9 @@ Downloading your data as ordinary files. This is not a backup you can restore fr
 ### Free trial
 
 The period at the start of an account in which you can use myBoxStock without paying. A chip at the top shows the days left. When it ends, the account becomes **read-only**. See [Plans, trials and billing](#/docs/plans-trials-billing).
+
+### Get set up card
+The checklist at the top of Home for Administrators: first device, payment methods, first sale, team member (optional), first backup, a tested backup file and your recovery key. It hides when done or when dismissed. More in [Home](#/docs/home).
 
 ### Idle lock
 
@@ -243,6 +246,12 @@ A user type that can work with inventory, customers and sales and record quick s
 ### Status
 
 Where a device is in its life: Available, Reserved, Sold, Returned, Awaiting test, Damaged or Archived. See [Inventory](#/docs/inventory).
+
+### Support
+The page, reached from the account menu, where you open and follow tickets with the myBoxStock team. Tickets can be read by the team, so never paste customer details, passwords or your recovery key. More in [Support](#/docs/support).
+
+### Ticket
+A numbered conversation with the myBoxStock team, such as T-1042. Its status says whose move it is: Open, Waiting on myBoxStock, Waiting on you, Resolved or Closed. More in [Support](#/docs/support).
 
 ### Suspended
 

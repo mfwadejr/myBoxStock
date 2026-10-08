@@ -9,7 +9,7 @@
 
   const authShell = (inner) => { root.innerHTML = `<div class="authwrap"><div class="authcard"><img class="logo" src="/assets/logo-512.png" alt="myBoxStock" width="512" height="512">${inner}${UI.legal.links(false, true)}</div></div>`; };
   AccountApp.root = root; AccountApp.authShell = authShell; AccountApp.pw = null; // the password typed at sign-in, held only until the data is unlocked
-  AccountApp.signOut = async () => { try { await AccountApp.api('POST', '/logout'); } catch {} AccountApp.me = null; AccountApp.pw = null; AccountApp.vault.clear(); loginScreen(); };
+  AccountApp.signOut = async () => { clearInterval(AccountApp.badgeTimer); try { await AccountApp.api('POST', '/logout'); } catch {} AccountApp.me = null; AccountApp.pw = null; AccountApp.vault.clear(); loginScreen(); };
   const onSubmit = (sel, fn) => root.querySelector(sel).addEventListener('submit', (e) => { e.preventDefault(); busy(root.querySelector(sel + ' button.block'), async () => { try { await fn(); } catch (er) { toast(er.message, true); } }); });
   const val = (id) => root.querySelector(id).value;
 
@@ -100,9 +100,12 @@
     root.innerHTML = `<header class="topbar"><div class="brand"><a class="brand-link" href="#/home" aria-label="Home"><img class="brand-mark" src="/assets/logo-512.png" alt="myBoxStock" width="512" height="512"></a><span class="brand-name">${esc(me.businessName)}</span></div><div class="grow"></div>${billingChip(me.billing)}<span id="acct"></span></header>
       <div class="shell"><nav class="side">${visibleNav().map(([k, l]) => `<a href="#/${k}" data-k="${k}">${AccountApp.icons[k] || ''}<span>${l}</span></a>`).join('')}</nav><main class="main" id="main"></main></div>${UI.legal.footer()}${UI.tabbar.html(visibleNav(), PRIMARY, AccountApp.icons)}`;
     UI.tabbar.bind(root, visibleNav(), PRIMARY, AccountApp.icons, {});
-    UI.menu.mount(root.querySelector('#acct'), { name: me.username, head: `<b>${esc(me.username)}</b><span>${esc(me.role)}</span><span>${esc(me.businessName)}</span>`,
-      items: [...(me.hostLinked ? [{ id: 'host', label: 'Site admin' }] : []), { id: 'out', label: 'Sign out', sep: me.hostLinked }],
-      pick: (id) => { if (id === 'host') window.open('/host/', '_blank', 'noopener'); else if (id === 'out') AccountApp.signOut(); } });
+    const menuItems = (n) => [{ id: 'support', label: 'Support', badge: n || 0 }, ...(me.hostLinked ? [{ id: 'host', label: 'Site admin' }] : []), { id: 'out', label: 'Sign out', sep: true }];
+    AccountApp.menu = UI.menu.mount(root.querySelector('#acct'), { name: me.username, head: `<b>${esc(me.username)}</b><span>${esc(me.role)}</span><span>${esc(me.businessName)}</span>`, items: menuItems(0),
+      pick: (id) => { if (id === 'support') location.hash = '#/support'; else if (id === 'host') window.open('/host/', '_blank', 'noopener'); else if (id === 'out') AccountApp.signOut(); } });
+    // The number of replies from the myBoxStock team that have not been read yet, shown beside the name and beside Support in the menu.
+    AccountApp.supportBadge = async () => { try { const { n } = await AccountApp.api('GET', '/support/unread'); AccountApp.menu?.update({ badge: n, items: menuItems(n) }); } catch {} };
+    clearInterval(AccountApp.badgeTimer); AccountApp.badgeTimer = setInterval(() => AccountApp.supportBadge(), 120000);
     window.removeEventListener('hashchange', AccountApp.route); window.addEventListener('hashchange', AccountApp.route); AccountApp.route();
   }
   // A closing account shows its erase date on every page, with a way back.
@@ -130,7 +133,7 @@
     const k = (location.hash.replace(/^#\//, '') || 'home').split('/')[0], key = AccountApp.views[k] ? k : 'home';
     UI.tabbar.mark(root, key, PRIMARY);
     const main = root.querySelector('#main'); if (!main) return;
-    try { await AccountApp.fresh(); if (Date.now() - annAt > 120000) { annAt = Date.now(); AccountApp.announcement = (await AccountApp.api('GET', '/announcement')).announcement; } await AccountApp.views[key](main); if (key === 'home' || key === 'security') emailBanner(main); closingBanner(main); announcementBanner(main); } catch (e) { if (e.status === 401 || e.data?.code === 'TERMS_ACCEPT_REQUIRED') return boot(); swap(main, `<div class="card"><p class="banner red">${esc(e.message)}</p></div>`); }
+    try { await AccountApp.fresh(); if (Date.now() - annAt > 120000) { annAt = Date.now(); AccountApp.announcement = (await AccountApp.api('GET', '/announcement')).announcement; } await AccountApp.views[key](main); if (key === 'home' || key === 'security') emailBanner(main); closingBanner(main); announcementBanner(main); AccountApp.supportBadge?.(); } catch (e) { if (e.status === 401 || e.data?.code === 'TERMS_ACCEPT_REQUIRED') return boot(); swap(main, `<div class="card"><p class="banner red">${esc(e.message)}</p></div>`); }
   };
   AccountApp.boot = boot;
   boot();

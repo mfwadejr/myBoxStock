@@ -140,7 +140,7 @@ test('offsite to S3-compatible storage: signed requests, the checksum is compare
 
 test('test restore: a good snapshot passes with counts, a corrupt copy fails in plain English, a bundle checks its passphrase; the live data is untouched', { skip: !sqlite && 'SQLite-only' }, async () => {
   const snap = (await host.req('GET', '/api/host/backups/files?tier=frequent&limit=1')).data.rows[0].name;
-  const before = fs.statSync(path.join(srv.dir, 'myboxstock.db')).mtimeMs;
+  const before = JSON.stringify((await host.req('GET', '/api/host/accounts')).data);   // the only thing a test restore writes to the live site is the note of its own result (shown on the Overview); the accounts must not change
   let r = await host.req('POST', `/api/host/backups/${snap}/test-restore`, {}); assert.equal(r.status, 200); assert.equal(r.data.ok, true); assert.deepEqual(r.data.counts, { accounts: 1, users: 1 }); assert.match(r.data.summary, /passed/);
   assert.ok(r.data.checks.every(c => c.ok)); assert.ok(!fs.readdirSync(os.tmpdir()).some(f => f.startsWith('mbs-testrestore-') && fs.readdirSync(path.join(os.tmpdir(), f)).length), 'the scratch copy is gone');
   fs.writeFileSync(path.join(bdir(), 'myboxstock-manual-2026-01-01-00-00-00.db'), Buffer.concat([Buffer.from('SQLite format 3\0'), Buffer.alloc(8192, 7)]));
@@ -152,7 +152,7 @@ test('test restore: a good snapshot passes with counts, a corrupt copy fails in 
   r = await host.req('POST', `/api/host/backups/${name}/test-restore`, {}); assert.equal(r.data.ok, true, JSON.stringify(r.data)); assert.match(JSON.stringify(r.data.checks), /passphrase opens the backup/);
   fs.writeFileSync(path.join(bdir(), 'myboxstock-manual-2026-01-03-00-00-00.sql'), 'nothing useful'); r = await host.req('POST', '/api/host/backups/myboxstock-manual-2026-01-03-00-00-00.sql/test-restore', {}); assert.equal(r.data.ok, false); assert.match(r.data.note, /only load SQLite/);
   assert.equal((await host.req('POST', '/api/host/backups/nope.db/test-restore', {})).status, 404);
-  assert.equal(fs.statSync(path.join(srv.dir, 'myboxstock.db')).mtimeMs, before, 'the live database file was not touched');
+  assert.equal(JSON.stringify((await host.req('GET', '/api/host/accounts')).data), before, 'the live accounts were not touched');
   for (const f of fs.readdirSync(bdir()).filter(f => /2026-01-0/.test(f))) fs.rmSync(path.join(bdir(), f));
 });
 

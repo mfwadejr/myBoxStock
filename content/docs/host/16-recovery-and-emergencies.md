@@ -8,6 +8,8 @@ covers: background job, job strip, Test a backup file, Restore this file, decryp
 
 ## First, breathe
 
+For a dead disk, a lost server, a damaged database, a lost passphrase or a bad update, start with the ordered runbook and printable checklist in [Disaster recovery](#/docs/disaster-recovery). This page holds the detailed steps it points to.
+
 Almost every emergency on this server can be fixed, and the tools for it are already built in. This page walks through the common ones in the order you are likely to meet them.
 
 Two reassurances: the commands below are run on the server itself, so if you can reach the machine you can get back in; and your customers keep working in their own accounts while you sort this out.

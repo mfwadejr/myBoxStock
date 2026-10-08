@@ -3,7 +3,7 @@
   const { esc, fmt, toast, busy, swap } = UI;
   const CHIP = { error: 'red', warn: 'amber', info: 'blue' };
   const row = (a, quiet) => `<div class="log-line"><div class="log-meta"><span class="chip ${CHIP[a.level] || ''}">${esc(a.level === 'info' ? 'heads-up' : a.level === 'warn' ? 'warning' : 'problem')}</span><span>${esc(fmt.dateTime(a.last_at))}</span>${a.occurrences > 1 ? `<span class="chip">seen ${a.occurrences} times</span>` : ''}${a.emailed_at ? '<span class="chip green">emailed</span>' : ''}${quiet ? '' : `<button class="linkish" data-dismiss="${esc(a.id)}">set aside</button>`}</div>
-    <div class="log-message"><b>${esc(a.title)}</b><div class="hint">${esc(a.detail || '')}</div></div></div>`;
+    <div class="log-message"><b>${esc(a.title)}</b><div class="hint">${/^backup\./.test(a.kind) ? esc(a.detail || '').replace('Open Backups.', '<a href="#/backups">Open Backups</a>.') : esc(a.detail || '')}</div></div></div>`;
   // History sections (set aside, cleared) are feeds: a capped scrolling box with "Showing N of M" and Load more.
   const section = (title, sub, items, quiet, empty, key) => `<div class="card"><h3>${title}</h3><div class="sub">${sub}</div>${items.length ? `<div ${key ? `class="feed" id="f-${key}"` : ''}>${items.map(a => row(a, quiet)).join('')}</div>${key ? `<div id="m-${key}"></div>` : ''}` : `<div class="empty">${empty}</div>`}</div>`;
 

@@ -3,7 +3,7 @@ title: Alerts
 summary: Understand the problems the server finds on its own, what each alert means, when you are emailed, and how to set one aside or let it clear itself.
 keywords: load more, showing, offsite upload failed, alerts, alert, banner, warning, problem, email failing, backup failing, failed sign-ins, storage full, disk, database errors, trials ending, update available, set aside, check now, owner, counter
 order: 9
-covers: nav:alerts, Check now, Needs a look, Set aside, Recently cleared, seen N times, emailed, problem, warning, heads-up, Email is not being delivered, The scheduled backup is failing, Many failed sign-ins, Storage is almost full, Database problems, Trials ending soon, Version is available, red banner, Open Alerts, Load more, Showing N of M alerts
+covers: nav:alerts, No recent full-site backup, A backup destination is failing, No recent test restore, The backup folder is nearly full, A background backup job failed, Open Backups, Check now, Needs a look, Set aside, Recently cleared, seen N times, emailed, problem, warning, heads-up, Email is not being delivered, The scheduled backup is failing, Many failed sign-ins, Storage is almost full, Database problems, Trials ending soon, Version is available, red banner, Open Alerts, Load more, Showing N of M alerts, Support tickets are waiting for a reply, response target
 ---
 
 ## What alerts are
@@ -43,6 +43,18 @@ Why it matters: customers cannot reset passwords and new sign-ups never get thei
 
 Raised as soon as any scheduled backup fails and no good one has been made since: a frequent snapshot, an offsite copy (including a failed upload to a destination such as a NAS, S3 bucket or SFTP server), or a full-site backup. The description says which one failed and the reason given. It clears itself after the next good backup. See [Backups](#/docs/backups). A failed full-site backup is not retried until the next day, so after you fix the cause use **Run one now** on the Full-site backups tab, or **Take a snapshot now** or **Send one now** on the other tabs.
 
+### Backup health alerts
+
+Five alerts watch whether your backups would really save the site. Each one is raised once, grouped with a counter if it repeats, emailed once to the Owner if Email is set up, and cleared by itself as soon as the cause is fixed. Each description ends with an **Open Backups** link. They also feed the **Backups** card on [Overview](#/docs/overview).
+
+- **No recent full-site backup** (problem): scheduled full-site backups are on, but the last good one is older than the window (2 days for nightly, 8 days for weekly) or none has finished yet. It clears after the next good full-site backup.
+- **A backup destination is failing** (problem): a turned-on destination failed its last send or its last Test connection. The description names the destinations. It clears after a good send or a passing test.
+- **No recent test restore** (warning): backups exist but no Test restore has passed in the last 30 days, or ever. A backup you have never opened is a hope, not a backup. It clears after a test restore passes.
+- **The backup folder is nearly full** (problem): 5 percent or less of the disk is free, or there is not room for two more copies of the newest backup. Free space, keep fewer copies, or enlarge the disk.
+- **A background backup job failed** (warning): a long job on the Backups page (Test restore, restore, a full-site backup, Test a backup file) ended with an error. It clears when you dismiss the job strip or start another job.
+
+The alerts show counts, times and destination names only. Remember that emails and alerts only work after the Email section is set up; without it the alerts still show here and in the red bar.
+
 ### Many failed sign-ins (warning)
 
 Raised when there have been 20 or more failed, refused or wrong-code sign-in attempts in the last hour, counted across the whole site (customers and Host administrators together). The description gives the number and tells you to open Logs and use the "Failed sign-ins" quick filter to see where they come from. See [Logs](#/docs/logs).
@@ -74,6 +86,10 @@ Why it matters: when a trial ends, the account becomes read-only. A friendly nud
 Raised when you have given the server a release address on the Updates page and its daily check finds a newer version than the one running. The headline names the version, for example "Version 0.19.0 is available", and the description says to rebuild the container to update. It clears by itself once you are running that version or newer, or when you remove the release address. See [Updates](#/docs/updates).
 
 This is the only alert that does not send an email. It appears on the page and in the banner only, because a new release is not an emergency.
+
+### Support tickets are waiting for a reply
+
+One or more tickets that are Open or Waiting on Host have had no answer for longer than the response target (business days, Monday to Friday, set in Support settings; default 2). The alert lists the oldest ticket numbers. Open Support, filter by Overdue and reply. It clears by itself when every ticket has been answered, and the Owner is emailed once if Email is set up. Resolved tickets are also closed automatically at the same five-minute check once they are old enough. See [Support tickets](#/docs/support-tickets).
 
 ## Reading the Alerts page
 

@@ -10,6 +10,7 @@ import { extractBundle, keyOf, peekPart } from './bundle.mjs';
 import { getPassphrase, earlierPassphraseNote } from './passphrase.mjs';
 import { takenAtFromName } from './files.mjs';
 import { jobStep } from './progress.mjs';
+import { recordTestResult } from './health.mjs';
 
 const L = areaLogger('backup');
 const ok = (label, detail = '') => ({ ok: true, label, detail }), bad = (label, detail = '') => ({ ok: false, label, detail });
@@ -58,6 +59,7 @@ export async function testRestore(db, name, { passphrase = '', actor = null } = 
   } catch (e) { checks.push(bad('The backup could be checked', e.message)); }
   finally { fs.rmSync(tmp, { recursive: true, force: true }); }
   const pass = checks.length > 0 && checks.every(c => c.ok);
+  await recordTestResult(db, { ok: pass, name, kind: name.endsWith('.db') ? 'snapshot' : 'full-site' });
   const summary = pass ? 'This backup passed. It opens, its data is intact, and it would restore.' : `This backup did not pass. ${checks.find(c => !c.ok)?.detail || 'It could not be checked.'} Do not rely on it.`;
   (pass ? L.info : L.warn).call(L, 'test_restore', `Test restore of ${name}: ${pass ? 'passed' : 'FAILED'}`, { actor, data: { name, pass, counts } });
   return { ok: pass, name, checks, counts, summary, note };

@@ -61,6 +61,8 @@ With PostgreSQL or MariaDB the database lives elsewhere, but the data folder sti
 
 ### Keeping it safe
 
+When the folder or the machine is gone, [Disaster recovery](#/docs/disaster-recovery) lists what to have in hand and how to stand up a new container with the same settings.
+
 - Put it on storage you trust, and **back it up away from the server**. Offsite copies and full-site backups can be sent to a mounted NAS, an SMB share, S3-compatible storage, an SFTP server or WebDAV. See [Backups](#/docs/backups).
 - Keep a copy of `secret.key` (or your `APP_SECRET` value) somewhere safe. Full-site backups include it. Plain snapshots and offsite copies do not.
 - Never run two copies of the server on the same SQLite data folder.

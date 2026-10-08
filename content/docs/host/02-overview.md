@@ -3,7 +3,7 @@ title: Overview
 summary: A live picture of the server: how many accounts and people, whether backups are healthy, plan counts, CPU, memory and storage, firewall activity and email.
 keywords: dashboard, home, overview, accounts count, users, signed in now, database, backup status, cpu, memory, storage, disk, load, uptime, version, firewall, blocked, rate-limited, banned, mail queue, banner, restore staged
 order: 2
-covers: nav:overview, Accounts, Users, Signed in now, Database, Backups card, Plans card, on trial, ending within 7 days, free, paid, ended, CPU, Memory, Storage, Server, Protection, blocked, rate-limited, banned now, mail sent queued failed, Email links will not work banner, database restore staged banner, Alerts banner, Set the site address
+covers: nav:overview, Last snapshot, Last full-site backup, Last test restore, Copy off this server, Backup space left, Not protected yet, need attention, Background job, Accounts, Users, Signed in now, Database, Backups card, Plans card, on trial, ending within 7 days, free, paid, ended, CPU, Memory, Storage, Server, Protection, blocked, rate-limited, banned now, mail sent queued failed, Email links will not work banner, database restore staged banner, Alerts banner, Set the site address, Support card, Open Support, waiting on Host, unassigned
 ---
 
 ## What this page is for
@@ -48,23 +48,36 @@ This appears when you have asked for a restore from [Backups](#/docs/backups) an
 
 ## The Backups card
 
-This card tells you whether your scheduled full-site backup is working. It shows:
+This card shows, in one place, whether your backups would really save the site. A heading card carries a label and a link, **Open Backups**, and two rows of numbers sit under it, with the destinations listed below when you have any.
 
-- the last good full-site backup, how long ago it finished, its size, that it was verified, and whether it was copied off-box (to a place outside the server) or not;
-- if the latest attempt failed, a red line with the reason.
+The label on the right is one of:
 
-A coloured label on the right sums it up:
+- **Protected** (green): a copy is held off this server and a test restore of it passed. This is the same Protected state as in Backup setup on the Backups page.
+- **Not protected yet** (amber): nothing is wrong, but the site is not yet safe from losing the disk or the machine. Finish Backup setup.
+- **N need attention** (red): one or more backup alerts are open. The same problems are on the [Alerts](#/docs/alerts) page.
 
-- **Healthy** (green): a recent good backup exists.
-- **Overdue** (red): backups are on, but the last good one is older than expected (more than 2 days for nightly, more than 8 days for weekly).
-- **Needs attention** (red): the last attempt failed and is newer than the last success.
-- **Scheduled backups off** (amber): you have not turned scheduled backups on, or "No scheduled full-site backup has completed yet" appears.
+The first row of numbers:
 
-Why you care: a backup that quietly stopped is the classic way servers lose everything. Treat red as urgent. See [Backups](#/docs/backups). Remember this is a backup of the server. It does not replace the customers' own exports.
+- **Last snapshot** is how long ago the newest frequent snapshot was taken, with its date and time.
+- **Last full-site backup** is how long ago the last good full-site backup finished, its size and that it was verified. If scheduled backups are off it says so. It turns red when the schedule is on but the last good backup is older than the window (more than 2 days for nightly, more than 8 days for weekly).
+- **Last test restore** is how long ago a test restore last passed, or Never. It turns red after 30 days. If a later test failed, a red note says when.
+- **Copy off this server** is Yes or No, and which destinations hold a copy. A backup that lives only on this machine is lost with it.
+Why you care: a backup that quietly stopped is the classic way servers lose everything. Treat red as urgent. See [Backups](#/docs/backups). Remember this is a backup of the server. It does not replace the customers' own exports. If the worst happens, [Disaster recovery](#/docs/disaster-recovery) is the runbook, with a printable checklist.
 
-> "No off-box copy" means the backup lives on the same machine as the server. If that machine's disk dies, the backup dies with it. Choose a destination under Backups so a copy is sent away.
+The second row:
 
-This card follows the full-site backup only. The Backups page has more: its status strip also shows the newest snapshot or offsite copy, when the next run is due, how much space is used, and a red banner when frequent snapshots or offsite copies fail. A failing snapshot or offsite copy also raises an alert, so the red bar appears even though this card may still say Healthy.
+- **Destinations** counts how many of your turned-on destinations are working and how many are failing.
+- **Backup space left** is the free space on the disk that holds the backup folder, as a size and a percentage, and how much the backups use. It turns red when 5 percent or less is free, or when there is not room for two more copies of the newest backup.
+- **Protected** repeats the state above in words.
+- **Background job** says Failed, with the job name and how long ago, when a Test restore, restore, backup or Test a backup file job ended with an error. It clears when you dismiss the job strip on the Backups page or start another job.
+
+Under the numbers, **Destinations** lists each turned-on destination by name with when a copy was last sent and when it last failed, if ever.
+
+Why you care: a backup that quietly stopped, or that was never tested, is the classic way servers lose everything. Treat red as urgent. See [Backups](#/docs/backups). Remember this is a backup of the server. It does not replace the customers' own exports.
+
+> A copy that only lives on the same machine is not protection against losing the machine. Choose a destination under Backups so a copy is sent away.
+
+The card shows counts, times and destination names only. It never reads anything inside an account.
 
 ## The Plans card
 
@@ -77,6 +90,10 @@ A single row of chips counts accounts by plan:
 - **ended** are trials or paid periods that have run out. These accounts are read-only: people can still look at their data, but changes are refused.
 
 These are the same numbers explained on [Plans](#/docs/plans) and listed by name on [Pipeline](#/docs/pipeline). Use "ended" as your to-do list for follow-up with customers who may want to pay or be given more time.
+
+## The Support card
+
+Below the Plans card, the **Support** card shows the state of the ticket queue: how many tickets are open, how many are waiting on you, how many are overdue (past the response target of business days set in Support settings) and how many nobody has taken. **Open Support** goes to the ticket list. An overdue ticket also raises an alert. See [Support tickets](#/docs/support-tickets).
 
 ## CPU, Memory and Storage
 
@@ -99,7 +116,7 @@ For mail, queued numbers should return to zero within a minute or two. If **fail
 
 ## What to worry about, in order
 
-1. A red or amber backup label, or a restore you did not expect.
+1. A red backup label, a failed test restore, or a restore you did not expect.
 2. Storage above 90 percent.
 3. The "Email links will not work" banner, or failed mail.
 4. A red alerts bar.

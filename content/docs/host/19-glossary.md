@@ -3,7 +3,7 @@ title: Glossary
 summary: Plain-English meanings of every term used in the Host Console, in alphabetical order, each with a link to the page that explains more.
 keywords: glossary, terms, meaning, definition, words, jargon, what is
 order: 19
-covers: Background job, Job strip, Test a backup file, Account menu, DMARC, Feed, Load more, Offsite copy, Passphrase, Restore point, Safety copy, Sender checks, Snapshot, Destination, Thinning, Test restore, .mbsenc, .mbsbackup, .mbsbak, Account, Alert, Announcement banner, Audit trail, Authenticator app, Ban, Backup, CIDR, Cloudflare, Closing, Comped, DKIM, Database engine, Direct delivery, Docker, Export, Firewall, Free, Full-site backup, Health, Helper, HELO, Host, Host Console, Log, Log area, Migration, Off-box folder, Onboarding, Open sign-ups, Owner, Paid, Pipeline, Plan, Proxy, Rate limit, Read-only, Recovery codes, Recovery key, Reseller, Reseller ID, Restore, Site address, SMTP, SPF, Suspended, TLS, Temporary password, Trial, Two-factor, User type, Zero-knowledge, Locked sign-in, Check my passphrase, Change passphrase, Reset (forgotten)
+covers: Backups card, Backup health, Background job, Job strip, Test a backup file, Account menu, DMARC, Feed, Load more, Offsite copy, Passphrase, Restore point, Safety copy, Sender checks, Snapshot, Destination, Thinning, Test restore, .mbsenc, .mbsbackup, .mbsbak, Account, Alert, Announcement banner, Audit trail, Authenticator app, Ban, Backup, CIDR, Cloudflare, Closing, Comped, DKIM, Database engine, Direct delivery, Docker, Export, Firewall, Free, Full-site backup, Health, Helper, HELO, Host, Host Console, Log, Log area, Migration, Off-box folder, Onboarding, Open sign-ups, Owner, Paid, Pipeline, Plan, Proxy, Rate limit, Read-only, Recovery codes, Recovery key, Reseller, Reseller ID, Restore, Site address, SMTP, SPF, Suspended, TLS, Temporary password, Trial, Two-factor, User type, Zero-knowledge, Locked sign-in, Check my passphrase, Change passphrase, Reset (forgotten), Disaster recovery, Canned reply, Host note, Purge, Response target, Support ticket
 ---
 
 Words are listed from A to Z. Each entry is short, and the link at the end of it goes to the page that explains the subject in full.
@@ -58,6 +58,8 @@ A service that sits between visitors and your site. When your site is behind it,
 ### Comped
 An account on the Free plan that you have granted without payment. It never expires. More in [Plans](#/docs/plans).
 
+### Canned reply
+A ready-made answer you can insert into a support ticket reply and edit before sending. You define them in Support settings. More in [Support tickets](#/docs/support-tickets).
 
 ## D
 
@@ -70,6 +72,9 @@ A place that backups can be sent to: a folder or mounted NAS, an SMB share, S3-c
 ### Direct delivery
 An email mode where your server hands each message straight to the recipient's mail server instead of using a relay. It works best with a fixed IP address, reverse DNS, SPF and DKIM. More in [Email](#/docs/email).
 
+### Disaster recovery
+The ordered plan for a dead disk, lost server, damaged database, lost passphrase or key, or bad update, with a one-page printable checklist. More in [Disaster recovery](#/docs/disaster-recovery).
+
 ### DKIM
 A digital signature added to outgoing email that proves it really came from your domain. Mail without it is more likely to be treated as spam. More in [Email](#/docs/email).
 
@@ -78,7 +83,6 @@ A public record on your domain that tells receivers what to do with mail that fa
 
 ### Docker
 The container tool the server normally runs in. Settings made as container variables, and updates done by rebuilding the container, relate to it. More in [Running the server](#/docs/running-the-server).
-
 
 ## E
 
@@ -121,6 +125,8 @@ The person or team who runs the server and signs in at `/host/`. Not to be confu
 ### Host Console
 The administration area at `/host/`. It handles accounts, backups, email, the firewall, settings and logs, and deliberately has no view of customers' business data. More in [Overview](#/docs/overview).
 
+### Host note
+A free-form note about one reseller, kept on the account under the Host notes tab and shared by all Host administrators. The reseller never sees it. More in [Support tickets](#/docs/support-tickets).
 
 ## J
 
@@ -190,6 +196,8 @@ An account's commercial state: trial, free or paid. The Plans page also records 
 ### Proxy
 A server standing between visitors and your site and passing requests on. The site must know how many there are to read the true visitor address. More in [Settings](#/docs/settings).
 
+### Purge
+The permanent deletion of closed support tickets by the Owner administrator, after typing PURGE. Nothing is purged automatically. More in [Support tickets](#/docs/support-tickets).
 
 ## R
 
@@ -217,6 +225,8 @@ Replacing the current platform with a backup. A safety copy is saved first, the 
 ### Restore point
 The copy that a reseller's app keeps for 7 days after they restore from their own backup file, so they can undo the restore. It is encrypted and the Host cannot read it. More in [Support and diagnostics](#/docs/support-and-diagnostics).
 
+### Response target
+The number of business days a support ticket may wait for an answer before the overdue alert is raised. The default is 2. More in [Support tickets](#/docs/support-tickets).
 
 ## S
 
@@ -241,6 +251,8 @@ A public record on your domain listing which servers may send email for it. With
 ### Suspended
 An account state in which nobody can sign in until you reactivate it. More in [Accounts](#/docs/accounts).
 
+### Support ticket
+A conversation a signed-in reseller opens from their app, with a number such as T-1042, a status, a priority and a category. You can read it, unlike their encrypted data. Statuses are Open, Waiting on Host, Waiting on reseller, Resolved and Closed. More in [Support tickets](#/docs/support-tickets).
 
 ## T
 
@@ -252,6 +264,9 @@ A check that opens a backup in a scratch copy, tests it and deletes the copy, wi
 
 ### Test a backup file
 A card on the Full-site backups tab that opens a backup held somewhere else (uploaded as a stream, or already in the server's backup folder) in a scratch copy and reports what is inside and how it compares with the live site. After a pass it offers Restore this file. The Host cannot open reseller records, so it only counts them. More in [Backups](#/docs/backups).
+
+### Backup health
+The Backups card on the Host Overview plus five backup alerts: last snapshot, last full-site backup, last test restore, copy off this server, destinations, space left and the Protected state. More in [Overview](#/docs/overview), [Alerts](#/docs/alerts) and [Backups](#/docs/backups).
 
 ### Backup setup
 The four guided steps at the top of Backups (passphrase, where copies go, how much to keep, prove it). Each step unlocks the next. More in [Backups](#/docs/backups).

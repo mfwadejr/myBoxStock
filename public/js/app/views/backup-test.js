@@ -38,6 +38,7 @@
       if (result.parsed) against = await E.testAgainst();
     } catch (e) { return sheet(`<h2>The test could not run</h2><p class="muted">${esc(e.message)}</p><div class="actions"><button class="btn" data-cancel>OK</button></div>`); }
     const failed = result.steps.find(s => s.ok === false), p = result.parsed;
+    if (!failed && p) A.firstRunTested();
     const banner = failed ? `<div class="banner red mb-md" id="sm"><b>This file failed a check, so it cannot be used.</b> ${esc(failed.message)} Nothing was restored or changed.</div>`
       : `<div class="banner blue mb-md" id="sm"><b>This file passed every check.</b> Nothing was restored, changed or sent.</div>`;
     return sheet(`<h2>Test a backup file</h2><p class="sub">${esc(file.name || 'Backup file')}</p>${banner}<div id="ck">${result.steps.map(checkRow).join('')}</div>

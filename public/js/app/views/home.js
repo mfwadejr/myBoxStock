@@ -14,6 +14,7 @@
       ${low.length ? `<div class="banner mb-lg"><b>Low stock:</b> ${low.map(m => `${esc(m.name)} (${m.n} left, reorder at ${m.r})`).join(' · ')}</div>` : ''}
       <div class="card"><h3>Recent sales</h3><div class="tablewrap mt-sm">${recent.length ? `<table><thead><tr><th>Date</th><th>Receipt</th><th>Customer</th><th class="right">Total</th></tr></thead><tbody>${recent.map(e => `<tr class="click" data-id="${esc(e.id)}"><td>${esc(F.when(e.data.ts))}</td><td class="ident">${esc(e.data.no)}</td><td>${esc(e.data.customerName || 'Walk-in')}</td><td class="right">${esc(F.money(e.data.total))}</td></tr>`).join('')}</tbody></table>` : `<div class="empty">No sales yet.${A.can('inventory.write') && !items.length ? ' Start by adding devices under Inventory.' : ''}</div>`}</div></div>`);
     main.querySelectorAll('tr.click').forEach(tr => tr.addEventListener('click', async () => { if (await C.showReceipt(S.get('sale', tr.dataset.id))) A.route(); }));
+    A.firstRunCard(main);
     A.backupReminder(main);
   };
 })();

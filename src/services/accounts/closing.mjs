@@ -18,6 +18,10 @@ export async function eraseAccount(db, id) {
     await t.run('DELETE FROM email_confirmations WHERE user_id IN (SELECT id FROM account_users WHERE account_id = ?)', [id]);
     await t.run('DELETE FROM admin_links WHERE user_id IN (SELECT id FROM account_users WHERE account_id = ?)', [id]);
     for (const tbl of ['inventory_items', 'records', 'restore_point_records', 'restore_points', 'account_keys', 'account_recovery', 'account_roles', 'account_users', 'billing_events', 'billing_receipts', 'sign_in_history']) await t.run(`DELETE FROM ${tbl} WHERE account_id = ?`, [id]);
+    // Support tickets are kept for the Host (they carry their own copy of the account name and ID), but nothing stays open for an account that is gone, and its people's read marks go.
+    await t.run('DELETE FROM support_views WHERE user_id IN (SELECT id FROM account_users WHERE account_id = ?)', [id]);
+    await t.run("UPDATE support_tickets SET status = 'closed', closed_at = ?, updated_at = ?, requester_id = NULL, account_id = NULL WHERE account_id = ? AND status <> 'closed'", [Date.now(), Date.now(), id]);
+    await t.run('UPDATE support_tickets SET requester_id = NULL, account_id = NULL WHERE account_id = ?', [id]);
     await t.run('DELETE FROM accounts WHERE id = ?', [id]);
   });
 }

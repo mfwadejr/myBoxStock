@@ -27,6 +27,8 @@ export const PLACEHOLDERS = {
   url: { label: 'Link', sample: 'https://app.myboxstock.com/app/' },
   link: { label: 'Link', sample: 'https://app.myboxstock.com/app/#/reset/example' },
   title: { label: 'Alert headline', sample: 'Email is not being delivered', bold: true },
+  ticketNo: { label: 'Ticket number', sample: 'T-1042', bold: true },
+  ticketSubject: { label: 'Ticket subject', sample: 'The scanner will not focus' },
   detail: { label: 'What was found', sample: '3 messages failed in the last 24 hours. Open Email, then Health.' },
 };
 
@@ -71,6 +73,9 @@ export const TEMPLATES = {
   host_alert: { group: 'System', name: 'Host alert', title: 'The server needs a look', subject: 'myBoxStock alert: {{title}}',
     body: 'The server found a problem.\n\n{{title}}\n\n{{detail}}\n\nTime: {{when}}\n\nOpen the Host Console, Alerts page, for the full list. You get one email per problem, not one per repeat.',
     vars: ['title', 'detail', 'when'], required: ['title'] },
+  support_reply: { group: 'Account', name: 'Support ticket reply', title: 'There is a reply to your support ticket', subject: 'Reply to your myBoxStock support ticket {{ticketNo}}',
+    body: 'Hi {{name}},\n\nThe myBoxStock team replied to your support ticket {{ticketNo}}: {{ticketSubject}}.\n\nSign in and open Support from the account menu to read the reply. For your privacy the reply itself is not in this email.',
+    button: { label: 'Open myBoxStock', to: 'url' }, vars: ['name', 'ticketNo', 'ticketSubject'], required: ['ticketNo'] },
   receipt: { group: 'Customer', name: 'Receipt', title: 'Your receipt', subject: 'Receipt {{receiptNo}} from {{business}}',
     body: '{{message}}', vars: ['business', 'receiptNo', 'message'], required: ['message'] },
   sale_voided: { group: 'Customer', name: 'Sale voided', title: 'Your sale was cancelled', subject: 'Receipt {{receiptNo}} from {{business}} was cancelled',

@@ -50,7 +50,7 @@ test('browser: reseller account menu at phone, tablet and desktop sizes; Site ad
     for (const [name, w, h] of SIZES) {
       await page.setViewportSize({ width: w, height: h }); await page.waitForTimeout(150);
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth) <= 1, `${name}: the top bar fits`);
-      await exercise(page, w, `reseller ${name}`, ['Sign out']);
+      await exercise(page, w, `reseller ${name}`, ['Support', 'Sign out']);
       if (w !== 768) { await page.locator('.menu-btn').click(); await page.waitForSelector('.menu-pop'); await page.waitForTimeout(500); await page.screenshot({ path: `${SHOTS}/menu-app-${w}.png` }); await page.keyboard.press('Escape'); }
     }
     // The More sheet is navigation only.
@@ -58,7 +58,7 @@ test('browser: reseller account menu at phone, tablet and desktop sizes; Site ad
     assert.equal(await page.locator('.sheet').getByText('Sign out').count(), 0, 'Sign out is not in the More sheet'); await page.keyboard.press('Escape'); await page.waitForSelector('.scrim', { state: 'detached' });
     // A linked account shows Site admin (the signed-in profile is flagged for this check; the server side is covered by e2e-hostlink) and it opens the Host Console in a new tab.
     await page.setViewportSize({ width: 1280, height: 800 }); await page.evaluate(() => { AccountApp.me.hostLinked = true; AccountApp.showShell(); }); await page.waitForSelector('.menu-btn');
-    await exercise(page, 1280, 'reseller linked', ['Site admin', 'Sign out']);
+    await exercise(page, 1280, 'reseller linked', ['Support', 'Site admin', 'Sign out']);
     await page.locator('.menu-btn').click(); const [pop] = await Promise.all([ctx.waitForEvent('page'), page.locator('.menu-item', { hasText: 'Site admin' }).click()]);
     assert.match(pop.url(), /\/host\/$/); await pop.close(); await page.waitForSelector('.menu-pop', { state: 'detached' });
     // Sign out

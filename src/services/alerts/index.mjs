@@ -5,9 +5,10 @@ import { newId } from '../../core/ids.mjs';
 import { areaLogger } from '../../logging/logger.mjs';
 import { getSetting } from '../../db/settings.mjs';
 import { enqueueMail, processQueue } from '../mail/index.mjs';
-import { getFullStatus, getTierStatus, tierFailing } from '../backup/index.mjs';
+import { getFullStatus, getTierStatus, tierFailing, backupHealth } from '../backup/index.mjs';
 import { snapshot } from '../system/metrics.mjs';
 import { billingState, DAY } from '../billing/state.mjs';
+import { getSupportSettings, overdueTickets, autoClose, label as ticketLabel } from '../support/index.mjs';
 
 const L = areaLogger('system');
 const HOUR = 3600e3;
@@ -62,6 +63,10 @@ export async function evaluate(db) {
   const tierBad = ['frequent', 'offsite'].find(t => tierFailing(ts[t])); // snapshots and offsite copies (see services/backup/runner.mjs)
   await set(!!bad || !!tierBad, { kind: 'backup.failing', level: 'error', title: 'The scheduled backup is failing', detail: bad ? `The last attempt failed: ${String(st.lastFail.error || 'unknown problem').slice(0, 300)}` : tierBad ? `The last ${tierBad === 'frequent' ? 'snapshot' : 'offsite copy'} failed: ${String(ts[tierBad].lastFail.error || 'unknown problem').slice(0, 300)}` : '' });
 
+  // Backup health: no recent full-site backup, a failing destination, no recent test restore, little room left, a failed background job.
+  try { const h = await backupHealth(db), on = new Map(h.problems.map(p => [p.kind, p])); for (const k of h.kinds) await set(on.has(k), on.get(k) || { kind: k }); }
+  catch (e) { L.error('alert.backup_health_failed', `Could not check backup health: ${e.message}`); }
+
   // Sign-ins: a burst of failed, refused or wrong-code attempts.
   const n = Number((await db.get("SELECT COUNT(*) AS n FROM event_log WHERE area = 'auth' AND event IN ('login.failed','login.blocked','mfa.failed') AND ts > ?", [now - HOUR])).n);
   await set(n >= SIGNIN_LIMIT, { kind: 'signins.failing', level: 'warn', title: 'Many failed sign-ins', detail: `${n} failed or refused sign-in attempts in the last hour. Open Logs, quick filter "Failed sign-ins", to see where they come from.` });
@@ -74,6 +79,11 @@ export async function evaluate(db) {
 
   // Trials about to end (a count only; no account is named).
   let ending = 0; for (const a of await db.all("SELECT plan, trial_ends_at, plan_until FROM accounts WHERE status <> 'closing'")) { const b = billingState(a, now); if (b.canWrite && b.plan === 'trial' && b.endsAt && b.endsAt - now <= 3 * DAY) ending++; }
+  // Support: resolved tickets close themselves after the Host's number of days, and tickets nobody has answered within the response target raise one grouped alert.
+  const sup = await getSupportSettings(db); await autoClose(db, sup, now).catch((e) => L.warn('support.auto_close_failed', `Could not close resolved tickets: ${e.message}`));
+  const late = await overdueTickets(db, sup, now), nums = late.slice(0, 8).map(t => ticketLabel(t.number)).join(', ');
+  await set(late.length > 0, { kind: 'support.overdue', level: 'warn', title: 'Support tickets are waiting for a reply', detail: `${late.length} ticket${late.length === 1 ? ' has' : 's have'} waited longer than the response target of ${sup.responseDays} business day${sup.responseDays === 1 ? '' : 's'}: ${nums}${late.length > 8 ? ' and more' : ''}. Open Support.` });
+
   await set(ending > 0, { kind: 'trials.ending', level: 'info', title: 'Trials ending soon', detail: `${ending} trial${ending === 1 ? '' : 's'} end within 3 days. Open Accounts or Plans to follow up.` });
 }
 

@@ -33,14 +33,22 @@
     main.querySelector('#hf').addEventListener('change', (e) => { health = UI.select.value(e.target); load(true); });
     main.querySelector('#tbl').addEventListener('click', (e) => { const tr = e.target.closest('tr[data-id]'); if (tr) accountSheet(tr.dataset.id, load); });
     await load();
+    const open = (location.hash.replace(/^#\//, '').split('?')[0].split('/')[1] || '');   // #/accounts/<id> opens that account (links from a ticket)
+    if (open) { history.replaceState(null, '', '#/accounts'); accountSheet(open, load); }
   };
 
   async function accountSheet(id, refresh) {
-    const d = await Host.api('GET', `/accounts/${id}`), a = d.account;
+    const [d, sup] = await Promise.all([Host.api('GET', `/accounts/${id}`), Host.api('GET', `/support/accounts/${id}`).catch(() => ({ tickets: [], note: null }))]), a = d.account;
+    const ticketRows = sup.tickets.length ? sup.tickets.map(t => `<div class="setting"><div><a href="#/support/${t.number}" class="setting-title">${esc(t.label)} · ${esc(t.subject)}</a><div class="setting-desc">${esc(t.category)} · ${esc(fmt.date(t.createdAt))} · ${esc(t.priority)}</div></div>${UI.support.statusChip(t.status, t.statusLabel)}</div>`).join('') : '<div class="setting-desc">This reseller has not opened any tickets.</div>';
     const rows = d.users.map(u => `<div class="setting"><div><div class="setting-title">${esc(u.username)} <span class="chip">${esc(u.role)}</span> ${u.totp_enabled ? '<span class="chip green">2FA</span>' : ''} ${u.disabled ? '<span class="chip red">disabled</span>' : ''} ${u.locked ? '<span class="chip red">locked out</span>' : ''} ${u.email ? (u.email_verified_at ? '<span class="chip green">Verified</span>' : '<span class="chip amber">Not verified</span>') : ''}</div>
       <div class="setting-desc">${esc(u.login)} · last sign-in ${fmt.ago(u.last_login)}</div></div><button class="btn secondary small" data-u="${u.id}">Manage</button></div>`).join('');
     await sheet(`<div class="row spread"><h2>${esc(a.business_name)}</h2><span class="chip ${a.status === 'active' ? 'green' : 'red'}">${esc(a.status)}</span></div>
       <p class="muted"><span class="ident">${esc(a.account_code)}</span> · created ${fmt.date(a.created_at)}</p>
+      <div class="seg tabs my-md" id="atabs" role="tablist"><button type="button" data-p="account" class="on" role="tab">Account</button><button type="button" data-p="tickets" role="tab">Tickets (${sup.tickets.length})</button><button type="button" data-p="notes" role="tab">Host notes</button></div>
+      <div data-pane="tickets" hidden><h3 class="mt-sm">Support tickets</h3>${ticketRows}<div class="row mt-md"><a class="btn secondary small" href="#/support">Open Support</a></div></div>
+      <div data-pane="notes" hidden><h3 class="mt-sm">Host notes</h3><div class="setting-desc">Your own notes about this reseller, shared by all Host administrators. The reseller never sees them.${sup.note ? ` Last edited by ${esc(sup.note.updatedBy || '')} on ${esc(fmt.dateTime(sup.note.updatedAt))}.` : ''}</div>
+        <div class="field mt-md"><label for="hn">Notes</label><textarea id="hn" maxlength="4000" rows="8">${esc(sup.note?.body || '')}</textarea></div><div class="row row-end"><button type="button" class="btn" id="hns">Save notes</button></div></div>
+      <div data-pane="account">
       ${a.closing_at ? `<div class="banner red row spread wrap my-md"><span>Closing: erases on ${fmt.date(a.closing_at)}.</span><button class="btn secondary small" id="unclose">Restore</button></div>` : ''}
       <div class="banner blue my-md">You can help with sign-in and security. Business data is not visible to host administrators.</div>
       <h3 class="mt-sm">Data</h3>
@@ -63,8 +71,13 @@
       <h3 class="mt-sm">Site admin linking</h3>
       <div class="setting"><div><div class="setting-title">Allow this account to link a Host administrator</div><div class="setting-desc">Shows the Link option in the account's Security page, so a person who also runs the site can switch between the two. Off by default. ${d.isOwner ? 'Switching it off removes any existing links.' : 'Only the Owner administrator can change this.'}</div></div><label class="switch"><input type="checkbox" id="hla" ${a.host_link_allowed ? 'checked' : ''} ${d.isOwner ? '' : 'disabled'}><i></i></label></div>
       <h3 class="mt-sm">People</h3>${rows}
+      </div>
       <div class="actions split"><div class="row"><button class="btn danger small" id="del">Delete</button></div><button class="btn" data-cancel>Done</button></div>`, {
       onMount: (el, close) => {
+        const tabs = el.querySelector('#atabs'); UI.tabRow(tabs);
+        tabs.addEventListener('click', (e) => { const b = e.target.closest('button[data-p]'); if (!b) return; tabs.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); el.querySelectorAll('[data-pane]').forEach(p => { p.hidden = p.dataset.pane !== b.dataset.p; }); UI.tabRow.sync(tabs); });
+        el.querySelectorAll('[data-pane=tickets] a').forEach(l => l.addEventListener('click', () => close(null)));
+        el.querySelector('#hns').addEventListener('click', (e) => busy(e.currentTarget, async () => { try { await Host.api('PUT', `/support/accounts/${id}/notes`, { body: el.querySelector('#hn').value }); toast('Notes saved'); } catch (er) { toast(er.message, true); } }));
         el.querySelector('#plan').addEventListener('click', () => { close(); planSheet(a, () => accountSheet(id, refresh)); });
         el.querySelector('#hla').addEventListener('change', async (e) => { try { await Host.api('POST', `/accounts/${id}/host-link`, { allowed: e.target.checked }); toast(e.target.checked ? 'Linking allowed' : 'Linking turned off'); } catch (er) { e.target.checked = !e.target.checked; toast(er.message, true); } });
         el.querySelector('#sus').addEventListener('click', async () => { const reason = await askReason(a.status === 'active' ? 'Suspend this account?' : 'Reactivate this account?', a.status === 'active' ? 'Everyone is signed out and cannot sign in until it is reactivated.' : 'People can sign in again.'); if (!reason) return; try { await Host.api('POST', `/accounts/${id}/status`, { status: a.status === 'active' ? 'suspended' : 'active', reason }); toast('Updated'); close(); refresh(); } catch (er) { toast(er.message, true); } });
