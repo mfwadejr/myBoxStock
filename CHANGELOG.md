@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.25.1] - 2026-10-09
+
+### Fixed
+- **Shipping label printed a blank page first (DYMO LabelWriter 4XL/5X and others).** Printing a label from its window restarted the window's pop-in animation, which shifted and shrank the label so it spilled onto a second page, and an empty window underneath added an empty first page. Print now removes that animation and prints only the label window. A new test renders the label to PDF at 4 x 6 in and at 104 x 159 mm and checks for exactly one page.
+
 ## [0.25.0] - 2026-10-09
 
 ### Added

@@ -63,8 +63,8 @@ tr.click:hover td { background: var(--color-wash-faint); }
 .steps li { margin-bottom: var(--space-xs); }
 @media print {
   html.printing .topbar, html.printing .side, html.printing #root, html.printing .toasts, html.printing .version-badge { display: none; }
-  html.printing .scrim { position: static; background: none; backdrop-filter: none; display: block; padding: var(--space-0); }
-  html.printing .sheet { box-shadow: none; max-height: none; width: 100%; overflow: visible; display: block; }
+  html.printing .scrim { position: static; background: none; backdrop-filter: none; display: block; padding: var(--space-0); animation: none; transform: none; }
+  html.printing .sheet { box-shadow: none; max-height: none; width: 100%; overflow: visible; display: block; animation: none; transform: none; }   /* the pop-in animation restarts when the sheet switches to print layout and would print the page scaled and shifted, spilling onto an extra page */
   html.printing .sheet-body { overflow: visible; padding: var(--space-0); }
   html.printing .sheet .actions, html.printing .no-print { display: none; }
   html.printing body { background: var(--color-surface); }
@@ -167,6 +167,8 @@ html.reorder-drag { user-select: none; -webkit-user-select: none; cursor: grabbi
 @page labelhalf { size: 8.5in 5.5in; margin: 0; }
 @page labelletter { size: 8.5in 11in; margin: 0; }
 @media print {
+  html.printing-label .scrim { display: none; }   /* any other open window (the sale underneath) would print as an empty first page, because the label asks for its own page size */
+  html.printing-label .scrim:has(.label-pages) { display: block; }
   html.printing-label .sheet-body > :not(.label-pages) { display: none; }
   html.printing-label .label-pages { display: block; margin: var(--space-0); }
   html.printing-label .label { border: 0; border-radius: var(--radius-xs); box-shadow: none; aspect-ratio: auto; break-after: page; margin: var(--space-0); }

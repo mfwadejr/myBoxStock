@@ -85,6 +85,7 @@ Labels are built in your browser from data that is already decrypted there. Noth
 
 ## Common mistakes and tips
 
+- **A blank page before the label (DYMO and other label printers).** Fixed in 0.25.1: the label now prints on exactly one page. In the print window use the printer's 4 x 6 in (or 4XL) paper size, set Margins to **None** and Scale to **Default**. If your printer driver's paper is slightly bigger than 4 x 6 in (for example 104 x 159 mm), the label still prints on one page, with a thin blank strip at the bottom.
 - **Printing on the wrong paper size.** Pick the same size in the label view and in the print window.
 - **Blurry or grey logo on a thermal printer.** Choose **Plain** style, which prints the logo in black and white.
 - **No return address.** Add it once in Settings so every label has it.
