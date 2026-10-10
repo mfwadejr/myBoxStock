@@ -57,8 +57,8 @@
       <div class="setting"><div><div class="setting-title">Taken</div></div><div class="tab-num">${esc(info.takenAtText)} (${esc(fmt.date(info.takenAt))} your time)</div></div>
       <div class="setting"><div><div class="setting-title">That was</div></div><div>${esc(B.ageText(info.agoMs))} ago</div></div>
       <ul class="hint"><li>A safety copy of the site as it is now is taken first.</li><li>The site restarts and everyone is signed out.</li><li>A notice is shown to every customer afterwards: the site was restored from this backup and recent entries may be missing.</li></ul>
-      ${full ? '<div class="field mt-md"><label>Backup passphrase</label><input type="password" id="pp" autocomplete="off"></div>' : ''}
-      <div class="field mt-md"><label>Type RESTORE to confirm</label><input type="text" id="cf" autocomplete="off" autocapitalize="characters"></div>
+      ${full ? '<div class="field mt-md"><label for="pp">Backup passphrase</label><input type="password" id="pp" autocomplete="off"></div>' : ''}
+      <div class="field mt-md"><label for="cf">Type RESTORE to confirm</label><input type="text" id="cf" autocomplete="off" autocapitalize="characters"></div>
       <div id="rjob" class="mt-md"></div>
       <div class="actions"><button class="btn secondary" data-cancel>Close</button><button class="btn danger" id="go" disabled>Restore</button></div>`,
     { onMount: (el, close) => {
@@ -81,7 +81,7 @@
   B.testSheet = async (name) => {
     let h = null;
     await sheet(`<h2>Test restore</h2><p class="muted"><span class="ident">${esc(name)}</span></p><div id="tbody"><p class="hint">Opens a scratch copy of this backup, checks it, and deletes the copy. The live site is not touched. It runs in the background, so you can close this window and watch the top of the page.</p>
-      ${name.endsWith('.mbsbak') ? '<div class="field"><label>Backup passphrase</label><input type="password" id="pp" autocomplete="off" placeholder="Leave blank to use the saved passphrase"></div>' : ''}</div>
+      ${name.endsWith('.mbsbak') ? '<div class="field"><label for="pp">Backup passphrase</label><input type="password" id="pp" autocomplete="off" placeholder="Leave blank to use the saved passphrase"></div>' : ''}</div>
       <div class="actions"><button class="btn secondary" data-cancel>Close</button><button class="btn" id="go">Run test</button></div>`, {
       onMount: (el) => {
         const go = el.querySelector('#go'), body = el.querySelector('#tbody');

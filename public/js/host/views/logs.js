@@ -23,8 +23,8 @@
     swap(main, `${Host.head('Logs', 'Every action is recorded in plain English and as raw JSON. Files are also written to the server’s log folder, one set per area.')}
       <div class="card"><div class="row wrap">
         ${UI.select.html({ id: 'area', options: areaOpts, value: f.area })}${UI.select.html({ id: 'level', options: levelOpts, value: f.level })}${UI.select.html({ id: 'range', options: RANGES.map(r => [r[0], r[1]]), value: f.range })}
-        <input type="search" id="q" placeholder="Search messages, events, people, IP addresses, Reseller IDs" class="grow" value="${esc(f.q)}"></div>
-        <div class="row wrap mt-md" id="custom" hidden><div class="field mb-0"><label>From</label><input type="date" id="from" value="${esc(f.from)}"></div><div class="field mb-0"><label>To</label><input type="date" id="to" value="${esc(f.to)}"></div></div>
+        <input type="search" id="q" aria-label="Search the logs" placeholder="Search messages, events, people, IP addresses, Reseller IDs" class="grow" value="${esc(f.q)}"></div>
+        <div class="row wrap mt-md" id="custom" hidden><div class="field mb-0"><label for="from">From</label><input type="date" id="from" value="${esc(f.from)}"></div><div class="field mb-0"><label for="to">To</label><input type="date" id="to" value="${esc(f.to)}"></div></div>
         <div class="row wrap mt-md">${QUICK.map(([l], i) => `<button class="btn secondary small" data-quick="${i}">${esc(l)}</button>`).join('')}<button class="btn secondary small" id="clear">Clear filters</button></div>
         <div class="hint" id="hint"></div>
         <div id="list" class="feed mt-md"></div><div id="more"></div>

@@ -1,9 +1,9 @@
 ---
 title: Email
 summary: Set up how the server sends email, reword each message customers and administrators receive, and check that mail is actually getting out.
-keywords: sender checks, dmarc, dns, dkim selector, email, smtp, relay, direct, helo, from address, tls, port 465, 587, test email, resend, queue, bounce, spf, dkim, reverse dns, messages, placeholders, template, preview, health
+keywords: support notice, digest, sender checks, dmarc, dns, dkim selector, email, smtp, relay, direct, helo, from address, tls, port 465, 587, test email, resend, queue, bounce, spf, dkim, reverse dns, messages, placeholders, template, preview, health, check my email setup, test failed, cannot reach the mail server, wrong port, sign-in refused, sender not allowed, blocked, rate limited, show details, last test, test email warning, not tested, step by step
 order: 8
-covers: nav:email, Delivery, Messages, Health, Send email, Delivery method, Direct to recipient, SMTP relay, From name, From address, Server name announced when sending (HELO), SMTP host, Port, Username, Password, Use TLS from the start of the connection (port 465), Save, Send a test, Send test email, Recent messages, Resend, Resend all failed, Subject, Heading, Body, Button label, Insert a detail, Reset to default, Send test, Live preview, Styled, Plain text, Desktop, Phone, Is email getting out, Last successful send, Failed last 24 hours, Failed last 7 days, Waiting to send, Last failure, Sender checks, Check again, DKIM selector, SPF, DMARC, DKIM, Found, Not found, Could not check, Account erased by the Host, Emails and alerts only work after the Email section is set up
+covers: nav:email, New support ticket (to the Host), Reseller reply on a ticket (to the Host), Daily support digest (to the Host), Delivery, Messages, Health, Send email, Delivery method, Direct to recipient, SMTP relay, From name, From address, Server name announced when sending (HELO), SMTP host, Port, Username, Password, Use TLS from the start of the connection (port 465), Save, Send a test, Send test email, Recent messages, Resend, Resend all failed, Subject, Heading, Body, Button label, Insert a detail, Reset to default, Send test, Live preview, Styled, Plain text, Desktop, Phone, Is email getting out, Last successful send, Failed last 24 hours, Failed last 7 days, Waiting to send, Last failure, Sender checks, Check again, DKIM selector, SPF, DMARC, DKIM, Found, Not found, Could not check, Account erased by the Host, Emails and alerts only work after the Email section is set up, Check my email setup, Show details, Hide details, Passed, Failed, Warning, Not needed, Not run, Settings are complete, Reach the mail server, Sign in to the mail server, Send the test message, Cannot reach the mail server, Wrong port or TLS setting, The mail server refused the sign-in, The From address is not allowed, Sent but it looks unauthenticated, Blocked or rate-limited, Email has not been tested, Last test, Announcement from the Host
 ---
 
 ## What email does here
@@ -17,6 +17,8 @@ The **Email** page has three tabs. **Delivery** is how mail leaves the server. *
 > Email is how customers recover access to their accounts, and how you hear about problems. If it is not working, people get stuck. Set it up early, send yourself a test, and check the Health tab from time to time.
 
 Messages are queued, not sent in the middle of a customer's click. A background worker picks up waiting messages every 30 seconds. If sending fails, the server tries again, up to five tries, and then marks the message as failed.
+
+![The Email page, Delivery tab, with the send-a-test card](shot:host-email "The Email page, Delivery tab, with the send-a-test card. (The mail password field is never shown.)")
 
 ## Delivery tab
 
@@ -71,9 +73,44 @@ Reseller receipts are shown as sent from a business name "via" your From name, s
 1. Save your changes first. The test uses what is saved, not what is typed.
 2. In **Send a test**, check the recipient box. It starts with your own email address if you have one on file.
 3. Click **Send test email**.
-4. Read the line underneath. "Delivered to the recipient's server." means the next server accepted it. "Not sent:" followed by a reason means it did not.
+4. Read the result underneath. A green **Sent** chip and "Test email sent" mean the next server accepted the message for that address. A red **Not sent** chip names the problem in plain words, says what it means, and gives a **Next:** step to try.
+5. If you or your mail provider need the technical side, press **Show details**. It reveals the server's own words (error code and reply) and is hidden until you ask. Press **Hide details** to close it again.
 
-A delivered test only means the receiving server took the message. It does not promise the message avoided the spam folder, so always look in the inbox.
+A test that is accepted only means the receiving server took the message. It does not promise the message avoided the spam folder, so always look in the inbox, and the spam folder too.
+
+#### What the result can say
+
+- **Email is not fully set up.** Send email is off, there is no From address, or the SMTP host or port is empty. Turn it on, fill the missing detail, save and try again.
+- **Cannot reach the mail server.** This server could not open a connection. Check the server name for typos and the port. If you send directly from a home or office connection, your provider may block port 25: use an SMTP relay.
+- **Wrong port or TLS setting.** The server answered, or stayed silent, in a way that does not fit the setting. Port 587 normally has "Use TLS from the start of the connection (port 465)" off. Port 465 needs it on.
+- **The mail server refused the sign-in.** The server was reached but did not accept the username and password. Re-enter them. Many providers need an app password or a separate SMTP password.
+- **The From address is not allowed.** The server refused to send mail from that address. Use an address on a domain your provider has verified for you, or the same address as the SMTP login.
+- **Sent, but it looks unauthenticated.** The message was accepted, but the sending domain has no (or an incomplete) SPF, DKIM or DMARC setup, so receivers may treat it as suspicious. This shows as an amber **Sent, with a warning**. Open the Health tab, Sender checks, and add the missing records.
+- **Blocked or rate-limited.** The server or the receiving side refused the message because of limits, a block list or spam rules. Wait and try again, and check your sending limits and that your address or server is not on a block list.
+- **The test email could not be sent.** A reason this page does not recognise. Use **Show details** and give the server's words to your mail provider.
+
+The mail password is never shown in the result, in the details, in the log or in the audit trail. If a mail server repeats it in an error message, it is replaced by "[hidden]" before anything is shown or saved.
+
+### Check my email setup
+
+Press **Check my email setup** (next to Send test email) to run the checks one at a time and see exactly where it stops. It also sends the test message, to the address in the recipient box. Each step gets a green tick or a red cross, always with a word as well:
+
+1. **Settings are complete**: email is on and the required details are filled in.
+2. **Reach the mail server**: this server can open a connection to the relay (or, for direct sending, to the recipient's mail server) and the server says hello.
+3. **Sign in to the mail server**: the username and password are accepted. Marked **Not needed** for direct sending or a relay with no username.
+4. **Send the test message**: the server accepts the message.
+
+The check stops at the first step that fails, and the steps after it show **Not run**. Under the ticks you see the same plain message, **Next:** step and **Show details** as above. Use this button when you are setting email up for the first time, or after changing providers.
+
+### The last test is remembered
+
+Under the buttons a line says when the last test was run and whether it passed, for example "Last test 5 minutes ago: passed (Test email sent)." A test only counts for the settings it was run with. If you change the mail settings (including the password) afterwards, the earlier result no longer counts, and while email is on with no passing test:
+
+- a yellow note appears above the test buttons;
+- the Overview page shows a note, "Email is on but no test email has passed since it was last changed", with a link here;
+- the [Alerts](#/docs/alerts) page shows **Email has not been tested** (it is not emailed, because email may be the very thing that is broken).
+
+A passing test clears all three. Each test, passed or not, is written to the [Audit trail](#/docs/audit-trail) with the recipient and the result, and shows under **Recent messages**.
 
 ### Recent messages
 
@@ -112,9 +149,9 @@ The **Messages** tab lets you reword every message the platform sends. You chang
 
 A selector at the top lists the messages, grouped as **Account**, **Trial** and **System**, in the form "Group · Name", with "(edited)" after any whose wording you have changed. The groups hold:
 
-- Account: Welcome, New sign-in alert, Confirm your email, Password reset, Password reset (several accounts), Temporary password, Two-factor reset, Account closing, Account erased (sent by the hourly closing sweep) and Account erased by the Host (sent once when a Host administrator deletes an account; it carries the optional reason).
+- Account: Announcement from the Host (sent by the bulk action **Send announcement** in [Accounts](#/docs/accounts)), Welcome, New sign-in alert, Confirm your email, Password reset, Password reset (several accounts), Temporary password, Two-factor reset, Account closing, Account erased (sent by the hourly closing sweep) and Account erased by the Host (sent once when a Host administrator deletes an account; it carries the optional reason).
 - Trial: Trial ended.
-- System: Backup failed, Host alert and Test message.
+- System: Backup failed, Host alert, Test message, and three messages that go to Host administrators about Support: **New support ticket (to the Host)** (subject "[myBoxStock] New support ticket #1042: ..."), **Reseller reply on a ticket (to the Host)** and **Daily support digest (to the Host)**. They list the reseller, priority, category and the first lines of the message, with a link to the ticket, and never carry screenshots or diagnostics. They are sent only when you switch them on in Support, Settings, New-ticket notices; until then nothing goes out. See [Support tickets](#/docs/support-tickets).
 
 Below the selector are the fields:
 
@@ -150,6 +187,8 @@ If you switch to another message while you have unsaved edits, you are asked whe
 ### What is not here
 
 Messages resellers send to their own buyers, such as receipts, are edited by the resellers in their own Settings.
+
+![A test email result](shot:host-email-2 "A test email result: a plain cause, the next step and Show details for support.")
 
 ## Health tab
 
@@ -195,5 +234,6 @@ If you have not set a From address yet, the card tells you to set one on the Del
 ## Related pages
 
 - [Alerts](#/docs/alerts) for email failure warnings.
+- [Support tickets](#/docs/support-tickets) for the new-ticket emails. They stay off until Email is set up, a test email has arrived and you switch them on.
 - [Settings](#/docs/settings) for the site address that email links use. If it is wrong, links in emails will not work.
 - [Troubleshooting and FAQ](#/docs/troubleshooting-faq) for more help.

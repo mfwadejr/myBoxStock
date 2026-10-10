@@ -19,21 +19,24 @@ export const RESTART_MS = 600;
 // What the page may see about a job. `result` only on request; never the parameters.
 export const publicJob = (j, { result = false } = {}) => j && ({
   id: j.id, kind: j.kind, label: j.label, actor: j.actor, status: j.status, step: j.step, pct: Math.round(j.pct), bytesDone: j.bytesDone, bytesTotal: j.bytesTotal,
-  startedAt: j.startedAt, finishedAt: j.finishedAt, error: j.error, restarting: j.restarting, ok: j.ok, summary: j.summary, hasResult: j.result != null, ...(result ? { result: j.result } : {}),
+  startedAt: j.startedAt, finishedAt: j.finishedAt, error: j.error, restarting: j.restarting, ok: j.ok, stoppable: !!j.stoppable, stopRequested: !!j.stopRequested, summary: j.summary, hasResult: j.result != null, ...(result ? { result: j.result } : {}),
 });
 export const currentJob = () => current;
 export const getJob = (id) => (current && current.id === id ? current : null);
+// Asks a stoppable job to stop. The job finishes the unit it is on, then ends; nothing is cut off in the middle.
+export function stopJob(id) { const j = getJob(id); if (!j || j.status !== 'running' || !j.stoppable) return false; j.stopRequested = true; return true; }
 export function dismissJob(id) { if (current && current.id === id && current.status !== 'running') { current = null; return true; } return false; }
 export function detachJob(id) { const j = getJob(id); if (j) j.detached = true; return !!j; }
 export const resetJobsForTests = () => { current = null; };
 
 // Starts `run` in the background. Throws HOST_JOB_RUNNING when any backup work holds the lock. `run()` returns the result; a thrown error is the failure.
-export function startJob({ kind, label, actor, ip = null, run }) {
+export function startJob({ kind, label, actor, ip = null, run, stoppable = false }) {
   const release = takeBackupLock(label);
   if (!release) throw Object.assign(coded('HOST_JOB_RUNNING'), { by: backupBusy() });
-  const now = Date.now(), j = { id: crypto.randomBytes(8).toString('hex'), kind, label, actor, status: 'running', step: 'Starting', pct: 1, bytesDone: null, bytesTotal: null, startedAt: now, finishedAt: null, result: null, error: null, restarting: false, ok: null, summary: '', detached: false, from: 0, to: 100 };
+  const now = Date.now(), j = { id: crypto.randomBytes(8).toString('hex'), kind, label, actor, status: 'running', step: 'Starting', pct: 1, bytesDone: null, bytesTotal: null, startedAt: now, finishedAt: null, result: null, error: null, restarting: false, ok: null, summary: '', detached: false, from: 0, to: 100, stoppable, stopRequested: false };
   current = j;
   const ctx = {
+    stopRequested: () => j.stopRequested,
     step(text, from, to) { j.step = text; j.from = from ?? j.pct; j.to = to ?? j.to; j.bytesDone = j.bytesTotal = null; j.pct = Math.max(j.pct, j.from); },
     bytes(done, total) { j.bytesDone = done; j.bytesTotal = total; if (total > 0) j.pct = Math.max(j.pct, j.from + (j.to - j.from) * Math.min(1, done / total)); },
   };

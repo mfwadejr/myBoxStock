@@ -11,29 +11,31 @@
   --color-surface: #ffffff;
   --color-surface-alt: #fbfbfd;
   --color-text: #1d1d1f;
-  --color-text-muted: #6e6e73;
-  --color-text-faint: #86868b;
+  --color-text-muted: #5f5f64;
+  --color-text-faint: #6b6b70;
   --color-line: rgba(0, 0, 0, 0.08);
   --color-line-strong: rgba(0, 0, 0, 0.14);
   --color-code-bg: #f5f5f7;
 
   /* ---- color: brand & status ---- */
-  --color-primary: #0071e3;
-  --color-primary-hover: #0077ed;
+  --color-primary: #0066cc;
+  --color-primary-hover: #0071e3;
   --color-primary-soft: rgba(0, 113, 227, 0.1);
   --color-primary-text: #00479b;
   --color-primary-on: #ffffff;
-  --color-success: #1d9d4a;
+  --color-success: #13783a;
   --color-success-soft: rgba(29, 157, 74, 0.12);
   --color-success-switch: #34c759;
-  --color-danger: #d70015;
+  --color-danger: #c40016;
   --color-danger-soft: rgba(215, 0, 21, 0.09);
   --color-danger-soft-hover: rgba(215, 0, 21, 0.16);
-  --color-warning: #b25e00;
+  --color-warning: #9a5200;
   --color-warning-soft: rgba(255, 159, 10, 0.15);
   --color-warning-text: #7a4300;
   --color-warning-bar: #ff9f0a;
   --color-accent: #8e5af7;
+  --color-focus: var(--color-primary);          /* the keyboard focus outline, one colour for every control (3:1 or better on every surface) */
+  --color-focus-on-dark: var(--color-scan-text);   /* the same outline inside the camera layer */
 
   /* ---- color: neutral washes, controls, overlays ---- */
   --color-neutral-soft: rgba(0, 0, 0, 0.06);
@@ -133,7 +135,9 @@
   --border-strong: var(--border-width) solid var(--color-line-strong);
   --border-primary: var(--border-width) solid var(--color-primary);
   --ring-width: 4px;
-  --focus-ring: 0 0 0 var(--ring-width) var(--color-primary-soft);
+  --focus-outline-w: 2px;
+  --focus-outline-offset: 2px;
+  --focus-ring: 0 0 0 var(--focus-outline-w) var(--color-focus);
   --shadow-filled: 0 0 0 var(--ring-width) var(--color-success);
 
   /* ---- shadows ---- */
@@ -258,6 +262,27 @@
   --scale-press: 0.97;
   --scale-pop: 0.97;
   --scale-small-switch: 0.8;
+
+  /* ---- shipping labels (printed sizes; the plain style is pure black on white for thermal printers) ---- */
+  --label-4x6-w: 4in;
+  --label-4x6-h: 6in;
+  --label-half-w: 8.5in;
+  --label-half-h: 5.5in;
+  --label-letter-w: 8.5in;
+  --label-letter-h: 11in;
+  --label-4x6-ratio: 2 / 3;
+  --label-half-ratio: 17 / 11;
+  --label-letter-ratio: 17 / 22;
+  --label-pad: 0.2in;
+  --label-pad-lg: 0.5in;
+  --label-logo-w: 0.9in;
+  --label-logo-h: 0.5in;
+  --label-logo-w-lg: 1.6in;
+  --label-logo-h-lg: 0.9in;
+  --color-label-ink: #000000;
+  --color-label-paper: #ffffff;
+  --label-plain-filter: grayscale(1) contrast(2);
+  --label-rule: 2px;
 
   /* ---- embedded icons (data URIs cannot read variables, so their colors live here) ---- */
   --icon-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%2386868b' stroke-width='2'%3E%3Cpath d='m1 1 5 5 5-5'/%3E%3C/svg%3E");

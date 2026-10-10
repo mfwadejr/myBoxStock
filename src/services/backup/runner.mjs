@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { areaLogger } from '../../logging/logger.mjs';
 import { createBackup } from './create.mjs';
+import { stripDemoFromSnapshot } from '../demo/strip.mjs';
 import { backupDir, backupPath, deleteBackup, listBackups, takenAtFromName } from './files.mjs';
 import { thin } from './thin.mjs';
 import { getTiers } from './tiers.mjs';
@@ -76,6 +77,7 @@ export async function runOffsite(db, { actor = 'scheduler', trigger = 'scheduled
     const tiers = await getTiers(db), dests = await enabledDestinations(db, tiers.offsite.destinations);
     if (!dests.length) throw new Error('No destination is turned on for offsite copies.');
     const name = await createBackup(db, 'offsite-temp', actor); snap = backupPath(name);
+    await stripDemoFromSnapshot(db, snap);   // Demo mode accounts are left out of the offsite copy (never out of the live site), like a full-site backup, so a disaster restore never brings demo data back
     const ext = path.extname(name), stampPart = name.replace(/^myboxstock-offsite-temp-/, '').replace(/\.\w+$/, ''), remoteName = `myboxstock-offsite-${stampPart}${ext}`;
     const where = [], t0 = Date.now();
     for (const d of dests) {

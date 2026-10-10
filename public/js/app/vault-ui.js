@@ -48,7 +48,7 @@
   });
 
   const askPassword = ({ title, lead, button, extra = '', onSubmit, below = signOutLink }) => new Promise((resolve) => {
-    AccountApp.authShell(`<h1>${esc(title)}</h1><p class="lead">${lead}</p><form id="f">${extra}<div class="field"><label>Your password</label><input type="password" id="pw" autocomplete="current-password" required></div><button class="btn block">${esc(button)}</button></form>${below}`);
+    AccountApp.authShell(`<h1>${esc(title)}</h1><p class="lead">${lead}</p><form id="f">${extra}<div class="field"><label for="pw">Your password</label><input type="password" id="pw" autocomplete="current-password" required></div><button class="btn block">${esc(button)}</button></form>${below}`);
     wireSignOut();
     form('#f', async () => { await onSubmit(val('#pw')); resolve(); });
     AccountApp.root.querySelector('#pw').focus();
@@ -79,8 +79,8 @@
   // Get the account key back using the recovery key, then protect it with the person's current password again.
   const recoverAccess = () => new Promise((resolve) => {
     AccountApp.authShell(`<h1>Use your recovery key</h1><p class="lead">Your password no longer unlocks your data. Enter the recovery key you saved when the account was set up.</p>
-      <form id="f"><div class="field"><label>Recovery key</label><input type="text" id="rk" autocomplete="off" autocapitalize="characters" required></div>
-      <div class="field"><label>Your current password</label><input type="password" id="pw" autocomplete="current-password" required><div class="hint">Your data will unlock with this password from now on.</div></div><button class="btn block">Restore access</button></form>
+      <form id="f"><div class="field"><label for="rk">Recovery key</label><input type="text" id="rk" autocomplete="off" autocapitalize="characters" required></div>
+      <div class="field"><label for="pw">Your current password</label><input type="password" id="pw" autocomplete="current-password" required><div class="hint">Your data will unlock with this password from now on.</div></div><button class="btn block">Restore access</button></form>
       <p class="hint center mt-lg">No recovery key? Ask an Administrator in your account to reset your access.</p>${signOutLink}`);
     wireSignOut();
     form('#f', async () => {
@@ -91,7 +91,7 @@
 
   const unlockScreen = (v) => new Promise((resolve) => {
     AccountApp.authShell(`<h1>Unlock your data</h1><p class="lead">Your data is encrypted. Enter your password to open it on this device.</p>
-      <form id="f"><div class="field"><label>Your password</label><input type="password" id="pw" autocomplete="current-password" required></div><button class="btn block">Unlock</button></form>
+      <form id="f"><div class="field"><label for="pw">Your password</label><input type="password" id="pw" autocomplete="current-password" required></div><button class="btn block">Unlock</button></form>
       <p class="hint center mt-lg"><a href="#" id="rc">Forgot it? Use your recovery key</a></p>${signOutLink}`);
     wireSignOut(); AccountApp.root.querySelector('#pw').focus();
     AccountApp.root.querySelector('#rc').addEventListener('click', async (e) => { e.preventDefault(); await recoverAccess(); resolve(); });

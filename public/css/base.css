@@ -26,8 +26,15 @@ input[type=date], input[type=time] { display: flex; align-items: center; min-wid
 input[type=date]::-webkit-date-and-time-value, input[type=time]::-webkit-date-and-time-value { text-align: left; margin: 0; min-height: 0; }
 input[type=date]::-webkit-datetime-edit, input[type=date]::-webkit-datetime-edit-fields-wrapper, input[type=time]::-webkit-datetime-edit, input[type=time]::-webkit-datetime-edit-fields-wrapper { padding: 0; margin: 0; }
 input[type=date]::-webkit-calendar-picker-indicator, input[type=time]::-webkit-calendar-picker-indicator { margin: 0; padding: 0; opacity: var(--opacity-icon); cursor: pointer; }   /* quiet calendar/clock icon (native picker kept for phones) */
-input:focus, textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: var(--focus-ring); }
-.switch input:focus-visible + i { box-shadow: var(--focus-ring); }
+input:focus, textarea:focus { border-color: var(--color-focus); }
+
+/* ---- keyboard focus: ONE ring for every control (token --focus-ring, colour --color-focus, 3:1 on every surface) ----
+   Anything that can be focused shows the outline below. Controls that sit inside a clipped or tight frame, and every field, use the same ring
+   as a shadow instead (the group right after it). Never add a focus style anywhere else: add the control to this group, or give it the class focus-ring. */
+:focus-visible { outline: var(--focus-outline-w) solid var(--color-focus); outline-offset: var(--focus-outline-offset); }
+input:focus, textarea:focus, .select-btn:focus, .select-option:focus-visible, .select.open .select-btn, .menu-btn:focus-visible, .menu-item:focus-visible, button.chip:focus-visible,
+.grip:focus-visible, .search-clear:focus-visible, .th-sort:focus-visible, .switch input:focus-visible + i, .focus-ring:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.th-sort:focus-visible { border-radius: var(--radius-sm); }
 
 /* ---- hidden attribute always wins (used to show/hide form sections) ---- */
 [hidden] { display: none !important; }

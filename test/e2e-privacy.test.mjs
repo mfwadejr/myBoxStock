@@ -42,7 +42,7 @@ test('browser: export everything, customer export and erase, close and restore',
     let [dl] = await Promise.all([page.waitForEvent('download'), page.click('#xall')]);
     assert.match(dl.suggestedFilename(), /^myboxstock-privacy-co-\d{8}\.zip$/);
     let z = readZip(fs.readFileSync(await dl.path()));
-    assert.deepEqual(Object.keys(z).sort(), ['README.txt', 'customers.csv', 'inventory.csv', 'sale_items.csv', 'sales.csv', 'settings.json']);
+    assert.deepEqual(Object.keys(z).sort(), ['README.txt', 'customers.csv', 'inventory.csv', 'models.csv', 'returns.csv', 'sale_items.csv', 'sales.csv', 'settings.json']);
     assert.ok(z['customers.csv'].includes('Zed Buyer') && z['sales.csv'].includes('S-TEST-0001') && z['sale_items.csv'].includes('Roku Ultra') && JSON.parse(z['settings.json']).fields);
 
     // one customer: export, then erase

@@ -38,14 +38,16 @@
 
   Host.views.overview = async (main) => {
     const paint = async (first) => {
-      const d = await Host.api('GET', '/dashboard');
+      const d = await Host.api('GET', '/dashboard' + Host.demoFilter.query());
       const mp = fmt.pct(d.memory.used, d.memory.total), dp = d.disk ? fmt.pct(d.disk.used, d.disk.total) : 0, cpu = d.history.at(-1)?.cpu ?? 0;
       const html = `${Host.head('Overview', `${esc(d.hostname)} · up ${fmt.dur(d.uptimeSec)} · v${esc(d.version)}`)}
         ${d.siteUrlProblem ? `<div class="banner mb-lg">Email links will not work: ${esc(d.siteUrlProblem)} <a href="#/settings">Set the site address</a></div>` : ''}
+        ${d.mailUntested ? '<div class="banner mb-lg">Email is on but no test email has passed since it was last changed. <a href="#/email">Send a test email</a></div>' : ''}
         ${d.restorePending ? '<div class="banner mb-lg">A database restore is staged and will be applied on the next restart.</div>' : ''}
+        ${d.demo.accounts ? `<div class="row wrap mb-lg" id="demo-row">${Host.demoFilter.checkHtml()}<span class="hint">${d.demo.accounts.toLocaleString('en-US')} demo accounts, ${d.demo.records.toLocaleString('en-US')} stored records. <a href="#/demo">Open Demo mode</a></span></div>` : ''}
         <div class="grid g4">
-          <div class="card stat"><div class="stat-label">Accounts</div><div class="stat-value">${d.accounts}</div><div class="stat-note">${d.accountsByStatus.suspended || 0} suspended</div></div>
-          <div class="card stat"><div class="stat-label">Users</div><div class="stat-value">${d.users}</div><div class="stat-note">across all accounts</div></div>
+          <div class="card stat"><div class="stat-label">Accounts</div><div class="stat-value">${d.accounts}</div><div class="stat-note">${d.accountsByStatus.suspended || 0} suspended${d.demo.accounts && !d.demoHidden ? ` · ${d.demo.accounts.toLocaleString('en-US')} ${Host.demoFilter.chip()}` : ''}</div></div>
+          <div class="card stat"><div class="stat-label">Users</div><div class="stat-value">${d.users}</div><div class="stat-note">across all accounts${d.demo.users && !d.demoHidden ? ` · ${d.demo.users.toLocaleString('en-US')} ${Host.demoFilter.chip()}` : ''}</div></div>
           <div class="card stat"><div class="stat-label">Signed in now</div><div class="stat-value">${d.activeSessions}</div><div class="stat-note">people active in the last 15 minutes</div></div>
           <div class="card stat"><div class="stat-label">Database</div><div class="stat-value small">${esc(d.database.label)}</div><div class="stat-note">${d.dbFileSize != null ? fmt.bytes(d.dbFileSize) : 'external server'}</div></div>
         </div>
@@ -63,6 +65,7 @@
             <span class="chip ${d.mail.failed ? 'red' : 'blue'}">mail: ${d.mail.sent || 0} sent, ${d.mail.queued || 0} queued${d.mail.failed ? `, ${d.mail.failed} failed` : ''}</span></div></div>
         </div>`;
       if (first) swap(main, html); else { main.innerHTML = html; UI.dynamic(main); }
+      Host.demoFilter.wire(main, () => paint(false));
     };
     await paint(true); Host.timer = setInterval(() => paint(false).catch(() => {}), 10000);
   };

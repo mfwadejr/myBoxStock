@@ -16,6 +16,8 @@ The page uses only facts the server already holds: identity and setup status. It
 
 > Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
 
+![Onboarding](shot:host-onboarding "Onboarding: the setup funnel and account-by-account progress.")
+
 ## Choosing the time range
 
 At the top is one drop-down with three choices:

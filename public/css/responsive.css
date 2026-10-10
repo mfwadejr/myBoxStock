@@ -83,6 +83,7 @@
   .pick-list li { min-height: var(--tap-min); }
   .icon-btn { width: var(--tap-min); height: var(--tap-min); }
   .select-btn, input[type=text], input[type=password], input[type=email], input[type=tel], input[type=number], input[type=date], input[type=time], input[type=search], textarea { min-height: var(--tap-min); font-size: var(--text-input-touch); }
+  button.chip { min-height: var(--tap-min); padding: 0 var(--space-lg); }
   .linkish { min-height: var(--tap-min); padding: var(--space-sm) var(--space-xs); font-size: var(--text-sm); }
   .switch { min-height: var(--tap-min); }
 }

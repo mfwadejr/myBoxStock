@@ -2,6 +2,10 @@
 // Stored as a platform setting. It is plain text (never HTML) and is not tied to any account's data.
 import { getSetting, setSetting } from '../../db/settings.mjs';
 
+// A notice the Host sent to chosen accounts (Accounts > bulk action "Send announcement"): one per account, the newest wins, kept as the settings row notice:<account id>.
+export const NOTICE_DAYS = 14;
+export const noticeKey = (accountId) => `notice:${accountId}`;
+
 export const LEVELS = ['info', 'warning', 'important'];
 export const MAX_TEXT = 400;
 const EMPTY = { enabled: false, text: '', level: 'info', until: '', id: '' };
@@ -25,4 +29,14 @@ export async function saveAnnouncement(db, body) {
   const old = await getAnnouncement(db), changed = text !== old.text || level !== old.level || until !== old.until || (enabled && !old.enabled);
   await setSetting(db, 'announcement', { enabled, text, level, until, id: changed ? String(Date.now()) : old.id });
   return '';
+}
+
+export async function saveAccountNotice(db, accountId, { text, level = 'info' }, now = Date.now()) {
+  await setSetting(db, noticeKey(accountId), { id: `n${now.toString(36)}${String(accountId).slice(0, 6)}`, text: String(text), level: LEVELS.includes(level) ? level : 'info', until: now + NOTICE_DAYS * 86400e3 });
+}
+// What this account's people see: the Host's notice for this account while it is current, otherwise the site-wide banner.
+export async function announcementFor(db, accountId, now = Date.now()) {
+  const n = accountId ? await getSetting(db, noticeKey(accountId), null) : null;
+  if (n && n.text && Number(n.until) > now) return { id: n.id, text: n.text, level: n.level };
+  return activeAnnouncement(db, new Date(now));
 }

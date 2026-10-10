@@ -23,6 +23,8 @@ Each card saves on its own. Pressing Save on one card never changes the others.
 
 > Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
 
+![Host Settings](shot:host-settings "Host Settings: sign-ups, trial length, site address and the announcement banner.")
+
 ## Open sign-ups
 
 This switch decides whether new businesses can create an account from the sign-up page.

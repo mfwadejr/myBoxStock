@@ -74,12 +74,16 @@
     ],
     tests: { enabled: true, requireBeforeSale: false },
     firstRun: { dismissed: false },
+    returns: { reasons: [{ key: 'mind', label: 'Changed their mind' }, { key: 'faulty', label: 'Faulty or not working' }, { key: 'described', label: 'Not as described' }, { key: 'wrong', label: 'Wrong item' }, { key: 'other', label: 'Other' }], standardCan: true, limit: 0, fee: { mode: 'none', value: 0 } },
     mail: { enabled: false, host: '', port: 587, secure: false, user: '', pass: '', fromName: '', fromAddress: '', wording: {}, logo: '' },
   };
   S.CONFIG_ID = CONFIG_ID;
   S.defaults = () => JSON.parse(JSON.stringify(DEFAULTS));
   // Existing accounts: the default firmware step gains Launcher and Firmware (From → To) until the Administrator changes it.
   const upgraded = (steps) => steps.map(st => Array.isArray(st.details) ? st : (st.key === 'upgrade' && st.label === DEFAULTS.steps[4].label ? { ...st, details: JSON.parse(JSON.stringify(DEFAULTS.steps[4].details)) } : { ...st, details: [] }));
-  S.config = () => { const c = S.get('config', CONFIG_ID)?.data; if (!(c && Array.isArray(c.fields) && Array.isArray(c.steps))) return S.defaults(); return { ...c, steps: upgraded(c.steps), tests: { enabled: c.tests?.enabled !== false, requireBeforeSale: !!c.tests?.requireBeforeSale }, warranty: c.warranty?.periods ? c.warranty : S.defaults().warranty, payments: Array.isArray(c.payments?.methods) && c.payments.methods.length ? c.payments : S.defaults().payments, unlock: { ...S.defaults().unlock, ...(c.unlock || {}) }, discount: { ...S.defaults().discount, ...(c.discount || {}) }, catalog: { makes: Array.isArray(c.catalog?.makes) ? c.catalog.makes : [] }, mail: { ...S.defaults().mail, ...(c.mail || {}) }, firstRun: { dismissed: !!c.firstRun?.dismissed } }; };
+  // Returns settings: reasons to pick from, whether Standard users may process returns, an optional refund limit for them (cents, 0 = none) and the default restocking fee.
+  const retNorm = (r) => { r = r || {}; const d = S.defaults().returns;
+    return { reasons: Array.isArray(r.reasons) && r.reasons.length ? r.reasons.map(x => ({ key: String(x.key), label: String(x.label || ''), archived: !!x.archived })) : d.reasons, standardCan: r.standardCan !== false, limit: Math.max(0, Math.round(Number(r.limit) || 0)), fee: ['pct', 'flat'].includes(r.fee?.mode) ? { mode: r.fee.mode, value: Math.max(0, Number(r.fee.value) || 0) } : d.fee }; };
+  S.config = () => { const c = S.get('config', CONFIG_ID)?.data; if (!(c && Array.isArray(c.fields) && Array.isArray(c.steps))) return S.defaults(); return { ...c, steps: upgraded(c.steps), tests: { enabled: c.tests?.enabled !== false, requireBeforeSale: !!c.tests?.requireBeforeSale }, warranty: c.warranty?.periods ? c.warranty : S.defaults().warranty, payments: Array.isArray(c.payments?.methods) && c.payments.methods.length ? c.payments : S.defaults().payments, unlock: { ...S.defaults().unlock, ...(c.unlock || {}) }, discount: { ...S.defaults().discount, ...(c.discount || {}) }, catalog: { makes: Array.isArray(c.catalog?.makes) ? c.catalog.makes : [] }, mail: { ...S.defaults().mail, ...(c.mail || {}) }, firstRun: { dismissed: !!c.firstRun?.dismissed }, returns: retNorm(c.returns) }; };
   S.saveConfig = (cfg) => S.commit({ puts: [{ type: 'config', id: CONFIG_ID, data: cfg }] });
 })();

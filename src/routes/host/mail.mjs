@@ -7,6 +7,7 @@ import { TEMPLATES, PLACEHOLDERS, EDITABLE, defaultsOf, wording, problems, rende
 import { getSetting, setSetting } from '../../db/settings.mjs';
 import { newId } from '../../core/ids.mjs';
 import { checkSender, cleanSelector } from '../../services/mail/sender-checks.mjs';
+import { runMailCheck, saveLastTest, mailTestStatus, logTest, scrub } from '../../services/mail/diagnose.mjs';
 
 const QUEUE_SQL = 'SELECT id, to_addr, subject, status, attempts, last_error, created_at, sent_at FROM mail_queue ORDER BY created_at DESC LIMIT 30';
 
@@ -27,7 +28,7 @@ export function mailRoutes(db, { resolver } = {}) {   // resolver: the DNS clien
       lastSentAt: lastSent?.sent_at ? Number(lastSent.sent_at) : null, lastFailureAt: lastFail ? Number(lastFail.created_at) : null, lastError: lastFail?.last_error || '',
       sent24h: await n("SELECT COUNT(*) AS n FROM mail_queue WHERE status = 'sent' AND sent_at > ?", [now - 24 * H]), failed24h: await n("SELECT COUNT(*) AS n FROM mail_queue WHERE status = 'failed' AND created_at > ?", [now - 24 * H]),
       sent7d: await n("SELECT COUNT(*) AS n FROM mail_queue WHERE status = 'sent' AND sent_at > ?", [now - 168 * H]), failed7d: await n("SELECT COUNT(*) AS n FROM mail_queue WHERE status = 'failed' AND created_at > ?", [now - 168 * H]),
-      queued: await n("SELECT COUNT(*) AS n FROM mail_queue WHERE status = 'queued'"), oldestQueuedAt: oldest ? Number(oldest.created_at) : null });
+      queued: await n("SELECT COUNT(*) AS n FROM mail_queue WHERE status = 'queued'"), oldestQueuedAt: oldest ? Number(oldest.created_at) : null, test: await mailTestStatus(db) });
   });
 
   // Sender checks: SPF, DMARC and DKIM records of the From address's domain. Public DNS facts only.
@@ -93,13 +94,23 @@ export function mailRoutes(db, { resolver } = {}) {   // resolver: the DNS clien
   r.post('/:id/resend', (req, res) => resend(req, res, 'AND id = ?', [String(req.params.id)], 'Resend'));
   r.put('/', async (req, res) => {
     const chk = checkSmtp(req.body?.smtp); if (chk.error && req.body?.mode === 'smtp') return res.status(400).json({ error: chk.error }); await saveMailSettings(db, req.body, req.subject.username); res.json({ ok: true }); });
-  r.post('/test', async (req, res) => {
-    const to = String(req.body.to || req.subject.email || '');
+  // "Send test email" and "Check my email setup": the settings, the connection, the sign-in and the send, in order, with a plain-language cause and next step when one fails.
+  // The result (never the password) is remembered, and the history row of the test message appears under Recent messages.
+  const check = async (req, res) => {
+    const to = String(req.body?.to || req.subject.email || '');
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return res.status(400).json({ error: 'Enter a valid recipient address.' });
-    const id = await enqueueMail(db, to, 'test'); await processQueue(db);
-    const last = await db.get('SELECT status, last_error FROM mail_queue WHERE id = ?', [id]);
-    hostLog(req, last.status === 'sent' ? 'info' : 'warn', 'mail.test', `Test email to ${to}: ${last.status}${last.last_error ? ` — ${last.last_error}` : ''}`, { data: { to, status: last.status } });
-    res.json({ ok: last.status === 'sent', status: last.status, error: last.last_error });
-  });
+    const result = await runMailCheck(db, { to, resolver, greetingMs: Number(process.env.MAIL_GREETING_MS) || 6000 }), ok = result.ok || (result.warning && !result.failure);
+    // Every test leaves a line under Recent messages (sent, or failed with the plain reason), using the saved wording of the Test message.
+    const msg = render('test', {}, (await getSetting(db, 'mail_templates', {})).test);
+    await db.run('INSERT INTO mail_queue (id,to_addr,subject,body_text,body_html,status,attempts,last_error,created_at,sent_at) VALUES (?,?,?,?,?,?,?,?,?,?)',
+      [newId(), to, msg.subject, msg.text, msg.html, ok ? 'sent' : 'failed', 1, ok ? null : scrub(`${result.failure.title}. ${result.failure.detail}`).slice(0, 500), result.at, ok ? Date.now() : null]);
+    const saved = await saveLastTest(db, result); logTest(result, req.subject.username, req.ip);
+    hostLog(req, result.ok ? 'info' : 'warn', 'mail.test', `Test email to ${to}: ${result.ok ? 'sent' : `not sent (${result.failure.title})`}`, { data: { to, status: result.ok ? 'sent' : 'failed', kind: result.failure?.kind || null } });
+    res.json({ ok: result.ok, status: result.ok ? 'sent' : 'failed', error: result.failure ? `${result.failure.title}. ${result.failure.cause}` : '', result, last: { at: saved.at, ok: saved.ok, title: saved.title } });
+  };
+  r.post('/test', check);
+  r.post('/check', check);
+  // The last test, and whether one has passed since the settings last changed.
+  r.get('/test-status', async (req, res) => res.json(await mailTestStatus(db)));
   return r;
 }

@@ -12,8 +12,10 @@
 
   // ---------------------------------------------------------------- the list
   async function listPage(main) {
-    const [cfg, staff] = await Promise.all([api('GET', '/settings'), api('GET', '/staff')]), s = cfg.settings;
+    const [cfg, staff, sm] = await Promise.all([api('GET', '/settings'), api('GET', '/staff'), api('GET', '/summary')]), s = cfg.settings;
     swap(main, `${Host.head('Support', 'Tickets that signed-in resellers opened from their app. You can read what they write here, so they are told not to paste customer details, passwords or recovery keys.')}${tabs('tickets')}
+      <div class="row wrap mb-lg" id="stats"><button type="button" class="chip" id="od" aria-pressed="false" aria-label="Overdue tickets"></button><span class="hint mt-0" id="odh"></span></div>
+      <div id="live" aria-live="polite"></div>
       <div class="card"><div class="row wrap">
         <div class="field">${UI.select.html({ id: 'fs', options: STATUS_FILTER, value: F.status })}</div>
         <div class="field">${UI.select.html({ id: 'fp', options: [['', 'Any priority'], ...s.priorities.map(p => [p, p])], value: F.priority })}</div>
@@ -22,19 +24,45 @@
         <div class="field grow"><input type="search" id="q" placeholder="Search tickets: number, subject, reseller, person, message" value="${esc(F.q)}" aria-label="Search tickets"></div></div>
         <div id="tbl" class="mt-md"></div><div id="more"></div></div>`);
     wireTabs(main);
-    let shown = 0, total = 0;
+    let shown = 0, total = 0, baseline = 0, marker = '', pending = null, checking = false;
     const row = (t) => `<tr class="click" data-no="${t.number}"><td class="ident">${esc(t.label)}</td><td><b>${esc(t.subject)}</b><div class="hint mt-0">${esc(t.category)}</div></td><td>${esc(t.accountName || '')} <span class="ident muted">${esc(t.accountCode || '')}</span></td>
       <td>${S().statusChip(t.status, t.statusLabel)}</td><td>${esc(t.priority)}</td><td class="muted">${esc(t.assignee || 'Unassigned')}</td><td class="muted">${esc(fmt.ago(t.updatedAt))}</td><td class="muted">${esc(waitText(t))} ${t.overdue ? '<span class="chip red">Overdue</span>' : ''}</td></tr>`;
-    const load = async (more) => {
-      const p = new URLSearchParams({ status: F.status, offset: more ? shown : 0 }); for (const k of ['priority', 'category', 'assignee', 'q']) if (F[k]) p.set(k, F[k]);
-      const d = await api('GET', '/tickets?' + p); total = d.total; shown = (more ? shown : 0) + d.tickets.length;
-      const box = main.querySelector('#tbl');
+    const query = (offset, limit) => { const p = new URLSearchParams({ status: F.status, offset }); if (limit) p.set('limit', limit); for (const k of ['priority', 'category', 'assignee', 'q']) if (F[k]) p.set(k, F[k]); return api('GET', '/tickets?' + p); };
+    const hideBar = () => { pending = null; main.querySelector('#live').innerHTML = ''; };
+    // The Overdue number is the one the menu count, the alert and the Overview card use (the summary). Red when above zero, neutral at zero.
+    const paintOverdue = (n, days) => {
+      const od = main.querySelector('#od'); if (!od) return;
+      od.textContent = `${n} overdue`; od.classList.toggle('red', n > 0); od.setAttribute('aria-pressed', String(F.status === 'overdue')); od.classList.toggle('on', F.status === 'overdue');
+      od.setAttribute('aria-label', `${n} overdue ticket${n === 1 ? '' : 's'}, past the response target. ${F.status === 'overdue' ? 'Showing them; select to go back to active tickets.' : 'Select to show only these.'}`);
+      main.querySelector('#odh').textContent = `Past the response target of ${days} business day${days === 1 ? '' : 's'}.`;
+    };
+    const paint = (d, more) => {
+      total = d.total; shown = (more ? shown : 0) + d.tickets.length; baseline = Math.max(baseline, d.newest || 0); if (!more) marker = d.latest;
+      const box = main.querySelector('#tbl'), keep = !more && document.activeElement?.closest?.('#tbl tr[data-no]')?.dataset.no;   // the row being used with the keyboard keeps focus through a refresh
       if (!more) box.innerHTML = d.tickets.length ? `<div class="tablewrap"><table><thead><tr><th>Ticket</th><th>Subject</th><th>Reseller</th><th>Status</th><th>Priority</th><th>Assigned</th><th>Last activity</th><th>Waiting</th></tr></thead><tbody>${d.tickets.map(row).join('')}</tbody></table></div>` : '<div class="empty">No tickets match. Change the filters, or enjoy the quiet.</div>';
       else box.querySelector('tbody').insertAdjacentHTML('beforeend', d.tickets.map(row).join(''));
+      if (keep) box.querySelector(`tr[data-no="${keep}"]`)?.focus({ preventScroll: true });
       UI.more(main.querySelector('#more'), { shown, total, noun: total === 1 ? 'ticket' : 'tickets', load: () => load(true).catch(e => toast(e.message, true)) });
     };
+    const load = async (more) => { const d = await query(more ? shown : 0); if (!more) { hideBar(); baseline = d.newest || 0; } paint(d, more); };
     const refresh = () => load(false).catch(e => toast(e.message, true));
-    for (const [id, key] of [['fs', 'status'], ['fp', 'priority'], ['fc', 'category'], ['fa', 'assignee']]) main.querySelector('#' + id).addEventListener('change', (e) => { F[key] = UI.select.value(e.target); refresh(); });
+    // Live refresh (T36): the menu poll hands over the light summary. Only when its change marker moved is the list asked again, with as many rows as are on screen.
+    // Rows that changed are swapped in place (filters, search text, scroll and the ticket being read are untouched); new tickets wait behind a bar so the list never jumps.
+    Host.onSummary = async (sum) => {
+      if (!main.isConnected) { Host.onSummary = null; return; }
+      paintOverdue(sum.overdue, sum.responseDays);
+      if (checking || sum.latest === marker) return;
+      checking = true;
+      try {
+        const d = await query(0, Math.max(shown, 100)), fresh = d.tickets.filter(t => t.number > baseline).length;
+        if (fresh) { pending = d; marker = d.latest; main.querySelector('#live').innerHTML = `<div class="banner blue mb-lg">${fresh} new ticket${fresh === 1 ? '' : 's'} <button type="button" class="linkish" id="showlive">show</button></div>`; }
+        else { hideBar(); const y = window.scrollY, top = main.scrollTop; paint(d, false); window.scrollTo(0, y); main.scrollTop = top; }
+      } catch {} finally { checking = false; }
+    };
+    main.querySelector('#live').addEventListener('click', (e) => { if (!e.target.closest('#showlive') || !pending) return; const d = pending; hideBar(); baseline = d.newest || 0; paint(d, false); window.scrollTo(0, 0); main.querySelector('#tbl tr[data-no]')?.focus({ preventScroll: true }); });
+    paintOverdue(sm.overdue, sm.responseDays);
+    main.querySelector('#od').addEventListener('click', () => { F.status = F.status === 'overdue' ? 'active' : 'overdue'; UI.select.set(main.querySelector('#fs'), F.status); paintOverdue(Host.support?.overdue ?? sm.overdue, sm.responseDays); refresh(); });
+    for (const [id, key] of [['fs', 'status'], ['fp', 'priority'], ['fc', 'category'], ['fa', 'assignee']]) main.querySelector('#' + id).addEventListener('change', (e) => { F[key] = UI.select.value(e.target); paintOverdue(Host.support?.overdue ?? sm.overdue, sm.responseDays); refresh(); });
     let t; main.querySelector('#q').addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => { F.q = e.target.value.trim(); refresh(); }, 300); });
     main.querySelector('#tbl').addEventListener('click', (e) => { const tr = e.target.closest('tr[data-no]'); if (tr) location.hash = `#/support/${tr.dataset.no}`; });
     await load(false);
@@ -102,6 +130,8 @@
   async function settingsPage(main) {
     const cfg = await api('GET', '/settings'), s = cfg.settings; let canned = s.canned.map(c => ({ ...c }));
     const num = (id, label, val, hint) => `<div class="field"><label for="${id}">${label}</label><input type="number" class="num" id="${id}" value="${esc(val)}" inputmode="numeric">${hint ? `<div class="hint">${hint}</div>` : ''}</div>`;
+    const sw = (id, title, desc, on, off) => `<div class="setting"><div><div class="setting-title">${title}</div><div class="setting-desc">${desc}</div></div><label class="switch"><input type="checkbox" id="${id}" aria-label="${esc(title)}" ${on ? 'checked' : ''} ${off ? 'disabled' : ''}><i></i></label></div>`;
+    const chosen = cfg.staffList.map(a => `<div class="setting"><div class="setting-title">${esc(a.username)}</div><label class="switch"><input type="checkbox" data-ch="${esc(a.id)}" aria-label="Send notices to ${esc(a.username)}" ${s.notifyChosen.includes(a.id) ? 'checked' : ''}><i></i></label></div>`).join('');
     const cannedHtml = () => canned.map((c, i) => `<div class="setting"><div class="grow"><div class="field"><label for="cn${i}">Title</label><input type="text" id="cn${i}" data-i="${i}" data-f="title" maxlength="60" value="${esc(c.title)}"></div><div class="field mb-0"><label for="cb${i}">Text</label><textarea id="cb${i}" data-i="${i}" data-f="body" maxlength="2000" rows="3">${esc(c.body)}</textarea></div></div><button type="button" class="icon-btn" data-rm="${i}" aria-label="Remove canned reply ${esc(c.title)}">&times;</button></div>`).join('') || '<div class="empty">No canned replies yet.</div>';
     swap(main, `${Host.head('Support', 'Tickets that signed-in resellers opened from their app. You can read what they write here, so they are told not to paste customer details, passwords or recovery keys.')}${tabs('settings')}
       ${cfg.mailReady ? '' : `<div class="banner mb-lg">Email is not set up, so resellers are not emailed about replies; they see a red number in their app instead. ${esc(cfg.mailNote)} <a href="#/email">Open Email</a></div>`}
@@ -113,6 +143,17 @@
         <div class="grid g2"><div>${num('rd', 'Response target (business days)', s.responseDays, '1 to 30. Default 2.')}${num('ac', 'Days before Resolved closes by itself', s.autoCloseDays, '1 to 90. Default 7. A reply from the reseller reopens a Resolved ticket first.')}${num('pt', 'New tickets per account per hour', s.perHour, '1 to 60.')}${num('oc', 'Open tickets per account', s.openCap, '1 to 100.')}</div>
           <div>${num('mf', 'Screenshots per message', s.maxFiles, `0 turns screenshots off. Up to ${cfg.limits.maxFilesMax}. Only PNG or JPG are accepted.`)}${num('mk', 'Largest screenshot (KB)', s.maxKB, `50 to ${cfg.limits.maxKBMax}.`)}</div></div>
         <div class="row row-end mt-md"><button type="button" class="btn" id="save">Save support settings</button></div></div>
+      <div class="card"><h3>New-ticket notices</h3><div class="sub">How the Host hears about a new ticket right away. Alerts always show in Alerts and raise its count; the email goes out through Email.</div>
+        ${sw('ni', 'Show new tickets in Alerts', 'A line in Alerts links to the ticket and clears when the ticket is opened or replied to. High and Urgent show red.', s.notifyInApp)}
+        ${sw('ne', 'Email the Host about new tickets', cfg.mailReady ? 'Sends the reseller name, priority, category and the first lines of the message. No screenshots. Switch on after a test email from Email has worked.' : 'Off until Email is set up and a test email has worked. Open Email first.', s.notifyEmail, !cfg.mailReady && !s.notifyEmail)}
+        ${sw('rni', 'Show reseller replies in Alerts', 'When a reseller answers a ticket that is now waiting on the Host.', s.notifyReplyInApp)}
+        ${sw('rne', 'Email the Host about reseller replies', cfg.mailReady ? 'Same email, for replies on a ticket waiting on the Host.' : 'Off until Email is set up and a test email has worked.', s.notifyReplyEmail, !cfg.mailReady && !s.notifyReplyEmail)}
+        <div class="grid g2 mt-md"><div class="field"><label for="nr">Send emails to</label>${UI.select.html({ id: 'nr', options: [['all', 'All Host administrators'], ['owner', 'Owner only'], ['chosen', 'A chosen list']], value: s.notifyRecipients })}</div>
+          <div class="field"><label for="nt">Which tickets</label>${UI.select.html({ id: 'nt', options: [['every', 'Every ticket'], ['high', 'Only High and Urgent']], value: s.notifyThreshold })}</div></div>
+        <div class="field" id="nch"><label>Chosen list</label>${chosen}<div class="hint">Only administrators with an email address can be chosen.</div></div>
+        ${sw('nd', 'Daily digest instead of one email per ticket', 'One email a day listing new tickets and reseller replies. Alerts are not affected.', s.notifyDigest)}
+        ${num('np', 'Notice emails per hour', s.notifyPerHour, '1 to 200. Default 20. When the limit is reached the rest are not emailed (they still show in Alerts) and this is logged.')}
+        <div class="row row-end mt-md"><button type="button" class="btn" id="savenote">Save support settings</button></div></div>
       <div class="card"><h3>Retention</h3><div class="sub">Closed tickets are kept, with their messages and screenshots, until the Owner administrator purges them. This is stated in the Terms and Privacy Policy and on the reseller’s form. ${cfg.closed} closed ticket${cfg.closed === 1 ? '' : 's'} held now.</div>
         ${cfg.isOwner ? '<button type="button" class="btn danger" id="purge">Purge closed tickets</button>' : '<div class="setting-desc">Only the Owner administrator can purge tickets.</div>'}</div>`);
     wireTabs(main);
@@ -120,11 +161,16 @@
     const wireCanned = () => main.querySelectorAll('#canned [data-rm]').forEach(b => b.addEventListener('click', () => { reads(); canned.splice(Number(b.dataset.rm), 1); main.querySelector('#canned').innerHTML = cannedHtml(); wireCanned(); }));
     wireCanned();
     main.querySelector('#addc').addEventListener('click', () => { reads(); canned.push({ id: '', title: '', body: '' }); main.querySelector('#canned').innerHTML = cannedHtml(); wireCanned(); main.querySelector(`#cn${canned.length - 1}`).focus(); });
-    main.querySelector('#save').addEventListener('click', (e) => busy(e.currentTarget, async () => {
+    const on = (id) => main.querySelector('#' + id).checked, pick = (id) => UI.select.value(main.querySelector('#' + id));
+    const showChosen = () => { main.querySelector('#nch').hidden = pick('nr') !== 'chosen'; }; showChosen(); main.querySelector('#nr').addEventListener('change', showChosen);
+    const save = (e) => busy(e.currentTarget, async () => {
       reads(); const v = (id) => main.querySelector('#' + id).value;
-      try { await api('PUT', '/settings', { categories: v('cats'), priorities: v('pris'), defaultPriority: UI.select.value(main.querySelector('#dp')), canned, responseDays: v('rd'), autoCloseDays: v('ac'), perHour: v('pt'), openCap: v('oc'), maxFiles: v('mf'), maxKB: v('mk') }); toast('Support settings saved'); Host.route(); }
+      try { await api('PUT', '/settings', { categories: v('cats'), priorities: v('pris'), defaultPriority: pick('dp'), canned, responseDays: v('rd'), autoCloseDays: v('ac'), perHour: v('pt'), openCap: v('oc'), maxFiles: v('mf'), maxKB: v('mk'),
+        notifyInApp: on('ni'), notifyEmail: on('ne'), notifyReplyInApp: on('rni'), notifyReplyEmail: on('rne'), notifyRecipients: pick('nr'), notifyThreshold: pick('nt'), notifyDigest: on('nd'), notifyPerHour: v('np'), notifyChosen: [...main.querySelectorAll('[data-ch]')].filter(x => x.checked).map(x => x.dataset.ch) });
+        toast('Support settings saved'); Host.route(); }
       catch (er) { toast(er.message, true); }
-    }));
+    });
+    main.querySelector('#save').addEventListener('click', save); main.querySelector('#savenote').addEventListener('click', save);
     main.querySelector('#purge')?.addEventListener('click', () => purgeSheet(cfg.closed));
   }
 

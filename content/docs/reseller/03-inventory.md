@@ -1,9 +1,9 @@
 ---
 title: Inventory
 summary: Add, scan, import, search, edit, test, archive and export every device you own, and set reorder levels so you never run out of a popular model.
-keywords: inventory, camera button, scan with camera, search by camera, paging, per page, 25 per page, next page, previous, small medium large, aim line, wrong barcode, scan next field, several barcodes on a label, no spinners, monospace, devices, stock, add device, bulk scan, barcode, scanner, uid, serial number, mac address, condition, supplier, cost, selling price, status, date received, tested on, test record, import csv, export csv, archive, delete, reorder, low stock, make, model, filter, search, awaiting test
+keywords: inventory, camera button, scan with camera, search by camera, paging, per page, 25 per page, next page, previous, small medium large, aim line, wrong barcode, scan next field, several barcodes on a label, no spinners, monospace, devices, stock, add device, bulk scan, barcode, scanner, uid, serial number, mac address, condition, supplier, cost, selling price, status, date received, tested on, test record, import csv, export csv, archive, delete, reorder, low stock, make, model, filter, search, awaiting test, returned device, damaged, running low, return
 order: 3
-covers: nav:inventory, camera button, Search by camera, Scanning a detail with the camera, Bulk scan with the camera, Scan next field, 25 / 50 / 100 per page, Previous, Next, Showing 1–25, Pages, Add device, Save and add another, Save, Cancel, Close, Bulk scan, Save 0 devices, Remove last, Scan or type then Enter, What do you scan for each device, Import CSV, Import devices, Export CSV, Search, Available, All (not archived), Awaiting test, Reserved, Sold, Returned, Damaged, Archived, All models, Make, Model, Add new, UID, Serial number, MAC address, Condition, Supplier, Status, Cost, Selling price, Date received, Notes, Test record, Mark all done, Tested on, Test notes, required before sale, Stock levels, Reorder at, Low, Archive, Restore, Delete, Tests column, columns
+covers: nav:inventory, Import checks, That file is too large, That does not look like a CSV file, camera button, Search by camera, Scanning a detail with the camera, Bulk scan with the camera, Scan next field, 25 / 50 / 100 per page, Previous, Next, Showing 1–25, Pages, Add device, Save and add another, Save, Cancel, Close, Bulk scan, Save 0 devices, Remove last, Scan or type then Enter, What do you scan for each device, Import CSV, Import devices, Export CSV, Search, Available, All (not archived), Awaiting test, Reserved, Sold, Returned, Damaged, Archived, All models, Make, Model, Add new, UID, Serial number, MAC address, Condition, Supplier, Status, Cost, Selling price, Date received, Notes, Test record, Mark all done, Tested on, Test notes, required before sale, Stock levels, Reorder at, Low, Archive, Restore, Delete, Tests column, columns, Running low, Return or refund, Returned, Damaged
 ---
 
 ## What Inventory is for
@@ -25,7 +25,9 @@ If your user type does not include inventory at all, you will see a message that
 
 At the top right are the action buttons: **Bulk scan**, **Import CSV**, **Export CSV** and **Add device**. View users see only **Export CSV**.
 
-Under that, if any model is at or below its reorder level, a banner lists it, for example "Fire Stick 4K: 2 left (reorder at 3)".
+![The Inventory list with search, filters, status chips and one row for each device](shot:reseller-inventory-1 "The Inventory list.")
+
+Under that, if any model is at or below its reorder level, a banner lists it, for example "Fire Stick 4K: 2 left (reorder at 3)". Home shows the same models in its **Running low** card, one row per model with the number left, the reorder level and a small bar; clicking a row opens this page filtered to that model (see [Home](#/docs/home)).
 
 Then the toolbar: a search box and two drop-down filters. Then the table of devices. Last, a **Stock levels** card.
 
@@ -77,8 +79,8 @@ The second drop-down starts at **All models** and lists every model that appears
 - **Available**: ready to sell.
 - **Reserved**: set aside for someone, not for general sale. Quick sale will not accept it.
 - **Sold**: set automatically when you complete a sale. It records the sale date and receipt.
-- **Returned**: came back from a customer. It is treated like available stock again, so it can be sold again.
-- **Damaged**: not sellable. Quick sale will not accept it.
+- **Returned**: came back from a customer. It is treated like available stock again, so it can be sold again. You normally do not set this by hand: processing a return on the sale (see [Returns and refunds](#/docs/returns-and-refunds)) lets you choose **Returned** for each device that came back.
+- **Damaged**: not sellable. Quick sale will not accept it. A returned device that arrives broken can be sent straight here when you process the return, which keeps it out of stock.
 - **Archived**: tucked away without deleting. See below.
 - **Awaiting test**: not something you choose. The app shows it automatically for an Available or Returned device whose required tests are not finished, when **Sell only tested devices** is on. Ticking the test steps frees the device automatically.
 
@@ -92,6 +94,8 @@ The second drop-down starts at **All models** and lists every model that appears
 6. Add any **Notes**.
 7. Fill in the **Test record** if you have already tested it.
 8. Press **Save**, or **Save and add another** to keep going with a fresh form. **Cancel** closes without saving.
+
+![The Add device sheet with the identifier, make, model and price fields](shot:reseller-inventory-2 "The Add device sheet.")
 
 A "Device added" message confirms it.
 
@@ -181,6 +185,8 @@ Use **Import CSV** to bring in a spreadsheet saved as CSV, for example from a pr
 4. A box says how many devices will be added and how many rows will be skipped. Rows are skipped when they have no identifier or one that already exists.
 5. Press **Import N** to confirm, or **Cancel**.
 
+The import checks the file before it adds anything. A file larger than 10 MB, one with more than 20,000 rows, one that is not a text CSV (a zip or a picture), and one with no row of column names each stop with a plain message and add nothing; split a very large file into smaller ones. A cost or price written as a negative number is imported as zero. A row is skipped when its UID, Serial number or MAC address is already in your account or appears earlier in the same file (capital letters do not matter). Importing the same file twice therefore adds nothing the second time. A device imported with the status **Sold** is not linked to any sale. Text that starts with =, +, - or @ is exported with a ' in front so spreadsheets do not run it as a formula, and the import takes that ' off again, so Export CSV followed by Import CSV brings every device back as it was.
+
 Missing columns get sensible defaults: Status Available, costs zero, Date received today, and Condition the first choice. Makes and models are spelled to match your existing lists. Files are read inside your browser; the site never sees them.
 
 > Tip: the quickest way to learn the layout is to press **Export CSV**, open that file, and add rows in the same shape.
@@ -209,11 +215,13 @@ If you change a unique detail to something another device already has, the save 
 
 **Delete** asks "Delete this device?" and says it is removed for good. Past sales that included it keep their receipts. If you are unsure, use Archive instead. There is no undo.
 
-> Important: if a device was sold by mistake, void the sale in [Sales](#/docs/sales) rather than editing its status. Voiding returns it to available and keeps the history tidy.
+> Important: if a device was sold by mistake, void the sale in [Sales](#/docs/sales) rather than editing its status. Voiding returns it to available and keeps the history tidy. If a customer genuinely sent it back, use **Return or refund** on the sale instead, so the refund is recorded too (see [Returns and refunds](#/docs/returns-and-refunds)).
 
 ## Stock levels and reorder
 
-The **Stock levels** card lists every model with how many are available. Type a number in **Reorder at** for any model and the page saves it ("Saved"). When the available count is at or below that number a red **Low** chip appears, the banner shows at the top, and Home also warns you. Enter 0 to turn off the warning. View users can see the numbers but the boxes are disabled.
+The **Stock levels** card lists every model with how many are available. Type a number in **Reorder at** for any model and the page saves it ("Saved"). When the available count is at or below that number a red **Low** chip appears, the banner shows at the top, and Home also warns you. Enter 0 to turn off the warning. View users can see the numbers but the boxes are disabled. The same level decides which models appear in the **Running low** card on [Home](#/docs/home): a model with no level set (0) never appears there.
+
+![The Stock levels card listing each model with how many are available and a Reorder at box](shot:reseller-inventory-3 "Stock levels: type a Reorder at number for each model.")
 
 Example: you want to keep at least four of one model. Set Reorder at to 4.
 

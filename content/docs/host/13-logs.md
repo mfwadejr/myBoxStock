@@ -1,7 +1,7 @@
 ---
 title: Logs
 summary: How to read, filter, search and export the server's activity log, where the log files live on disk, how long they are kept, and what is never written to them.
-keywords: feed box, showing n of m, scrolling box, logs, log, activity log, areas, level, debug, info, warn, error, quick filters, problems today, failed sign-ins, lockouts and bans, search, raw, json, export csv, export json, load more, log files, jsonl, retention, redacted, http log, tenant, troubleshooting
+keywords: host, feed box, showing n of m, scrolling box, logs, log, activity log, areas, level, debug, info, warn, error, quick filters, problems today, failed sign-ins, lockouts and bans, search, raw, json, export csv, export json, load more, log files, jsonl, retention, redacted, http log, tenant, troubleshooting
 order: 13
 covers: nav:logs, area filter, All areas, auth, security, host, accounts, backup, mail, system, database, error, level filter, All levels, debug, info, warn, Last hour, Last 24 hours, Last 7 days, Last 30 days, All time, Custom dates, From, To, Search messages events people IP addresses Reseller IDs, Problems today, Failed sign-ins, Lockouts and bans, Errors, Clear filters, raw, Load more, Showing N of M entries, feed box, Export CSV, Export JSON, LOG_DIR, LOG_LEVEL, LOG_MAX_MB, LOG_FILES, LOG_RETENTION_DAYS, LOG_CONSOLE
 ---
@@ -21,6 +21,8 @@ Use it when you want to know what the server has been doing and why. Typical que
 Logs is about the platform itself. It never contains a customer's inventory, sales or customer list, because the Host cannot see those and the server does not write them down. A related but different screen, the [Audit trail](#/docs/audit-trail), lists what Host administrators did and who signed in to the Host Console. Everything in the Audit trail is also in Logs, but Logs has much more: it is the place for troubleshooting, and the Audit trail is the place for accountability.
 
 > Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
+
+![Logs page](shot:host-logs "Logs: filters, quick filters and the scrolling feed.")
 
 ## How an entry looks
 

@@ -63,3 +63,68 @@ test('every local link, stylesheet and script resolves (screenshots are made sep
   }
   assert.deepEqual(bad, []);
 });
+
+// ---- W5: development status, sign-ups closed, Available today and Coming soon ----
+import { AVAILABLE, COMING_SOON } from '../tools/site/src/content.mjs';
+import { WORDS } from '../tools/site/src/settings.mjs';
+const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+const textOf = (f) => read(f).replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&#39;|&rsquo;/g, "'").replace(/\s+/g, ' ');
+
+test('closed notice, pricing line and a non-clickable sign-up state are on the pages; the setting is closed', () => {
+  assert.match(fs.readFileSync(path.join(ROOT, 'tools/site/src/settings.mjs'), 'utf8'), /SITE_SIGNUPS \|\| 'closed'/);
+  const home = textOf('index.html');
+  assert.ok(home.includes('myBoxStock is in active development. Sign-ups are currently closed.'));
+  assert.ok(home.includes('Sign-ups are currently closed'));
+  assert.ok(textOf('pricing.html').includes('Plans and pricing are still being finalized.'));
+  for (const f of ['faq.html', 'pricing.html']) assert.ok(textOf(f).includes(WORDS.faqQ) && textOf(f).includes('Not yet. myBoxStock is in active development'), `${f}: Can I sign up now?`);
+  for (const f of files) { const foot = read(f).match(/<footer[\s\S]*<\/footer>/)[0]; assert.ok(foot.includes('Sign-ups are currently closed'), `${f}: footer notice`); }
+  // the banner sits right under the main call to action
+  assert.match(read('index.html'), /class="closedbtn"[^>]*>Sign-ups are currently closed<\/span>[\s\S]{0,400}class="banner devnote"/);
+});
+
+test('while closed there is no working sign-up link or button anywhere', () => {
+  for (const f of files) { const h = read(f); assert.doesNotMatch(h, /data-app="signup"/, `${f}: sign-up link`); assert.doesNotMatch(h, /href="[^"]*#\/signup"/, `${f}: sign-up address`); assert.doesNotMatch(h, /<(a|button)[^>]*>\s*Sign up/i, `${f}: Sign up control`); }
+  const html = read('index.html'); assert.doesNotMatch(html, /<a[^>]*>\s*Sign-ups are currently closed/); assert.doesNotMatch(html, /<form|<input/i, 'no notify-me or contact form');
+});
+
+test('one setting opens sign-ups: building with SITE_SIGNUPS=open gives sign-up links and no closed notices', () => {
+  const d2 = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'mbs-site-open-')), 'site');
+  const r2 = spawnSync('node', ['tools/site/build.mjs', d2], { cwd: ROOT, encoding: 'utf8', env: { ...process.env, SITE_SIGNUPS: 'open' } }); assert.equal(r2.status, 0, r2.stderr);
+  const h = fs.readFileSync(path.join(d2, 'index.html'), 'utf8'); assert.match(h, /data-app="signup"/); assert.doesNotMatch(h, /Sign-ups are currently closed|active development/);
+});
+
+test('Available today lists only features the app ships, and Coming soon items carry no dates or promises', () => {
+  assert.ok(AVAILABLE.length >= 12);
+  for (const a of AVAILABLE) {
+    assert.ok(a.ships?.length, `${a.id}: names the app code that ships it`);
+    for (const [file, word] of a.ships) { assert.ok(fs.existsSync(path.join(ROOT, file)), `${a.id}: ${file} exists`); assert.ok(fs.readFileSync(path.join(ROOT, file), 'utf8').includes(word), `${a.id}: ${file} contains "${word}"`); }
+    assert.ok(textOf('features.html').includes(a.h), `${a.id} is on the Features page`); assert.ok(read('features.html').includes(`id="${a.id}"`));
+  }
+  const need = ['Bulk scan', 'Running low', 'Quick sale', 'label', 'refund', 'saved address', 'profit', 'Administrator', 'View', 'Standard', 'Activity', 'backup', 'Get set up', 'support ticket', 'encrypted in your'];
+  const all = textOf('features.html').toLowerCase(); for (const n of need) assert.ok(all.includes(n.toLowerCase()), `Features page covers ${n}`);
+  const DATE = /\b(20\d\d|Q[1-4]|january|february|march|april|may|june|july|august|september|october|november|december|soon|next (week|month|year)|by (the )?end|this (year|quarter|summer|fall|winter|spring)|\d{1,2}\/\d{1,2})\b/i;
+  for (const c of COMING_SOON) { assert.ok(c.title && c.text, 'item has a title and a sentence'); assert.doesNotMatch(c.title + ' ' + c.text, DATE, `Coming soon item has a date: ${c.title}`); }
+  const home = read('index.html'), feat = read('features.html');
+  if (!COMING_SOON.length) { for (const h of [home, feat]) { assert.doesNotMatch(h, /Coming soon|Planned and not yet available/); } } else for (const h of [home, feat]) assert.ok(h.includes(WORDS.comingLead));
+  assert.doesNotMatch(read('features.html').match(/<main>[\s\S]*<\/main>/)[0], /\b20\d\d\b|\bQ[1-4]\b/, 'no dates on the Features page');
+});
+
+test('no banned phrases: no notify-me or waitlist, no trial or price or plan-limit claims, no Free plan, no email or phone', () => {
+  const banned = /notify me|notified|waitlist|wait list|subscribe|newsletter|14 days|fourteen days|free trial|free for|no card|per month|\/month|per year|\bfree plan\b|comped|complimentary|users included|devices included|unlimited|\$\s?\d|€|£|call us|email us|contact us at/i;
+  for (const f of files.filter(f => !LEGAL.includes(f))) { const t = textOf(f); const m = t.match(banned); assert.equal(m, null, `${f}: "${m?.[0]}"`); }
+});
+
+test('images: every screenshot a page uses is in the build, the PNGs are small, with alt text and sizes', () => {
+  let n = 0;
+  for (const f of files) for (const m of read(f).matchAll(/<img[^>]*src="(ms\/shots\/[^"]+)"[^>]*>/g)) {
+    n++; const file = path.join(dir, m[1]); assert.ok(fs.existsSync(file), `${f}: ${m[1]} is missing`); assert.ok(fs.statSync(file).size < 250 * 1024, `${m[1]} is over 250 KB`);
+    assert.match(m[0], /alt="[^"]{8,}"/); assert.match(m[0], /width="\d+" height="\d+"/); assert.match(m[0], /loading="lazy"/);
+  }
+  assert.ok(n >= 10, 'the pages show screenshots');
+});
+
+test('mobile viewport, version and date in the footer, and the Coming soon list is a one-edit data list', () => {
+  for (const f of files) { assert.match(read(f), /<meta name="viewport" content="width=device-width, initial-scale=1">/); const foot = read(f).match(/<footer[\s\S]*<\/footer>/)[0]; assert.ok(foot.includes(`Version ${pkg.version}, built `) && /built \d{4}-\d\d-\d\d/.test(foot), `${f}: footer version and date`); }
+  const css = fs.readFileSync(path.join(ROOT, 'tools/site/src/site.css'), 'utf8'); assert.match(css, /@media \(max-width: 820px\)/); assert.match(css, /\.closedbtn/);
+  assert.match(fs.readFileSync(path.join(ROOT, 'tools/site/src/content.mjs'), 'utf8'), /export const COMING_SOON = \[/);
+});

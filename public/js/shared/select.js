@@ -4,9 +4,9 @@
 (() => {
   const esc = UI.esc;
   const label = (o, v) => (o.find(x => String(x[0]) === String(v)) || o[0] || ['', ''])[1];
-  const html = ({ id = '', options, value = '', cls = '' }) => {
+  const html = ({ id = '', options, value = '', cls = '', label: name = '' }) => {   // name = the accessible name when no visible <label for=id> sits beside it
     const sel = options.some(o => String(o[0]) === String(value)) ? String(value) : String(options[0]?.[0] ?? '');
-    return `<div class="select ${cls}"><button type="button" class="select-btn" ${id ? `id="${esc(id)}"` : ''} role="combobox" aria-haspopup="listbox" aria-expanded="false" data-value="${esc(sel)}"><span class="select-label">${esc(label(options, sel))}</span></button>`
+    return `<div class="select ${cls}"><button type="button" class="select-btn" ${id ? `id="${esc(id)}"` : ''} role="combobox" aria-haspopup="listbox" aria-expanded="false"${name ? ` aria-label="${esc(name)}"` : ''} data-value="${esc(sel)}"><span class="select-label">${esc(label(options, sel))}</span></button>`
       + `<ul class="select-list" role="listbox" hidden>${options.map(([v, l]) => `<li class="select-option" role="option" tabindex="-1" data-value="${esc(v)}" aria-selected="${String(v) === sel}">${esc(l)}</li>`).join('')}</ul></div>`;
   };
   const wrap = (el) => el.closest('.select');

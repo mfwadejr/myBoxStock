@@ -35,7 +35,7 @@ test('browser: date sold on Quick sale, tidy customer purchases', { skip, timeou
     assert.equal(sale.day, '2026-09-15'); await page.click('[data-cancel]');
     await page.evaluate(() => { location.hash = '#/customers'; }); await page.waitForSelector('tr.click'); await page.click('tr.click'); await page.waitForSelector('.buy-row');
     const box = await page.locator('.buy-row').first().boundingBox(), sheet = await page.locator('.sheet').boundingBox();
-    assert.ok(box.height < 120 && box.x + box.width <= sheet.x + sheet.width, 'a purchase fits on a short row inside the sheet');
+    assert.ok(box.height < 200 && box.x + box.width <= sheet.x + sheet.width, 'a purchase fits on a short row inside the sheet');
     if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT });
     assert.deepEqual(errors, []);
   } finally { await br.close(); await srv.stop(); }

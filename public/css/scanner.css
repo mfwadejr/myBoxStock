@@ -4,7 +4,7 @@
 .scanfield { position: relative; }
 .scanfield input { padding-right: var(--tap-min); }
 .scanbtn { position: absolute; top: 0; bottom: 0; right: 0; width: var(--tap-min); display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--color-text-muted); border-radius: var(--radius-md); cursor: pointer; }
-.scanbtn:hover, .scanbtn:focus-visible { color: var(--color-primary); outline: none; }
+.scanbtn:hover, .scanbtn:focus-visible { color: var(--color-primary); }
 .scanbtn .icon { width: var(--tabbar-icon); height: var(--tabbar-icon); }
 .toolbar .scanfield { flex: 1; min-width: var(--width-sm); }
 
@@ -15,6 +15,7 @@
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   touch-action: none; overscroll-behavior: contain; font-size: var(--text-lead);
 }
+.scanner { --color-focus: var(--color-focus-on-dark); }   /* the focus ring turns white on the dark camera layer */
 .scanner:focus { outline: none; }
 .scan-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: var(--color-scan-bg); }
 .scan-top { grid-area: top; position: relative; z-index: var(--z-nav); display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); padding: var(--space-md) var(--space-lg); background: var(--color-scan-glass); }
@@ -47,11 +48,11 @@
 .scan-value { font-size: var(--text-xl); font-weight: var(--weight-semibold); overflow-wrap: anywhere; max-width: 100%; }
 .scan-choices { display: grid; gap: var(--space-sm); }
 .scan-choice { min-height: var(--control-h-xl); padding: var(--space-sm) var(--space-lg); border: 0; border-radius: var(--radius-md); background: var(--color-scan-btn); color: var(--color-scan-text); font-size: var(--text-lg); font-weight: var(--weight-semibold); overflow-wrap: anywhere; cursor: pointer; }
-.scan-choice:hover, .scan-choice:focus-visible { background: var(--color-scan-btn-hover); outline: none; }
+.scan-choice:hover, .scan-choice:focus-visible { background: var(--color-scan-btn-hover); }
 .scan-row { display: flex; flex-wrap: wrap; gap: var(--space-sm); justify-content: center; }
 .scan-sizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-sm); }
 .scan-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: var(--tap-min); padding: 0 var(--btn-padding-x-sm); border: 0; border-radius: var(--radius-pill); background: var(--color-scan-btn); color: var(--color-scan-text); font: inherit; font-size: var(--text-body); font-weight: var(--weight-medium); cursor: pointer; }
-.scan-btn:hover, .scan-btn:focus-visible { background: var(--color-scan-btn-hover); outline: none; }
+.scan-btn:hover, .scan-btn:focus-visible { background: var(--color-scan-btn-hover); }
 .scan-btn.on { background: var(--color-scan-text); color: var(--color-text); }
 .scan-btn.primary { background: var(--color-primary); color: var(--color-primary-on); }
 .scan-btn[disabled] { opacity: var(--opacity-disabled); pointer-events: none; }

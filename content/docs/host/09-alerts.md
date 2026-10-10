@@ -1,9 +1,9 @@
 ---
 title: Alerts
 summary: Understand the problems the server finds on its own, what each alert means, when you are emailed, and how to set one aside or let it clear itself.
-keywords: load more, showing, offsite upload failed, alerts, alert, banner, warning, problem, email failing, backup failing, failed sign-ins, storage full, disk, database errors, trials ending, update available, set aside, check now, owner, counter
+keywords: new ticket, new tickets, ticket alert, reseller replied, switched off, load more, showing, offsite upload failed, alerts, alert, banner, warning, problem, email failing, backup failing, failed sign-ins, storage full, disk, database errors, trials ending, update available, set aside, check now, owner, counter, email not tested, test email
 order: 9
-covers: nav:alerts, No recent full-site backup, A backup destination is failing, No recent test restore, The backup folder is nearly full, A background backup job failed, Open Backups, Check now, Needs a look, Set aside, Recently cleared, seen N times, emailed, problem, warning, heads-up, Email is not being delivered, The scheduled backup is failing, Many failed sign-ins, Storage is almost full, Database problems, Trials ending soon, Version is available, red banner, Open Alerts, Load more, Showing N of M alerts, Support tickets are waiting for a reply, response target
+covers: nav:alerts, new ticket, ticket reply, New ticket from a reseller, Reseller replied on a ticket, New-ticket emails are switched off, Open ticket, No recent full-site backup, A backup destination is failing, No recent test restore, The backup folder is nearly full, A background backup job failed, Open Backups, Check now, Needs a look, Set aside, Recently cleared, seen N times, emailed, problem, warning, heads-up, Email is not being delivered, The scheduled backup is failing, Many failed sign-ins, Storage is almost full, Database problems, Trials ending soon, Version is available, red banner, Open Alerts, Load more, Showing N of M alerts, Support tickets are waiting for a reply, response target, Email has not been tested, Send test email
 ---
 
 ## What alerts are
@@ -38,6 +38,12 @@ Every alert has a headline, a plain description of what was found, and a level s
 Raised when any message has been given up on (marked failed) in the last 24 hours, or when any message has been waiting in the queue for more than 30 minutes. The description says how many failed, how many are stuck, and the last reason. The advice is to open the Email page, then the Health tab. See [Email](#/docs/email).
 
 Why it matters: customers cannot reset passwords and new sign-ups never get their welcome message when mail is broken. It also means other alerts might not reach you, so fix this one first.
+
+### Email has not been tested (warning)
+
+Raised when email is turned on but no test email has passed since the email settings last changed. That covers three cases: email was just turned on and never tested, the settings (including the password) were changed after the last passing test, or the last test failed. The description says which. Open **Email** and press **Send test email**, or **Check my email setup** to see which step stops. See [Email](#/docs/email).
+
+Why it matters: a mistyped port or password looks fine on the page and only shows itself when a customer waits for a password reset that never comes. This alert catches it first. It clears by itself after a passing test, or when email is turned off. It is the one alert that is not emailed to the Owner, because email may be exactly what is not working.
 
 ### The scheduled backup is failing (problem)
 
@@ -90,6 +96,16 @@ This is the only alert that does not send an email. It appears on the page and i
 ### Support tickets are waiting for a reply
 
 One or more tickets that are Open or Waiting on Host have had no answer for longer than the response target (business days, Monday to Friday, set in Support settings; default 2). The alert lists the oldest ticket numbers. Open Support, filter by Overdue and reply. It clears by itself when every ticket has been answered, and the Owner is emailed once if Email is set up. Resolved tickets are also closed automatically at the same five-minute check once they are old enough. See [Support tickets](#/docs/support-tickets).
+
+### New ticket from a reseller (new ticket)
+
+One line for every ticket a reseller opens, such as "New ticket #1042 from Alex Boxes: Scanner will not focus (High priority)", with an **Open ticket** link. It raises the Alerts count and the red banner. The chip says **new ticket**; High and Urgent tickets are red and the rest blue. It does not send the Owner the usual alert email: the Support settings decide who is emailed, if anyone. Opening the ticket, replying to it, or a ticket no longer waiting on the Host, clears the line at once or at the next check. When a reseller answers a ticket that is waiting on the Host, a **ticket reply** line ("Reseller replied on ticket #1042 ...") works the same way. Both can be switched off in the Support settings, and a threshold can limit them to High and Urgent. See [Support tickets](#/docs/support-tickets).
+
+### New-ticket emails are switched off (heads-up)
+
+Shown while Email is set up but the Support setting **Email the Host about new tickets** is still off, so a new ticket only appears here and not in your inbox. Send a test email from [Email](#/docs/email), then switch the setting on in Support, Settings. It clears by itself when you do. It is never emailed.
+
+![The Alerts page](shot:host-alerts "The Alerts page: open problems, a new ticket alert and how to set one aside.")
 
 ## Reading the Alerts page
 

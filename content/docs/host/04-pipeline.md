@@ -18,6 +18,8 @@ The page loads when you open it. It does not refresh itself, so reopen **Pipelin
 
 > Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
 
+![Pipeline](shot:host-pipeline "Pipeline: sign-ups, trials ending, renewals and accounts that have gone quiet.")
+
 ## The four numbers at the top
 
 ### Sign-ups this week

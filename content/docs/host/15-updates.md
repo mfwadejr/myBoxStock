@@ -14,6 +14,8 @@ The Updates screen is a dashboard for that process. It tells you what is running
 
 > Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
 
+![Updates](shot:host-updates "Updates: running version, newest release and health since start.")
+
 ## The three status cards
 
 ### Running version

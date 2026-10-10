@@ -5,26 +5,29 @@ import { newId } from '../../core/ids.mjs';
 import { areaLogger } from '../../logging/logger.mjs';
 import { getSetting } from '../../db/settings.mjs';
 import { enqueueMail, processQueue } from '../mail/index.mjs';
+import { mailTestStatus } from '../mail/diagnose.mjs';
 import { getFullStatus, getTierStatus, tierFailing, backupHealth } from '../backup/index.mjs';
 import { snapshot } from '../system/metrics.mjs';
 import { billingState, DAY } from '../billing/state.mjs';
 import { getSupportSettings, overdueTickets, autoClose, label as ticketLabel } from '../support/index.mjs';
+import { sendDigest } from '../support/notify.mjs';
+import { mailReady } from '../mail/index.mjs';
 
 const L = areaLogger('system');
 const HOUR = 3600e3;
 export const SIGNIN_LIMIT = 20; // failed or refused sign-ins in one hour before it is worth a look
-const NO_EMAIL = new Set(['update.available']);
+const NO_EMAIL = new Set(['update.available', 'email.untested']);
 
 // Owner = the oldest Host administrator who has an email address.
 const ownerEmail = async (db) => (await db.get("SELECT email FROM host_admins WHERE email IS NOT NULL AND email <> '' ORDER BY created_at, id LIMIT 1"))?.email;
 
-export async function raise(db, { kind, key = kind, level = 'warn', title, detail = '' }) {
+export async function raise(db, { kind, key = kind, level = 'warn', title, detail = '', mail = true }) {
   const now = Date.now(), cur = await db.get("SELECT id, status FROM alerts WHERE dedupe_key = ? AND status IN ('open','dismissed')", [key]);
   if (cur) { await db.run('UPDATE alerts SET last_at = ?, occurrences = occurrences + 1, detail = ?, title = ? WHERE id = ?', [now, String(detail).slice(0, 600), title, cur.id]); return { id: cur.id, isNew: false }; }
   const id = newId();
   await db.run('INSERT INTO alerts (id, kind, dedupe_key, level, title, detail, first_at, last_at, occurrences, status) VALUES (?,?,?,?,?,?,?,?,1,?)', [id, kind, key, level, title, String(detail).slice(0, 600), now, now, 'open']);
   L[level === 'error' ? 'error' : 'warn']('alert.raised', `Alert: ${title}`, { data: { kind, key } });
-  const to = NO_EMAIL.has(kind) ? null : await ownerEmail(db);
+  const to = NO_EMAIL.has(kind) || !mail ? null : await ownerEmail(db);
   if (to) {
     try { await enqueueMail(db, to, 'host_alert', { title, detail: detail || title, when: new Date(now).toUTCString() }); await db.run('UPDATE alerts SET emailed_at = ? WHERE id = ?', [now, id]); processQueue(db).catch(() => {}); } catch (e) { L.warn('alert.mail_failed', `Could not queue the alert email: ${e.message}`); }
   }
@@ -58,6 +61,10 @@ export async function evaluate(db) {
   await set(failed > 0 || stuck > 0, { kind: 'email.failing', level: 'warn', title: 'Email is not being delivered',
     detail: `${failed} message${failed === 1 ? '' : 's'} failed in the last 24 hours and ${stuck} ${stuck === 1 ? 'has' : 'have'} waited over 30 minutes.${lastErr ? ` Last problem: ${lastErr}` : ''} Open Email, then Health.` });
 
+  // Email is on but no test email has passed since its settings last changed.
+  const mt = await mailTestStatus(db);
+  await set(mt.needsTest, { kind: 'email.untested', level: 'warn', title: 'Email has not been tested', detail: mt.last && !mt.last.current ? 'The email settings changed after the last test. Open Email and press Send test email to make sure messages still go out.' : mt.last && !mt.last.ok ? `The last test did not pass (${mt.last.title}). Open Email, press Check my email setup and follow the next step.` : 'Email is turned on but no test email has been sent yet. Open Email and press Send test email.' });
+
   // Backups: the newest scheduled full-site backup failed.
   const st = await getFullStatus(db), ts = await getTierStatus(db), bad = st.lastFail && (!st.lastOk || st.lastFail.at > st.lastOk.at);
   const tierBad = ['frequent', 'offsite'].find(t => tierFailing(ts[t])); // snapshots and offsite copies (see services/backup/runner.mjs)
@@ -78,11 +85,21 @@ export async function evaluate(db) {
   await set(dbErr > 0, { kind: 'database.errors', level: 'error', title: 'Database problems', detail: `${dbErr} database error${dbErr === 1 ? '' : 's'} in the last hour. Open Logs, area "database".` });
 
   // Trials about to end (a count only; no account is named).
-  let ending = 0; for (const a of await db.all("SELECT plan, trial_ends_at, plan_until FROM accounts WHERE status <> 'closing'")) { const b = billingState(a, now); if (b.canWrite && b.plan === 'trial' && b.endsAt && b.endsAt - now <= 3 * DAY) ending++; }
+  let ending = 0; for (const a of await db.all("SELECT plan, trial_ends_at, plan_until FROM accounts WHERE status <> 'closing' AND demo = 0")) { const b = billingState(a, now); if (b.canWrite && b.plan === 'trial' && b.endsAt && b.endsAt - now <= 3 * DAY) ending++; }
   // Support: resolved tickets close themselves after the Host's number of days, and tickets nobody has answered within the response target raise one grouped alert.
   const sup = await getSupportSettings(db); await autoClose(db, sup, now).catch((e) => L.warn('support.auto_close_failed', `Could not close resolved tickets: ${e.message}`));
   const late = await overdueTickets(db, sup, now), nums = late.slice(0, 8).map(t => ticketLabel(t.number)).join(', ');
   await set(late.length > 0, { kind: 'support.overdue', level: 'warn', title: 'Support tickets are waiting for a reply', detail: `${late.length} ticket${late.length === 1 ? ' has' : 's have'} waited longer than the response target of ${sup.responseDays} business day${sup.responseDays === 1 ? '' : 's'}: ${nums}${late.length > 8 ? ' and more' : ''}. Open Support.` });
+
+  // New-ticket notices: alerts for tickets nobody is waiting on any more clear themselves, the daily digest goes out when due, and a reminder shows while Email works but the email notices are still off.
+  try {
+    for (const a of await db.all("SELECT dedupe_key FROM alerts WHERE kind IN ('support.ticket','support.reply') AND status IN ('open','dismissed')")) {
+      const no = Number(String(a.dedupe_key).split('.').pop()), t = await db.get('SELECT status FROM support_tickets WHERE number = ?', [no]);
+      if (!t || !['open', 'waiting_host'].includes(t.status)) await resolve(db, a.dedupe_key);
+    }
+    await sendDigest(db, now);
+    await set(!sup.notifyEmail && await mailReady(db), { kind: 'support.notify_off', level: 'info', mail: false, title: 'New-ticket emails are switched off', detail: 'Email is set up, but Support settings still send no email when a reseller opens a ticket. New tickets show here in Alerts. To get an email too, open Support, then Settings, send a test email from Email first, then switch on Email the Host about new tickets.' });
+  } catch (e) { L.warn('support.notice_check_failed', `Could not check support notices: ${e.message}`); }
 
   await set(ending > 0, { kind: 'trials.ending', level: 'info', title: 'Trials ending soon', detail: `${ending} trial${ending === 1 ? '' : 's'} end within 3 days. Open Accounts or Plans to follow up.` });
 }

@@ -3,7 +3,7 @@ title: Getting started
 summary: Sign in to the Host Console for the first time, set up two-factor, learn what each menu item is for, and work through a first-day checklist.
 keywords: account menu, name menu, first sign-in, login, temporary password, change password, two-factor, 2FA, authenticator, owner, helper administrator, menu, checklist, first day, documentation, search, host console
 order: 1
-covers: nav:docs, Username, Password, Sign in, Two-factor code, Verify, Use a different account, Set up two-factor, Sign out, Choose a new password, Current password, New password, Update password, Owner, helper administrator, Documentation search box, Documentation contents, Account menu, Reseller accounts, Host administrator, Sign out
+covers: nav:docs, Terms, Privacy, Data use, Billing, Username, Password, Sign in, Two-factor code, Verify, Use a different account, Set up two-factor, Sign out, Choose a new password, Current password, New password, Update password, Owner, helper administrator, Documentation search box, Documentation contents, Account menu, Reseller accounts, Host administrator, Sign out
 ---
 
 ## What the Host Console is
@@ -28,6 +28,8 @@ When the server starts for the very first time it creates one administrator call
 4. You will be taken to **Choose a new password** and told to replace the temporary password before continuing. Type the temporary password in **Current password**, then your new one in **New password**. It needs at least 10 characters with letters and numbers.
 5. Press **Update password**.
 6. You are now in the console, starting at [Overview](#/docs/overview).
+
+Under the sign-in box are four short links, **Terms**, **Privacy**, **Data use** and **Billing**. They open the legal pages (Terms of Service, Privacy Policy, Data responsibility and acceptable use, and Billing, trial and refund terms) in a new tab; hold the pointer over a link to see the full title. The same four links sit at the bottom of every page, here and in the reseller app.
 
 > If you lose the temporary password before using it, or you get locked out later, see [Recovery and emergencies](#/docs/recovery-and-emergencies). Do not keep guessing passwords.
 

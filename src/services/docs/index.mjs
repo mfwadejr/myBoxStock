@@ -15,6 +15,12 @@ const list = (v) => String(v || '').split(',').map(x => x.trim()).filter(Boolean
 // Inline: **bold**, `code`, [text](#/route). Links may only point inside the app (#/...), never elsewhere.
 const inline = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\[([^\]]+)\]\((#\/[a-z0-9/_-]+)\)/gi, '<a href="$2">$1</a>');
 
+// Screenshot line: ![Alt text](shot:NAME "Caption text"). NAME is a lowercase name; the files are public/assets/docs/NAME-laptop.png and NAME-phone.png (see content/docs/FORMAT.txt).
+// Served from 'self' only. The phone picture is used on narrow screens. The caption is part of the page text, so it is searchable; a bad line stays a plain paragraph and never breaks the page.
+export const SHOT_RE = /^!\[([^\]]*)\]\(shot:([a-z0-9][a-z0-9-]*)\s+"([^"]*)"\)$/;
+export const SHOT_DIR = '/assets/docs/', SHOT_PHONE_MAX = 600;
+const shotHtml = (alt, name, cap) => `<figure class="doc-shot"><picture><source media="(max-width: ${SHOT_PHONE_MAX}px)" srcset="${SHOT_DIR}${name}-phone.png"><img src="${SHOT_DIR}${name}-laptop.png" alt="${esc(alt)}" loading="lazy" decoding="async"></picture><figcaption>${inline(cap)}</figcaption></figure>`;
+
 // Block: ## / ### headings, paragraphs, "- " lists, "1. " lists, "> " notes. Returns html plus the plain text and section list for search.
 export function render(md) {
   const out = [], sections = [{ heading: '', text: [] }]; let para = [], items = null, kind = '', note = [];
@@ -26,6 +32,7 @@ export function render(md) {
   for (const raw of md.replace(/\r/g, '').split('\n')) {
     const line = raw.trimEnd(); let m;
     if (!line.trim()) { flush(); continue; }
+    if ((m = line.trim().match(SHOT_RE))) { flush(); out.push(shotHtml(m[1], m[2], m[3])); sections.at(-1).text.push(`${m[1]}. ${m[3]}`); continue; }
     if ((m = line.match(/^(#{2,3})\s+(.+)$/))) { flush(); const lvl = m[1].length; out.push(`<h${lvl}>${inline(m[2])}</h${lvl}>`); if (lvl === 2) sections.push({ heading: m[2], text: [] }); continue; }
     if ((m = line.match(/^>\s?(.*)$/))) { if (para.length || items) flush(); note.push(m[1]); continue; }
     if ((m = line.match(/^[-*]\s+(.+)$/))) { if (para.length || kind === 'ol' || note.length) flush(); kind = 'ul'; (items ||= []).push(m[1]); continue; }

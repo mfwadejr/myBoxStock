@@ -12,11 +12,13 @@
   const stepText = (j) => `${j.step}${j.status === 'running' ? ` · ${j.pct}%${bytesText(j)}` : ''}`;
 
   // The progress block used inside a sheet: the step in words and the bar.
-  B.progressHtml = (id = 'jp') => `<div id="${id}" role="status" aria-live="polite"><p class="hint" data-step>Starting…</p><div class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i data-pct="0"></i></div></div>`;
+  B.progressHtml = (id = 'jp') => `<div id="${id}"><p class="hint" data-step>Starting…</p><div class="meter" role="progressbar" aria-label="Job progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i data-pct="0"></i></div></div>`;
   B.progressPaint = (root, j, note = true) => {
     if (!root) return; const t = root.querySelector('[data-step]'), m = root.querySelector('.meter'), bar = root.querySelector('.meter > i');
     if (t) t.textContent = note ? `${stepText(j)}. You can close this window; the job keeps going and is shown at the top of the page.` : stepText(j);
     if (bar) { bar.dataset.pct = String(j.pct); UI.dynamic(root); m.setAttribute('aria-valuenow', String(j.pct)); }
+    // Screen readers hear a new step, and then each quarter of the way, not every second of polling (and focus is never moved).
+    const said = `${j.step}:${Math.floor((j.pct || 0) / 25)}`; if (root.dataset.said !== said && j.status === 'running') { root.dataset.said = said; UI.announce(`${j.label || 'Job'}: ${j.step}, ${j.pct}%`); }
   };
 
   const stop = () => { clearInterval(J.timer); J.timer = null; };
@@ -27,7 +29,7 @@
     if (job?.restarting && !J.restarting) { J.restarting = true; toast('Restoring… the console will reload'); setTimeout(() => location.reload(), RELOAD_MS); }
     if (job && was && was.id === job.id && was.status === 'running' && job.status !== 'running') {
       if (!J.subs.size) toast(job.status === 'failed' ? job.error.message : job.summary, job.status === 'failed' || job.ok === false);
-      if (job.kind === 'compact') B.afterCompact?.(); else if (job.kind === 'full-backup' || job.kind === 'bundle') B.reload?.(); else B.reloadStrip?.(); // a new backup file: redraw the lists too
+      if (job.kind === 'compact') B.afterCompact?.(); else if (job.kind?.startsWith('demo-')) B.afterDemo?.(job); else if (job.kind === 'full-backup' || job.kind === 'bundle') { B.reload?.(); B.afterDemo?.(job); } else B.reloadStrip?.(); // a new backup file: redraw the lists too
     }
     B.paintJobStrip?.();
   };
@@ -61,13 +63,14 @@
   let shown = '';
   B.paintJobStrip = () => {
     const el = document.querySelector('#job-strip'); if (!el) return;
-    const j = J.cur, key = j ? `${j.id}:${j.status}` : J.busyBy ? 'busy:' + J.busyBy : '';
+    const j = J.cur, key = j ? `${j.id}:${j.status}:${j.stopRequested ? 's' : ''}` : J.busyBy ? 'busy:' + J.busyBy : '';
     if (j && key === shown) { const c = el.querySelector('#job-card'); if (c) B.progressPaint(c, j, false); return; }
     shown = key;
     if (!j) { el.innerHTML = J.busyBy ? `<div class="banner blue mb-lg" id="job-busy" role="status">Another backup is running (${esc(J.busyBy)}). A new job cannot start until it finishes.</div>` : ''; return; }
     if (j.status === 'running') {
       el.innerHTML = `<div class="card mb-lg" id="job-card"><div class="row spread wrap"><div><div class="setting-title">${esc(j.label)}</div><div class="hint">Started ${esc(fmt.ago(j.startedAt))}</div></div><span class="chip blue">Running</span></div>
-        ${B.progressHtml('job-progress')}<p class="hint">Only one backup job runs at a time. You can leave this page; the job keeps going.</p></div>`;
+        ${B.progressHtml('job-progress')}<p class="hint">Only one backup job runs at a time. You can leave this page; the job keeps going.</p>${j.stoppable ? `<div class="row wrap"><button class="btn secondary small" id="job-stop" ${j.stopRequested ? 'disabled' : ''}>${j.stopRequested ? 'Stopping…' : 'Stop'}</button></div>` : ''}</div>`;
+      el.querySelector('#job-stop')?.addEventListener('click', async (e) => { e.target.disabled = true; try { await Host.api('POST', `/backups/jobs/${j.id}/stop`); toast('Stopping after the step it is on'); } catch (er) { toast(er.message, true); } });
       B.progressPaint(el.querySelector('#job-progress'), j, false);
     } else {
       const bad = j.status === 'failed' || j.ok === false;

@@ -6,7 +6,7 @@ import nodemailer from 'nodemailer';
 export async function transportFor(settings, toAddr) {
   if (settings.mode === 'smtp') {
     const m = settings.smtp;
-    return { transport: nodemailer.createTransport({ host: m.host, port: m.port, secure: m.secure, auth: m.user ? { user: m.user, pass: m.pass } : undefined }), via: `relay ${m.host}:${m.port}` };
+    return { transport: nodemailer.createTransport({ host: m.host, port: m.port, secure: m.secure, auth: m.user ? { user: m.user, pass: m.pass } : undefined, connectionTimeout: 15000, greetingTimeout: 15000, socketTimeout: 30000 }), via: `relay ${m.host}:${m.port}` };
   }
   const domain = toAddr.split('@')[1];
   let hosts = [];

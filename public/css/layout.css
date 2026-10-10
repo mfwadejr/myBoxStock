@@ -26,8 +26,10 @@
 /* Legal pages and links: the wrapper for a legal page, the footer row of links in both apps and the row inside sign-in cards. */
 .legal-page { max-width: var(--content-max); margin: var(--space-0) auto; padding: var(--space-3xl) var(--space-2xl) var(--space-6xl); }
 .legal-foot { max-width: var(--content-max); margin: var(--space-0) auto; padding: var(--space-lg) var(--space-2xl) var(--space-3xl); }
-.legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-xs) var(--space-lg); }
-.legal-links a { display: inline-flex; align-items: center; min-height: var(--tap-min); font-size: var(--text-sm); color: var(--color-text-muted); }
+/* Four short links: a neat 2x2 block on a phone, one row where it fits. Every link keeps the minimum tap size. */
+.legal-links { display: grid; grid-template-columns: repeat(2, auto); justify-content: center; justify-items: center; gap: var(--space-0) var(--space-2xl); }
+.legal-links a { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap-min); min-width: var(--tap-min); font-size: var(--text-xs); color: var(--color-text-muted); }
+@media (min-width: 641px) { .legal-links { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-lg); } }
 .authcard .legal-links { margin-top: var(--space-lg); }
 
 .grid { display: grid; gap: var(--space-lg); }

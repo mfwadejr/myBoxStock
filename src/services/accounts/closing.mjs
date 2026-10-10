@@ -22,6 +22,7 @@ export async function eraseAccount(db, id) {
     await t.run('DELETE FROM support_views WHERE user_id IN (SELECT id FROM account_users WHERE account_id = ?)', [id]);
     await t.run("UPDATE support_tickets SET status = 'closed', closed_at = ?, updated_at = ?, requester_id = NULL, account_id = NULL WHERE account_id = ? AND status <> 'closed'", [Date.now(), Date.now(), id]);
     await t.run('UPDATE support_tickets SET requester_id = NULL, account_id = NULL WHERE account_id = ?', [id]);
+    await t.run('DELETE FROM settings WHERE k = ?', ['notice:' + id]);   // a Host notice sent to this account
     await t.run('DELETE FROM accounts WHERE id = ?', [id]);
   });
 }

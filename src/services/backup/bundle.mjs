@@ -20,6 +20,7 @@ import { backupDir } from './files.mjs';
 import { writeRestoreNote } from './restore-note.mjs';
 import { encryptStreamTo, decryptStreamTo } from './crypt.mjs';
 import { jobBytes, jobStep } from './progress.mjs';
+import { stripDemoFromSnapshot } from '../demo/strip.mjs';
 
 const L = areaLogger('backup');
 const MAGIC = Buffer.from('MBSBAK1\n'), MAGIC2 = Buffer.from('MBSBAK2\n');
@@ -153,7 +154,8 @@ export async function createBundle(db, passphrase, actor = null, tag = '') {
   jobStep('Taking a snapshot of the database', 2, 15);
   const snap = await createBackup(db, 'bundle-temp', actor), snapPath = path.join(backupDir(), snap);
   try {
-    const manifest = { format: 2, app: 'myBoxStock', version: config.version, engine: db.client, createdAt: new Date().toISOString(), database: db.client === 'sqlite' ? 'database.db' : 'database.sql' };
+    const left = await stripDemoFromSnapshot(db, snapPath);   // demo accounts are left out of the copy (never out of the live site), unless the Demo mode setting says otherwise
+    const manifest = { format: 2, app: 'myBoxStock', version: config.version, engine: db.client, createdAt: new Date().toISOString(), database: db.client === 'sqlite' ? 'database.db' : 'database.sql', ...(left?.removed ? { demoAccountsLeftOut: left.removed } : {}) };
     const entries = [['manifest.json', Buffer.from(JSON.stringify(manifest, null, 2))], [manifest.database, { file: snapPath, size: fs.statSync(snapPath).size }], ['secret.key', Buffer.from(exportKey())]];
     const name = `myboxstock-fullsite${tag ? '-' + tag : ''}-${new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19)}.mbsbak`, out = path.join(backupDir(), name);
     jobStep('Writing the encrypted file', 15, 85); await writeBundleFile(entries, out, passphrase);

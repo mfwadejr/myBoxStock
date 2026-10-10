@@ -15,8 +15,8 @@
   const fieldHtml = (type, d) => FIELDS[type].map(([k, label, kind, hint]) => {
     const v = d?.settings?.[k] ?? '', saved = d?.secrets?.[k] === 'saved';
     if (kind === 'check') return `<label class="check"><input type="checkbox" data-f="${k}" ${v ? 'checked' : ''}> ${esc(label)}</label>`;
-    const input = kind === 'area' ? `<textarea data-f="${k}" rows="4" autocomplete="off" placeholder="${saved ? 'Saved — leave blank to keep it' : ''}"></textarea>`
-      : `<input data-f="${k}" type="${kind === 'secret' ? 'password' : kind === 'number' ? 'number' : 'text'}" autocomplete="${kind === 'secret' ? 'new-password' : 'off'}" value="${kind === 'secret' || kind === 'area' ? '' : esc(v)}" ${kind === 'secret' ? `placeholder="${saved ? 'Saved — leave blank to keep it' : ''}"` : ''}>`;
+    const input = kind === 'area' ? `<textarea data-f="${k}" aria-label="${esc(label)}" rows="4" autocomplete="off" placeholder="${saved ? 'Saved — leave blank to keep it' : ''}"></textarea>`
+      : `<input data-f="${k}" aria-label="${esc(label)}" type="${kind === 'secret' ? 'password' : kind === 'number' ? 'number' : 'text'}" autocomplete="${kind === 'secret' ? 'new-password' : 'off'}" value="${kind === 'secret' || kind === 'area' ? '' : esc(v)}" ${kind === 'secret' ? `placeholder="${saved ? 'Saved — leave blank to keep it' : ''}"` : ''}>`;
     return `<div class="field"><label>${esc(label)}</label>${input}${hint ? `<div class="hint">${esc(hint)}</div>` : ''}</div>`;
   }).join('');
   const gather = (el, type) => { const settings = {}, secrets = {}; for (const [k, , kind] of FIELDS[type]) { const i = el.querySelector(`[data-f="${k}"]`); if (kind === 'secret' || kind === 'area') { if (i.value) secrets[k] = i.value; } else settings[k] = kind === 'check' ? i.checked : i.value; } return { settings, secrets }; };
@@ -24,8 +24,8 @@
   B.destinationSheet = async (cur, onDone) => {
     let type = cur?.type || 'folder';
     const ok = await sheet(`<h2>${cur ? 'Edit destination' : 'Add a destination'}</h2>
-      <div class="field"><label>Name</label><input type="text" id="dn" value="${esc(cur?.name || '')}" autocomplete="off" placeholder="For example Office NAS"></div>
-      ${cur ? '' : `<div class="field"><label>Type</label>${UI.select.html({ id: 'dt', options: TYPE_OPTIONS, value: type })}</div>`}
+      <div class="field"><label for="dn">Name</label><input type="text" id="dn" value="${esc(cur?.name || '')}" autocomplete="off" placeholder="For example Office NAS"></div>
+      ${cur ? '' : `<div class="field"><label for="dt">Type</label>${UI.select.html({ id: 'dt', options: TYPE_OPTIONS, value: type })}</div>`}
       <div id="df">${fieldHtml(type, cur)}</div>
       <div class="banner blue mt-md">Everything sent here is encrypted first with your backup passphrase. A destination is saved switched off. Press Test connection on its card; it can only be switched on after the test passes, and changing its details means testing again.</div>
       <div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Save</button></div>`, {
@@ -57,7 +57,7 @@
         try { const r = await Host.api('POST', `/backups/destinations/${encodeURIComponent(dest.id)}/test`); res.innerHTML = `<div class="banner ${r.ok ? 'blue' : 'red'}">${esc(r.message)}</div>`; if (r.ok) { const en = c.querySelector('[data-en]'); if (en) en.disabled = false; c.querySelector('[data-needtest]')?.remove(); } if (r.ok && r.fingerprint && !dest.hostKey && dest.type === 'sftp') refresh(); } catch (er) { res.innerHTML = `<div class="banner red">${esc(er.message)}</div>`; }
       }));
       c.querySelector('[data-folder]')?.addEventListener('click', async () => {
-        const v = await sheet(`<h2>Backup folder on this server</h2><div class="field mt-md"><label>Folder path</label><input type="text" id="lf" value="${esc(d.localDir === d.defaultDir ? '' : d.localDir)}" placeholder="${esc(d.defaultDir)}" autocomplete="off"><div class="hint">Leave blank for the default, ${esc(d.defaultDir)}, which is inside the data folder you already mount. Older backups stay where they are and are still listed.</div></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Save</button></div>`,
+        const v = await sheet(`<h2>Backup folder on this server</h2><div class="field mt-md"><label for="lf">Folder path</label><input type="text" id="lf" value="${esc(d.localDir === d.defaultDir ? '' : d.localDir)}" placeholder="${esc(d.defaultDir)}" autocomplete="off"><div class="hint">Leave blank for the default, ${esc(d.defaultDir)}, which is inside the data folder you already mount. Older backups stay where they are and are still listed.</div></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Save</button></div>`,
           { onMount: (el, close) => el.querySelector('#go').addEventListener('click', async () => { try { await Host.api('PUT', '/backups/tiers', { localDir: el.querySelector('#lf').value }); close(true); } catch (er) { toast(er.message, true); } }) });
         if (v) { toast('Backup folder saved'); refresh(); }
       });

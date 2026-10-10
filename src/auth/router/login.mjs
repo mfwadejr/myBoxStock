@@ -5,7 +5,7 @@ import { isLocked, registerFailure, clearFailures } from '../lockout.mjs';
 import { areaLogger } from '../../logging/logger.mjs';
 import { normalizeIp } from '../../security/firewall/ip.mjs';
 import { fail } from '../../core/messages.mjs';
-import { activeAnnouncement } from '../../services/announcement/index.mjs';
+import { announcementFor } from '../../services/announcement/index.mjs';
 
 const L = areaLogger('auth');
 
@@ -33,7 +33,7 @@ export function loginRoutes(r, c) {
     // The password is right, so it is safe to say exactly why sign-in is refused. Not counted as a failed attempt.
     const blocked = user.blockedReason || (user.disabled ? 'USER_DISABLED' : null);
     if (blocked) {
-      const why = blocked === 'ACCOUNT_SUSPENDED' ? 'the account is suspended' : blocked === 'ACCOUNT_CLOSING' ? 'the account is closing' : 'the user is disabled';
+      const why = blocked === 'ACCOUNT_SUSPENDED' ? 'the account is suspended' : blocked === 'ACCOUNT_CLOSING' ? 'the account is closing' : blocked === 'DEMO_SIGNIN_OFF' ? 'Demo mode is switched off' : 'the user is disabled';
       L.warn('login.blocked', `Sign-in refused for "${login}" — correct password, but ${why}`, { actor: login, accountId: user.account_id || null, ip, data: { realm, reason: blocked } });
       c.record?.({ user, ip, ua: req.headers['user-agent'], result: 'blocked', reason: blocked });
       return fail(res, 403, blocked);
@@ -57,6 +57,6 @@ export function loginRoutes(r, c) {
     const s = await readSession(db, req, realm);
     const user = s && await c.loadSubject(db, s);
     if (!user) return fail(res, 401, 'NOT_SIGNED_IN');
-    res.json({ ...(realm === 'app' ? { announcement: await activeAnnouncement(db) } : {}), user: c.publicUser(user), csrf: s.csrf, mfaPending: !!s.mfa_pending, mustChange: !!user.must_change, ...(c.meExtra ? { vault: await c.meExtra(db, user) } : {}) });
+    res.json({ ...(realm === 'app' ? { announcement: await announcementFor(db, user.account_id) } : {}), user: c.publicUser(user), csrf: s.csrf, mfaPending: !!s.mfa_pending, mustChange: !!user.must_change, ...(c.meExtra ? { vault: await c.meExtra(db, user) } : {}) });
   });
 }

@@ -9,6 +9,7 @@ import { billingState } from '../../services/billing/state.mjs';
 import { enqueueMail, processQueue, mailReady } from '../../services/mail/index.mjs';
 import { siteUrl } from '../../services/site/index.mjs';
 import * as sup from '../../services/support/index.mjs';
+import { clearTicketAlerts } from '../../services/support/notify.mjs';
 
 const PAGE = 100, MAIL_OFF = 'Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway.';
 
@@ -34,16 +35,17 @@ export function supportRoutes(db) {
   const firstViewToday = (req, t) => firstViewTodayIn(db, req, t);
   const staff = () => db.all('SELECT id, username FROM host_admins ORDER BY username');
 
-  r.get('/summary', wrap(async (req, res) => res.json(await sup.summary(db, await sup.getSupportSettings(db)))));
+  r.get('/summary', wrap(async (req, res) => res.json(await sup.summary(db, await sup.getSupportSettings(db)))));   // light: also carries `latest`, the change marker the live list compares
   r.get('/staff', wrap(async (req, res) => res.json(await staff())));
 
   // ---- settings ----
   r.get('/settings', wrap(async (req, res) => {
     const s = await sup.getSupportSettings(db);
-    res.json({ settings: s, mailReady: await mailReady(db), mailNote: MAIL_OFF, isOwner: req.subject.id === await ownerId(), closed: await sup.closedCount(db, 0), limits: { maxFilesMax: 5, maxKBMax: 2048 } });
+    res.json({ settings: s, staffList: await staff(), mailReady: await mailReady(db), mailNote: MAIL_OFF, isOwner: req.subject.id === await ownerId(), closed: await sup.closedCount(db, 0), limits: { maxFilesMax: 5, maxKBMax: 2048 } });
   }));
   r.put('/settings', wrap(async (req, res) => {
     const c = await sup.cleanSupportSettings(db, req.body || {}); if (c.error) return fail(res, 400, 'SUPPORT_SETTINGS_BAD', { error: c.error });
+    if ((c.value.notifyEmail && !c.cur.notifyEmail || c.value.notifyReplyEmail && !c.cur.notifyReplyEmail) && !await mailReady(db)) { hostLog(req, 'warn', 'support.settings', 'Switching on new-ticket emails was refused: Email is not set up', { data: { refused: true, code: 'SUPPORT_NOTIFY_MAIL_OFF' } }); return fail(res, 409, 'SUPPORT_NOTIFY_MAIL_OFF'); }
     await sup.saveSupportSettings(db, c.value);
     const changed = Object.keys(c.value).filter(k => JSON.stringify(c.value[k]) !== JSON.stringify(c.cur[k]));
     log(req, 'support.settings', changed.length ? `Support settings changed: ${changed.join(', ')}` : 'Support settings saved with no change', null, { keys: changed, before: Object.fromEntries(changed.filter(k => k !== 'canned').map(k => [k, c.cur[k]])), after: Object.fromEntries(changed.filter(k => k !== 'canned').map(k => [k, c.value[k]])), cannedCount: c.value.canned.length });
@@ -52,7 +54,7 @@ export function supportRoutes(db) {
 
   // ---- the list ----
   r.get('/tickets', wrap(async (req, res) => {
-    const s = await sup.getSupportSettings(db), q = req.query, where = [], args = [];
+    const s = await sup.getSupportSettings(db), q = req.query, where = [], args = [], mark = await sup.summary(db, s);   // the change marker is read BEFORE the rows, so a ticket that arrives in between is never marked as seen
     const st = String(q.status || 'active');
     if (st === 'active') { where.push(`t.status IN (${sup.ACTIVE.map(() => '?').join(',')})`); args.push(...sup.ACTIVE); }
     else if (st === 'overdue') { where.push(`t.status IN (${sup.AWAITING_HOST.map(() => '?').join(',')})`); args.push(...sup.AWAITING_HOST); }
@@ -70,8 +72,8 @@ export function supportRoutes(db) {
     const sql = `FROM support_tickets t LEFT JOIN host_admins h ON h.id = t.assignee_id${where.length ? ' WHERE ' + where.join(' AND ') : ''}`;
     let rows = (await db.all(`SELECT t.*, h.username AS assignee_name ${sql} ORDER BY t.updated_at DESC, t.number DESC LIMIT 1000`, args)).map(t => sup.shape(t, s));
     if (st === 'overdue') rows = rows.filter(t => t.overdue);
-    const offset = Math.max(0, Number(q.offset) || 0);
-    res.json({ tickets: rows.slice(offset, offset + PAGE), total: rows.length, responseDays: s.responseDays });
+    const offset = Math.max(0, Number(q.offset) || 0), limit = Math.min(1000, Math.max(PAGE, Number(q.limit) || PAGE));   // a refresh asks for as many rows as are on screen
+    res.json({ tickets: rows.slice(offset, offset + limit), total: rows.length, responseDays: s.responseDays, newest: mark.newest, latest: mark.latest });
   }));
 
   // ---- one ticket ----
@@ -82,6 +84,7 @@ export function supportRoutes(db) {
     const person = t.requester_id ? await db.get('SELECT username, role, email, disabled FROM account_users WHERE id = ?', [t.requester_id]) : null;
     const others = await db.all('SELECT number, subject, status, created_at FROM support_tickets WHERE account_id = ? AND id <> ? ORDER BY created_at DESC LIMIT 25', [t.account_id || '-', t.id]);
     const b = acc ? billingState(acc) : null, note = t.account_id ? await db.get('SELECT body, updated_at, updated_by FROM support_notes WHERE account_id = ?', [t.account_id]) : null;
+    await clearTicketAlerts(db, t.number);   // opening it answers the new-ticket alert
     if (await firstViewToday(req, t)) log(req, 'support.viewed', `Opened support ticket ${sup.label(t.number)}`, t);   // once per administrator per ticket per day; every real action is logged every time
     res.json({
       ticket: { ...sup.shape({ ...t, assignee_name: t.assignee_id ? (await db.get('SELECT username FROM host_admins WHERE id = ?', [t.assignee_id]))?.username : null }, s, now), source: t.source }, now,
@@ -99,6 +102,7 @@ export function supportRoutes(db) {
   r.post('/tickets/:no/reply', wrap(async (req, res) => {
     const t = await ticketOf(req, res); if (!t) return;
     const b = req.body || {}, s = await sup.getSupportSettings(db), out = await sup.hostReply(db, t, req.subject, s, { message: b.message, internal: !!b.internal, status: b.status, attachmentIds: b.attachmentIds });
+    if (!out.internal) await clearTicketAlerts(db, t.number);
     if (out.internal) { log(req, 'support.note', `Internal note added to ${sup.label(t.number)}`, t, { files: (b.attachmentIds || []).length }); return res.json({ ok: true, internal: true }); }
     log(req, 'support.reply', `Replied to ${sup.label(t.number)}, status now ${sup.STATUS_LABEL[out.status]}${out.claimed ? ' (took the ticket)' : ''}`, t, { status: out.status, claimed: out.claimed, files: (b.attachmentIds || []).length });
     if (out.status !== t.status) log(req, 'support.status', `${sup.label(t.number)} status ${sup.STATUS_LABEL[t.status]} -> ${sup.STATUS_LABEL[out.status]}`, t, { from: t.status, to: out.status });

@@ -26,7 +26,7 @@ for (const realm of ['reseller', 'host']) {
       assert.ok(p.body.split(/\s+/).length >= 700, `${p.slug}: is a substantial page`);
       assert.ok(!/[\u{1F300}-\u{1FAFF}]/u.test(p.body), `${p.slug}: no emoji`);
       for (const m of p.body.matchAll(/\]\(#\/docs\/([a-z0-9-]+)\)/g)) assert.ok(slugs.has(m[1]), `${realm}/${p.slug} links to a page that does not exist: ${m[1]}`);
-      assert.ok(!/\]\((?!#\/docs\/)/.test(p.body), `${p.slug}: links stay inside the documentation`);
+      assert.ok(!/\]\((?!#\/docs\/|shot:)/.test(p.body), `${p.slug}: links stay inside the documentation`);
       assert.ok(!/<[a-z]/i.test(p.body.replace(/`[^`]*`/g, '')), `${p.slug}: no HTML`);
     }
   });

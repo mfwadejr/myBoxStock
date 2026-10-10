@@ -19,6 +19,8 @@ This page covers both, because understanding the account states is what makes th
 
 > Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
 
+![Plans](shot:host-plans "Plans: the plan list, trial length and receipts.")
+
 ## The three kinds of account plan
 
 ### Free trial
@@ -66,8 +68,13 @@ Every change is recorded in the account's **Plan history** with the date, who ma
 Examples:
 
 - A customer says the first week was lost to a holiday: **Extend trial**, 7 days, reason "holiday, agreed by email".
+- A whole group needs more time (a launch week, an outage): in [Accounts](#/docs/accounts) tick the accounts, or use **Select all matching** after choosing a plan filter, and use the bulk action **Extend trial** or **Change plan**. You see a preview such as "This will extend 42 trials by 14 days", type the confirmation, and every account gets its own plan-history entry and audit entry. Bulk actions never suspend, close or delete.
 - A friend of the business: **Change plan** to Free, reason "comped, launch partner".
 - A customer paid for a year: **Change plan** to Paid with Paid through next year's date, or record a receipt (below) and tick the apply box.
+
+### Many accounts at once
+
+The bulk actions **Extend trial** and **Change plan** on the Accounts page make the same changes as the single-account form, for every ticked account, after a preview and a typed confirmation. Trials are extended only for accounts on a running trial; the others are skipped and counted. A large selection runs in the background with a progress bar. Each change is recorded in the account's plan history with the reason you typed, and in the [Audit trail](#/docs/audit-trail) under Bulk account actions.
 
 ## Receipts and billing records
 

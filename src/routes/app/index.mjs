@@ -14,12 +14,13 @@ import { backupRoutes, diagnosticsRoutes } from './backup.mjs';
 import { termsRoutes, termsGate } from './terms.mjs';
 import { hostLinkRoutes } from './hostlink.mjs';
 import { supportRoutes } from './support.mjs';
+import { deliveryRoutes } from './delivery.mjs';
 import { docsRoutes } from '../docs.mjs';
 import { loadUser } from './context.mjs';
 import { log } from '../../logging/logger.mjs';
 import { fullPath } from '../../core/http.mjs';
 import { fail } from '../../core/messages.mjs';
-import { activeAnnouncement } from '../../services/announcement/index.mjs';
+import { announcementFor } from '../../services/announcement/index.mjs';
 
 export function appRouter(db) {
   const r = express.Router();
@@ -36,7 +37,7 @@ export function appRouter(db) {
     fail(res, 423, 'ACCOUNT_CLOSING_LOCKED');
   });
   r.use('/docs', docsRoutes('reseller'));
-  r.get('/announcement', async (req, res) => res.json({ announcement: await activeAnnouncement(db) }));
+  r.get('/announcement', async (req, res) => res.json({ announcement: await announcementFor(db, req.subject?.account_id) }));
   r.use('/account', accountRoutes(db)); // closing is allowed even when a trial has ended
   r.use('/support', supportRoutes(db)); // so is asking for help: a read-only or closing account can still write to support
   // Ended trials and paid periods are read-only: viewing still works, changes are refused (data is never deleted).
@@ -45,6 +46,6 @@ export function appRouter(db) {
     log('tenant', 'warn', 'billing.read_only', `${req.subject.login} tried ${req.method} ${fullPath(req)} but the account is read-only (${req.subject.billing.state})`, { actor: req.subject.login, accountId: req.subject.account_id, data: { state: req.subject.billing.state } });
     fail(res, 402, 'ACCOUNT_READ_ONLY', { billing: req.subject.billing });
   });
-  r.use('/receipt-email', receiptRoutes(db)); r.use('/users', usersRoutes(db)); r.use('/roles', rolesRoutes(db)); r.use('/vault', vaultRoutes(db)); r.use('/backup', backupRoutes(db)); r.use('/diagnostics', diagnosticsRoutes(db)); r.use('/activity', activityRoutes(db)); r.use('/hostlink', hostLinkRoutes(db)); r.use('/email', emailRoutes(db));
+  r.use('/delivery', deliveryRoutes()); r.use('/receipt-email', receiptRoutes(db)); r.use('/users', usersRoutes(db)); r.use('/roles', rolesRoutes(db)); r.use('/vault', vaultRoutes(db)); r.use('/backup', backupRoutes(db)); r.use('/diagnostics', diagnosticsRoutes(db)); r.use('/activity', activityRoutes(db)); r.use('/hostlink', hostLinkRoutes(db)); r.use('/email', emailRoutes(db));
   return r;
 }

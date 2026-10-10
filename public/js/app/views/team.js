@@ -15,7 +15,7 @@
     main.querySelectorAll('[data-dis]').forEach(b => b.addEventListener('click', async () => { await AccountApp.api('POST', `/users/${b.dataset.dis}/disabled`, { disabled: b.dataset.to === '1' }); AccountApp.route(); }));
     main.querySelectorAll('[data-reset]').forEach(b => b.addEventListener('click', async () => {
       const u = users.find(x => x.id === b.dataset.reset);
-      const ok = await sheet(`<h2>Reset access</h2><p class="sub">Gives ${esc(u.login)} a new temporary password and signs them out. They will choose their own at next sign-in and keep access to the data.</p><div class="field mt-md"><label>New temporary password</label><input type="password" id="p" autocomplete="new-password"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Reset</button></div>`,
+      const ok = await sheet(`<h2>Reset access</h2><p class="sub">Gives ${esc(u.login)} a new temporary password and signs them out. They will choose their own at next sign-in and keep access to the data.</p><div class="field mt-md"><label for="p">New temporary password</label><input type="password" id="p" autocomplete="new-password"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Reset</button></div>`,
         { onMount: (el, close) => el.querySelector('#go').addEventListener('click', async () => { try { const pw = el.querySelector('#p').value; await AccountApp.api('POST', `/users/${u.id}/reset-access`, { password: pw, keys: await keysFor(pw) }); close(true); } catch (e) { toast(e.message, true); } }) });
       if (ok) toast('Access reset');
     }));
@@ -25,8 +25,8 @@
       if (c) { try { await AccountApp.api('DELETE', `/users/${u.id}`, { confirm: c }); toast('Person deleted'); AccountApp.route(); } catch (e) { toast(e.message, true); } }
     }));
     main.querySelector('#add').addEventListener('click', async () => {
-      const ok = await sheet(`<h2>Add person</h2><div class="field mt-md"><label>Username</label><input type="text" id="u" autocapitalize="none"></div><div class="field"><label>Email (optional)</label><input type="email" id="e"></div>
-        <div class="field"><label>Role</label>${UI.select.html({ id: 'r', options: roles.map(r => [r.name, r.name]) })}</div><div class="field"><label>Temporary password</label><input type="password" id="p" autocomplete="new-password"><div class="hint">They’ll be asked to change it at first sign-in.</div></div>
+      const ok = await sheet(`<h2>Add person</h2><div class="field mt-md"><label for="u">Username</label><input type="text" id="u" autocapitalize="none"></div><div class="field"><label for="e">Email (optional)</label><input type="email" id="e"></div>
+        <div class="field"><label for="r">Role</label>${UI.select.html({ id: 'r', options: roles.map(r => [r.name, r.name]) })}</div><div class="field"><label for="p">Temporary password</label><input type="password" id="p" autocomplete="new-password"><div class="hint">They’ll be asked to change it at first sign-in.</div></div>
         <div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Add</button></div>`,
         { onMount: (el, close) => el.querySelector('#go').addEventListener('click', async () => { try { await AccountApp.api('POST', '/users', { username: el.querySelector('#u').value, email: el.querySelector('#e').value, role: UI.select.value(el.querySelector('#r')), password: el.querySelector('#p').value, keys: await keysFor(el.querySelector('#p').value) }); close(true); } catch (e) { toast(e.message, true); } }) });
       if (ok) { toast('Person added'); AccountApp.route(); }

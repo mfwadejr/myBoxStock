@@ -1,16 +1,18 @@
 // TOOLS / site / build — builds the static marketing site folder.
 // Usage: node tools/site/build.mjs <output-folder> [screenshots-folder]
 //   output-folder       where the site is written (it is emptied first); the zip's top folder is usually named myboxstock-site
-//   screenshots-folder  PNG files made by tools/site/shots.mjs (copied to ms/shots/)
+//   screenshots-folder  PNG files made by tools/docs-shots/run.mjs --manifest site (copied to ms/shots/); default tools/site/shots, which holds the last set
 // Pages come from src/pages.mjs; the four Legal pages are made from content/legal/*.md; the app's own tokens.css, base.css and
 // components.css are copied in so the site always looks like the app. No page contains a style attribute.
 import fs from 'node:fs';
 import path from 'node:path';
 import { PAGES, APP_SIGNUP, APP_LOGIN } from './src/pages.mjs';
+import { SIGNUPS, CLOSED, WORDS } from './src/settings.mjs';
 
 const HERE = import.meta.dirname, ROOT = path.resolve(HERE, '..', '..');
-const out = path.resolve(process.argv[2] || 'myboxstock-site'), shotsDir = process.argv[3] ? path.resolve(process.argv[3]) : '';
-const VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
+const out = path.resolve(process.argv[2] || 'myboxstock-site'), shotsDir = process.argv[3] ? path.resolve(process.argv[3]) : path.join(HERE, 'shots');
+const VERSION = process.env.SITE_VERSION || JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;   // SITE_VERSION: name the release the site describes before package.json is bumped
+const BUILT = process.env.SITE_DATE || new Date().toISOString().slice(0, 10);
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 // ---- legal pages: md file -> page ----
@@ -52,10 +54,10 @@ const navHtml = (cur, cls) => NAV.map(p => `<a href="${p.file}"${p.file === cur 
 const header = (cur) => `<header class="sitebar"><div class="wrap">
 <a class="sitebrand" href="index.html"><img src="ms/assets/logo-512.png" alt="" width="512" height="512">myBoxStock</a>
 <nav class="sitenav" aria-label="Main">${navHtml(cur)}</nav>
-<div class="siteactions"><a class="login" data-app="login" href="${APP_LOGIN}">Log in</a><a class="btn small" data-app="signup" href="${APP_SIGNUP}">Sign up free</a></div>
+<div class="siteactions"><a class="login" data-app="login" href="${APP_LOGIN}">Log in</a>${CLOSED ? '<span class="chip amber">Sign-ups closed</span>' : `<a class="btn small" data-app="signup" href="${APP_SIGNUP}">Sign up</a>`}</div>
 </div><nav class="mobnav" aria-label="Main">${navHtml(cur)}</nav></header>`;
-const footer = () => `<footer class="sitefoot"><div class="wrap"><div class="about"><strong>myBoxStock</strong><br>Inventory and sales for people who sell streaming boxes.<br>© <span id="yr">2026</span> myBoxStock</div>
-<div class="cols"><nav aria-label="Site">${NAV.map(p => `<a href="${p.file}">${p.nav}</a>`).join('')}<a data-app="login" href="${APP_LOGIN}">Log in</a><a data-app="signup" href="${APP_SIGNUP}">Sign up</a></nav>
+const footer = () => `<footer class="sitefoot"><div class="wrap"><div class="about"><strong>myBoxStock</strong><br>Inventory and sales for people who sell streaming boxes.<br>${CLOSED ? `${WORDS.banner}<br>` : ''}Version ${VERSION}, built ${BUILT}<br>© <span id="yr">2026</span> myBoxStock</div>
+<div class="cols"><nav aria-label="Site">${NAV.map(p => `<a href="${p.file}">${p.nav}</a>`).join('')}<a data-app="login" href="${APP_LOGIN}">Log in</a>${CLOSED ? '' : `<a data-app="signup" href="${APP_SIGNUP}">Sign up</a>`}</nav>
 <nav aria-label="Legal (drafts)">${legalPages.map(p => `<a href="${p.file}">${esc(p.title.replace(' (draft): myBoxStock', ''))}</a>`).join('')}</nav></div></div></footer>`;
 const page = (p) => `<!doctype html>
 <html lang="en"><head>
@@ -79,16 +81,18 @@ for (const f of ['site-tokens.css', 'site.css']) fs.copyFileSync(path.join(HERE,
 fs.copyFileSync(path.join(HERE, 'src', 'site.js'), path.join(out, 'ms', 'js', 'site.js'));
 for (const f of ['logo-512.png', 'apple-touch-icon.png', 'favicon-32.png']) fs.copyFileSync(path.join(ROOT, 'public', 'assets', f), path.join(out, 'ms', 'assets', f));
 fs.copyFileSync(path.join(ROOT, 'public', 'favicon.ico'), path.join(out, 'favicon.ico'));
-if (shotsDir) for (const f of fs.readdirSync(shotsDir).filter(f => f.endsWith('.png'))) fs.copyFileSync(path.join(shotsDir, f), path.join(out, 'ms', 'shots', f));
+if (fs.existsSync(shotsDir)) for (const f of fs.readdirSync(shotsDir).filter(f => f.endsWith('.png'))) fs.copyFileSync(path.join(shotsDir, f), path.join(out, 'ms', 'shots', f));
 for (const p of [...PAGES, ...legalPages]) fs.writeFileSync(path.join(out, p.file), page(p));
 fs.writeFileSync(path.join(out, 'README.txt'), `myBoxStock marketing site (static files, no server needed). Built for myBoxStock ${VERSION}.
 
 Pages: ${[...PAGES, ...legalPages].map(p => p.file).join(', ')}.
 Upload the whole folder to any web host.
+Sign-ups are set to ${SIGNUPS.toUpperCase()}. To change it, edit SIGNUPS in tools/site/src/settings.mjs (closed or open), rebuild and upload again.
+The Available today and Coming soon lists are in tools/site/src/content.mjs (Coming soon stays hidden while its list is empty).
 
 Where Log in and Sign up point: edit APP_URL in ms/js/site.js (the same address is also written into each page, so the buttons work with scripts blocked).
 Colours, sizes and fonts: ms/css/tokens.css is a copy of the app's tokens, and ms/css/site-tokens.css holds the few site-only sizes. No page uses inline styles.
 The four Legal pages are DRAFTS made from the app's content/legal files. Rebuild with: node tools/site/build.mjs <folder> <screenshots folder>.
-Screenshots in ms/shots are of the real reseller app with made-up sample data (node tools/site/shots.mjs <folder>).
+Screenshots in ms/shots are of the real reseller app with made-up sample data (node tools/docs-shots/run.mjs --manifest site --out <folder>).
 `);
 console.log(`built ${PAGES.length + legalPages.length} pages into ${out}`);

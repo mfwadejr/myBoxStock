@@ -1,9 +1,9 @@
 ---
 title: Accounts
 summary: Find a customer account, check its health, and use the support tools: suspend, reset passwords and two-factor, temporary passwords, plan changes, receipts, closing and erasing.
-keywords: accounts, unlock, locked out, unlock sign-in, account erased email, delete reason, email not sent, deleted email not sent, paging, per page, page size, search, customer, support, suspend, reactivate, reset password, temporary password, two-factor reset, 2FA, confirm email, resend, mark confirmed, sign out everywhere, disable sign-in, delete user, delete account, closing, restore, erase, plan, extend trial, receipt, support history, host link, health filter, recovery key
+keywords: accounts, unlock, locked out, unlock sign-in, account erased email, delete reason, email not sent, deleted email not sent, paging, per page, page size, search, customer, support, suspend, reactivate, reset password, temporary password, two-factor reset, 2FA, confirm email, resend, mark confirmed, sign out everywhere, disable sign-in, delete user, delete account, closing, restore, erase, plan, extend trial, receipt, support history, host link, health filter, recovery key, bulk actions, bulk, select all, needs attention, attention, sort, sorting, sort columns, announcement, notice to accounts, export accounts, CSV, extend many trials
 order: 3
-covers: nav:accounts, Terms, Terms accepted, Not accepted yet, Older terms accepted, Search by business Reseller ID or email, All plans, On trial, Free (comped), Paid, Ended / read-only, Any health, No recovery key saved, No two-factor, Email not verified, Inactive 30 days, Encryption not set up, Closing, Suspended, Business, Reseller ID, Owner, Users, Plan, Status, Health, Last sign-in, Showing, 25 per page, 50 per page, 100 per page, Previous, Next, Account sheet, Change plan, Extend trial, Suspend, Reactivate, Record a receipt, Remove receipt, Plan history, Support history, Allow this account to link a Host administrator, People, Manage, Delete, Restore, Email a password reset link, Resend the confirmation email, Mark as confirmed, Set a temporary password, Reset two-factor authentication, Sign out everywhere, Disable sign-in, Enable sign-in, Delete this user, Reason, locked out, Unlock this sign-in, Not locked out, Reason (included in the email, optional), Email is not set up so nobody will be told this account was deleted, Delete forever, account erased email
+covers: nav:accounts, Terms, Terms accepted, Not accepted yet, Older terms accepted, Search by business Reseller ID or email, All plans, On trial, Free (comped), Paid, Ended / read-only, Any health, No recovery key saved, No two-factor, Email not verified, Inactive 30 days, Encryption not set up, Closing, Suspended, Business, Reseller ID, Owner, Users, Plan, Status, Health, Last sign-in, Showing, 25 per page, 50 per page, 100 per page, Previous, Next, Account sheet, Change plan, Extend trial, Suspend, Reactivate, Record a receipt, Remove receipt, Plan history, Support history, Allow this account to link a Host administrator, People, Manage, Delete, Restore, Email a password reset link, Resend the confirmation email, Mark as confirmed, Set a temporary password, Reset two-factor authentication, Sign out everywhere, Disable sign-in, Enable sign-in, Delete this user, Reason, locked out, Unlock this sign-in, Not locked out, Reason (included in the email, optional), Email is not set up so nobody will be told this account was deleted, Delete forever, account erased email, Needs attention, Trial ends within 3 days, Trial ends within 7 days, Trial ends within 14 days, Trial ends within 30 days, Trial ending soon, Ticket overdue, Select all accounts on this page, Select all matching, Clear, selected, Bulk actions, Send announcement, Export list, Preview, Sort by Business, Sort by Plan days left, Sort by Users, Sort by Last sign-in, Days to add to each running trial, Keep the plan, change only the note, Plan note, Message, Style, Also email the account owners, Reason (a few words, saved in the audit trail), Type the words to confirm, DEMO chip, Show demo accounts, Demo accounts in the list
 ---
 
 ## What this page is for
@@ -15,6 +15,8 @@ It is just as important to know what is not here. You will never see a customer'
 > The customer owns their data and is 100 percent responsible for it, for saving their recovery key, and for making their own exports. Resetting a password or two-factor lets someone sign in again. It does not give anyone the ability to read data they could not already open. If a customer loses their recovery key and every device, the data cannot be recovered by you.
 
 > Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
+
+![The Accounts list with search, filters and the Health column (made-up demo accounts, marked DEMO).](shot:host-accounts "The Accounts list with search, filters and the Health column (made-up demo accounts, marked DEMO).")
 
 ## The account list
 
@@ -41,6 +43,7 @@ The first drop-down narrows by plan:
 The second drop-down finds accounts that need a nudge. It only uses identity and security facts.
 
 - **Any health** (no filter).
+- **Needs attention**: one combined view of everything worth a follow-up. See "Needs attention" below.
 - **No recovery key saved**: encryption is set up but the customer has not confirmed saving their recovery key. This is the most important filter, because without the key, forgotten credentials mean lost data. Contact these customers.
 - **No two-factor**: none of the account's Administrators has two-factor on.
 - **Email not verified**: someone in the account has an email address that has not been confirmed.
@@ -53,7 +56,7 @@ You can combine search, plan and health. Use **Closing** at the start of each we
 
 ### The columns
 
-- **Business** is the business name.
+- **Business** is the business name. Accounts made by [Demo mode](#/docs/demo-mode) carry an amber **DEMO** chip here and in the title of their account sheet. The **Show demo accounts** checkbox above the list hides them. Reset links and confirmation emails are never sent to a demo account, and they are never billed.
 - **Reseller ID** is the account code.
 - **Owner** is the owner's email.
 - **Users** is how many people the account has.
@@ -62,11 +65,71 @@ You can combine search, plan and health. Use **Closing** at the start of each we
 - **Health** shows chips: "No recovery key", "Not encrypted", "2FA off", "Email not verified", or a green "Good" when none apply.
 - **Last sign-in** shows how long ago anyone last signed in, or "never".
 
-Click any row to open that account's sheet.
+Four of the column titles can be clicked to sort the list: **Business**, **Users**, **Plan** (by days left) and **Last sign-in**. See "Sorting" below. Click any other part of a row to open that account's sheet.
 
 ### Paging
 
 The list shows 25 accounts at a time. Under it a line says, for example, "Showing 1-25 of 60". A drop-down on the right changes the page size to **25 per page**, **50 per page** or **100 per page**, and **Previous** and **Next** move between pages. When there are 25 accounts or fewer, these controls are hidden. Typing in the search box or changing either filter takes you back to page 1. The server returns at most 500 matches for one search, so use the search box and the filters to narrow a very large list rather than paging to the end.
+
+### Needs attention
+
+Choose **Needs attention** in the health drop-down to see, in one list, every account with at least one of these problems:
+
+- **No recovery key**: encryption is set up but the customer has not confirmed saving the recovery key.
+- **Email not verified**: someone in the account has an email address that has not been confirmed.
+- **Inactive 30 days**: nobody has signed in for 30 days.
+- **Trial ending soon**: a running trial ends within a number of days you choose.
+- **Ticket overdue**: the account has a support ticket waiting on the Host for longer than the response target set in Support settings. It is the same measure the Support page and the Alerts use.
+
+When you pick Needs attention, a third drop-down appears next to it: **Trial ends within 3 days**, **7 days** (the default), **14 days** or **30 days**. It only changes what counts as "ending soon". Instead of the usual health chips, each row then shows amber chips naming the reasons, so you can see why an account is listed without opening it. An account with none of these problems is not listed.
+
+Why: it gives you one place to start each morning, instead of running five separate filters. Work down the list, fix or contact each account, and the list gets shorter. The individual filters (No recovery key saved, Email not verified and so on) are still there when you want just one problem.
+
+### Sorting
+
+The titles **Business**, **Users**, **Plan** and **Last sign-in** are buttons. Press one to sort the list by it, ascending. Press it again to reverse the order. A small arrow shows which column is sorted and which way, and screen readers are told the same ("sorted ascending"). **Plan** sorts by days left, so the trials that end soonest come first when ascending. Accounts with no end date (Free) or no sign-in yet ("never") always go to the bottom, whichever way you sort. The choice is remembered while the page is open, even if you visit another page and come back, and it applies to the whole result (all pages), not only the page you see. Searching and filtering keep the sort. To go back to the default (newest accounts first), reload the Host Console.
+
+### Selecting accounts and bulk actions
+
+Every row has a tick box at the start, and the title row has one that selects every account on the page you are looking at. Ticking a box never opens the account. Once something is ticked, a blue bar appears above the list showing "N selected", with:
+
+- **Select all N matching**: appears when more accounts match your search and filter than are ticked. It selects everything the list holds for the current search, plan and health filter, not only this page. The list holds at most 500 matches, so narrow the search first for a very large site.
+- **Clear**: unticks everything.
+- Four actions, described below: **Extend trial**, **Change plan**, **Send announcement** and **Export list**.
+
+Bulk actions are for routine, safe jobs. They never suspend, close or delete an account; those stay one at a time on the account sheet, on purpose. A Host administrator whose role is View can look at accounts but cannot use bulk actions.
+
+Every action that changes accounts works in the same four steps inside one window:
+
+1. **Choose.** Fill in the small form for the action (for example the number of days) and press **Preview**.
+2. **Preview.** Nothing has changed yet. A blue box says in words what would happen, for example "This will extend 42 trials by 14 days." It also lists any selected accounts that would be skipped and why (for example "3 accounts skipped: not on a running trial") and a few example names.
+3. **Confirm.** Type a short reason (saved in the audit trail) and type the confirmation words shown, for example `EXTEND 42`. The button stays greyed out until both are right. The words include the number, so you cannot confirm a different number by accident, and if the accounts changed after the preview the action is refused and you are asked to preview again.
+4. **Run.** Small selections finish at once and show a summary. From 25 accounts up, the action runs in the background with a progress bar ("12 of 80 accounts") and you can keep the window open until it finishes. Only one bulk action runs at a time.
+
+Everything is logged. Each account gets its own entry in the [Audit trail](#/docs/audit-trail) under **Bulk account actions**, saying what was done to it, who did it and why, and one summary entry says what was run, by whom, how many accounts were done, failed and skipped. Plan changes are also kept in each account's plan history.
+
+#### Extend trial
+
+Adds the number of days you enter (1 to 365) to the end date of every selected account that is on a running trial. Accounts that are Free, Paid or whose trial already ended are skipped and counted in the preview. To restart an ended trial, use **Change plan** below. Why: a launch week, a conference or an outage is a good reason to give a whole group of customers more time in one go.
+
+#### Change plan
+
+Changes the plan of every selected account. Choose what to change them to: **Keep the plan, change only the note** (only the plan note changes, plans and dates stay), **Free (comped)**, **Trial** (enter the length in days, counted from today) or **Paid** (optionally the "Paid through" date). The **Plan note** appears on each account's plan and in its history. Accounts that are already Free are skipped when you choose Free. It is the same change as **Change plan** on one account sheet, applied to many. See [Plans](#/docs/plans).
+
+#### Send announcement
+
+Shows a short notice to the people in every selected account. Write the **Message** (5 to 400 characters, plain text), choose the **Style** (Information, Heads-up or Important), and optionally switch on **Also email the account owners**.
+
+- The notice appears as a banner at the top of the app for 14 days, until people close it. It replaces the site-wide banner for those accounts while it is current. Other accounts see nothing.
+- With the email option on, one email goes to each selected account's owner address through your [Email](#/docs/email) setup. If Email is not set up, the action is refused and tells you so. An account with no owner address gets only the notice. Demo accounts (when Demo mode is used) get only the notice and are never emailed.
+- One action can queue at most 500 emails. For more, send in groups or use the notice alone.
+- The email text is a normal message you can restyle under Email, Messages, called **Announcement from the Host**. The reseller's data is never involved: the notice is the same text for everyone you chose.
+
+#### Export list
+
+Downloads a CSV file of the selected accounts. It has only what the Host can already see on the Accounts page: business name, Reseller ID, owner email, status, plan, plan end date, days left, number of users, last sign-in date and created date. It never contains customer data. No confirmation is needed because nothing changes, but the export is still recorded for every account and as a summary. Cells that start with a character a spreadsheet could treat as a formula are made safe. Treat the file as personal data: it holds email addresses. Delete it when you have finished.
+
+![Tick some rows and the bulk bar appears](shot:host-accounts-2 "Tick some rows and the bulk bar appears: Extend trial, Change plan, Send announcement and Export list.")
 
 ## The account sheet
 
@@ -126,6 +189,8 @@ Every person in the account, with chips for their role, **2FA**, **disabled**, a
 The red **Delete** button opens a sheet. It explains that the delete is permanent and that you cannot recover the data (it was encrypted; the only way back is the customer's own backup file), asks for an optional **Reason (included in the email)**, and asks you to type the account's Reseller ID. **Delete forever** stays greyed out until the ID matches. See "Closing, restoring and erasing" below.
 
 If Email is not set up, the sheet shows a red warning: "Email is not set up, so nobody will be told this account was deleted." You may still go ahead on purpose.
+
+![An account sheet](shot:host-accounts-3 "An account sheet: plan, status and the support tools. The Host sees no business data here.")
 
 ## Managing a person
 

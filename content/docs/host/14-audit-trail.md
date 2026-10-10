@@ -1,9 +1,9 @@
 ---
 title: Audit trail
 summary: A plain record of what each Host administrator did and who signed in to the Host Console: settings, accounts, firewall rules, bans, sign-ins and two-factor changes. This page explains every kind of entry, how it differs from Logs, and how to answer "who changed that?".
-keywords: type filter, system, firewall changes, bans, lockouts, sign-ins, two-factor, audit trail, audit, who changed, who did this, administrator actions, accountability, history, support history, settings changed, suspended, reset password, everyone, actor filter, search, load more
+keywords: type filter, system, firewall changes, bans, lockouts, sign-ins, two-factor, audit trail, audit, who changed, who did this, administrator actions, accountability, history, support history, bulk actions, bulk account actions, settings changed, suspended, reset password, everyone, actor filter, search, load more
 order: 14
-covers: nav:audit, Everyone, All kinds of entry, Type filter, Settings and accounts, Firewall and access, Bans and lockouts, Host Console sign-ins, Two-factor, System, Firewall rule added, Firewall rule changed, Firewall rule removed, Rate-limit settings changed, Host Console access limit changed, Ban created, Ban lifted, Host Console sign-in locked, Host Console sign-in, Host Console failed sign-in, Host Console sign-out, Two-factor turned on, Two-factor turned off, Two-factor recovery code used, Showing N of M actions, actor filter, Last 24 hours, Last 7 days, Last 30 days, All time, Search actions people addresses Reseller IDs, Load more, Sign-in unlocked, account erased email, deleted email not sent, Support tickets filter, Closed tickets purged, Data and retention filter, Retention rule changed, Automatic pruning changed, Data pruned, Database compacted, Retention change refused
+covers: nav:audit, New-ticket alert raised, New-ticket email queued, New-ticket email not sent, Daily support digest sent, Everyone, All kinds of entry, Type filter, Settings and accounts, Firewall and access, Bans and lockouts, Host Console sign-ins, Two-factor, System, Firewall rule added, Firewall rule changed, Firewall rule removed, Rate-limit settings changed, Host Console access limit changed, Ban created, Ban lifted, Host Console sign-in locked, Host Console sign-in, Host Console failed sign-in, Host Console sign-out, Two-factor turned on, Two-factor turned off, Two-factor recovery code used, Showing N of M actions, actor filter, Last 24 hours, Last 7 days, Last 30 days, All time, Search actions people addresses Reseller IDs, Load more, Sign-in unlocked, account erased email, deleted email not sent, Support tickets filter, Closed tickets purged, Data and retention filter, Retention rule changed, Automatic pruning changed, Data pruned, Database compacted, Retention change refused, Bulk account actions, Bulk action on an account, Bulk action summary, Demo mode, Demo mode switched on or off, Demo data built, Demo data removed or reset, Demo password shown copied or changed, Demo started without a backup
 ---
 
 ## What the Audit trail is
@@ -62,13 +62,25 @@ Each entry says who, what, when and from which address. Reseller sign-ins never 
 
 The Audit trail is kept apart from the Logs. Trimming the activity log (90 days by default) never removes audit entries. They are kept forever by default. The Owner administrator can set a limit on [Data and retention](#/docs/data-and-retention), and the limit can never be shorter than 1 year (365 days), so one mistaken click cannot erase the evidence. Entries that existed before this rule came in were all kept. The entries about retention itself (rule changes, prunes, compacting) are never pruned, whatever the limit.
 
+### Demo mode
+
+The **Demo mode** filter shows what administrators did with demo data: **Demo mode switched on or off**, **Demo settings changed or reset**, **Demo data built**, **Demo data removed or reset**, **Demo job stopped**, **Demo password shown, copied or changed**, **Opened as a demo reseller**, **Demo started without a backup** (the Owner continued without a recent backup) and **Demo action refused** (a role or a safety check said no). Passwords are never in these entries, only the login name and the set. Demo entries are also left out of the Actions filter so they do not bury your real changes. See [Demo mode](#/docs/demo-mode).
+
 ### Data and retention
 
 The **Data and retention** filter shows every change to a retention rule (**Retention rule changed**), every change to nightly pruning (**Automatic pruning changed**), every prune by an administrator or by System (**Data pruned**, with how many rows and about how many bytes), every **Database compacted** and every refused attempt (**Retention change refused**). These entries are never pruned.
 
 ### Support tickets
 
-The **Support tickets** filter shows everything done in Support: opening a ticket (recorded the first time each administrator opens a given ticket on a given day, not on every view), replies, internal notes, status, priority, category and assignment changes, tickets closed automatically, changes to Support settings, Host notes on a reseller, and purges of closed tickets (including a purge that was refused because the person was not the Owner). Each entry names the administrator and the reseller. A reseller opening a ticket or replying is not a Host action and is not listed. See [Support tickets](#/docs/support-tickets).
+The **Support tickets** filter shows everything done in Support: opening a ticket (recorded the first time each administrator opens a given ticket on a given day, not on every view), replies, internal notes, status, priority, category and assignment changes, tickets closed automatically, changes to Support settings, Host notes on a reseller, new-ticket notices (**New-ticket alert raised**, **New-ticket email queued**, **New-ticket email not sent**, **Daily support digest sent**, recorded with the system as the actor), and purges of closed tickets (including a purge that was refused because the person was not the Owner). Each entry names the administrator and the reseller. A reseller opening a ticket or replying is not a Host action and is not listed. See [Support tickets](#/docs/support-tickets).
+
+### Bulk account actions
+
+The **Bulk account actions** filter shows what was done from the Accounts page with the tick boxes and the bulk bar. See [Accounts](#/docs/accounts). A run writes one **Bulk action on an account** entry for every account it touched (for example "Account BX-ABC123: Trial extended by 14 days (now 28 days left) (bulk)", with the reason you gave), and one **Bulk action summary** entry for the whole run: which action, who ran it, how many accounts were done, failed and skipped, and how many emails were queued. A failed account has its own warning entry. An attempt that was refused (a Host administrator who may not use bulk actions, a confirmation that was not typed, or a selection that changed after the preview) is recorded as a summary entry too. Exporting the list is recorded the same way, so there is always a record of who took a copy of the account list. These entries are never pruned.
+
+### Email tests
+
+Every **Send test email** and **Check my email setup** on the Email page is recorded under **Settings and accounts**, with the recipient and how it ended ("sent" or "not sent" with the plain-language cause). The mail password never appears in an entry. See [Email](#/docs/email).
 
 ## What is not in the Audit trail
 
@@ -91,6 +103,8 @@ A good habit: check the Audit trail first for "an administrator did something" o
 - **Typical reader.** Audit trail: the Owner checking on the team. Logs: anyone troubleshooting.
 
 If you only remember one thing: Audit trail is for accountability, Logs is for troubleshooting.
+
+![The Audit trail listing who did what, with the type filter.](shot:host-audit "The Audit trail listing who did what, with the type filter.")
 
 ## Reading the list
 
@@ -125,6 +139,8 @@ The second menu starts at **All kinds of entry**. It narrows the list to one gro
 - **Bans and lockouts**: bans created and lifted, sign-ins unlocked by an administrator, and Host Console sign-ins that were locked.
 - **Host Console sign-ins**: successful and failed sign-ins and sign-outs.
 - **Two-factor**: turned on, turned off and recovery codes used.
+- **Bulk account actions**: bulk extends, plan changes, announcements and exports from the Accounts page, one entry per account plus a summary.
+- **Demo mode**: everything done on the Demo mode page, as described above.
 - **Backups**: backups made (by hand or by the schedule, shown as "scheduler"), restores, downloads, deletions, test restores, destinations saved, tested or removed, and backup settings changes.
 
 ### Time range

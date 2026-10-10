@@ -12,6 +12,8 @@ export const AUDIT_GROUPS = [
   { id: 'backups', label: 'Backups' },
   { id: 'support', label: 'Support tickets' },
   { id: 'retention', label: 'Data and retention' },
+  { id: 'bulk', label: 'Bulk account actions' },
+  { id: 'demo', label: 'Demo mode' },
 ];
 
 export const AUDIT_TYPES = [
@@ -53,20 +55,36 @@ export const AUDIT_TYPES = [
   { group: 'support', label: 'Ticket assigned', area: 'host', events: ['support.assign'] },
   { group: 'support', label: 'Ticket closed automatically', area: 'host', events: ['support.auto_closed'] },
   { group: 'support', label: 'Support settings changed', area: 'host', events: ['support.settings'] },
+  { group: 'support', label: 'New-ticket alert raised', area: 'host', events: ['support.notice'] },
+  { group: 'support', label: 'New-ticket email queued', area: 'host', events: ['support.notice_email'] },
+  { group: 'support', label: 'New-ticket email not sent', area: 'host', events: ['support.notice_skipped', 'support.notice_failed'] },
+  { group: 'support', label: 'Daily support digest sent', area: 'host', events: ['support.notice_digest'] },
   { group: 'support', label: 'Host note on a reseller saved', area: 'host', events: ['support.account_note'] },
   { group: 'retention', label: 'Retention rule changed', area: 'host', events: ['retention.rule'] },
   { group: 'retention', label: 'Automatic pruning changed', area: 'host', events: ['retention.auto'] },
   { group: 'retention', label: 'Data pruned', area: 'host', events: ['retention.pruned'] },
   { group: 'retention', label: 'Database compacted', area: 'host', events: ['retention.compacted'] },
   { group: 'retention', label: 'Retention change refused', area: 'host', events: ['retention.refused'] },
+  { group: 'bulk', label: 'Bulk action on an account', area: 'accounts', events: ['bulk.extend_trial', 'bulk.change_plan', 'bulk.announce', 'bulk.export'] },
+  { group: 'bulk', label: 'Bulk action summary', area: 'host', events: ['bulk.summary', 'bulk.refused'] },
   { group: 'support', label: 'Closed tickets purged', area: 'host', events: ['support.purge'] },
+  { group: 'demo', label: 'Demo mode switched on or off', area: 'host', events: ['demo.enabled', 'demo.disabled'] },
+  { group: 'demo', label: 'Demo settings changed or reset', area: 'host', events: ['demo.settings', 'demo.settings_reset'] },
+  { group: 'demo', label: 'Demo data built', area: 'host', events: ['demo.build'] },
+  { group: 'demo', label: 'Demo data removed or reset', area: 'host', events: ['demo.remove', 'demo.reset'] },
+  { group: 'demo', label: 'Demo job stopped', area: 'host', events: ['demo.stopped'] },
+  { group: 'demo', label: 'Demo password shown, copied or changed', area: 'host', events: ['demo.password_show', 'demo.password_copy', 'demo.password_reset'] },
+  { group: 'demo', label: 'Opened as a demo reseller', area: 'host', events: ['demo.open'] },
+  { group: 'demo', label: 'Demo started without a backup', area: 'host', events: ['demo.backup_override'] },
+  { group: 'demo', label: 'Demo action refused', area: 'host', events: ['demo.refused'] },
+  { group: 'demo', label: 'Demo email blocked', area: 'mail', events: ['demo.mail_blocked'] },
 ];
 
 
 // SQL for "this event row belongs to the audit trail" (optionally only one group). Parameters are returned in order.
 export function auditScope(group = '') {
   const parts = [], params = [];
-  if (!group || group === 'actions') { parts.push(`(e.area IN (${ACTION_AREAS.map(() => '?').join(',')}) AND e.actor IS NOT NULL AND e.actor <> '' AND e.event NOT LIKE 'backup.%' AND e.event NOT LIKE 'support.%' AND e.event NOT LIKE 'retention.%')`); params.push(...ACTION_AREAS); }
+  if (!group || group === 'actions') { parts.push(`(e.area IN (${ACTION_AREAS.map(() => '?').join(',')}) AND e.actor IS NOT NULL AND e.actor <> '' AND e.event NOT LIKE 'backup.%' AND e.event NOT LIKE 'support.%' AND e.event NOT LIKE 'retention.%' AND e.event NOT LIKE 'bulk.%' AND e.event NOT LIKE 'demo.%')`); params.push(...ACTION_AREAS); }
   for (const t of AUDIT_TYPES.filter(x => !group || x.group === group)) {
     parts.push(`(e.area = ? AND e.event IN (${t.events.map(() => '?').join(',')})${t.hostRealm ? ` AND e.raw LIKE '%"realm":"host"%'` : ''})`); params.push(t.area, ...t.events);
   }

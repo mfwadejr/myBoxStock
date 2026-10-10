@@ -19,6 +19,8 @@ There are two separate ideas on this page, and mixing them up is the most common
 
 > Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. See [Email](#/docs/email).
 
+![Firewall](shot:host-firewall "Firewall: blocked and rate-limited counts, bans and Host Console access.")
+
 ## The three counters
 
 At the top, three tiles show how the firewall has been working.

@@ -3,7 +3,7 @@ title: Overview
 summary: A live picture of the server: how many accounts and people, whether backups are healthy, plan counts, CPU, memory and storage, firewall activity and email.
 keywords: dashboard, home, overview, accounts count, users, signed in now, database, backup status, cpu, memory, storage, disk, load, uptime, version, firewall, blocked, rate-limited, banned, mail queue, banner, restore staged
 order: 2
-covers: nav:overview, red number, Last snapshot, Last full-site backup, Last test restore, Copy off this server, Backup space left, Not protected yet, need attention, Background job, Accounts, Users, Signed in now, Database, Backups card, Plans card, on trial, ending within 7 days, free, paid, ended, CPU, Memory, Storage, Server, Protection, blocked, rate-limited, banned now, mail sent queued failed, Email links will not work banner, database restore staged banner, Alerts banner, Set the site address, Support card, Open Support, waiting on Host, unassigned
+covers: nav:overview, Email is on but no test email has passed since it was last changed, Send a test email, red number, Last snapshot, Last full-site backup, Last test restore, Copy off this server, Backup space left, Not protected yet, need attention, Background job, Accounts, Users, Signed in now, Database, Backups card, Plans card, on trial, ending within 7 days, free, paid, ended, CPU, Memory, Storage, Server, Protection, blocked, rate-limited, banned now, mail sent queued failed, Email links will not work banner, database restore staged banner, Alerts banner, Set the site address, Support card, Open Support, waiting on Host, unassigned, Demo accounts on Overview, DEMO, Show demo accounts, What you can and cannot see here
 ---
 
 ## What this page is for
@@ -35,13 +35,20 @@ On every page, not just Overview, a red bar says how many problems need a look, 
 
 This banner appears when the server cannot work out a proper public address to put in emails. It explains the problem and offers **Set the site address**, which takes you to [Settings](#/docs/settings). Fix this early: until the site address is right, confirmation and password-reset emails will contain links that go nowhere, and customers will contact you.
 
+### Email has not been tested
+
+This note appears when email is on but no test email has passed since the email settings last changed. It links to [Email](#/docs/email), where **Send test email** or **Check my email setup** will confirm that messages really go out. A passing test removes it.
+
 ### A database restore is staged
 
 This appears when you have asked for a restore from [Backups](#/docs/backups) and it will be applied on the next restart. Until you restart, the server still uses the current data. If you did not expect this banner, open Backups and check before restarting, because applying a restore replaces what the server holds.
 
+![The Host Overview with made-up demo data](shot:host-overview "The Host Overview with made-up demo data: the top numbers, the Backups, Plans and Support cards and server health.")
+
 ## The four top numbers
 
 - **Accounts** is how many customer accounts exist. The small note under it says how many are suspended. A suspended account is one you or a colleague switched off under [Accounts](#/docs/accounts).
+- **Demo accounts** made by [Demo mode](#/docs/demo-mode) count in these numbers, and a small amber **DEMO** chip under Accounts and Users says how many of them are demo. When demo accounts exist, a **Show demo accounts** checkbox appears: clear it to see the numbers, plan counts and storage for real accounts only. The choice is remembered in this browser only.
 - **Users** is how many people there are across all accounts. Each account has at least one administrator, plus whatever staff they add.
 - **Signed in now** counts different people who used the app in the last 15 minutes. It is not the number of open sign-ins, which would overstate it because a sign-in lasts a long time. Use it to pick a quiet moment for maintenance: if it is 0 or 1, restarting hurts almost nobody.
 - **Database** shows which database engine is in use (for example SQLite or PostgreSQL) and, for a file-based database, its size. If the database is on a separate server it says "external server" instead of a size. A steadily growing size is normal as customers add records. A sudden jump is worth a look at [Logs](#/docs/logs).
@@ -133,6 +140,10 @@ For mail, queued numbers should return to zero within a minute or two. If **fail
 6. Resources: if it is steady growth, plan a bigger server; if brief, ignore it.
 
 For emergencies read [Recovery and emergencies](#/docs/recovery-and-emergencies), and for server care see [Running the server](#/docs/running-the-server).
+
+## What you can and cannot see here
+
+Every number on this page is about the server, not about anyone's business. You can see how many accounts exist, how many people belong to them, how big their stored data is, which plan each is on, and when each last signed in. You cannot see what a reseller sells, owns or charges: inventory, customers, sales, receipts, prices and notes are encrypted in the reseller's browser before they reach the server, and only the reseller (and the people they invite) can open them. The server stores them as unreadable blocks. The totals above count those blocks and their size, never what is inside. See [Accounts](#/docs/accounts) for the exact list of what the Host can look at when helping one reseller.
 
 ## Tips
 

@@ -48,7 +48,7 @@ test('browser: Terms box on sign-up, legal pages in the app, updated-terms scree
     await fillLogin(page, 'tia@' + id); await page.fill('#p', PW); await page.click('button.block');
     await page.waitForSelector('.recovery-key'); await page.check('#ok'); await page.click('#go'); await page.waitForSelector('.main');
     assert.equal(await page.locator('.legal-foot .legal-links a').count(), 4);
-    await page.click('.legal-foot a:has-text("Terms of Service")'); await page.waitForSelector('.main .doc h1'); assert.equal(await page.textContent('.main .doc h1'), 'Terms of Service');
+    await page.click('.legal-foot a[href="#/legal/terms-of-service"]'); await page.waitForSelector('.main .doc h1'); assert.equal(await page.textContent('.main .doc h1'), 'Terms of Service');
     l = await page.evaluate(layout); assert.ok(l.overflow <= 1, 'legal page inside the app scrolls sideways'); assert.deepEqual(l.small, []);
 
     // The Host sees the acceptance on the account's detail, and the footer links in the Host Console.

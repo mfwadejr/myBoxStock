@@ -5,6 +5,7 @@ import { can, tenantLog } from './context.mjs';
 import { fail } from '../../core/messages.mjs';
 import { buildDiagnostics } from '../../services/backup/diagnostics.mjs';
 import * as sup from '../../services/support/index.mjs';
+import { ticketNotice } from '../../services/support/notify.mjs';
 
 export function supportRoutes(db) {
   const r = express.Router();
@@ -23,6 +24,7 @@ export function supportRoutes(db) {
     try {
       const t = await sup.openTicket(db, req.subject, s, { category: b.category, subject: b.subject, message: b.message, attachmentIds: b.attachmentIds, diagnostics: await diag(req, !!b.diagnostics) }, req.get('user-agent'));
       tenantLog(req, 'support.ticket_opened', `${req.subject.login} opened support ticket ${t.label} (${b.category}${b.diagnostics ? ', diagnostics attached' : ''})`, { ticket: t.label, category: b.category, diagnostics: !!b.diagnostics, files: (b.attachmentIds || []).length });
+      await ticketNotice(db, t.number, 'new');   // alert and email to the Host; never fails the request
       res.json({ ok: true, ticket: t });
     } catch (e) { if (e.code) tenantLog(req, 'support.ticket_refused', `${req.subject.login} could not open a support ticket: ${e.code}`, { code: e.code }); throw e; }
   }));
@@ -38,6 +40,7 @@ export function supportRoutes(db) {
     const t = await mine(req, res); if (!t) return;
     const b = req.body || {}, out = await sup.requesterReply(db, t, req.subject, await sup.getSupportSettings(db), { message: b.message, attachmentIds: b.attachmentIds, diagnostics: await diag(req, !!b.diagnostics) });
     tenantLog(req, 'support.reply', `${req.subject.login} replied to support ticket ${sup.label(t.number)}${out.reopened ? ' (reopened it)' : ''}`, { ticket: sup.label(t.number), reopened: out.reopened });
+    await ticketNotice(db, t.number, 'reply');
     res.json({ ok: true, ...out });
   }));
   r.get('/attachments/:id', wrap(async (req, res) => {

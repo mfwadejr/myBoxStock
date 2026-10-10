@@ -1,0 +1,22 @@
+{
+  "about": "Account records as the app saved them in v0.21.0 to v0.24.0, before delivery, addresses, returns, labels and return settings existed. The records are sealed with the test account's key by test/t48-compat.test.mjs (a real backup file is bound to one account and its key, so a plain-text fixture is what can be kept in the repository).",
+  "config": { "fields": [
+      { "key": "uid", "label": "UID", "type": "text", "core": true, "enabled": true, "lookup": true, "unique": true, "onSale": true },
+      { "key": "serial", "label": "Serial number", "type": "text", "core": true, "enabled": true, "lookup": true, "unique": true, "onSale": true },
+      { "key": "mac", "label": "MAC address", "type": "text", "core": true, "enabled": true, "lookup": true, "unique": true, "onSale": true } ],
+    "steps": [ { "key": "inspected", "label": "Device inspected", "required": false }, { "key": "upgrade", "label": "Code / firmware upgraded (if needed)", "required": false } ],
+    "warranty": { "default": "none", "periods": [ { "key": "none", "label": "No warranty", "amount": 0, "unit": "days" }, { "key": "d30", "label": "30 days", "amount": 30, "unit": "days" } ] } },
+  "customers": [
+    { "id": "c-old-1", "data": { "name": "Old Customer", "phone": "555-0111", "email": "old@example.com", "notes": "", "createdAt": 1700000000000 } },
+    { "id": "c-old-2", "data": { "name": "Second Old", "createdAt": 1700000100000 } } ],
+  "models": [ { "id": "m-old-1", "data": { "name": "Roku Ultra", "reorder": 3 } } ],
+  "items": [
+    { "id": "i-old-1", "data": { "uid": "OLD-1", "serial": "S-OLD-1", "make": "Roku", "model": "Ultra", "status": "sold", "cost": 2000, "price": 5000, "addedAt": 1700000000000, "soldAt": 1700001000000, "saleId": "s-old-1" } },
+    { "id": "i-old-2", "data": { "uid": "OLD-2", "serial": "S-OLD-2", "make": "Roku", "model": "Ultra", "status": "available", "cost": 2000, "price": 5000, "addedAt": 1700000000000, "notes": "shelf B" } },
+    { "id": "i-old-3", "data": { "uid": "OLD-3", "make": "Amazon", "model": "Fire 4K", "status": "archived", "cost": 1000, "price": 3000, "addedAt": 1690000000000 } },
+    { "id": "i-old-4", "data": { "uid": "OLD-4", "make": "Roku", "model": "Ultra", "status": "returned", "cost": 2000, "price": 5000, "addedAt": 1690000000000 } } ],
+  "sales": [
+    { "id": "s-old-1", "data": { "no": "S-OLD-0001", "ts": 1700001000000, "customerId": "c-old-1", "customerName": "Old Customer", "items": [ { "make": "Roku", "model": "Ultra", "uid": "OLD-1", "price": 5000 } ], "subtotal": 5000, "total": 5000, "cost": 2000, "payment": "cash" } },
+    { "id": "s-old-2", "data": { "no": "S-OLD-0002", "ts": 1700002000000, "customerId": null, "customerName": "", "customerEmail": "", "items": [ { "id": "i-old-3", "uid": "OLD-3", "make": "Amazon", "model": "Fire 4K", "fields": [], "inspection": null, "listPrice": 3000, "pct": 0, "price": 3000, "cost": 1000 } ], "subtotal": 3000, "orderPct": 0, "orderOff": 0, "total": 3000, "cost": 1000, "payment": "card", "paymentLabel": "Card", "warranty": { "key": "none", "label": "No warranty", "start": 1700002000000, "end": null }, "notes": "", "voided": true, "voidedAt": 1700003000000 } },
+    { "id": "s-old-3", "data": { "no": "S-OLD-0003", "ts": 1700004000000, "customerId": "c-old-2", "customerName": "Second Old", "customerEmail": "", "items": [ { "id": "i-old-4", "uid": "OLD-4", "make": "Roku", "model": "Ultra", "fields": [ { "label": "UID", "value": "OLD-4" } ], "inspection": { "steps": [ { "label": "Device inspected", "done": true, "by": "someone", "at": 1700003900000, "details": [] } ], "testedOn": 1700003900000, "by": "someone", "notes": "" }, "listPrice": 5000, "pct": 10, "price": 4500, "cost": 2000 } ], "subtotal": 5000, "orderPct": 0, "orderOff": 0, "total": 4500, "cost": 2000, "payment": "transfer", "paymentLabel": "Bank transfer", "warranty": { "key": "d30", "label": "30 days", "start": 1700004000000, "end": 1702596000000 }, "notes": "paid in two parts" } } ]
+}

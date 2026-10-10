@@ -1,9 +1,9 @@
 ---
 title: Glossary
 summary: Plain-English meanings of every term used in the Host Console, in alphabetical order, each with a link to the page that explains more.
-keywords: glossary, terms, meaning, definition, words, jargon, what is
+keywords: locked sign-in, glossary, terms, meaning, definition, words, jargon, what is, backup, demo
 order: 19
-covers: Backups card, Backup health, Background job, Job strip, Test a backup file, Account menu, DMARC, Feed, Load more, Offsite copy, Passphrase, Restore point, Safety copy, Sender checks, Snapshot, Destination, Thinning, Test restore, .mbsenc, .mbsbackup, .mbsbak, Account, Alert, Announcement banner, Audit trail, Authenticator app, Ban, Backup, CIDR, Cloudflare, Closing, Comped, DKIM, Database engine, Direct delivery, Docker, Export, Firewall, Free, Full-site backup, Health, Helper, HELO, Host, Host Console, Log, Log area, Migration, Off-box folder, Onboarding, Open sign-ups, Owner, Paid, Pipeline, Plan, Proxy, Rate limit, Read-only, Recovery codes, Recovery key, Reseller, Reseller ID, Restore, Site address, SMTP, SPF, Suspended, TLS, Temporary password, Trial, Two-factor, User type, Zero-knowledge, Locked sign-in, Check my passphrase, Change passphrase, Reset (forgotten), Disaster recovery, Canned reply, Host note, Purge, Response target, Support ticket, Compact the database, Data and retention, Prune, Retention rule, Audit trail retention
+covers: Backups card, Backup health, Background job, Job strip, Test a backup file, Account menu, DMARC, Feed, Load more, Offsite copy, Passphrase, Restore point, Safety copy, Sender checks, Snapshot, Destination, Thinning, Test restore, .mbsenc, .mbsbackup, .mbsbak, Account, Alert, Announcement banner, Audit trail, Authenticator app, Ban, Backup, CIDR, Cloudflare, Closing, Comped, DKIM, Database engine, Direct delivery, Docker, Export, Firewall, Free, Full-site backup, Health, Helper, HELO, Host, Host Console, Log, Log area, Migration, Off-box folder, Onboarding, Open sign-ups, Owner, Paid, Pipeline, Plan, Proxy, Rate limit, Read-only, Recovery codes, Recovery key, Reseller, Reseller ID, Restore, Site address, SMTP, SPF, Suspended, TLS, Temporary password, Trial, Two-factor, User type, Zero-knowledge, Locked sign-in, Check my passphrase, Change passphrase, Reset (forgotten), Disaster recovery, Canned reply, Host note, Purge, Response target, Support ticket, Compact the database, Data and retention, Prune, Retention rule, Audit trail retention, Demo mode, Demo set, Demo login, DEMO chip
 ---
 
 Words are listed from A to Z. Each entry is short, and the link at the end of it goes to the page that explains the subject in full.
@@ -89,6 +89,18 @@ A public record on your domain that tells receivers what to do with mail that fa
 
 ### Docker
 The container tool the server normally runs in. Settings made as container variables, and updates done by rebuilding the container, relate to it. More in [Running the server](#/docs/running-the-server).
+
+### Demo login
+
+One of the sign-ins made by Demo mode for a set: an Owner, a Standard and a View login named after the set, plus a shared filler login. See [Demo mode](#/docs/demo-mode).
+
+### Demo mode
+
+The Host page that builds made-up reseller accounts for testing, screenshots and measuring. It only ever touches accounts with the demo tag. See [Demo mode](#/docs/demo-mode).
+
+### Demo set
+
+A recipe for a group of demo accounts: Demo3, Demo300, Demo1000, Demo5000 or a Custom set. See [Demo mode](#/docs/demo-mode).
 
 ## E
 

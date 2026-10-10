@@ -91,6 +91,9 @@ const resolveSource = (source, actor) => {
 const TYPE_KEY = { item: 'devices', customer: 'customers', sale: 'sales' };
 const zero = () => ({ devices: 0, customers: 0, sales: 0, other: 0 });
 const tally = (rows) => { const m = new Map(); for (const r of rows) { const o = m.get(String(r.account_id)) || zero(); o[TYPE_KEY[r.type] || 'other'] += Number(r.n); m.set(String(r.account_id), o); } return m; };
+// Kinds of record beyond devices, customers and sales: model reorder levels and the account's settings (which hold delivery, label and return settings). Counts only.
+const KIND_KEY = { model: 'models', config: 'settings' };
+const kindTally = (rows) => { const o = { models: 0, settings: 0, other: 0 }; for (const r of rows) { if (TYPE_KEY[r.type]) continue; o[KIND_KEY[r.type] || 'other'] += Number(r.n); } return o; };
 const group = (rows, key) => { const o = {}; for (const r of rows) o[r[key] || 'none'] = (o[r[key] || 'none'] || 0) + 1; return o; };
 
 // Everything the Host may see about a database, from a private SQLite file.
@@ -98,8 +101,8 @@ function readFile(file) {
   const d = new DatabaseSync(file, { readOnly: true });
   try {
     const all = (sql) => { try { return d.prepare(sql).all(); } catch { return []; } };
-    const accounts = all('SELECT id, account_code, plan, status, created_at FROM accounts');
-    return { accounts, users: all('SELECT account_id, role FROM account_users'), rec: all('SELECT account_id, type, COUNT(*) AS n FROM records GROUP BY account_id, type'), newest: Math.max(Number(Object.values(all('SELECT MAX(updated_at) AS n FROM records')[0] || {})[0] || 0), ...accounts.map(a => Number(a.created_at) || 0)), migration: Number(Object.values(all('SELECT MAX(id) AS n FROM schema_migrations')[0] || {})[0] || 0) };
+    const accounts = all('SELECT id, account_code, plan, status, created_at FROM accounts'), demo = Number(all('SELECT COUNT(*) AS n FROM accounts WHERE demo = 1')[0]?.n || 0); // older files have no demo column: 0
+    return { demo, accounts, users: all('SELECT account_id, role FROM account_users'), rec: all('SELECT account_id, type, COUNT(*) AS n FROM records GROUP BY account_id, type'), newest: Math.max(Number(Object.values(all('SELECT MAX(updated_at) AS n FROM records')[0] || {})[0] || 0), ...accounts.map(a => Number(a.created_at) || 0)), migration: Number(Object.values(all('SELECT MAX(id) AS n FROM schema_migrations')[0] || {})[0] || 0) };
   } finally { d.close(); }
 }
 async function readLive(db) {
@@ -129,6 +132,8 @@ export function buildReport(fileData, liveData, { takenAt }) {
     accounts: { total: fileData.accounts.length, byPlan: group(fileData.accounts, 'plan'), byStatus: group(fileData.accounts, 'status') },
     users: { total: fileData.users.length, byRole: roles },
     records: { file: sumRec(fRec), live: sumRec(lRec) },
+    kinds: { file: kindTally(fileData.rec), live: kindTally(liveData.rec) },
+    demo: { inFile: fileData.demo || 0 },
     live: { accounts: liveData.accounts.length, users: liveData.users.length },
     compare: { relation, fileNewest, liveNewest: liveData.newest, onlyLiveTotal: onlyLive.length, onlyLive: onlyLive.slice(0, LISTED_MAX), onlyFileTotal: onlyFile.length, onlyFile: onlyFile.slice(0, LISTED_MAX), differTotal: differ.length, differ: differ.slice(0, LISTED_MAX) },
     rows,
@@ -161,7 +166,7 @@ export async function testBackupFile(db, source, { passphrase = '', actor = null
           const live = await readLive(db);
           report = buildReport(f, live, { takenAt });
           details = { name: src.name, from: src.from, size, sha256: hash, takenAt, appVersion: opened.manifest?.version || null, migration: f.migration, serverMigration: LATEST_MIGRATION, serverVersion: config.version, engine: opened.manifest?.engine || 'sqlite',
-            format: opened.manifest?.format || null, kind: /\.mbsbak$/.test(src.name) ? 'Full-site backup' : /\.mbsenc$/.test(src.name) ? 'Encrypted copy of a snapshot' : 'Database snapshot' };
+            format: opened.manifest?.format || null, demoLeftOut: Number(opened.manifest?.demoAccountsLeftOut) || 0, kind: /\.mbsbak$/.test(src.name) ? 'Full-site backup' : /\.mbsenc$/.test(src.name) ? 'Encrypted copy of a snapshot' : 'Database snapshot' };
           checks.push(ok('What is inside, compared with the live site', compareLine(report, { accounts: live.accounts.length, users: live.users.length })));
         }
         opened.bundle?.cleanup?.();

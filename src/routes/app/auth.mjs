@@ -4,6 +4,7 @@ import { loadUser, publicUser } from './context.mjs';
 import { vaultState, validKeys, saveKeys } from '../../services/vault/keys.mjs';
 import { MSG } from '../../core/messages.mjs';
 import { recordSignIn } from '../../services/signins/index.mjs';
+import { isOn as demoOn } from '../../services/demo/settings.mjs';
 
 export const appAuthRouter = (db) => authRouter({
   db, realm: 'app', table: 'account_users', loadSubject: loadUser, publicUser,
@@ -16,9 +17,10 @@ export const appAuthRouter = (db) => authRouter({
   },
   record: (info) => recordSignIn(db, info),
   findByLogin: async (d, login) => {
-    const u = await d.get('SELECT u.*, a.status AS account_status, a.closing_at FROM account_users u JOIN accounts a ON a.id = u.account_id WHERE u.login = ?', [login]);
+    const u = await d.get('SELECT u.*, a.status AS account_status, a.closing_at, a.demo FROM account_users u JOIN accounts a ON a.id = u.account_id WHERE u.login = ?', [login]);
     if (u && u.account_status !== 'active') u.blockedReason = 'ACCOUNT_SUSPENDED';
     else if (u && u.closing_at && u.role !== 'Administrator') u.blockedReason = 'ACCOUNT_CLOSING';
+    else if (u && u.demo && !await demoOn(d)) u.blockedReason = 'DEMO_SIGNIN_OFF';   // demo logins only work while Demo mode is on
     return u;
   },
   who: (u) => ({ actor: u?.login || null, accountId: u?.account_id || null }),

@@ -3,6 +3,7 @@
 import { getMailSettings } from './settings.mjs';
 import { transportFor } from './transport.mjs';
 import { LOGO_CID } from './theme.mjs';
+import { isDemoAddress, noteBlocked } from '../demo/guard.mjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -13,6 +14,7 @@ export async function mailReady(db) { const m = await getMailSettings(db); retur
 
 // { to, subject, text, html, replyTo, businessName } -> resolves when handed to the mail server; throws on failure.
 export async function sendDirect(db, { to, subject, text, html, replyTo, businessName, attachments }) {
+  if (isDemoAddress(to)) { noteBlocked(to, 'receipt'); throw new Error('demo_blocked'); }
   const settings = await getMailSettings(db, { reveal: true });
   if (!settings.enabled || !settings.fromAddress) throw new Error('mail_off');
   const { transport } = await transportFor(settings, to);

@@ -1,9 +1,9 @@
 ---
 title: Getting started
 summary: What myBoxStock is, how to create your account, sign in, save your recovery key, find your way around the menu, and what to do in your first hour.
-keywords: terms, privacy, agree, terms of service, privacy policy, legal, updated terms, start, account menu, name menu, site admin, sign out, more, more sheet, contents, search help, backup, begin, sign up, create account, register, reseller id, username, password, sign in, log in, new device, recovery key, menu, roles, administrator, standard, view, checklist, first steps, documentation, search help, confirm email, trial
+keywords: short links, data use, billing link, forgot password, password updated, terms, privacy, agree, terms of service, privacy policy, legal, updated terms, start, account menu, name menu, site admin, sign out, more, more sheet, contents, search help, backup, begin, sign up, create account, register, reseller id, username, password, sign in, log in, new device, recovery key, menu, roles, administrator, standard, view, checklist, first steps, documentation, search help, confirm email, trial
 order: 1
-covers: Support menu item, More button, Get set up card, nav:docs, I agree to the Terms of Service and Privacy Policy, Terms of Service, Privacy Policy, Updated terms, Accept and continue, Sign out instead, Legal links, nav:docs, Account menu, Site admin, name menu, More sheet, Contents menu, Nothing found, Backup and restore, Back up now, Documentation, Search the documentation, Create account, Sign in, Reseller ID, Username, Password, Business name, Email, Forgot password, Send link, Back to sign in, Two-factor code, Verify, Choose a new password, Update password, Unlock your data, Unlock, Use your recovery key, Restore access, Turn on encryption, Save your recovery key, Download, Print, I have saved my recovery key somewhere safe, Continue, Continue to sign in, Send it again, Sign out, Free trial, Trial ended, Restore account, Close, menu tour, roles, first-hour checklist
+covers: Terms, Privacy, Data use, Billing, Password updated, Continue to sign in, This site cannot send email right now, Support menu item, More button, Get set up card, nav:docs, I agree to the Terms of Service and Privacy Policy, Terms of Service, Privacy Policy, Updated terms, Accept and continue, Sign out instead, Legal links, nav:docs, Account menu, Site admin, name menu, More sheet, Contents menu, Nothing found, Backup and restore, Back up now, Documentation, Search the documentation, Create account, Sign in, Reseller ID, Username, Password, Business name, Email, Forgot password, Send link, Back to sign in, Two-factor code, Verify, Choose a new password, Update password, Unlock your data, Unlock, Use your recovery key, Restore access, Turn on encryption, Save your recovery key, Download, Print, I have saved my recovery key somewhere safe, Continue, Continue to sign in, Send it again, Sign out, Free trial, Trial ended, Restore account, Close, menu tour, roles, first-hour checklist
 ---
 
 ## What myBoxStock is
@@ -38,7 +38,7 @@ The next screen says **You're all set** and shows your **Reseller ID** in large 
 
 ### The Terms and Privacy Policy
 
-The legal pages are part of the app. The **Terms of Service**, **Privacy Policy**, **Data responsibility and acceptable use** and **Billing, trial and refund terms** are linked in the footer at the bottom of every page, under every sign-in screen, and in the sign-up form. Each page shows its **version** and its **effective date** at the top. In short: myBoxStock, its owner and supporting staff cannot see your customer data (inventory, customers, sales, receipts and prices) and are not responsible or liable for it. You own your data and are 100 percent responsible for it, for your recovery key, and for your own backup files and exports.
+The legal pages are part of the app. The **Terms of Service**, **Privacy Policy**, **Data responsibility and acceptable use** and **Billing, trial and refund terms** are linked in a small block of four short links at the bottom of every page, under every sign-in screen (yours and the one for the site's own administrators), and under the sign-up form: **Terms**, **Privacy**, **Data use** and **Billing**. On a phone they sit in a neat two-by-two block; on a larger screen they sit in one row. Hold the pointer over a link (or press and hold on a phone) to see the full title. The pages themselves keep their full titles. Each page shows its **version** and its **effective date** at the top. In short: myBoxStock, its owner and supporting staff cannot see your customer data (inventory, customers, sales, receipts and prices) and are not responsible or liable for it. You own your data and are 100 percent responsible for it, for your recovery key, and for your own backup files and exports.
 
 #### When the terms change
 
@@ -83,6 +83,10 @@ If an Administrator created your login, your first password may be a temporary o
 
 Use **Back** or **Back to sign in** if you change your mind.
 
+The reset screens tell you plainly what a reset does and does not do. On both **Reset password** and **New password** a blue note says: "Resetting your password gets you back into your login. Your business data stays locked until you enter your recovery key or an Administrator unlocks it for you." After you press **Save password** a **Password updated** screen repeats it, with a **Continue to sign in** button.
+
+If the site's owner has not set up email, **Reset password** also shows a note: "This site cannot send email right now, so reset links cannot be sent." That note is about the site, not about your address, so it never reveals which accounts exist. Ask an Administrator on your account to give you a temporary password, or ask the person who runs the site.
+
 > Important: resetting a password does not by itself bring back access to your encrypted data. Your data unlocks with your password, and a reset password does not know the account key. After a reset you may be asked to use your recovery key (see below), or an Administrator can restore your access. This is the most common point where people get stuck, which is why the recovery key matters so much.
 
 ## The recovery key, first run
@@ -114,7 +118,7 @@ Your menu lists the places in the app. What you see depends on your user type, s
 - **Quick sale**: ring up a sale in a few taps, with receipt, discount and warranty. See [Quick sale](#/docs/quick-sale).
 - **Inventory**: every device you own, with costs, prices, test records and stock levels. See [Inventory](#/docs/inventory).
 - **Customers**: the people you sell to and what they bought. See [Customers](#/docs/customers).
-- **Sales**: every receipt, with totals and filters. See [Sales](#/docs/sales).
+- **Sales**: every receipt, with totals and filters. See [Sales](#/docs/sales). Parcels waiting to go out are under its **To ship** filter; see [Delivery and shipping](#/docs/delivery-and-shipping) and [Shipping labels](#/docs/shipping-labels).
 - **Team**: add people and choose what they can do. Administrators only. See [Team](#/docs/team).
 - **Settings**: choose which details you track, the test checklist, warranties, payment methods and more. Administrators only. See [Settings](#/docs/settings).
 - **Backup and restore**: save a backup file of your whole account and put it back if something goes wrong. Administrators only. It sits between Settings and Activity. See [Backup and restore](#/docs/backup-and-restore).
@@ -126,6 +130,8 @@ Your menu lists the places in the app. What you see depends on your user type, s
 ### Your account menu
 
 The button with your username at the top right of every page opens your **account menu**.
+
+![The account menu open, showing the signed-in name, user type, business name and Sign out](shot:reseller-getting-started-3 "The account menu, opened from the button with your username.")
 
 1. Click or tap the button with your username. The menu opens. On a phone it rises from the bottom of the screen like the other pop-ups.
 2. At the top it shows your name, your user type and your business name.
@@ -151,6 +157,8 @@ Every person in your business has a user type. An **Administrator** can do every
 
 Administrators also see a **Get set up** card on Home that ticks these steps off for you as you do them (a device, payment methods, a first sale, a team member if you want one, a backup, a tested backup file and your recovery key). **Dismiss** hides it. See [Home](#/docs/home).
 
+![Home page with the Get set up card at the top, listing seven steps with Done or To do beside each](shot:reseller-getting-started-1 "The Get set up card at the top of Home. It ticks off each step as you finish it.")
+
 1. Create your account, write down your Reseller ID, and confirm your email.
 2. Save your recovery key and put it somewhere safe (and tell one other trusted person where it is).
 3. Open [Settings](#/docs/settings) and decide which device details you track. UID, Serial number and MAC address are scannable identifiers; Condition and Supplier are also there. Turn off what you do not need.
@@ -166,6 +174,8 @@ Administrators also see a **Get set up** card on Home that ticks these steps off
 ## Using this Documentation
 
 Choose **Documentation** in the menu. The page has one layout.
+
+![The Documentation page with the contents on the left, a search box and the open topic](shot:reseller-getting-started-2 "The Documentation page: contents, search box and the open topic.")
 
 - On a laptop or tablet, the list of topics (the contents) is on the left. On the right, at the top, is a search box, and under it the open topic. The first time, **Getting started** opens for you.
 - On a phone, the contents is a compact list at the top of the page, with the search box and the topic below it.

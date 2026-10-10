@@ -9,8 +9,8 @@
   const CHEVRON = '<svg class="icon menu-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
   let seq = 0;
   const rows = (items) => items.map(it => it.heading ? `<div class="menu-label" role="presentation">${esc(it.heading)}</div>`
-    : `<button type="button" class="menu-item${it.sep ? ' sep' : ''}" role="menuitem" tabindex="-1" data-id="${esc(it.id)}">${esc(it.label)}${it.badge ? `<span class="chip red">${esc(it.badge)}</span>` : ''}</button>`).join('');
-  const badgeHtml = (n) => n ? `<span class="chip red" aria-label="${esc(n)} new">${esc(n)}</span>` : '';
+    : `<button type="button" class="menu-item${it.sep ? ' sep' : ''}" role="menuitem" tabindex="-1" data-id="${esc(it.id)}">${esc(it.label)}${it.badge ? `<span class="chip red" role="img" aria-label="${esc(it.badge)} new">${esc(it.badge)}</span>` : ''}</button>`).join('');
+  const badgeHtml = (n) => n ? `<span class="chip red" role="img" aria-label="${esc(n)} new">${esc(n)}</span>` : '';
 
   const mount = (el, { name, head = '', items = [], badge = 0, pick }) => {
     const id = `menu${++seq}`; let state = { head, items, badge };

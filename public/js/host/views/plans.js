@@ -9,12 +9,12 @@
       swap(main, `${Host.head('Plans', 'Name your plans and write down their prices and limits, ready for when payments are connected.')}
         <div class="banner blue mb-lg">Prices and limits are recorded here only. Nothing is charged and no limit is enforced yet. The free trial is ${d.trialDays} days (change it under Settings).</div>
         ${plans.map((p, i) => `<div class="card"><div class="row spread"><h3>${esc(p.name || 'New plan')}</h3><button class="btn danger small" data-rm="${i}">Remove</button></div>
-          <div class="grid g3"><div class="field"><label>Name</label><input type="text" data-k="name" data-i="${i}" value="${esc(p.name)}" maxlength="60"></div>
-            <div class="field"><label>Price</label><input type="text" data-k="price" data-i="${i}" value="${esc(p.price)}" inputmode="decimal" placeholder="29.00"></div>
-            <div class="field"><label>Billed every</label>${UI.select.html({ id: 'iv' + i, value: p.interval || 'month', options: [['month', 'Month'], ['year', 'Year']] })}</div>
-            <div class="field"><label>Users included</label><input type="number" data-k="maxUsers" data-i="${i}" value="${esc(p.maxUsers ?? '')}" min="1" placeholder="No limit"></div>
-            <div class="field"><label>Devices included</label><input type="number" data-k="maxDevices" data-i="${i}" value="${esc(p.maxDevices ?? '')}" min="1" placeholder="No limit"></div>
-            <div class="field"><label>Note</label><input type="text" data-k="note" data-i="${i}" value="${esc(p.note || '')}" maxlength="200"></div></div></div>`).join('') || '<div class="card"><div class="empty">No plans yet.</div></div>'}
+          <div class="grid g3"><div class="field"><label for="pn${i}">Name</label><input type="text" id="pn${i}" data-k="name" data-i="${i}" value="${esc(p.name)}" maxlength="60"></div>
+            <div class="field"><label for="pp${i}">Price</label><input type="text" id="pp${i}" data-k="price" data-i="${i}" value="${esc(p.price)}" inputmode="decimal" placeholder="29.00"></div>
+            <div class="field"><label for="iv${i}">Billed every</label>${UI.select.html({ id: 'iv' + i, value: p.interval || 'month', options: [['month', 'Month'], ['year', 'Year']] })}</div>
+            <div class="field"><label for="pu${i}">Users included</label><input type="number" id="pu${i}" data-k="maxUsers" data-i="${i}" value="${esc(p.maxUsers ?? '')}" min="1" placeholder="No limit"></div>
+            <div class="field"><label for="pd${i}">Devices included</label><input type="number" id="pd${i}" data-k="maxDevices" data-i="${i}" value="${esc(p.maxDevices ?? '')}" min="1" placeholder="No limit"></div>
+            <div class="field"><label for="pt${i}">Note</label><input type="text" id="pt${i}" data-k="note" data-i="${i}" value="${esc(p.note || '')}" maxlength="200"></div></div></div>`).join('') || '<div class="card"><div class="empty">No plans yet.</div></div>'}
         <div class="row mt-lg"><button class="btn secondary" id="add">Add a plan</button><button class="btn" id="save">Save plans</button></div>`);
       main.querySelectorAll('[data-k]').forEach(el => el.addEventListener('input', () => { plans[+el.dataset.i][el.dataset.k] = el.value; }));
       plans.forEach((p, i) => main.querySelector('#iv' + i).addEventListener('change', (e) => { p.interval = UI.select.value(e.target); }));

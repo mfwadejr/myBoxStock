@@ -48,7 +48,7 @@ export async function setPlan(db, account, { plan, days, extend, until, note, ac
 export async function sweepExpired(db) {
   const now = Date.now();
   const rows = await db.all(`SELECT id, account_code, owner_email, business_name, plan, trial_ends_at, plan_until FROM accounts
-    WHERE expiry_noted = 0 AND ((plan = 'trial' AND trial_ends_at < ?) OR (plan = 'paid' AND plan_until IS NOT NULL AND plan_until < ?))`, [now, now]);
+    WHERE demo = 0 AND expiry_noted = 0 AND ((plan = 'trial' AND trial_ends_at < ?) OR (plan = 'paid' AND plan_until IS NOT NULL AND plan_until < ?))`, [now, now]);
   for (const a of rows) {
     await db.tx(async (t) => {
       await t.run('UPDATE accounts SET expiry_noted = 1 WHERE id = ?', [a.id]);

@@ -2,14 +2,17 @@
 (() => {
   const { esc, fmt, toast, busy, swap } = UI;
   const CHIP = { error: 'red', warn: 'amber', info: 'blue' };
-  const row = (a, quiet) => `<div class="log-line"><div class="log-meta"><span class="chip ${CHIP[a.level] || ''}">${esc(a.level === 'info' ? 'heads-up' : a.level === 'warn' ? 'warning' : 'problem')}</span><span>${esc(fmt.dateTime(a.last_at))}</span>${a.occurrences > 1 ? `<span class="chip">seen ${a.occurrences} times</span>` : ''}${a.emailed_at ? '<span class="chip green">emailed</span>' : ''}${quiet ? '' : `<button class="linkish" data-dismiss="${esc(a.id)}">set aside</button>`}</div>
-    <div class="log-message"><b>${esc(a.title)}</b><div class="hint">${/^backup\./.test(a.kind) ? esc(a.detail || '').replace('Open Backups.', '<a href="#/backups">Open Backups</a>.') : esc(a.detail || '')}</div></div></div>`;
+  const ticketNo = (a) => /^support\.(ticket|reply)$/.test(a.kind) ? String(a.dedupe_key).split('.').pop() : '';
+  const kindLabel = (a) => a.kind === 'support.ticket' ? 'new ticket' : a.kind === 'support.reply' ? 'ticket reply' : a.level === 'info' ? 'heads-up' : a.level === 'warn' ? 'warning' : 'problem';
+  const detailOf = (a) => ticketNo(a) ? `${esc(a.detail || '')} <a href="#/support/${esc(ticketNo(a))}">Open ticket #${esc(ticketNo(a))}</a>` : /^backup\./.test(a.kind) ? esc(a.detail || '').replace('Open Backups.', '<a href="#/backups">Open Backups</a>.') : esc(a.detail || '');
+  const row = (a, quiet) => `<div class="log-line"><div class="log-meta"><span class="chip ${CHIP[a.level] || ''}">${esc(kindLabel(a))}</span><span>${esc(fmt.dateTime(a.last_at))}</span>${a.occurrences > 1 ? `<span class="chip">seen ${a.occurrences} times</span>` : ''}${a.emailed_at ? '<span class="chip green">emailed</span>' : ''}${quiet ? '' : `<button class="linkish" data-dismiss="${esc(a.id)}">set aside</button>`}</div>
+    <div class="log-message"><b>${esc(a.title)}</b><div class="hint">${detailOf(a)}</div></div></div>`;
   // History sections (set aside, cleared) are feeds: a capped scrolling box with "Showing N of M" and Load more.
   const section = (title, sub, items, quiet, empty, key) => `<div class="card"><h3>${title}</h3><div class="sub">${sub}</div>${items.length ? `<div ${key ? `class="feed" id="f-${key}"` : ''}>${items.map(a => row(a, quiet)).join('')}</div>${key ? `<div id="m-${key}"></div>` : ''}` : `<div class="empty">${empty}</div>`}</div>`;
 
   Host.views.alerts = async (main) => {
     const paint = (d) => {
-      swap(main, `${Host.head('Alerts', 'Problems the server noticed on its own: email, backups, sign-in floods, storage, database and trials about to end. Each problem is listed once with a counter, and the Owner is emailed once.')}
+      swap(main, `${Host.head('Alerts', 'Problems the server noticed on its own: email, backups, sign-in floods, storage, database and trials about to end, plus a line for each new support ticket. Each problem is listed once with a counter, and the Owner is emailed once.')}
         <div class="row mb-lg"><button class="btn secondary" id="chk">Check now</button></div>
         ${section('Needs a look', 'These clear by themselves when the problem is gone.', d.open, false, 'All clear. Nothing needs attention.')}
         ${d.quiet.length ? section('Set aside', 'Hidden from the banner. They clear by themselves when the problem is gone.', d.quiet, true, '', 'quiet') : ''}

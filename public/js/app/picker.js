@@ -15,7 +15,7 @@
     const pool = C.availableStock(exclude).sort((a, b) => C.receivedMs(a.data) - C.receivedMs(b.data)), counts = C.modelCounts(pool);
     if (!counts.length) return Promise.resolve(null);
     const opts = counts.map(([m, n]) => [m, `${modelName(m)} · ${n} available`]);
-    return sheet(`<h2>Add by quantity</h2><p class="muted">Adds the oldest available units of a model. You can remove any of them from the sale afterwards.</p><div class="field mt-md"><label>Model</label>${UI.select.html({ id: 'm', options: opts, value: opts[0][0] })}</div><div class="field"><label>How many</label><input type="number" id="n" class="num" min="1" step="1" value="1"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="ok">Add to sale</button></div>`, { onMount: (el, close) => {
+    return sheet(`<h2>Add by quantity</h2><p class="muted">Adds the oldest available units of a model. You can remove any of them from the sale afterwards.</p><div class="field mt-md"><label for="m">Model</label>${UI.select.html({ id: 'm', options: opts, value: opts[0][0] })}</div><div class="field"><label for="n">How many</label><input type="number" id="n" class="num" min="1" step="1" value="1"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="ok">Add to sale</button></div>`, { onMount: (el, close) => {
       const mv = () => UI.select.value(el.querySelector('#m')), left = () => pool.filter(e => (e.data.model || '') === mv());
       el.querySelector('#ok').addEventListener('click', () => { const n = Math.floor(Number(el.querySelector('#n').value)), have = left(); if (!(n >= 1)) return UI.toast('Enter how many.', true); if (n > have.length) return UI.toast(`Only ${have.length} available.`, true); close(have.slice(0, n).map(e => e.id)); });
     } });
@@ -25,7 +25,7 @@
     const pool = C.availableStock(exclude).sort((a, b) => modelName(a.data.model).localeCompare(modelName(b.data.model)) || idsOf(a.data).localeCompare(idsOf(b.data)));
     const st = { q: '', model, picked: new Set() }, counts = C.modelCounts(pool), F = A.fmt;
     const html = `<h2>Available stock</h2><p class="muted" id="cnt"></p>
-      <input type="search" id="q" placeholder="Search make, model, UID, serial, MAC…" autocomplete="off">
+      <input type="search" id="q" aria-label="Search the catalog" placeholder="Search make, model, UID, serial, MAC…" autocomplete="off">
       <div class="filters mt-md" id="fl"></div><label class="check mt-md"><input type="checkbox" id="all"><span>Select all shown</span></label><div class="stock-list mt-md" id="sl"></div>
       <div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="ok" disabled>Add to sale</button></div>`;
     return sheet(html, { wide: true, onMount: (el, close) => {

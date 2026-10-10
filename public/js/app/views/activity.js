@@ -36,5 +36,6 @@
     if (!AccountApp.can('users.manage')) return swap(main, '<div class="page-head"><h1>Activity</h1></div><div class="card"><div class="empty">Only administrators can see team activity.</div></div>');
     swap(main, '<div class="page-head"><h1>Activity</h1><p>Who signed in to your account, from where, and which devices are signed in now.</p></div><div id="act"></div>');
     await render(main.querySelector('#act'), '/activity/team', true);
+    AccountApp.returns.history(main);
   };
 })();

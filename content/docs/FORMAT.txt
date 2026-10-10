@@ -10,4 +10,7 @@ covers: nav:inventory, Add item, Date received, Tested on   (every menu key as n
 ---
 
 Body: ## and ### headings, paragraphs, "- " bullets, "1. " numbered steps, "> " tip/note box, **bold**, `code`, and links [text](#/docs/slug).
-No HTML, no images, no other Markdown. Links only to #/docs/<slug>.
+Screenshots: one line on its own, ![Alt text](shot:NAME "Caption text"). NAME is lowercase letters, digits and hyphens (for example reseller-home).
+Both files must exist: public/assets/docs/NAME-laptop.png and NAME-phone.png (each under 250 KB). Alt text and caption are required. The phone picture shows on narrow screens.
+Make them with tools/docs-shots/run.mjs (see tools/docs-shots/README.md). The caption is searchable; the steps must still read fine without the picture. Made-up demo data only.
+No HTML, no other images, no other Markdown. Links only to #/docs/<slug> (screenshot lines use shot:NAME).

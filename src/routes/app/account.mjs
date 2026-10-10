@@ -32,5 +32,13 @@ export function accountRoutes(db) {
     tenantLog(req, `firstrun.${e}`, `${req.subject.login}: ${FIRSTRUN[e]}`); res.json({ ok: true });
   });
   r.post('/erase-note', need('customers.write'), (req, res) => { tenantLog(req, 'customer.erased', `${req.subject.login} erased one customer's personal details (${Math.max(0, Number(req.body.sales) || 0)} sales kept)`, { sales: Number(req.body.sales) || 0 }); res.json({ ok: true }); });
+  // Returns and refunds happen in the browser (the records are encrypted); this only leaves a note in the log: who, what kind, how many devices, how much. Never names or contents.
+  const RETURN_EVENTS = { processed: 'processed a return', requested: 'asked an Administrator to process a return' };
+  r.post('/return-note', need('sales.write'), (req, res) => {
+    const e = String(req.body?.event || ''); if (!Object.hasOwn(RETURN_EVENTS, e)) return fail(res, 400, 'RETURN_BAD');
+    const devices = Math.min(500, Math.max(0, Math.floor(Number(req.body.devices) || 0))), cents = Math.min(1e9, Math.max(0, Math.round(Number(req.body.cents) || 0))), full = req.body.full === true;
+    tenantLog(req, `sale.return_${e}`, `${req.subject.login} (${req.subject.role}) ${RETURN_EVENTS[e]}: ${devices} device${devices === 1 ? '' : 's'}${e === 'processed' ? `, refund ${(cents / 100).toFixed(2)}${full ? ', whole sale' : ', part of a sale'}` : ''}`, { devices, cents, full });
+    res.json({ ok: true });
+  });
   return r;
 }

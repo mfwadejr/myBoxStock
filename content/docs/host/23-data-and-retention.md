@@ -14,6 +14,8 @@ It only deals with data the Host can already read: the activity log, the audit t
 
 Everyone who can sign in to the Host Console can read this page. Only the **Owner administrator** (the oldest administrator, normally "admin") can change a rule, prune, compact or change automatic pruning. Other administrators see the numbers and a blue note saying so, and the buttons are not shown. If someone else tries anyway, the server refuses and the attempt is written to the [Audit trail](#/docs/audit-trail).
 
+![Data and retention](shot:host-retention "Data and retention: what is using space, retention rules and compacting.")
+
 ## What is using space
 
 The six tiles at the top are read-only facts.

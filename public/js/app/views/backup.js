@@ -60,7 +60,7 @@
     let text; try { text = (await api('GET', '/diagnostics')).text; } catch (e) { return toast(e.message, true); }
     text = text.replace(/^(Device: .*)$/m, `$1 · screen ${screen.width}x${screen.height} · ${navigator.language || 'language unknown'}`);
     try { await navigator.clipboard.writeText(text); toast('Diagnostics copied. Paste them into your message to the Host admin.'); }
-    catch { await sheet(`<h2>Copy diagnostics</h2><p class="sub">Your browser did not allow copying. Select all of this text, copy it, and paste it into your message to the Host admin.</p><div class="field"><textarea id="dg" rows="12" readonly>${esc(text)}</textarea></div><div class="actions"><button class="btn" data-cancel>Close</button></div>`, { onMount: (el) => { const t = el.querySelector('#dg'); t.focus(); t.select(); } }); }
+    catch { await sheet(`<h2>Copy diagnostics</h2><p class="sub">Your browser did not allow copying. Select all of this text, copy it, and paste it into your message to the Host admin.</p><div class="field"><textarea id="dg" rows="12" readonly aria-label="Diagnostics text to copy">${esc(text)}</textarea></div><div class="actions"><button class="btn" data-cancel>Close</button></div>`, { onMount: (el) => { const t = el.querySelector('#dg'); t.focus(); t.select(); } }); }
   };
 
   A.views.backup = async (main) => {

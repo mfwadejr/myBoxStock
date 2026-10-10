@@ -69,6 +69,7 @@ export function receiptRoutes(db) {
   // body.smtp = the reseller's own mail server details (used once, not kept); without it the site's shared sender is used.
   async function relay(req, res, to, m, tmplLog, attachments) {
     const u = req.subject;
+    if (u.demo) { L.warn('receipt.demo_blocked', `${u.login} is a demo login: the message was not sent`, { actor: u.login, accountId: u.account_id, data: { code: 'DEMO_MAIL_BLOCKED' } }); return fail(res, 403, 'DEMO_MAIL_BLOCKED'); }   // demo accounts never send email
     if (req.body.smtp) {
       const c = await checkOwnSmtp(req.body.smtp); if (c.code) return fail(res, 400, c.code);
       if (!await count(u.account_id, OWN_DAILY_LIMIT)) return fail(res, 429, 'RECEIPT_MAIL_LIMIT');

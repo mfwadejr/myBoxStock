@@ -66,7 +66,7 @@ export const INDEXES = [
 // Order matters when copying between databases (parents before children).
 export const COPY_ORDER = ['settings', 'host_admins', 'accounts', 'billing_events', 'account_users', 'sign_in_history', 'account_keys', 'account_recovery', 'account_roles', 'inventory_items', 'records',
   'firewall_rules', 'mail_queue', 'event_log', 'password_resets', 'sessions', 'admin_links', 'email_confirmations', 'billing_receipts', 'receipt_mail_usage', 'alerts', 'security_blocks', 'restore_points', 'restore_point_records',
-  'support_tickets', 'support_messages', 'support_attachments', 'support_notes', 'support_views'];
+  'support_tickets', 'support_messages', 'support_attachments', 'support_notes', 'support_views', 'demo_logins'];
 
 // Versioned migrations. Each runs once, in order, and is recorded in schema_migrations.
 // Fresh installs run all of them; existing installs run only the ones they are missing. Never edit an applied migration — add a new one.
@@ -192,6 +192,16 @@ const MIGRATIONS = [
     await db.exec('CREATE INDEX idx_support_att_owner ON support_attachments (owner_kind, owner_id)');
     await db.exec(`CREATE TABLE support_notes (account_id ${id} PRIMARY KEY, body TEXT NOT NULL, updated_at BIGINT NOT NULL, updated_by ${s(100)})`);
     await db.exec(`CREATE TABLE support_views (ticket_id ${id} NOT NULL, user_id ${id} NOT NULL, seen_at BIGINT NOT NULL, PRIMARY KEY (ticket_id, user_id))`);
+  } },
+  { id: 18, name: 'Demo mode: the demo tag on accounts and the demo logins', up: async (db) => {
+    // demo = 1 only on accounts made by Demo mode's Build; demo_set says which set (demo3, demo300, ...). Every Demo action selects on this tag and nothing else, so a real account is never picked.
+    // demo_logins holds one row per named demo login with its password sealed by the server key (the demo accounts hold only made-up data, so the password may be recovered; real accounts never get a row here).
+    await db.exec('ALTER TABLE accounts ADD COLUMN demo INTEGER NOT NULL DEFAULT 0');
+    await db.exec(`ALTER TABLE accounts ADD COLUMN demo_set ${s(40)}`);
+    await db.exec('CREATE INDEX idx_accounts_demo ON accounts (demo, demo_set)');
+    await db.exec(`CREATE TABLE demo_logins (
+      user_id ${id} PRIMARY KEY, account_id ${id} NOT NULL, set_key ${s(40)} NOT NULL, kind ${s(12)} NOT NULL, login ${s(160)} NOT NULL, role ${s(40)} NOT NULL, pw_sealed TEXT NOT NULL, created_at BIGINT NOT NULL, rotated_at BIGINT)`);
+    await db.exec('CREATE INDEX idx_demo_logins_set ON demo_logins (set_key)');
   } },
 ];
 

@@ -36,14 +36,14 @@
       swap(pane, `<div class="grid g2">
         <div class="card"><h3>Message</h3><div class="hint mb-md">These messages are global wording, in English only. Every account receives the same text.</div>
           <div class="field">${UI.select.html({ id: 'mk', options: options(), value: st.key })}</div>
-          <div class="field"><label>Subject</label><input type="text" id="sub" value="${esc(c.subject)}" autocomplete="off"></div>
-          <div class="field"><label>Heading</label><input type="text" id="ttl" value="${esc(c.title)}" autocomplete="off"></div>
-          <div class="field"><label>Body</label><textarea id="body" rows="10">${esc(c.body)}</textarea><div class="hint">A blank line starts a new paragraph. Plain words only: the look comes from the site theme.</div></div>
-          ${t.hasButton ? `<div class="field"><label>Button label</label><input type="text" id="btn" value="${esc(c.buttonLabel)}" autocomplete="off"></div>` : ''}
+          <div class="field"><label for="sub">Subject</label><input type="text" id="sub" value="${esc(c.subject)}" autocomplete="off"></div>
+          <div class="field"><label for="ttl">Heading</label><input type="text" id="ttl" value="${esc(c.title)}" autocomplete="off"></div>
+          <div class="field"><label for="body">Body</label><textarea id="body" rows="10">${esc(c.body)}</textarea><div class="hint">A blank line starts a new paragraph. Plain words only: the look comes from the site theme.</div></div>
+          ${t.hasButton ? `<div class="field"><label for="btn">Button label</label><input type="text" id="btn" value="${esc(c.buttonLabel)}" autocomplete="off"></div>` : ''}
           ${t.placeholders.length ? `<div class="field"><label>Insert a detail</label><div class="row wrap">${t.placeholders.map(p => `<button type="button" class="btn secondary small" data-ph="${esc(p.key)}" title="${esc(p.label)}">{{${esc(p.key)}}}</button>`).join('')}</div><div class="hint">Click to add at the cursor.${need.length ? ` Must stay in the message: ${need.map(p => `{{${esc(p.key)}}}`).join(', ')}.` : ''}</div></div>` : ''}
           <div class="hint danger-text" id="prob"></div>
           <div class="row mt-md"><button class="btn" id="save">Save</button><button class="btn secondary" id="reset" ${t.custom ? '' : 'disabled'}>Reset to default</button></div>
-          <div class="field mt-lg mb-0"><label>Send a test of this message</label><div class="row wrap"><input type="email" id="to" class="maxw-md" value="${esc(Host.me.email || '')}" placeholder="you@example.com"><button class="btn secondary" id="test">Send test</button></div><div class="hint" id="testres">Sent with sample details, using the wording above (saved or not).</div></div></div>
+          <div class="field mt-lg mb-0"><label for="to">Send a test of this message</label><div class="row wrap"><input type="email" id="to" class="maxw-md" value="${esc(Host.me.email || '')}" placeholder="you@example.com"><button class="btn secondary" id="test">Send test</button></div><div class="hint" id="testres">Sent with sample details, using the wording above (saved or not).</div></div></div>
         <div class="card"><div class="row spread wrap"><h3>Live preview</h3><div class="row"><div class="seg" id="vw"><button type="button" data-v="styled" class="on">Styled</button><button type="button" data-v="text">Plain text</button></div><div class="seg" id="dv"><button type="button" data-d="desktop" class="on">Desktop</button><button type="button" data-d="phone">Phone</button></div></div></div>
           <div class="sub mt-sm" id="psub"></div><div id="pbody"></div><div class="hint">Shown with sample details. Updates as you type.</div></div></div>`);
 

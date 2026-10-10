@@ -31,6 +31,7 @@
       : c.relation === 'newer' ? `<div class="banner blue mb-md" id="ft-older">This file is newer than the live site.</div>` : '';
     return `<h3 class="mt-xl">The file</h3>
       ${kv('Kind', esc(d.kind))}${kv('Taken', esc(fmt.date(d.takenAt)))}${kv('Size', esc(fmt.bytes(d.size)))}${kv('App version', d.appVersion ? esc(d.appVersion) : 'Not recorded in this kind of file')}${kv('Database version', `${d.migration} (this server: ${d.serverMigration})`)}${kv('Readable by this server', d.readable ? 'Yes' : 'No')}${kv('Fingerprint (SHA-256)', `<span class="ident">${esc(d.sha256.slice(0, 16))}</span>`)}
+      ${d.demoLeftOut ? `<p class="hint" id="ft-demoleft">${plural(d.demoLeftOut, 'Demo mode account')} ${d.demoLeftOut === 1 ? 'was' : 'were'} left out of this file on purpose, so restoring it never brings demo data back.</p>` : ''}${p.demo?.inFile ? `<div class="banner blue mb-md" id="ft-demoin">This file holds ${plural(p.demo.inFile, 'Demo mode account')}. Restoring it brings ${p.demo.inFile === 1 ? 'it' : 'them'} back; Demo mode can remove ${p.demo.inFile === 1 ? 'it' : 'them'} again.</div>` : ''}
       <h3 class="mt-xl">Compared with the live site</h3>${lostFirst}${rel}
       <div class="compare"><span></span><b>In the file</b><b>On the live site now</b>
         <span>Accounts</span><span class="tab-num">${p.accounts.total}</span><span class="tab-num">${p.live.accounts}</span>
@@ -38,6 +39,7 @@
         <span>Devices</span><span class="tab-num">${rec.file.devices}</span><span class="tab-num">${rec.live.devices}</span>
         <span>Customers</span><span class="tab-num">${rec.file.customers}</span><span class="tab-num">${rec.live.customers}</span>
         <span>Sales</span><span class="tab-num">${rec.file.sales}</span><span class="tab-num">${rec.live.sales}</span>
+        ${p.kinds ? `<span>Models (reorder levels)</span><span class="tab-num">${p.kinds.file.models}</span><span class="tab-num">${p.kinds.live.models}</span><span>Settings records</span><span class="tab-num">${p.kinds.file.settings}</span><span class="tab-num">${p.kinds.live.settings}</span>` : ''}
         ${rec.file.other || rec.live.other ? `<span>Other records</span><span class="tab-num">${rec.file.other}</span><span class="tab-num">${rec.live.other}</span>` : ''}</div>
       ${c.onlyLiveTotal ? `<h3 class="mt-lg">Only on the live site (a restore would lose these)</h3><div id="ft-onlylive"></div>` : ''}
       ${c.onlyFileTotal ? `<p class="hint" id="ft-onlyfile">${plural(c.onlyFileTotal, 'account')} only in the file${c.onlyFileTotal > c.onlyFile.length ? `, first ${c.onlyFile.length} shown` : ''}: ${esc(c.onlyFile.slice(0, 20).join(', '))}${c.onlyFile.length > 20 ? '…' : ''}</p>` : ''}

@@ -1,14 +1,16 @@
 ---
 title: Home
 summary: Your daily dashboard: how many devices you have ready to sell, what you sold and earned this month, which models are running low, and your latest sales.
-keywords: home, backup reminder, back up now, not today, site restored, dashboard, overview, stats, available devices, revenue, profit, low stock, reorder, recent sales, this month, banner, trial, read-only, receipt
+keywords: home, backup reminder, back up now, not today, site restored, dashboard, overview, stats, available devices, revenue, profit, low stock, reorder, recent sales, this month, banner, trial, read-only, receipt, running low, out of stock, per model, refunds this month, hide card, show all
 order: 2
-covers: nav:home, Get set up, Dismiss, Add your first device, Check your payment methods, Make your first sale, Add a team member, Make your first backup, Save your recovery key, Backup reminder, Back up now, Not today, Your last backup was, You have not made a backup yet, site restored banner, Quick sale, Available devices, Devices sold this month, Revenue this month, Profit this month, Low stock, Recent sales, Date, Receipt, Customer, Total, Walk-in, email confirmation banner, Send it again, announcement banner, Close, closing account banner, Restore account, records could not be opened, free trial chip, Trial ended read-only
+covers: nav:home, Get set up, Dismiss, Add your first device, Check your payment methods, Make your first sale, Add a team member, Make your first backup, Save your recovery key, Backup reminder, Back up now, Not today, Your last backup was, You have not made a backup yet, site restored banner, Quick sale, Available devices, Devices sold this month, Revenue this month, Profit this month, Low stock, Recent sales, Date, Receipt, Customer, Total, Walk-in, email confirmation banner, Send it again, announcement banner, Close, closing account banner, Restore account, records could not be opened, free trial chip, Trial ended read-only, Running low, Out of stock, Low, Show all, Show fewer, Hide, Show it, Refunds this month, after refunds
 ---
 
 ## What Home is for
 
 Home is the first page you see after signing in. Think of it as the whiteboard on the wall of your shop: a quick look at how business is going this month, with nothing to type. You can leave it open on a tablet at the counter and glance at it between customers.
+
+![Home with four tiles for devices, sales, revenue and profit, then recent sales](shot:reseller-home-1 "Home: this month at a glance, with nothing to type.")
 
 Home only shows information. Everything on it is worked out inside your browser from your own records, after they have been unscrambled with your key. The site itself never sees these totals. Because of this, the page always reflects the latest records your team has saved when you open it.
 
@@ -56,6 +58,8 @@ The number of devices sold since the first of the month, with the count of sales
 
 Voided sales are not counted. If you void a sale, the numbers change straight away. See [Sales](#/docs/sales) for voiding.
 
+Revenue and profit are worked out after refunds. When a customer has returned something this month, the tile notes "after refunds" and an extra tile, **Refunds this month**, shows the money given back, so nothing is hidden. **Devices sold this month** does not count devices that came back. Refunds are taken off the month of the original sale. See [Returns and refunds](#/docs/returns-and-refunds).
+
 ### Revenue this month
 
 The total of all sales this month after discounts. If you sold three boxes at 50.00 and gave 10 percent off one of them, revenue counts the discounted price. Revenue is money coming in; it does not subtract your costs.
@@ -68,11 +72,15 @@ Revenue minus the cost of the devices that were sold. It uses the **Cost** you e
 
 Amounts are shown in US dollars with the formatting of your browser.
 
-## The Low stock warning
+## The Running low card
 
-When any model drops to or below the reorder level you set, a banner appears reading **Low stock** with the model name, how many are left, and the reorder level, for example "Fire Stick 4K (2 left, reorder at 3)".
+When any model drops to or below the reorder level you set, a card called **Running low** appears under the tiles. It has one row for each model. A row shows the make and model, how many are left and the reorder level (for example "2 left · reorder at 3"), a small bar that shrinks as the stock does, and a chip: a red **Out of stock** when none are left, or an amber **Low** when a few are. The most urgent model is at the top, with models that are out of stock first.
 
-How a model gets a reorder level: in [Inventory](#/docs/inventory), the **Stock levels** area lists each model with a **Reorder at** box. A level of 0 turns the warning off for that model. Once you have set a number, the warning appears on Home and on the Inventory page whenever the available count is equal to or below it.
+![The Running low card listing five models with how many are left, a bar and a Low chip, and a Show all link](shot:reseller-home-2 "The Running low card. Each row is one model, most urgent first.")
+
+Click or tap a row to open [Inventory](#/docs/inventory) showing only that model, so you can see exactly which boxes are left. If more than five models are running low the card shows the first five, and **Show all** opens the rest (**Show fewer** puts it back). The card is hidden when nothing is low. If you do not want it on your Home page, press **Hide** on the card; a short line **Show it** remains so you can bring it back. Hiding is a personal choice kept in your own browser, so it does not change what anyone else on your team sees.
+
+How a model gets a reorder level: in [Inventory](#/docs/inventory), the **Stock levels** area lists each model with a **Reorder at** box. A level of 0 turns the warning off for that model. Once you have set a number, the card appears on Home and the warning on the Inventory page whenever the available count is equal to or below it.
 
 Why you want it: it is an early reminder to place a supplier order before you run out, instead of finding out when a customer asks for something you do not have.
 
@@ -131,7 +139,7 @@ At the top of every page, next to your username button, a blue chip shows the da
 ## How to use Home day to day
 
 1. Sign in and look at the tiles. Is the available count where you expect it?
-2. Check for a Low stock banner. If you see one, decide whether to reorder.
+2. Check the Running low card. If you see one, decide whether to reorder.
 3. Scan the recent sales for anything odd, such as an unexpected total or a customer you do not recognise. Click it to look at the receipt.
 4. If a customer is waiting, press **Quick sale**.
 

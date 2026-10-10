@@ -16,12 +16,12 @@
       <div class="card"><h3>Encryption</h3><div class="sub mb-0">${AccountApp.vault.state?.enabled ? 'Your inventory, customers and sales are encrypted in your browser. The hosting service stores them but cannot read them.' : 'Not turned on yet.'}</div></div>
       <div id="act" class="mt-lg"></div>`);
     main.querySelector('#pw')?.addEventListener('click', async () => {
-      const ok = await sheet(`<h2>Change password</h2><div class="field mt-md"><label>Current password</label><input type="password" id="a" autocomplete="current-password"></div><div class="field"><label>New password</label><input type="password" id="b" autocomplete="new-password"><div class="hint">At least 10 characters with letters and numbers.</div></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Change</button></div>`,
+      const ok = await sheet(`<h2>Change password</h2><div class="field mt-md"><label for="a">Current password</label><input type="password" id="a" autocomplete="current-password"></div><div class="field"><label for="b">New password</label><input type="password" id="b" autocomplete="new-password"><div class="hint">At least 10 characters with letters and numbers.</div></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Change</button></div>`,
         { onMount: (el, close) => el.querySelector('#go').addEventListener('click', async () => { try { const a = el.querySelector('#a').value, b = el.querySelector('#b').value; const keys = await AccountApp.vault.keysForNewPassword(a, b); await AccountApp.api('POST', '/change-password', { current: a, next: b, keys }); close(true); } catch (e) { toast(e.message, true); } }) });
       if (ok) toast('Password changed');
     });
     main.querySelector('#em')?.addEventListener('click', async () => {
-      const ok = await sheet(`<h2>Change email address</h2><p class="sub">We will send a link to the new address. Your current one stays in use until you click it.</p><div class="field mt-md"><label>New email address</label><input type="email" id="ne" autocomplete="email"></div><div class="field"><label>Password</label><input type="password" id="pw2" autocomplete="current-password"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Send confirmation</button></div>`,
+      const ok = await sheet(`<h2>Change email address</h2><p class="sub">We will send a link to the new address. Your current one stays in use until you click it.</p><div class="field mt-md"><label for="ne">New email address</label><input type="email" id="ne" autocomplete="email"></div><div class="field"><label for="pw2">Password</label><input type="password" id="pw2" autocomplete="current-password"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Send confirmation</button></div>`,
         { onMount: (el, close) => el.querySelector('#go').addEventListener('click', async () => { try { await AccountApp.api('POST', '/email/change', { email: el.querySelector('#ne').value, password: el.querySelector('#pw2').value }); close(true); } catch (e) { toast(e.message, true); } }) });
       if (ok) toast('Check the new mailbox for the confirmation link');
     });
@@ -30,7 +30,7 @@
       const ok = await sheet(`<h2>Close this account?</h2><p class="sub">The account is locked straight away: only Administrators can sign in, and only to look around, export or restore it. After 7 days everything is erased automatically: the people, the devices, customers and sales. We email you now and again when it is done.</p>
         <div class="banner mb-md">Backups kept by the site may still hold an encrypted copy until they expire. It cannot be opened without your password or recovery key.</div>
         <div class="row mb-md"><button class="btn secondary" id="xs">Export everything first</button></div>
-        <div class="field"><label>Your password</label><input type="password" id="cp" autocomplete="current-password"></div><div class="field"><label>Type your Reseller ID (<b>${esc(me.accountCode)}</b>)</label><input type="text" id="ci" autocomplete="off" autocapitalize="none"></div>
+        <div class="field"><label for="cp">Your password</label><input type="password" id="cp" autocomplete="current-password"></div><div class="field"><label for="ci">Type your Reseller ID (<b>${esc(me.accountCode)}</b>)</label><input type="text" id="ci" autocomplete="off" autocapitalize="none"></div>
         <div class="actions"><button class="btn secondary" data-cancel>Keep my account</button><button class="btn danger" id="go">Close account</button></div>`,
         { onMount: (el, close) => {
           el.querySelector('#xs').addEventListener('click', () => { AccountApp.exportEverything(); toast('Exported'); });
@@ -39,7 +39,7 @@
       if (ok) { toast('Account closing'); const r2 = await AccountApp.api('GET', '/me'); AccountApp.me = r2.user; AccountApp.route(); }
     });
     main.querySelector('#hl')?.addEventListener('click', async () => {
-      const ok = await sheet(`<h2>Link Host administrator</h2><p class="sub">Enter your Host Console sign-in once to prove it is you.</p><div class="field mt-md"><label>Host username</label><input type="text" id="u" autocapitalize="none" autocomplete="off"></div><div class="field"><label>Host password</label><input type="password" id="p" autocomplete="off"></div><div class="field"><label>Two-factor code (if your Host sign-in uses one)</label><input type="text" id="c" inputmode="numeric" autocomplete="off"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Link</button></div>`,
+      const ok = await sheet(`<h2>Link Host administrator</h2><p class="sub">Enter your Host Console sign-in once to prove it is you.</p><div class="field mt-md"><label for="u">Host username</label><input type="text" id="u" autocapitalize="none" autocomplete="off"></div><div class="field"><label for="p">Host password</label><input type="password" id="p" autocomplete="off"></div><div class="field"><label for="c">Two-factor code (if your Host sign-in uses one)</label><input type="text" id="c" inputmode="numeric" autocomplete="off"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Link</button></div>`,
         { onMount: (el, close) => el.querySelector('#go').addEventListener('click', async () => { try { await AccountApp.api('POST', '/hostlink', { username: el.querySelector('#u').value, password: el.querySelector('#p').value, code: el.querySelector('#c').value }); close(true); } catch (e) { toast(e.message, true); } }) });
       if (ok) { toast('Linked'); const r2 = await AccountApp.api('GET', '/me'); AccountApp.me = r2.user; AccountApp.showShell(); location.hash = '#/security'; }
     });
@@ -54,7 +54,7 @@
     AccountApp.activity.render(main.querySelector('#act'), '/activity/me', false).catch((e) => toast(e.message, true));
     main.querySelector('#on')?.addEventListener('click', async () => { if (await UI.totpSetup(AccountApp.api)) AccountApp.route(); });
     main.querySelector('#off')?.addEventListener('click', async () => {
-      const ok = await sheet(`<h2>Turn off two-factor</h2><div class="field mt-md"><label>Password</label><input type="password" id="p"></div><div class="field"><label>Authenticator code</label><input type="text" id="c"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn danger" id="go">Turn off</button></div>`,
+      const ok = await sheet(`<h2>Turn off two-factor</h2><div class="field mt-md"><label for="p">Password</label><input type="password" id="p"></div><div class="field"><label for="c">Authenticator code</label><input type="text" id="c"></div><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn danger" id="go">Turn off</button></div>`,
         { onMount: (el, close) => el.querySelector('#go').addEventListener('click', async () => { try { await AccountApp.api('POST', '/totp/disable', { password: el.querySelector('#p').value, code: el.querySelector('#c').value }); close(true); } catch (e) { toast(e.message, true); } }) });
       if (ok) AccountApp.route();
     });

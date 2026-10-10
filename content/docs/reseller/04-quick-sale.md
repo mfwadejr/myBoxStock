@@ -1,9 +1,9 @@
 ---
 title: Quick sale
 summary: Ring up a sale by scanning or choosing devices, setting prices and discounts, attaching a customer, picking a payment method and warranty, then printing or emailing the receipt.
-keywords: quick sale, sell, sale, checkout, till, scan, camera, phone camera, scan serial, barcode, uid, browse available stock, add by quantity, discount, percent off, order discount, payment method, paid by, customer, new customer, existing customer, receipt, print, email, warranty, date sold, time sold, void, refund, cancel sale, test record
+keywords: delivery, shipping, ship to, shipping fee, pickup, meet, quick sale, sell, sale, checkout, till, scan, camera, phone camera, scan serial, barcode, uid, browse available stock, add by quantity, discount, percent off, order discount, payment method, paid by, customer, new customer, existing customer, receipt, print, email, warranty, date sold, time sold, void, refund, cancel sale, test record, return, credit note
 order: 4
-covers: nav:sell, Scan or type, Scan a serial with the phone camera, camera button, Nothing in your inventory matches, Browse available stock, Add by quantity, Available stock, Select all shown, Add to sale, model buttons, This sale, Price, % off, Remove, Customer, Existing, New, Search name phone or email, Change, Name, Phone, Email, Date sold, Time sold, Warranty, Paid by, Note (optional), % off the whole order, Subtotal before discounts, You save, Total, Complete sale, Required checks not done, Sell anyway, Receipt, Include the test record, Email, Print, Done, Send, Open in my mail app, Message, Send to, Receipt, Thank-you note, Sale voided notice, Void sale, Change warranty
+covers: nav:sell, Scan or type, Scan a serial with the phone camera, camera button, Nothing in your inventory matches, Browse available stock, Add by quantity, Available stock, Select all shown, Add to sale, model buttons, This sale, Price, % off, Remove, Customer, Existing, New, Search name phone or email, Change, Name, Phone, Email, Date sold, Time sold, Warranty, Paid by, Note (optional), % off the whole order, Subtotal before discounts, You save, Total, Complete sale, Required checks not done, Sell anyway, Receipt, Include the test record, Print, Done, Send, Open in my mail app, Message, Send to, Thank-you note, Sale voided notice, Void sale, Change warranty, Delivery, Immediate, Shipping, Pickup, Meet, Ship to, Shipping fee charged to the customer, Save this address to the customer, Return or refund, Credit note
 ---
 
 ## What Quick sale is for
@@ -35,6 +35,8 @@ Check that:
 5. Check the date, time, warranty and payment method.
 6. Check the **Total**, then press **Complete sale**.
 7. The receipt appears. Print it, email it, then press **Done**.
+
+![Quick sale with two devices in the cart, a total and the Complete sale button](shot:reseller-quick-sale-1 "Quick sale with two devices in the cart.")
 
 ## Adding devices
 
@@ -129,6 +131,8 @@ Every sale must have a customer. The **Customer** card has two modes, **Existing
 2. Click one to attach it. The card shows the name and phone.
 3. Press **Change** to pick someone else.
 
+The sale then appears in that customer's **Purchases and shipments** on the [Customers](#/docs/customers) page, with its delivery, tracking and any later refund, and the receipt number or tracking number finds the customer there.
+
 ### New customer
 
 1. Press **New**.
@@ -147,11 +151,22 @@ Adding a new customer requires permission to add customers, which Administrators
 - **Paid by**: how the customer paid, from your own list (by default Cash, Card, Bank transfer, Other). It is saved by name on the sale.
 - **Note (optional)**: a short message that appears on the receipt, such as "Includes HDMI cable".
 
+## Delivery
+
+Under **Paid by** there is a **Delivery** drop-down with four choices: **Immediate**, **Shipping**, **Pickup** and **Meet**. It starts on **Immediate**, and with that choice the screen is exactly as described above: nothing extra appears and nothing extra is saved.
+
+![The Delivery drop-down set to Shipping, with the Ship to box, shipping fee, carrier and delivery note filled in](shot:reseller-quick-sale-2 "Choosing Shipping opens the Ship to box. A saved address fills it in for you.")
+
+- **Shipping** opens a tinted **Ship to** box (name, street, apartment or suite, city, state, ZIP), the **Shipping fee charged to the customer**, your own **Your shipping cost (optional)**, **Carrier (optional)**, **Tracking number (optional)** and a **Delivery note (optional)**. If the customer has a saved address it is filled in for you; for a new customer a switch **Save this address to the customer** keeps it for next time.
+- **Pickup** and **Meet** open an optional date and a notes box, and need no address.
+
+The shipping fee appears as its own **Shipping** line above the **Total**, which then shows what the customer pays. It is never mixed into item prices, discounts or profit. Your own shipping cost is never shown on the receipt. Shipping sales start as **To ship** on the Sales page. The full guide is [Delivery and shipping](#/docs/delivery-and-shipping), and labels are in [Shipping labels](#/docs/shipping-labels).
+
 ## Completing the sale
 
 Press **Complete sale**. It is disabled until there is at least one device. The app checks:
 
-1. A customer is chosen, or a new customer has a name.
+1. A customer is chosen, or a new customer has a name. For Shipping, the parcel has a name, street and city.
 2. The discounts are within your limit.
 3. Required test steps. If any device has required steps not ticked, a box titled **Required checks not done** lists those devices and asks whether to sell anyway. Press **Sell anyway** to proceed; the sale record will show what was and was not done. Cancel to go back and finish the tests. (If Sell only tested devices is on, untested devices could not be added in the first place.)
 4. The date and time are not in the future.
@@ -162,7 +177,7 @@ What gets recorded: a receipt number such as `S-20261005-K7P2Q`, the date, your 
 
 ## The receipt
 
-After saving, the **Receipt** opens with your business name, number, date, customer, each device (with its discount and any recorded details), order discount, **Total**, **Paid by**, warranty lines and your note, ending in "Thank you!".
+After saving, the **Receipt** opens with your business name, number, date, customer, each device (with its discount and any recorded details), order discount, the **Shipping** fee and **Ship to** address for a shipped sale (or the word Pickup or Meet), **Total**, **Paid by**, warranty lines and your note, ending in "Thank you!". For a shipped sale a **Delivery** section also appears under the receipt, for your team only, with the status, tracking, **Mark shipped**, **Edit tracking** and **Print label**; it is never printed or emailed.
 
 If any device has a test record, a tick box **Include the test record (shows what was checked before it was sold)** adds the steps, who tested and when, any From/To values, and notes. Use it when a customer wants proof, leave it off for a simple receipt.
 
@@ -195,6 +210,10 @@ Made a mistake? Voiding cancels a sale but keeps the record.
 
 The receipt then says "This sale was voided." Voided sales are left out of the totals on Home and Sales. You can email a **Sale voided notice** to the customer. The Void button needs permission to record sales. Money handling (a refund) is up to you outside the app.
 
+Void is only for sales that should never have happened. When a customer brings something back after a genuine sale, use **Return or refund** on the same receipt instead. It records which devices came back, how much was refunded and where each device goes, and it gives the customer a credit note. A sale that already has a return can no longer be voided. See [Returns and refunds](#/docs/returns-and-refunds).
+
+A device that came back and was put back as **Available** or **Returned** can be sold again here like any other stock.
+
 ### Change warranty
 
 Administrators see **Change warranty** on a receipt. Choose a different period and save; the end date is recalculated from the sale date.
@@ -206,6 +225,7 @@ Administrators see **Change warranty** on a receipt. Choose a different period a
 - Typing a price in cents. Prices are in dollars and cents, for example 49.99.
 - Discounting twice by accident, on a line and on the whole order. Watch **You save**.
 - Entering a sale for another day without changing the date. Use **Date sold** and **Time sold**.
+- Choosing Shipping but forgetting the street or city. The sale is refused until the address is complete.
 - Selling a device marked Reserved. Change its status in [Inventory](#/docs/inventory) first.
 
 See also [Sales](#/docs/sales) for reviewing past sales and [Inventory](#/docs/inventory) for stock.

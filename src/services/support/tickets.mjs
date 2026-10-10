@@ -157,7 +157,10 @@ export async function overdueTickets(db, settings, now = Date.now()) { return (a
 export async function summary(db, settings) {
   const by = Object.fromEntries((await db.all('SELECT status, COUNT(*) AS n FROM support_tickets GROUP BY status')).map(r => [r.status, Number(r.n)]));
   const unassigned = Number((await db.get(`SELECT COUNT(*) AS n FROM support_tickets WHERE assignee_id IS NULL AND status IN (${marks(ACTIVE)})`, ACTIVE)).n);
-  return { open: ACTIVE.reduce((n, s) => n + (by[s] || 0), 0), awaitingHost: AWAITING_HOST.reduce((n, s) => n + (by[s] || 0), 0), resolved: by.resolved || 0, closed: by.closed || 0, unassigned, overdue: (await overdueTickets(db, settings)).length, responseDays: settings.responseDays };
+  const last = await db.get('SELECT COUNT(*) AS n, MAX(updated_at) AS u, MAX(number) AS m FROM support_tickets'), overdue = (await overdueTickets(db, settings)).length;
+  // `latest` changes whenever a ticket is added, removed, replied to or changed, or the overdue count moves; the live list reloads only when it differs.
+  const latest = `${Number(last.n)}.${Number(last.m || 0)}.${Number(last.u || 0)}.${overdue}`;
+  return { latest, newest: Number(last.m || 0), open: ACTIVE.reduce((n, s) => n + (by[s] || 0), 0), awaitingHost: AWAITING_HOST.reduce((n, s) => n + (by[s] || 0), 0), resolved: by.resolved || 0, closed: by.closed || 0, unassigned, overdue, responseDays: settings.responseDays };
 }
 
 // Resolved tickets close by themselves after the Host's number of days. Returns how many.

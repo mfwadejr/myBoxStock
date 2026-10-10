@@ -1,7 +1,7 @@
 ---
 title: Disaster recovery
 summary: A runbook for the day the server is gone or broken: a dead disk, a lost server, a damaged database, a lost passphrase or key, or a bad update. What to have in hand, how to stand up a new container, test the backup first, restore, what customers keep and lose, what to check afterward, and a one-page checklist you can print.
-keywords: disaster, disaster recovery, runbook, dead disk, disk failure, lost server, new server, rebuild, damaged database, corrupt, lost passphrase, lost key, secret.key, bad update, rollback, restore, test a backup file, checklist, print, printable, zimaos, custom install, docker compose, restore-bundle, what customers lose, after a restore
+keywords: demo accounts after a restore, disaster, disaster recovery, runbook, dead disk, disk failure, lost server, new server, rebuild, damaged database, corrupt, lost passphrase, lost key, secret.key, bad update, rollback, restore, test a backup file, checklist, print, printable, zimaos, custom install, docker compose, restore-bundle, what customers lose, after a restore
 order: 21
 covers: Disaster recovery, Dead disk, Lost server, Damaged database, Lost passphrase or key, Bad update, What to have in hand, Stand up a new container, Test a backup file, restore-bundle, Printable checklist, Print the checklist, What customers will and will not have lost, Checks afterward
 ---
@@ -78,8 +78,10 @@ Add `--force` if it says the server already has data and you mean to replace it.
 A restore puts the whole site back to the moment of the backup. Customers keep:
 
 - Their accounts, sign-ins, plans and settings as they were at that moment.
-- All the business data that was in the backup: devices, customers, sales and receipts, still encrypted, still readable only with their own password or recovery key. Restoring never exposes it to you.
+- All the business data that was in the backup: devices, customers, sales and receipts, including delivery and shipping details, saved addresses, returns and refunds, label and return settings, still encrypted, still readable only with their own password or recovery key. Restoring never exposes it to you.
 - Their own backup files, which are separate and untouched.
+
+Demo mode accounts are not in a full-site backup or an offsite copy (unless you turned off **Leave demo accounts out of backups**), so a restore from one never brings demo data back; if you need demo data on the restored site, build it again from [Demo mode](#/docs/demo-mode). A whole snapshot or safety copy does hold them.
 
 They lose anything entered after the moment of the backup: sales, devices, new sign-ups, changed passwords and plan changes. Everyone is signed out. After a console restore, every customer sees a red notice saying the site was restored from a backup taken at a stated time. After a command line restore you write that notice yourself in [Settings](#/docs/settings).
 

@@ -33,12 +33,12 @@
     // Form fields for the device sheet.
     makeField: (d = {}) => {
       const list = cat.makes(), cur = cat.canon(list, d.make);
-      return `<div class="field"><label>Make</label>${UI.select.html({ id: 'make', options: [['', '—'], ...list.map(m => [m.name, m.name]), [NEW, 'Add new…']], value: list.length ? cur : NEW })}<input type="text" id="make_new" class="mt-sm" placeholder="Type the new make" autocomplete="off" ${list.length ? 'hidden' : ''}></div>`;
+      return `<div class="field"><label for="make">Make</label>${UI.select.html({ id: 'make', options: [['', '—'], ...list.map(m => [m.name, m.name]), [NEW, 'Add new…']], value: list.length ? cur : NEW })}<input type="text" id="make_new" class="mt-sm" aria-label="New make" placeholder="Type the new make" autocomplete="off" ${list.length ? 'hidden' : ''}></div>`;
     },
     modelField: (d = {}) => `<div class="field"><label>Model</label><div id="modelw">${cat.modelBlock(cat.canon(cat.makes(), d.make), d.model)}</div></div>`,
     modelBlock: (make, current) => {
       const list = key(make) && !cat.makes().some(m => key(m.name) === key(make)) ? [] : cat.models(make), cur = cat.canon(list, current);
-      return `${UI.select.html({ id: 'model', options: [['', '—'], ...list.map(m => [m.name, m.name]), [NEW, 'Add new…']], value: list.length ? cur : NEW })}<input type="text" id="model_new" class="mt-sm" placeholder="Type the new model" autocomplete="off" ${list.length ? 'hidden' : ''}>`;
+      return `${UI.select.html({ id: 'model', options: [['', '—'], ...list.map(m => [m.name, m.name]), [NEW, 'Add new…']], value: list.length ? cur : NEW })}<input type="text" id="model_new" class="mt-sm" aria-label="New model" placeholder="Type the new model" autocomplete="off" ${list.length ? 'hidden' : ''}>`;
     },
     // Reads the chosen (or typed) make and model back out of a device sheet.
     read: (el) => {

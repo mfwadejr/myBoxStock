@@ -17,39 +17,21 @@ import { termsOf } from '../../services/legal/index.mjs';
 import { setPlan } from '../../services/billing/index.mjs';
 import { isLocked, unlock } from '../../auth/lockout.mjs';
 import { mailReady } from '../../services/mail/index.mjs';
+import { listAccounts } from '../../services/accounts/list.mjs';
+import { bulkRoutes } from './accounts-bulk.mjs';
+import { isDemoAddress } from '../../services/demo/guard.mjs';
 
 export function accountsRoutes(db) {
   const r = express.Router();
   const A = (req, level, event, message, a, data) => hostLog(req, level, event, message, { area: 'accounts', accountId: a?.id || null, data });
-  const getAccount = (id) => db.get('SELECT id, account_code, business_name, owner_email, status, plan, trial_ends_at, plan_until, plan_note, plan_changed_at, created_at, last_activity, closing_at, closing_by, host_link_allowed, terms_version, terms_accepted_at FROM accounts WHERE id = ?', [id]);
+  const getAccount = (id) => db.get('SELECT id, account_code, business_name, owner_email, status, plan, trial_ends_at, plan_until, plan_note, plan_changed_at, created_at, last_activity, closing_at, closing_by, host_link_allowed, terms_version, terms_accepted_at, demo, demo_set FROM accounts WHERE id = ?', [id]);
   // Every support action needs a short reason; it goes in the log next to who did it (see "Support history").
   const reasonOf = (req, res) => { const t = String(req.body?.reason ?? req.body?.note ?? '').trim(); if (t.length < 3) { res.status(400).json({ error: 'Say why, in a few words, so the log explains it.', code: 'REASON_REQUIRED' }); return null; } return t.slice(0, 200); };
   const userOf = (req) => db.get('SELECT id, account_id, username, login, email, role FROM account_users WHERE id = ? AND account_id = ?', [req.params.uid, req.params.id]);
 
-  // The account list, with the health signals a Host administrator can see (identity and security only, never business data).
-  const HEALTH_SQL = `(SELECT COUNT(*) FROM account_users u WHERE u.account_id = a.id) AS user_count,
-      (SELECT MAX(u.last_login) FROM account_users u WHERE u.account_id = a.id) AS last_login,
-      (SELECT COUNT(*) FROM account_users u WHERE u.account_id = a.id AND u.role = 'Administrator' AND u.totp_enabled = 1) AS admins_2fa,
-      (SELECT COUNT(*) FROM account_users u WHERE u.account_id = a.id AND u.email IS NOT NULL AND u.email_verified_at IS NULL) AS unverified,
-      (SELECT COUNT(*) FROM account_recovery rc WHERE rc.account_id = a.id) AS encrypted,
-      (SELECT COUNT(*) FROM account_recovery rc WHERE rc.account_id = a.id AND rc.confirmed_at IS NOT NULL) AS recovery_saved`;
-  const FILTERS = {
-    no_recovery: (x) => x.encrypted && !x.recovery_saved, not_encrypted: (x) => !x.encrypted, no_2fa: (x) => !x.admins_2fa, unverified: (x) => x.unverified > 0,
-    inactive30: (x) => (x.last_login ? Date.now() - Number(x.last_login) > 30 * DAY : Date.now() - Number(x.created_at) > 30 * DAY),
-    closing: (x) => !!x.closing_at, suspended: (x) => x.status === 'suspended', read_only: (x) => !x.billing.canWrite,
-  };
-  r.get('/', async (req, res) => {
-    const q = `%${String(req.query.q || '').toLowerCase()}%`;
-    const rows = await db.all(`SELECT a.id, a.account_code, a.business_name, a.owner_email, a.status, a.plan, a.trial_ends_at, a.plan_until, a.plan_note, a.created_at, a.last_activity, a.closing_at,
-      ${HEALTH_SQL} FROM accounts a
-      WHERE LOWER(a.business_name) LIKE ? OR LOWER(a.account_code) LIKE ? OR LOWER(a.owner_email) LIKE ? ORDER BY a.created_at DESC LIMIT 500`, [q, q, q]);
-    const want = String(req.query.plan || ''), health = String(req.query.health || '');   // plan: '' | trial | free | paid | expired
-    const num = (x) => ({ ...x, user_count: Number(x.user_count), admins_2fa: Number(x.admins_2fa), unverified: Number(x.unverified), encrypted: Number(x.encrypted), recovery_saved: Number(x.recovery_saved), last_login: x.last_login ? Number(x.last_login) : null });
-    const out = rows.map(x => ({ ...num(x), billing: billingState(x) }))
-      .filter(x => !want || (want === 'expired' ? !x.billing.canWrite : x.billing.state === want))
-      .filter(x => !health || !FILTERS[health] || FILTERS[health](x));
-    res.json(out);
-  });
+  // The account list, with the health signals a Host administrator can see (identity and security only, never business data). Search, filters, Needs attention and sorting: services/accounts/list.mjs.
+  r.get('/', async (req, res) => res.json(await listAccounts(db, req.query)));
+  r.use('/bulk', bulkRoutes(db));
 
   r.get('/:id', async (req, res) => {
     const a = await getAccount(req.params.id); if (!a) return fail(res, 404, 'NOT_FOUND');
@@ -159,6 +141,7 @@ export function accountsRoutes(db) {
   r.post('/:id/users/:uid/reset-link', async (req, res) => {
     const u = await userOf(req); if (!u) return fail(res, 404, 'NOT_FOUND');
     if (!u.email) return res.status(400).json({ error: 'This user has no email address on file.' });
+    if (isDemoAddress(u.email)) return fail(res, 400, 'DEMO_MAIL_BLOCKED');   // demo accounts never send email
     const reason = reasonOf(req, res); if (!reason) return;
     const raw = token(32);
     await db.run('INSERT INTO password_resets (token_hash, realm, subject_id, expires_at, used) VALUES (?,?,?,?,0)', [sha256(raw), 'app', u.id, Date.now() + 3600e3]);
@@ -169,6 +152,7 @@ export function accountsRoutes(db) {
   r.post('/:id/users/:uid/verify-resend', async (req, res) => {
     const u = await userOf(req); if (!u) return fail(res, 404, 'NOT_FOUND');
     if (!u.email) return res.status(400).json({ error: 'This user has no email address on file.' });
+    if (isDemoAddress(u.email)) return fail(res, 400, 'DEMO_MAIL_BLOCKED');
     const a = await db.get('SELECT account_code FROM accounts WHERE id = ?', [u.account_id]);
     const s = await sendConfirmation(db, u, u.email, { accountCode: a?.account_code, ip: null });
     if (!s.sent) return res.status(s.reason === 'mail_off' ? 400 : 429).json({ error: s.reason === 'mail_off' ? 'Email is not set up, so nothing can be sent.' : s.reason === 'too_soon' ? 'One was sent a moment ago. Wait a minute.' : 'Daily limit reached for this person.' });

@@ -11,8 +11,12 @@ export const DEFAULTS = {
     { id: 'c3', title: 'Resolved', body: 'We believe this is sorted now. If it is not, just reply to this ticket and we will pick it up again.' },
   ],
   responseDays: 2, autoCloseDays: 7, maxFiles: 3, maxKB: 1024, perHour: 5, openCap: 10,
+  // New-ticket notices to the Host (T35). Decided defaults: in-app on, email off until Email is set up and switched on, every ticket, all Host administrators, no digest, 20 emails an hour.
+  notifyInApp: true, notifyEmail: false, notifyRecipients: 'all', notifyChosen: [], notifyThreshold: 'every', notifyDigest: false,
+  notifyReplyInApp: true, notifyReplyEmail: false, notifyPerHour: 20,
 };
-const RANGE = { responseDays: [1, 30, 'Response target'], autoCloseDays: [1, 90, 'Days before Resolved closes'], maxFiles: [0, 5, 'Screenshots per message'], maxKB: [50, 2048, 'Screenshot size limit (KB)'], perHour: [1, 60, 'New tickets per hour'], openCap: [1, 100, 'Open tickets per account'] };
+export const RECIPIENTS = ['owner', 'all', 'chosen'], THRESHOLDS = ['every', 'high'];
+const RANGE = { responseDays: [1, 30, 'Response target'], autoCloseDays: [1, 90, 'Days before Resolved closes'], maxFiles: [0, 5, 'Screenshots per message'], maxKB: [50, 2048, 'Screenshot size limit (KB)'], perHour: [1, 60, 'New tickets per hour'], openCap: [1, 100, 'Open tickets per account'], notifyPerHour: [1, 200, 'Notice emails per hour'] };
 
 export async function getSupportSettings(db) {
   const saved = await getSetting(db, 'support', {}), out = { ...DEFAULTS, ...saved };
@@ -35,6 +39,11 @@ export async function cleanSupportSettings(db, patch = {}) {
   if (patch.defaultPriority !== undefined) next.defaultPriority = String(patch.defaultPriority);
   if (!next.priorities.includes(next.defaultPriority)) next.defaultPriority = next.priorities.includes('Normal') ? 'Normal' : next.priorities[0];
   for (const [k, [lo, hi, label]] of Object.entries(RANGE)) if (patch[k] !== undefined) { const n = Number(patch[k]); if (!Number.isInteger(n) || n < lo || n > hi) return { error: `${label} must be a whole number from ${lo} to ${hi}.` }; next[k] = n; }
+  for (const k of ['notifyInApp', 'notifyEmail', 'notifyDigest', 'notifyReplyInApp', 'notifyReplyEmail']) if (patch[k] !== undefined) next[k] = patch[k] === true || patch[k] === 'true';
+  if (patch.notifyRecipients !== undefined) { if (!RECIPIENTS.includes(patch.notifyRecipients)) return { error: 'Choose Owner only, All Host administrators or A chosen list for the notice recipients.' }; next.notifyRecipients = patch.notifyRecipients; }
+  if (patch.notifyThreshold !== undefined) { if (!THRESHOLDS.includes(patch.notifyThreshold)) return { error: 'Choose Every ticket or Only High and Urgent for the notice threshold.' }; next.notifyThreshold = patch.notifyThreshold; }
+  if (patch.notifyChosen !== undefined) { if (!Array.isArray(patch.notifyChosen) || patch.notifyChosen.length > 50) return { error: 'Choose up to 50 Host administrators for the notice list.' }; next.notifyChosen = [...new Set(patch.notifyChosen.map(String))]; }
+  if (next.notifyRecipients === 'chosen' && !next.notifyChosen.length && (patch.notifyRecipients !== undefined || patch.notifyChosen !== undefined)) return { error: 'Choose at least one Host administrator, or pick another recipient option.' };
   if (patch.canned !== undefined) {
     if (!Array.isArray(patch.canned) || patch.canned.length > 30) return { error: 'Keep up to 30 canned replies.' };
     const out = [];

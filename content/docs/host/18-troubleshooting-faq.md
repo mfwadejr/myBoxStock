@@ -3,7 +3,7 @@ title: Troubleshooting and FAQ
 summary: Problems you are likely to meet as the Host, grouped by symptom, with the cause, the fix and where to read more. Ends with a general FAQ.
 keywords: test connection, sftp identity, restore notice, lockouts persist, camera, scanning, diagnostics, destination, troubleshooting, problem, error, not found, locked out, blocked, proxy, email not arriving, resend, confirmation link, backup failed, restore, trial, read-only, two-factor, recovery, FAQ, help
 order: 18
-covers: Test a backup file too large, Not Found, host_console.blocked, Reverse proxy in front of the site, Site is behind Cloudflare, Resend, Resend all failed, Site address, Health tab, Send a test, Run one now, Restore, Extend trial, Change plan, Set up two-factor, reset-host-admin, reset-server-options, HOST_ALLOW_ANY, Mark email as confirmed, Email a password reset link, Reset two-factor authentication, Recovery key, Test connection, Take a snapshot now, Send one now, Lift, Copy diagnostics, Try again, decrypt-backup, SFTP identity, Server identity pinned, restore notice, Backup is failing, Locked sign-ins, Unlock, Too many failed attempts
+covers: Test a backup file too large, Not Found, host_console.blocked, Reverse proxy in front of the site, Site is behind Cloudflare, Resend, Resend all failed, Site address, Health tab, Send a test, Run one now, Restore, Extend trial, Change plan, Check my email setup, Show details, Email has not been tested, Set up two-factor, reset-host-admin, reset-server-options, HOST_ALLOW_ANY, Mark email as confirmed, Email a password reset link, Reset two-factor authentication, Recovery key, Test connection, Take a snapshot now, Send one now, Lift, Copy diagnostics, Try again, decrypt-backup, SFTP identity, Server identity pinned, restore notice, Backup is failing, Locked sign-ins, Unlock, Too many failed attempts
 ---
 
 ## How to use this page
@@ -78,7 +78,8 @@ Open [Email](#/docs/email) and start on the **Health** tab. It tells you whether
 - **Wrong port or TLS setting.** Use port 587 and leave **Use TLS from the start** off, or port 465 with it on. The port is fixed at 465 while that box is ticked.
 - **The HELO name is wrong.** Some receiving servers reject mail when the name announced by your server does not look like a real host name. Set **Server name announced when sending (HELO)** to a proper name that resolves to your server.
 - **Mail arrives but lands in spam.** Open the Health tab and look at the **Sender checks** card. It looks up SPF, DMARC and DKIM for your From address's domain and tells you what is missing. DKIM "not found" only matters if your relay does not sign your mail; type your relay's selector in the box and press **Check again**.
-- **Nothing seems wrong but nothing arrives.** Use **Send a test** (save first). The result appears under the button in plain words.
+- **Nothing seems wrong but nothing arrives.** Use **Send test email** (save first). If it fails, the result names the problem in plain words (cannot reach the mail server, wrong port or TLS setting, sign-in refused, From address not allowed, blocked or rate-limited), gives a **Next:** step, and keeps the technical words behind **Show details**. To see which step stops, press **Check my email setup**: it ticks off Settings, Reach the mail server, Sign in to the mail server and Send the test message in order.
+- **The Overview or Alerts says Email has not been tested.** Email is on but no test has passed since the settings last changed. Press **Send test email**. A passing test clears the notes.
 
 Messages are tried up to five times. After the fifth failure the message is marked **failed** and the receiving server's reason is kept with it. When you have fixed the cause, use **Resend** on one message or **Resend all failed** under Recent messages.
 
@@ -208,7 +209,7 @@ You cannot. Backups cover the whole site, are all-or-nothing, and you cannot ope
 
 **Cause.** When a trial or a paid period ends, the account becomes **read-only**. People can still sign in and look, but cannot change anything. The owner is emailed once when this happens. Accounts on the **Free (comped)** plan never end.
 
-**Fix.** In [Accounts](#/docs/accounts), open the account and choose **Extend trial** (if it is still on trial) or **Change plan**. You can set a trial number of days, a paid-through date, or Free. A reason is recorded. The account can write again straight away. The new trial length in [Settings](#/docs/settings) affects only accounts created from that moment on. The [Pipeline](#/docs/pipeline) page lists trials about to end and gone-quiet accounts, so you can nudge people before this happens. See [Plans and trials](#/docs/plans).
+**Fix.** In [Accounts](#/docs/accounts), open the account and choose **Extend trial** (to give many accounts more time at once, tick them and use the bulk action **Extend trial**; see "Selecting accounts and bulk actions" on that page) (if it is still on trial) or **Change plan**. You can set a trial number of days, a paid-through date, or Free. A reason is recorded. The account can write again straight away. The new trial length in [Settings](#/docs/settings) affects only accounts created from that moment on. The [Pipeline](#/docs/pipeline) page lists trials about to end and gone-quiet accounts, so you can nudge people before this happens. See [Plans and trials](#/docs/plans).
 
 ## Plans and prices: why is nothing being charged?
 
@@ -283,7 +284,9 @@ The length is set in Settings under **Free trial length for new sign-ups (days)*
 
 ### How do I tell customers about maintenance?
 
-Use the **Announcement banner** in Settings. It shows one plain-text message (up to 400 characters) at the top of every customer's app, in blue, amber or red, with an optional last day.
+To tell everyone, use the **Announcement banner** in Settings. To tell only some accounts (for example trials ending this week), tick them in [Accounts](#/docs/accounts) and use **Send announcement**; it can also email their owners.
+
+The Settings banner shows one plain-text message (up to 400 characters) at the top of every customer's app, in blue, amber or red, with an optional last day.
 
 ### What does the Host do about backups of customers' data?
 

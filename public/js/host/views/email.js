@@ -45,13 +45,16 @@
     swap(main, `
       <div class="card"><div class="setting"><div><div class="setting-title">Send email</div><div class="setting-desc">Turn off to pause all outgoing messages.</div></div><label class="switch"><input type="checkbox" id="en" ${m.enabled ? 'checked' : ''}><i></i></label></div>
         <div class="field mt-xs"><label>Delivery method</label><div class="seg" id="mode"><button data-m="direct" class="${m.mode === 'direct' ? 'on' : ''}">Direct to recipient</button><button data-m="smtp" class="${m.mode === 'smtp' ? 'on' : ''}">SMTP relay</button></div><div class="hint" id="modehint"></div></div>
-        <div class="grid g2"><div class="field"><label>From name</label><input type="text" id="fn" value="${esc(m.fromName)}"></div><div class="field"><label>From address</label><input type="email" id="fa" value="${esc(m.fromAddress)}" placeholder="no-reply@yourdomain.com"></div></div>
-        <div id="direct" class="field"><label>Server name announced when sending (HELO)</label><input type="text" id="helo" value="${esc(m.heloName)}" placeholder="mail.yourdomain.com"></div>
-        <div id="smtp"><div class="grid g2"><div class="field"><label>SMTP host</label><input type="text" id="sh" value="${esc(m.smtp.host)}" placeholder="smtp.example.com"></div><div class="field"><label>Port</label><input type="number" id="sp" class="num" min="1" max="65535" value="${m.smtp.secure ? 465 : m.smtp.port === 465 ? 587 : m.smtp.port}" ${m.smtp.secure ? 'disabled' : ''}><div class="hint" id="sphint"></div></div>
-          <div class="field"><label>Username</label><input type="text" id="su" value="${esc(m.smtp.user)}" autocomplete="off"></div><div class="field"><label>Password</label><input type="password" id="sw" value="${esc(m.smtp.pass)}" autocomplete="new-password"></div></div>
+        <div class="grid g2"><div class="field"><label for="fn">From name</label><input type="text" id="fn" value="${esc(m.fromName)}"></div><div class="field"><label for="fa">From address</label><input type="email" id="fa" value="${esc(m.fromAddress)}" placeholder="no-reply@yourdomain.com"></div></div>
+        <div id="direct" class="field"><label for="helo">Server name announced when sending (HELO)</label><input type="text" id="helo" value="${esc(m.heloName)}" placeholder="mail.yourdomain.com"></div>
+        <div id="smtp"><div class="grid g2"><div class="field"><label for="sh">SMTP host</label><input type="text" id="sh" value="${esc(m.smtp.host)}" placeholder="smtp.example.com"></div><div class="field"><label for="sp">Port</label><input type="number" id="sp" class="num" min="1" max="65535" value="${m.smtp.secure ? 465 : m.smtp.port === 465 ? 587 : m.smtp.port}" ${m.smtp.secure ? 'disabled' : ''}><div class="hint" id="sphint"></div></div>
+          <div class="field"><label for="su">Username</label><input type="text" id="su" value="${esc(m.smtp.user)}" autocomplete="off"></div><div class="field"><label for="sw">Password</label><input type="password" id="sw" value="${esc(m.smtp.pass)}" autocomplete="new-password"></div></div>
           <div class="setting"><div><div class="setting-title">Use TLS from the start of the connection (port 465)</div><div class="setting-desc">Leave off for port 587, which upgrades to TLS automatically.</div></div><label class="switch"><input type="checkbox" id="ss" ${m.smtp.secure ? 'checked' : ''}><i></i></label></div></div>
         <div class="row mt-md"><button class="btn" id="save">Save</button></div></div>
-      <div class="card"><h3>Send a test</h3><div class="sub">Save first, then try it.</div><div class="row wrap"><input type="email" id="to" placeholder="you@example.com" class="maxw-md" value="${esc(Host.me.email || '')}"><button class="btn secondary" id="test">Send test email</button></div><div id="testres" class="hint"></div></div>
+      <div class="card"><h3>Send a test</h3><div class="sub">Save first, then try it. “Check my email setup” runs the checks one at a time so you can see where it stops.</div>
+        <div id="untested" class="banner mb-md" hidden>No test email has passed since these settings last changed. Send a test to make sure messages go out.</div>
+        <div class="row wrap"><input type="email" id="to" placeholder="you@example.com" class="maxw-md" value="${esc(Host.me.email || '')}" aria-label="Send the test to"><button class="btn secondary" id="test">Send test email</button><button class="btn secondary" id="check">Check my email setup</button></div>
+        <div id="testres" class="mt-md" aria-live="polite"></div><div id="lasttest" class="hint mt-sm"></div></div>
       <div class="card"><div class="row spread wrap"><h3>Recent messages</h3><button class="btn secondary small" id="resendall" hidden>Resend all failed</button></div><div class="tablewrap mt-sm" id="queue"></div></div>`);
     let mode = m.mode;
     const sync = () => {
@@ -69,11 +72,29 @@
     const gather = () => ({ enabled: main.querySelector('#en').checked, mode, fromName: main.querySelector('#fn').value, fromAddress: main.querySelector('#fa').value, heloName: main.querySelector('#helo').value,
       smtp: { host: main.querySelector('#sh').value, port: main.querySelector('#sp').value, user: main.querySelector('#su').value, pass: main.querySelector('#sw').value, secure: main.querySelector('#ss').checked } });
     main.querySelector('#save').addEventListener('click', async () => { try { await Host.api('PUT', '/mail', gather()); toast('Email settings saved'); } catch (er) { toast(er.message, true); } });
-    main.querySelector('#test').addEventListener('click', (e) => busy(e.currentTarget, async () => {
-      const res = main.querySelector('#testres'); res.textContent = 'Sending…'; res.className = 'hint';
-      try { const r = await Host.api('POST', '/mail/test', { to: main.querySelector('#to').value }); res.textContent = r.ok ? 'Delivered to the recipient’s server.' : `Not sent: ${r.error || r.status}`; res.className = 'hint ' + (r.ok ? 'success-text' : 'danger-text'); poll(); }
-      catch (er) { res.textContent = er.message; res.className = 'hint danger-text'; }
-    }));
+    // The test result: a plain message with the cause and the next step, the technical detail behind “Show details”, and (for the full check) a tick for every step.
+    const TICK = { ok: ['green', 'Passed'], fail: ['red', 'Failed'], warn: ['amber', 'Warning'], skipped: ['', 'Not needed'], notrun: ['', 'Not run'] };
+    const stepsHtml = (steps) => steps.map(x => `<div class="setting"><div><div class="setting-title">${esc(x.label)}</div>${x.note ? `<div class="setting-desc">${esc(x.note)}</div>` : ''}</div><span class="chip ${TICK[x.status][0]}">${x.status === 'ok' ? '✓ ' : x.status === 'fail' ? '✗ ' : ''}${TICK[x.status][1]}</span></div>`).join('');
+    const resultHtml = (r, withSteps) => {
+      const f = r.result.failure, w = r.result.warning, head = f ? { c: 'red', t: f.title } : w ? { c: 'amber', t: w.title } : { c: 'green', t: 'Test email sent' };
+      const msg = f || w;
+      return `<div class="setting"><div><div class="setting-title">${esc(head.t)}</div><div class="setting-desc">${msg ? `${esc(msg.cause)}<br><b>Next:</b> ${esc(msg.next)}` : `Accepted by the mail server for ${esc(r.result.to)}. Check the inbox (and the spam folder) to be sure it arrived.`}</div></div><span class="chip ${head.c}">${f ? 'Not sent' : w ? 'Sent, with a warning' : 'Sent'}</span></div>
+        ${withSteps ? stepsHtml(r.result.steps) : ''}
+        ${msg ? `<button type="button" class="linkbtn" id="tdet" aria-expanded="false" aria-controls="tdetbox">Show details</button><div id="tdetbox" class="hint ident" hidden>${esc(msg.detail)}</div>` : ''}`;
+    };
+    const lastLine = (l) => { const box = main.querySelector('#lasttest'); box.textContent = l ? `Last test ${fmt.ago(l.at)}: ${l.ok ? 'passed' : 'did not pass'} (${l.title}).` : 'No test has been run yet.'; };
+    const refreshStatus = async () => { try { const st = await Host.api('GET', '/mail/test-status'); lastLine(st.last); main.querySelector('#untested').hidden = !st.needsTest; } catch {} };
+    const runTest = (path, withSteps) => (e) => busy(e.currentTarget, async () => {
+      const res = main.querySelector('#testres'); res.innerHTML = '<div class="hint">Checking…</div>';
+      try {
+        const r = await Host.api('POST', path, { to: main.querySelector('#to').value }); res.innerHTML = resultHtml(r, withSteps);
+        const det = res.querySelector('#tdet'); det?.addEventListener('click', () => { const box = res.querySelector('#tdetbox'); box.hidden = !box.hidden; det.setAttribute('aria-expanded', String(!box.hidden)); det.textContent = box.hidden ? 'Show details' : 'Hide details'; });
+        refreshStatus(); poll();
+      } catch (er) { res.innerHTML = `<div class="hint danger-text">${esc(er.message)}</div>`; }
+    });
+    main.querySelector('#test').addEventListener('click', runTest('/mail/test', false));
+    main.querySelector('#check').addEventListener('click', runTest('/mail/check', true));
+    refreshStatus();
 
     // Recent messages refresh by themselves; failed ones can be resent.
     const box = main.querySelector('#queue'), all = main.querySelector('#resendall'); let last = '';

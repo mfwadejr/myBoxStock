@@ -24,6 +24,12 @@ export function jobsRoutes(db) {
   const find = (req, res) => { const j = bk.getJob(req.params.id); if (!j) fail(res, 404, 'HOST_JOB_GONE'); return j; };
   r.get('/:id', (req, res) => { const j = find(req, res); if (j) res.json({ job: bk.publicJob(j, { result: true }) }); });
   r.post('/:id/detach', (req, res) => { const j = find(req, res); if (j) { bk.detachJob(j.id); res.json({ ok: true }); } });
+  // Stops a job that can stop (Demo mode's Build, Remove and Reset): it ends after the step it is on. Written to the audit trail.
+  r.post('/:id/stop', (req, res) => {
+    const j = find(req, res); if (!j) return;
+    const ok = bk.stopJob(j.id); if (ok) bk.audit('demo.stopped', `Stop requested for the background job: ${j.label}`, { actor: req.subject.username, ip: req.ip, level: 'warn', data: { kind: j.kind, job: j.id } });
+    res.json({ ok });
+  });
   r.post('/:id/dismiss', (req, res) => { const j = find(req, res); if (j) res.json({ ok: bk.dismissJob(j.id) }); });
   return r;
 }

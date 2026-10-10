@@ -4,7 +4,7 @@ import { log } from '../../logging/logger.mjs';
 import { normalizeIp } from '../../security/firewall/ip.mjs';
 import { hashPassword, passwordProblem } from '../../auth/password.mjs';
 import { newId, newResellerId, token, sha256 } from '../../core/ids.mjs';
-import { enqueueMail, processQueue } from '../../services/mail/index.mjs';
+import { enqueueMail, processQueue, mailReady } from '../../services/mail/index.mjs';
 import { getSetting } from '../../db/settings.mjs';
 import { siteUrl } from '../../services/site/index.mjs';
 import { DEFAULT_ROLES } from './context.mjs';
@@ -15,14 +15,23 @@ import { DAY } from '../../services/billing/state.mjs';
 import { TERMS_VERSION } from '../../services/legal/index.mjs';
 import { docsRoutes } from '../docs.mjs';
 import { fail } from '../../core/messages.mjs';
+import { redeemTicket, isOn as demoOn } from '../../services/demo/index.mjs';
 
 export function publicRoutes(db) {
   const r = express.Router();
   const loginOf = (username, code) => `${username.toLowerCase()}@${code.toLowerCase()}`;
 
-  r.get('/public-config', async (req, res) => res.json({ signupsEnabled: await getSetting(db, 'signups_enabled', true), trialDays: await trialDays(db), termsVersion: TERMS_VERSION }));
+  r.get('/public-config', async (req, res) => res.json({ signupsEnabled: await getSetting(db, 'signups_enabled', true), trialDays: await trialDays(db), termsVersion: TERMS_VERSION, emailReady: await mailReady(db) }));
   r.use('/legal', docsRoutes('legal'));   // the Terms and Privacy pages are public: they are read before an account exists
 
+  // "Open as this reseller" from the Host console: the ticket is single-use and lasts a minute. It hands the sign-in form the demo login's name and password, and the form signs in the normal way.
+  r.post('/demo-open', async (req, res) => {
+    try {
+      if (!await demoOn(db)) return fail(res, 403, 'DEMO_SIGNIN_OFF');
+      const x = await redeemTicket(db, req.body?.ticket); log('tenant', 'info', 'demo.opened', `Demo login ${x.username}@${x.resellerId} opened from the Host console`, { actor: 'host', ip: normalizeIp(req.ip), data: { set: x.set } });
+      res.json({ resellerId: x.resellerId, username: x.username, password: x.password });
+    } catch (e) { if (e.code) return fail(res, 400, e.code); throw e; }
+  });
   r.post('/signup', async (req, res) => {
     const ip = normalizeIp(req.ip);
     if (!(await getSetting(db, 'signups_enabled', true))) { log('tenant', 'info', 'signup.closed', 'Sign-up attempt while sign-ups are closed', { ip }); return res.status(403).json({ error: 'Sign-ups are closed right now.' }); }

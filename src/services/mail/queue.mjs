@@ -6,6 +6,7 @@ import { render } from './templates.mjs';
 import { getSetting } from '../../db/settings.mjs';
 import { transportFor } from './transport.mjs';
 import { LOGO_CID } from './theme.mjs';
+import { isDemoAddress, noteBlocked } from '../demo/guard.mjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -16,6 +17,7 @@ const MAX_ATTEMPTS = 5;
 
 // opts.override = wording to use instead of the saved one (used to send a draft as a test); opts.subjectPrefix = text put before the subject.
 export async function enqueueMail(db, to, template, vars = {}, opts = {}) {
+  if (isDemoAddress(to)) { noteBlocked(to, `"${template}" email`); return null; }   // demo accounts never send email
   const saved = (await getSetting(db, 'mail_templates', {}))[template], m = render(template, vars, opts.override || saved), id = newId();
   if (opts.subjectPrefix) m.subject = opts.subjectPrefix + m.subject;
   await db.run('INSERT INTO mail_queue (id,to_addr,subject,body_text,body_html,status,attempts,created_at) VALUES (?,?,?,?,?,?,0,?)', [id, to, m.subject, m.text, m.html, 'queued', Date.now()]);
@@ -24,6 +26,7 @@ export async function enqueueMail(db, to, template, vars = {}, opts = {}) {
 }
 
 async function deliver(db, row) {
+  if (isDemoAddress(row.to_addr)) throw new Error('Demo accounts never send email.');   // belt and braces: a demo address that reached the queue is never sent
   const settings = await getMailSettings(db, { reveal: true });
   if (!settings.enabled) throw new Error('Outbound email is disabled in Host settings.');
   if (!settings.fromAddress) throw new Error('Set a From address first.');
