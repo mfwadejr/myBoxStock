@@ -3,7 +3,7 @@ title: Home
 summary: Your daily dashboard: how many devices you have ready to sell, what you sold and earned this month, which models are running low, and your latest sales.
 keywords: home, backup reminder, back up now, not today, site restored, dashboard, overview, stats, available devices, revenue, profit, low stock, reorder, recent sales, this month, banner, trial, read-only, receipt, running low, out of stock, per model, refunds this month, hide card, show all
 order: 2
-covers: nav:home, Get set up, Dismiss, Add your first device, Check your payment methods, Make your first sale, Add a team member, Make your first backup, Save your recovery key, Backup reminder, Back up now, Not today, Your last backup was, You have not made a backup yet, site restored banner, Quick sale, Available devices, Devices sold this month, Revenue this month, Profit this month, Low stock, Recent sales, Date, Receipt, Customer, Total, Walk-in, email confirmation banner, Send it again, announcement banner, Close, closing account banner, Restore account, records could not be opened, free trial chip, Trial ended read-only, Running low, Out of stock, Low, Show all, Show fewer, Hide, Show it, Refunds this month, after refunds
+covers: nav:home, On demo, Overdue, See all, Get set up, Dismiss, Add your first device, Check your payment methods, Make your first sale, Add a team member, Make your first backup, Save your recovery key, Backup reminder, Back up now, Not today, Your last backup was, You have not made a backup yet, site restored banner, Quick sale, Available devices, Devices sold this month, Revenue this month, Profit this month, Low stock, Recent sales, Date, Receipt, Customer, Total, Walk-in, email confirmation banner, Send it again, announcement banner, Close, closing account banner, Restore account, records could not be opened, free trial chip, Trial ended read-only, Running low, Out of stock, Low, Show all, Show fewer, Hide, Show it, Refunds this month, after refunds
 ---
 
 ## What Home is for
@@ -87,6 +87,10 @@ Why you want it: it is an early reminder to place a supplier order before you ru
 Example: you sell about five of one model each week and your supplier takes a week to deliver. Set the reorder level to 6. When the shelf drops to 6, Home tells you it is time to order.
 
 The warning is based only on devices that are available. Devices that are awaiting test, sold or archived do not count towards "left".
+
+## The On demo card
+
+When a device is out on a demo, an RMA or a loan, an **On demo** card appears under Running low. It lists up to six devices with who has each one, how many days it has been out and the due date. A late one shows an **Overdue** chip. Click a row to open the device, or **See all** to open Inventory on the **On demo** filter. The card is hidden when nothing is out. See [Demo units and loans](#/docs/demo-units-and-loans).
 
 ## Recent sales
 

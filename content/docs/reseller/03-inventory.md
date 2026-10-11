@@ -3,7 +3,7 @@ title: Inventory
 summary: Add, scan, import, search, edit, test, archive and export every device you own, and set reorder levels so you never run out of a popular model.
 keywords: inventory, camera button, scan with camera, search by camera, paging, per page, 25 per page, next page, previous, small medium large, aim line, wrong barcode, scan next field, several barcodes on a label, no spinners, monospace, devices, stock, add device, bulk scan, barcode, scanner, uid, serial number, mac address, condition, supplier, cost, selling price, status, date received, tested on, test record, import csv, export csv, archive, delete, reorder, low stock, make, model, filter, search, awaiting test, returned device, damaged, running low, return
 order: 3
-covers: nav:inventory, Import checks, That file is too large, That does not look like a CSV file, camera button, Search by camera, Scanning a detail with the camera, Bulk scan with the camera, Scan next field, 25 / 50 / 100 per page, Previous, Next, Showing 1–25, Pages, Add device, Save and add another, Save, Cancel, Close, Bulk scan, Save 0 devices, Remove last, Scan or type then Enter, What do you scan for each device, Import CSV, Import devices, Export CSV, Search, Available, All (not archived), Awaiting test, Reserved, Sold, Returned, Damaged, Archived, All models, Make, Model, Add new, UID, Serial number, MAC address, Condition, Supplier, Status, Cost, Selling price, Date received, Notes, Test record, Mark all done, Tested on, Test notes, required before sale, Stock levels, Reorder at, Low, Archive, Restore, Delete, Tests column, columns, Running low, Return or refund, Returned, Damaged
+covers: nav:inventory, On demo, Lend out, Return from demo, Import checks, That file is too large, That does not look like a CSV file, camera button, Search by camera, Scanning a detail with the camera, Bulk scan with the camera, Scan next field, 25 / 50 / 100 per page, Previous, Next, Showing 1–25, Pages, Add device, Save and add another, Save, Cancel, Close, Bulk scan, Save 0 devices, Remove last, Scan or type then Enter, What do you scan for each device, Import CSV, Import devices, Export CSV, Search, Available, All (not archived), Awaiting test, Reserved, Sold, Returned, Damaged, Archived, All models, Make, Model, Add new, UID, Serial number, MAC address, Condition, Supplier, Status, Cost, Selling price, Date received, Notes, Test record, Mark all done, Tested on, Test notes, required before sale, Stock levels, Reorder at, Low, Archive, Restore, Delete, Tests column, columns, Running low, Return or refund, Returned, Damaged
 ---
 
 ## What Inventory is for
@@ -66,6 +66,7 @@ The first drop-down has these choices:
 - **Available**: devices you can sell now. This is the standard view.
 - **All (not archived)**: everything except archived devices, including sold ones.
 - **Awaiting test**: devices that cannot be sold yet because required tests are not done. This choice appears only when your Administrator has turned on **Sell only tested devices**.
+- **On demo**: devices that are out on loan (see [Demo units and loans](#/docs/demo-units-and-loans)).
 - **Reserved**, **Sold**, **Returned**, **Damaged**, **Archived**: only devices with that status.
 
 ### Model filter
@@ -77,6 +78,7 @@ The second drop-down starts at **All models** and lists every model that appears
 ## Statuses explained
 
 - **Available**: ready to sell.
+- **On demo**: out on a demo, an RMA or a loan. You cannot choose it in the Status list: use **Lend out** on the device, and **Return from demo** when it is back. A device that is On demo cannot be deleted or archived. See [Demo units and loans](#/docs/demo-units-and-loans).
 - **Reserved**: set aside for someone, not for general sale. Quick sale will not accept it.
 - **Sold**: set automatically when you complete a sale. It records the sale date and receipt.
 - **Returned**: came back from a customer. It is treated like available stock again, so it can be sold again. You normally do not set this by hand: processing a return on the sale (see [Returns and refunds](#/docs/returns-and-refunds)) lets you choose **Returned** for each device that came back.

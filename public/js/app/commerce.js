@@ -53,7 +53,7 @@
   C.inspectionSnapshot = (d) => !C.steps().length ? null : ({ steps: C.steps().map(s => { const c = d.checks?.[s.key]; return { label: s.label, done: !!c, by: c?.by || '', at: c?.at || 0, details: c ? C.detailRows(s, d) : [] }; }), testedOn: C.testedMs(d), by: Object.values(d.checks || {})[0]?.by || '', notes: d.testNotes || '' });
   C.fieldSnapshot = (d) => C.fields().filter(f => f.onSale).map(f => ({ label: f.label, value: C.showVal(f, C.getVal(d, f)) })).filter(x => x.value !== '');
 
-  C.STATUS = { available: ['green', 'Available'], reserved: ['blue', 'Reserved'], sold: ['gray', 'Sold'], returned: ['amber', 'Returned'], testing: ['amber', 'Awaiting test'], damaged: ['red', 'Damaged'], archived: ['gray', 'Archived'] };
+  C.STATUS = { available: ['green', 'Available'], reserved: ['blue', 'Reserved'], sold: ['gray', 'Sold'], returned: ['amber', 'Returned'], testing: ['amber', 'Awaiting test'], damaged: ['red', 'Damaged'], loaned: ['blue', 'On demo'], archived: ['gray', 'Archived'] };
   C.statusChip = (s) => { const [c, l] = C.STATUS[s] || ['gray', s]; return `<span class="chip ${c}">${esc(l)}</span>`; };
   // "Paid by" choices are the reseller's own list (Settings > Payment methods). A sale keeps the name it was sold under.
   C.paymentMethods = () => AccountApp.store.config().payments.methods;

@@ -266,14 +266,14 @@
   /* ---- shipping labels (printed sizes; the plain style is pure black on white for thermal printers) ---- */
   --label-4x6-w: 4in;
   --label-4x6-h: 6in;
-  --label-dymo-w: 104mm;   /* the DYMO 4XL / 5XL shipping label (1744907) is die-cut a little bigger than 4 x 6 in */
+  --label-dymo-w: 102mm;   /* the DYMO 4XL / 5XL shipping label (1744907) is 102 x 159 mm; its page in the driver is 104 mm wide, so the label is centred on it */
   --label-dymo-h: 159mm;
   --label-half-w: 8.5in;
   --label-half-h: 5.5in;
   --label-letter-w: 8.5in;
   --label-letter-h: 11in;
   --label-4x6-ratio: 2 / 3;
-  --label-dymo-ratio: 104 / 159;
+  --label-dymo-ratio: 102 / 159;
   --label-half-ratio: 17 / 11;
   --label-letter-ratio: 17 / 22;
   --label-pad: 0.2in;
@@ -293,6 +293,41 @@
   --label-border-w: 1.5px;   /* the line around a label, drawn inside the edge so a thermal printer's feed shift never clips it */
   --label-border-inset: 0.08in;
   --label-border-radius: 0.12in;   /* rounded corners on the line around a label */
+  --label-shift-x: 0mm;   /* Printer fit: move the printed label (set by data-sx, data-sy and data-fit on the label) */
+  --label-shift-y: 0mm;
+  --label-fit-scale: 1;
+  /* Printer fit steps: 1 mm nudges and size percentages, used by the data-sx, data-sy and data-fit rules in commerce.css */
+  --label-nudge-n6: -6mm;
+  --label-nudge-n5: -5mm;
+  --label-nudge-n4: -4mm;
+  --label-nudge-n3: -3mm;
+  --label-nudge-n2: -2mm;
+  --label-nudge-n1: -1mm;
+  --label-nudge-p0: 0mm;
+  --label-nudge-p1: 1mm;
+  --label-nudge-p2: 2mm;
+  --label-nudge-p3: 3mm;
+  --label-nudge-p4: 4mm;
+  --label-nudge-p5: 5mm;
+  --label-nudge-p6: 6mm;
+  --label-fit-90: 0.9;
+  --label-fit-91: 0.91;
+  --label-fit-92: 0.92;
+  --label-fit-93: 0.93;
+  --label-fit-94: 0.94;
+  --label-fit-95: 0.95;
+  --label-fit-96: 0.96;
+  --label-fit-97: 0.97;
+  --label-fit-98: 0.98;
+  --label-fit-99: 0.99;
+  --label-fit-100: 1;
+  --label-frame-w: 0.3mm;   /* the test label's nested frames, 1 to 6 mm in from each edge */
+  --label-frame-1: 1mm;
+  --label-frame-2: 2mm;
+  --label-frame-3: 3mm;
+  --label-frame-4: 4mm;
+  --label-frame-5: 5mm;
+  --label-frame-6: 6mm;
   --label-mark: 0.15in;   /* corner marks on the test label */
 
   /* ---- embedded icons (data URIs cannot read variables, so their colors live here) ---- */

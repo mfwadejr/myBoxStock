@@ -73,7 +73,7 @@ test('browser: a backup of the older record shapes restores, reads safely and ex
     assert.deepEqual(read.states, ['', '', '']); assert.deepEqual(read.nets, [true, true, true]); assert.equal(read.toShip, 0); assert.deepEqual(read.tags, ['', '', '']); assert.deepEqual(read.recHtml, ['', '', '']);
     assert.ok(read.chips.every(c => c === ''), 'no Returned or Partly returned tag on an old sale');
     assert.ok(read.receipts.every(t => !/Ship to|Shipping|Credit note|Delivery/i.test(t)), 'old receipts read as before');
-    assert.deepEqual(read.label, { size: '4x6', look: 'themed', border: true, text: 'larger', logo: 'business', customLogo: '', returnAddress: { name: '', street: '', unit: '', city: '', state: '', zip: '', country: '' } });
+    assert.deepEqual(read.label, { size: '4x6', look: 'themed', border: true, text: 'larger', shiftX: 0, shiftY: 0, fit: 100, logo: 'business', customLogo: '', returnAddress: { name: '', street: '', unit: '', city: '', state: '', zip: '', country: '' } });
     assert.equal(read.ret.standardCan, true); assert.equal(read.ret.limit, 0); assert.deepEqual(read.ret.fee, { mode: 'none', value: 0 }); assert.equal(read.ret.reasons.length, 5);
     assert.deepEqual(read.dcfg, { country: false, receiptNote: false, receiptDeliveryNote: false });
     assert.equal(read.cfg.delivery, undefined, 'a default is not written back by reading'); assert.equal(read.mailLogo, '');

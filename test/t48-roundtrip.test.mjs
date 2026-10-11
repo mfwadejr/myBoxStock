@@ -126,7 +126,7 @@ test('browser: every v0.25.0 field survives backup, wipe and restore, and every 
     // ---- Export everything: the files, read against the checklist ----
     const files = await page.evaluate(() => { const keep = UI.zip, keepDl = UI.downloadBlob; let got = null; UI.zip = (f) => { got = f; return new Blob([]); }; UI.downloadBlob = () => {}; try { AccountApp.exportEverything(); } finally { UI.zip = keep; UI.downloadBlob = keepDl; } return got; });
     const by = Object.fromEntries(files.map(f => [f.name, f.text.replace(/^﻿/, '')]));
-    assert.deepEqual(Object.keys(by).sort(), ['README.txt', 'customers.csv', 'inventory.csv', 'models.csv', 'returns.csv', 'sale_items.csv', 'sales.csv', 'settings.json']);
+    assert.deepEqual(Object.keys(by).sort(), ['README.txt', 'customers.csv', 'inventory.csv', 'loans.csv', 'models.csv', 'returns.csv', 'sale_items.csv', 'sales.csv', 'settings.json']);
     assert.match(by['README.txt'], /models\.csv/);
     const header = (name) => by[name].split('\r\n')[0].split(',').map(h => h.replace(/^"|"$/g, '').toLowerCase());
     const checklist = fs.readFileSync(path.join(ROOT, 'docs/data-model-checklist.md'), 'utf8'), missing = [];

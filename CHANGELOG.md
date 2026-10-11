@@ -3,6 +3,17 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.27.0] - 2026-10-11
+
+### Added
+- **Demo units and loans.** Lend a device out for a demo, an RMA replacement, a repair loaner or any other reason you set, and see who has it and for how long. The device shows the status **On demo** (also a filter in Inventory) and cannot be sold to someone else, deleted or archived until it is back. **Lend out** takes the reason, an optional due date, the borrower (an existing customer, or a new person saved in Customers as a **Prospect**), the handover (pickup, meet or shipping with carrier and tracking, with an offer to print the shipping label), a related sale for an RMA, and which items go with it (Device, Remote, Batteries, Power Adapter and HDMI Cable to start with, editable in Settings). The loan keeps its own copy of the borrower's details.
+- **Return from demo.** Date back, an items-returned checklist (anything missing is recorded), the condition (a damaged device is marked Damaged with a note), and a re-test of the steps you choose in Settings, which clears them so the device shows Awaiting test until they are done again. A reason can allow **Customer keeps it** (set per reason in Settings, for resellers who want it). **Sell to borrower** opens Quick sale with the device and the borrower chosen, and closes the loan as Sold.
+- **Where it shows.** An **On demo** card on Home with days out and an Overdue chip, a Demo and loan history on each device, Demo units and loans on the customer's page, a Prospect chip in Customers, a new **loans.csv** in Export everything and in a one-customer export, and erasing a customer scrubs their loans. Loans are stored inside the encrypted device record, so they are backed up and restored with it, and the activity log records only that a device was lent out or taken back.
+- **Settings: Demo units and loans** for the reasons, the items that go with a device, the usual loan length and the test steps repeated on return. New documentation page **Demo units and loans** with screenshots; Home, Inventory, Customers, Settings, Your data and the glossary are updated, and the Host data page says loans are customer data the Host cannot read.
+
+### Changed
+- **Shipping label fits the real DYMO 5XL stock.** The DYMO label is now 102 mm wide (the real stock) centred on the 104 mm page the driver uses, so the left and right edges are no longer clipped. **Printer fit** in Settings and in the label window moves the label up to 6 mm in any direction and prints it at 90% to 100% size, applied to the print and to Download PDF. The test label now carries six nested frames (1 to 6 mm in from the edge) and four corner marks so you can see exactly what your printer cuts off. Documented on the Shipping labels and Settings pages.
+
 ## [0.26.2] - 2026-10-11
 
 ### Changed

@@ -3,7 +3,7 @@ title: Customers
 summary: Keep a list of the people you sell to, see what each one has bought, export or erase their details, and find anyone in seconds.
 keywords: address, saved address, ship to, shipping address, customers, paging, per page, next, previous, customer list, buyers, contacts, phone, email, notes, purchase history, search, find customer, receipt number, tracking number, sort, sorting, filter chips, clear search, shipments, refunds, export customer, erase customer, delete customer, privacy, data request, GDPR
 order: 7
-covers: nav:customers, 25 / 50 / 100 per page, Previous, Next, Showing 1–25, Add customer, Search name, phone, email, address, receipt, tracking, Clear search, Clear search and filters, results, Has an address, Bought in the last 30 days, No purchases yet, Name (A to Z), Last purchase (newest first), Total spent (high to low), Number of purchases (most first), Recently added (newest first), Added, Purchases and shipments, Print label, Receipt, Name, Phone, Email, Notes, Purchases, Spent, Last purchase, Save, Cancel, Close, Delete, Erase, Export, customer.csv, purchases.csv, purchase_items.csv, Erased customer, customers.read, customers.write, Address, Street, Apartment or suite, City, State, ZIP, Country, Clear address, apartment_or_suite
+covers: nav:customers, Prospect, Demo units and loans, 25 / 50 / 100 per page, Previous, Next, Showing 1–25, Add customer, Search name, phone, email, address, receipt, tracking, Clear search, Clear search and filters, results, Has an address, Bought in the last 30 days, No purchases yet, Name (A to Z), Last purchase (newest first), Total spent (high to low), Number of purchases (most first), Recently added (newest first), Added, Purchases and shipments, Print label, Receipt, Name, Phone, Email, Notes, Purchases, Spent, Last purchase, Save, Cancel, Close, Delete, Erase, Export, customer.csv, purchases.csv, purchase_items.csv, Erased customer, customers.read, customers.write, Address, Street, Apartment or suite, City, State, ZIP, Country, Clear address, apartment_or_suite
 ---
 
 ## What the Customers page is for
@@ -142,6 +142,10 @@ Important details:
 - Voided sales are listed (so you can find a receipt) but are left out of the **Purchases** and **Spent** numbers, because a voided sale did not really happen.
 - Your own shipping cost, device costs and profit are never shown here or searched; this page shows what the customer saw.
 - A new customer being created has no Purchases section yet; it only appears once the customer has been saved.
+
+## Prospects and demo units
+
+A person added while lending a device out is saved here as a customer with a **Prospect** chip next to the name. The chip goes away once they have a purchase. Their page lists **Demo units and loans** under the purchases, and a one-customer export includes a `loans.csv`. See [Demo units and loans](#/docs/demo-units-and-loans).
 
 ## Deleting a customer
 

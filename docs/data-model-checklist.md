@@ -1,4 +1,4 @@
-# myBoxStock data-model checklist (v0.25.0)
+# myBoxStock data-model checklist (v0.27.0)
 
 Every stored field, where it is saved, and which backup, export and import path covers it. Updated at every release. `test/t48-field-guard.test.mjs` reads this file and FAILS when a field the app saves is not listed here, or a listed field has no coverage, so a new field cannot be added without deciding how it is backed up and exported.
 
@@ -42,6 +42,28 @@ Rules that always hold: every field below sits inside an encrypted record (type 
 | `item.checkVals` | Details recorded under a test step (From and To values) | yes | inventory.csv:one column per detail | yes |
 | `item.testedOn` | Date tested | yes | inventory.csv:Tested on | yes |
 | `item.testNotes` | Test notes | yes | inventory.csv:Test notes | yes |
+| `item.loans` | Demo and loan history: one entry for each time the device was lent out | yes | loans.csv:loan_device | - |
+| `item.loans.id` | Loan reference | yes | -  (internal) | - |
+| `item.loans.reason` | Loan reason (key) | yes | -  (internal; the name is exported) | - |
+| `item.loans.reasonLabel` | Loan reason as named when lent out | yes | loans.csv:loan_reason | - |
+| `item.loans.customerId` | Who has it (the customer record) | yes | -  (internal) | - |
+| `item.loans.customer` | Borrower as they were when lent out: name, phone, email, address | yes | loans.csv:borrower | - |
+| `item.loans.outAt` | When it went out | yes | loans.csv:loan_out | - |
+| `item.loans.outBy` | Who lent it out | yes | loans.csv:loan_out_by | - |
+| `item.loans.dueAt` | Due back (optional) | yes | loans.csv:loan_due | - |
+| `item.loans.delivery` | How it got to the borrower: pickup, meet or shipping with carrier and tracking | yes | loans.csv:loan_handover | - |
+| `item.loans.items` | What went with the device | yes | loans.csv:loan_included | - |
+| `item.loans.outNote` | Note when lent out | yes | loans.csv:loan_notes | - |
+| `item.loans.saleId` | Related sale, for an RMA | yes | -  (internal reference) | - |
+| `item.loans.outCondition` | Test record when it went out | yes | -  (kept in the backup; the device row has the current tests) | - |
+| `item.loans.inAt` | When it came back, was kept or was sold | yes | loans.csv:loan_back | - |
+| `item.loans.inBy` | Who took it back | yes | loans.csv:loan_in_by | - |
+| `item.loans.outcome` | Returned, kept by the customer, or sold | yes | loans.csv:loan_outcome | - |
+| `item.loans.condition` | Condition on return: ok or damaged | yes | loans.csv:loan_condition | - |
+| `item.loans.damageNote` | What was wrong on return | yes | loans.csv:loan_damage | - |
+| `item.loans.missing` | Items that did not come back | yes | loans.csv:loan_not_returned | - |
+| `item.loans.inNote` | Note when taken back | yes | loans.csv:loan_notes | - |
+| `item.loans.soldSaleId` | The sale, when the borrower bought it | yes | -  (internal reference) | - |
 
 ### Customer (record type `customer`)
 
@@ -52,6 +74,7 @@ Rules that always hold: every field below sits inside an encrypted record (type 
 | `customer.email` | Email | yes | customers.csv:email | - |
 | `customer.notes` | Notes | yes | customers.csv:notes | - |
 | `customer.createdAt` | When added | yes | customers.csv:created | - |
+| `customer.prospect` | Added while lending a device; shown as Prospect until they buy | yes | - (not exported) | - |
 | `customer.address` | The saved address | yes | customers.csv:street | - |
 | `customer.address.name` | Saved address: name (usually empty; the customer's name is used) | yes | - (blank in practice) | - |
 | `customer.address.street` | Saved address: street | yes | customers.csv:street | - |
@@ -186,6 +209,9 @@ Rules that always hold: every field below sits inside an encrypted record (type 
 | `config.label.look` | Themed or Plain | yes | settings.json | - |
 | `config.label.border` | Border around the label (on by default) | yes | settings.json | - |
 | `config.label.text` | Label text size: Standard, Larger or Largest | yes | settings.json | - |
+| `config.label.shiftX` | Printer fit: move the label left or right (mm) | yes | settings.json | - |
+| `config.label.shiftY` | Printer fit: move the label up or down (mm) | yes | settings.json | - |
+| `config.label.fit` | Printer fit: printed size (percent) | yes | settings.json | - |
 | `config.label.logo` | Business logo, a different logo, or none | yes | settings.json | - |
 | `config.label.customLogo` | The different logo, as a small image kept in the record | yes | settings.json | - |
 | `config.label.returnAddress` | Return address printed on labels | yes | settings.json | - |
@@ -194,6 +220,11 @@ Rules that always hold: every field below sits inside an encrypted record (type 
 | `config.returns.standardCan` | Standard users can process returns | yes | settings.json | - |
 | `config.returns.limit` | Refunds above this amount need an Administrator | yes | settings.json | - |
 | `config.returns.fee` | Default restocking fee (percentage or flat) | yes | settings.json | - |
+| `config.loans` | Demo and loan settings | yes | settings.json | - |
+| `config.loans.reasons` | Loan reasons, each with whether the customer can keep the device | yes | settings.json | - |
+| `config.loans.items` | What goes with a loaned device | yes | settings.json | - |
+| `config.loans.retestOff` | Test steps that are not repeated when a device comes back | yes | settings.json | - |
+| `config.loans.dueDays` | Usual loan length in days | yes | settings.json | - |
 
 ## Team (not an encrypted record)
 

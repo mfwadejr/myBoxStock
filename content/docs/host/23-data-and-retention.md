@@ -12,6 +12,8 @@ The **Data and retention** page answers four questions about the server's own ho
 
 It only deals with data the Host can already read: the activity log, the audit trail, support tickets, the mail history and temporary files. It never touches customer business data (inventory, customers, sales). That data is encrypted by each reseller and the Host cannot read it, so the Host cannot and does not prune it.
 
+Demo units and loans (who borrowed a device, when and in what condition) are customer business data too. They are encrypted inside the device record in the reseller's browser, so the Host cannot read them. They are included in full-site backups and offsite copies with everything else, and nothing here touches them. The reseller's activity log only notes that a device was lent out or taken back, never who had it.
+
 Everyone who can sign in to the Host Console can read this page. Only the **Owner administrator** (the oldest administrator, normally "admin") can change a rule, prune, compact or change automatic pruning. Other administrators see the numbers and a blue note saying so, and the buttons are not shown. If someone else tries anyway, the server refuses and the attempt is written to the [Audit trail](#/docs/audit-trail).
 
 ![Data and retention](shot:host-retention "Data and retention: what is using space, retention rules and compacting.")

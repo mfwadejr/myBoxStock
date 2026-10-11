@@ -7,6 +7,7 @@
   const PT_IN = 72, PT_MM = 72 / 25.4;
   // page size in points, then the look for that size (points; they follow the on-screen label)
   const PAGES = { '4x6': [4 * PT_IN, 6 * PT_IN], dymo: [104 * PT_MM, 159 * PT_MM], half: [8.5 * PT_IN, 5.5 * PT_IN], letter: [8.5 * PT_IN, 11 * PT_IN] };
+  const ART = { dymo: 102 * PT_MM };   // the printed label is narrower than the driver's page and sits centred on it
   const TEXT = {   // [from name, from lines, to name, to lines, logo w, logo h]
     standard: [9.75, 9, 15, 12.75, 64.8, 36], larger: [11.25, 9.75, 16.5, 15, 79.2, 43.2], largest: [12, 11.25, 19.5, 16.5, 93.6, 50.4] };
   const BIG = [11.25, 9, 24, 16.5, 115.2, 64.8];   // half sheet and full letter
@@ -51,6 +52,7 @@
     const round = (x, y, w, h, r, lw, c) => { const k = r * 0.5523, yb = H - y - h, t = yb + h;   // a rectangle with rounded corners, drawn with four curves
       out.push(`${col(c, true)} ${n(lw)} w ${n(x + r)} ${n(yb)} m ${n(x + w - r)} ${n(yb)} l ${n(x + w - r + k)} ${n(yb)} ${n(x + w)} ${n(yb + r - k)} ${n(x + w)} ${n(yb + r)} c ${n(x + w)} ${n(t - r)} l ${n(x + w)} ${n(t - r + k)} ${n(x + w - r + k)} ${n(t)} ${n(x + w - r)} ${n(t)} c ${n(x + r)} ${n(t)} l ${n(x + r - k)} ${n(t)} ${n(x)} ${n(t - r + k)} ${n(x)} ${n(t - r)} c ${n(x)} ${n(yb + r)} l ${n(x)} ${n(yb + r - k)} ${n(x + r - k)} ${n(yb)} ${n(x + r)} ${n(yb)} c S`); };
     if (o.border !== false) { const i = 0.08 * PT_IN; round(i, i, PGW - 2 * i, PGH - 2 * i, 0.12 * PT_IN, 1.1, [0, 0, 0]); }
+    if (o.test) for (let i = 1; i <= 6; i++) rect(i * PT_MM, i * PT_MM, PGW - 2 * i * PT_MM, PGH - 2 * i * PT_MM, 0.85, [0, 0, 0]);   // frames 1 to 6 mm in from each edge, to see what the printer clips
     if (o.test) { const m = 0.15 * PT_IN; for (const [cx, cy, sx, sy] of [[0, 0, 1, 1], [PGW, 0, -1, 1], [0, PGH, 1, -1], [PGW, PGH, -1, -1]]) { line(cx, cy, cx + sx * m, cy, 1.1, [0, 0, 0]); line(cx, cy, cx, cy + sy * m, 1.1, [0, 0, 0]); } }
     // top: logo left, return address right
     const fromLines = D.lines(from), fh = (from.name ? T[0] * 1.3 : 0) + fromLines.length * T[1] * 1.3;
@@ -87,7 +89,9 @@
     let img = 0; if (logo) img = add({ dict: `<< /Type /XObject /Subtype /Image /Width ${logo.w} /Height ${logo.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode`, data: logo.data });
     const pages = [];
     for (const s of sales) {
-      const stream = bytes(drawLabel(s, o, logo, PW, PH)), c = add({ dict: '<<', data: stream });
+      const aw = ART[o.size] || PW, k = Math.min(1, Math.max(0.9, (Number(o.fit) || 100) / 100)), sx = (Number(o.shiftX) || 0) * PT_MM, sy = (Number(o.shiftY) || 0) * PT_MM;   // Printer fit, about the top centre of the label
+      const matrix = `${n(k)} 0 0 ${n(k)} ${n((PW - aw) / 2 + aw / 2 * (1 - k) + sx)} ${n(PH * (1 - k) - sy)} cm`;
+      const stream = bytes(`q ${matrix}\n${drawLabel(s, o, logo, aw, PH)}\nQ`), c = add({ dict: '<<', data: stream });
       pages.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n(PW)} ${n(PH)}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>${img ? ` /XObject << /Im1 ${img} 0 R >>` : ''} >> /Contents ${c} 0 R >>`));
     }
     objs[1] = `<< /Type /Pages /Count ${pages.length} /Kids [${pages.map(p => p + ' 0 R').join(' ')}] >>`;

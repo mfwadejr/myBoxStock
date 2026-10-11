@@ -96,6 +96,10 @@ A short instruction for the carrier, such as "Fragile, leave at the door". It pr
 
 A small amber **DEMO** tag and banner. It appears only when you are signed in to a demonstration account made by the site's Host, which holds made-up data and never sends email. Real accounts never show it. See [Getting started](#/docs/getting-started).
 
+### Demo unit
+
+A device you lend out for a demo, an RMA replacement or a repair loaner instead of selling it. It shows as On demo until it is returned, kept or sold. See [Demo units and loans](#/docs/demo-units-and-loans).
+
 ### Diagnostics
 
 A short plain-text summary of your account's health that **Copy diagnostics** puts on your clipboard, to paste to your site's administrator. It has versions, counts and recent warnings, and never your devices, customers or sales. See [Backup and restore](#/docs/backup-and-restore).
@@ -203,6 +207,10 @@ A delivery choice for a customer who collects the device from you later. It reco
 ### Preset (scan box size)
 
 The three sizes of the scan box on the camera scanner: **Small**, **Medium** and **Large**. Your choice is remembered on that device. See [Scanning with your phone camera](#/docs/scanning-with-your-phone).
+
+### Prospect
+
+A customer who was added while lending a device and has not bought anything yet.
 
 ### Quick sale
 

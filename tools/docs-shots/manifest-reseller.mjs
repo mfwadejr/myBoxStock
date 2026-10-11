@@ -175,4 +175,23 @@ export default [
   E('reseller-security-1', '#/security', async (page) => { await page.waitForSelector('.page-head'); await sleep(page, 600); }),
   E('reseller-support-1', '#/support', async (page) => { await page.waitForSelector('.page-head'); await sleep(page, 600); }),
   E('reseller-support-2', '#/support/new', async (page) => { await page.waitForSelector('#go'); await sleep(page, 600); }),
+
+  // ---- Demo units and loans -------------------------------------------------------------------------------------------------------------------------------------------
+  // The Lend out form on an available demo-account device, filled in with made-up details.
+  E('reseller-demo-units-1', '#/inventory', async (page) => {
+    await page.waitForSelector('tr.click'); await page.locator('tr.click').first().click(); await page.waitForSelector('#lend'); await page.click('#lend'); await page.waitForSelector('#lrs');
+    await page.click('[data-mode=new]'); await page.fill('#lnn', 'Sam Sample'); await page.fill('#lnp', '555-0142'); await page.fill('#ldue', new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10)); await page.uncheck('[data-li=hdmi]'); await page.evaluate(() => { document.activeElement?.blur(); document.querySelectorAll('.sheet, .sheet-body').forEach(e => { e.scrollTop = 0; }); }); await sleep(page);
+  }),
+  // The Return from demo form for a device that is out (a made-up loan is added to one demo device, once).
+  E('reseller-demo-units-2', '#/inventory', async (page) => {
+    await page.evaluate(async () => {
+      const A = AccountApp, S = A.store; await S.load();
+      if (!S.all('item').some(e => e.data.status === 'loaned')) { const e = S.all('item').find(x => x.data.status === 'available'), c = S.all('customer')[0], cfg = S.config().loans;
+        const loan = { id: Vault.newId(), reason: 'demo', reasonLabel: 'Demo or trial', customerId: c.id, customer: { name: c.data.name, phone: c.data.phone || '', email: c.data.email || '', address: { name: '', street: '', unit: '', city: '', state: '', zip: '', country: '' } }, outAt: Date.now() - 6 * 864e5, outBy: 'demo', dueAt: new Date(Date.now() - 864e5).toISOString().slice(0, 10), delivery: { type: 'pickup', date: '', notes: '' }, items: cfg.items.map(i => ({ key: i.key, label: i.label })), outNote: '', saleId: '', outCondition: null };
+        await S.commit({ puts: [{ type: 'item', id: e.id, data: { ...e.data, status: 'loaned', loans: [loan] } }] }); }
+    });
+    await page.evaluate(() => AccountApp.inventoryLoanFilter()); await go(page, '#/home', '#loanbox'); await go(page, '#/inventory', 'tr.click');
+    await page.locator('tr.click', { hasText: 'On demo' }).first().click(); await page.waitForSelector('#lback'); await page.click('#lback'); await page.waitForSelector('#bcond'); await page.evaluate(() => { document.activeElement?.blur(); document.querySelectorAll('.sheet, .sheet-body').forEach(e => { e.scrollTop = 0; }); }); await sleep(page);
+  }),
+  E('reseller-demo-units-3', '#/settings', async (page) => { await page.waitForSelector('#lnreasons'); await toCard(page, 'Demo units and loans'); }, { keepScroll: true }),
 ];

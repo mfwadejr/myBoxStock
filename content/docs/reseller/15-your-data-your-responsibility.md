@@ -3,7 +3,7 @@ title: Your data, your responsibility
 summary: How your data is encrypted, what the site can and cannot see, and what you must do to keep your business information safe: your password, your recovery key and your own exports.
 keywords: models.csv, reorder levels in export, what is exported, what is in the backup, encryption, zero-knowledge, recovery key, export, backup, backup file, mbsbackup, how often to back up, host restore, restore, add what is missing, ownership, responsibility, lost password, lost key, privacy, erase, close account, 7 days, data loss, who can see my data, checklist, returns.csv, refunds
 order: 15
-covers: models.csv, what an export contains, encryption, recovery key, export, backups, backup file, how often to back up, where to keep the backup, after a Host restore, Add what is missing, Back up now, Backup reminder, ownership, Export everything, Close account, Restore account, Unlock behaviour, Create new recovery key, 7 days, checklist, returns.csv
+covers: models.csv, loans.csv, what an export contains, encryption, recovery key, export, backups, backup file, how often to back up, where to keep the backup, after a Host restore, Add what is missing, Back up now, Backup reminder, ownership, Export everything, Close account, Restore account, Unlock behaviour, Create new recovery key, 7 days, checklist, returns.csv
 ---
 
 ## The short version
@@ -153,6 +153,7 @@ An export is a copy of your business information that you keep, readable without
 - `sale_items.csv`, one row for each device on each sale, with a column showing whether it was returned.
 - `returns.csv`, one row for each return and refund, with the credit note number, reason, amounts, who processed it and any return tracking.
 - `models.csv`, the reorder level you set for each model.
+- `loans.csv`, one row for each demo, RMA or loan, with who had the device, what went with it and its condition on return.
 - `settings.json`, your fields, test steps, warranty periods and catalogue, plus your delivery, label and return settings. It also holds your own mail server password if you set one up, so keep the zip private.
 
 The CSV files open in Excel, Numbers and Google Sheets. The export is built inside your browser and does not pass through the server. A note is added to the account log that an export happened (just the fact, never the contents).

@@ -10,6 +10,8 @@ const EVENTS = {
   tracking: ['sales.write', 'changed the carrier or tracking on a sale'],
   label: ['sales.read', 'opened a shipping label to print'],
   labeltest: ['sales.read', 'printed a test shipping label (sample data, no sale)'],
+  loanout: ['inventory.write', 'lent a device out (demo, RMA or loan)'],
+  loanin: ['inventory.write', 'took a loaned device back'],
   labelpdf: ['sales.read', 'downloaded a shipping label as a PDF'],
 };
 

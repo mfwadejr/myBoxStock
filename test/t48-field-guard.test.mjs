@@ -47,6 +47,10 @@ const CHECKS = [
   ['public/js/app/returns.js', /const ret = \{/, 'sale.returns'],
   ['public/js/app/returns.js', /returnAsk: \{(?= by:)/, 'sale.returnAsk'],
   ['public/js/app/views/sell.js', /customer = \{ id, data: \{/, 'customer'],
+  ['public/js/app/loans.js', /cust = \{ id: cid, data: \{/, 'customer'],
+  ['public/js/app/loans.js', /const loan = \{/, 'item.loans'],
+  ['public/js/app/loans.js', /const back = \{/, 'item.loans'],
+  ['public/js/app/loans.js', /\{(?= \.\.\.l, inAt: ts)/, 'item.loans'],
   ['public/js/app/views/customers.js', /return \{(?= \.\.\.old, name:)/, 'customer'],
   ['public/js/app/views/inventory.js', /type: 'model', id: cur\?\.id, data: \{/, 'model'],
   ['public/js/app/views/inventory.js', /d = \{(?= \.\.\.old, \.\.\.C\.catalog\.read\(el\), status:)/, 'item'],
@@ -126,8 +130,8 @@ test('every Host table, setting key and Demo mode column is listed; every table 
 });
 
 test('every export column named in the checklist exists in the code that writes the file', () => {
-  const code = ['public/js/app/views/inventory.js', 'public/js/app/views/sales.js', 'public/js/app/delivery.js', 'public/js/app/returns.js', 'public/js/app/export.js', 'public/js/app/store.js', 'public/js/app/label.js'].map(read).join('\n');
-  const files = new Set(['inventory.csv', 'customers.csv', 'sales.csv', 'sale_items.csv', 'returns.csv', 'models.csv']), bad = [];
+  const code = ['public/js/app/views/inventory.js', 'public/js/app/views/sales.js', 'public/js/app/delivery.js', 'public/js/app/returns.js', 'public/js/app/export.js', 'public/js/app/store.js', 'public/js/app/label.js', 'public/js/app/loans.js'].map(read).join('\n');
+  const files = new Set(['inventory.csv', 'customers.csv', 'sales.csv', 'sale_items.csv', 'returns.csv', 'models.csv', 'loans.csv']), bad = [];
   for (const [k, r] of rows) {
     const m = r.exp.match(/^([a-z_]+\.csv):(.+?)(?: \(|$)/); if (!m) continue;
     if (!files.has(m[1])) bad.push(`${k}: unknown file ${m[1]}`);

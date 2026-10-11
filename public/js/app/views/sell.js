@@ -19,7 +19,7 @@
   function addEntry(e) {
     if (e.data.status === 'sold') return `${C.itemLabel(e.data)} was already sold${e.data.soldAt ? ' on ' + F.day(e.data.soldAt) : ''}.`;
     if (C.effStatus(e.data) === 'testing') return `${C.itemLabel(e.data)} is awaiting its tests and cannot be sold yet. Tick its test steps in Inventory first.`;
-    if (e.data.status !== 'available' && e.data.status !== 'returned') return `${C.itemLabel(e.data)} is marked ${C.STATUS[e.data.status]?.[1].toLowerCase() || e.data.status}, not available.`;
+    if (e.data.status !== 'available' && e.data.status !== 'returned' && e.data.status !== 'loaned') return `${C.itemLabel(e.data)} is marked ${C.STATUS[e.data.status]?.[1].toLowerCase() || e.data.status}, not available.`;
     if (st.cart.some(l => l.id === e.id)) return `${C.itemLabel(e.data)} is already in this sale.`;
     st.cart.push({ id: e.id, price: e.data.price || 0, pct: 0 }); return '';
   }
@@ -47,7 +47,7 @@
     const sale = { no: C.newReceiptNo(now), ts: now, customerId: customer?.id || null, customerName: customer?.data.name || '', customerEmail: customer?.data.email || '', items, subtotal: totals().sub, orderPct: C.pct(st.orderPct), orderOff: totals().off, total: total(), cost: items.reduce((t, i) => t + i.cost, 0), payment: st.payment || C.paymentDefault(), paymentLabel: C.paymentLabel(st.payment || C.paymentDefault()), warranty: C.warrantySnapshot(st.warranty || C.warrantyDefault(), now), notes: st.notes.trim() };
     if (dv.delivery) sale.delivery = dv.delivery;   // Immediate sales carry nothing extra
     puts.push({ type: 'sale', id: saleId, data: sale });
-    for (const l of st.cart) { const cur = S.get('item', l.id); puts.push({ type: 'item', id: l.id, data: { ...cur.data, status: 'sold', soldAt: now, saleId, price: cur.data.price || l.price } }); }
+    for (const l of st.cart) { const cur = S.get('item', l.id); puts.push({ type: 'item', id: l.id, data: { ...cur.data, status: 'sold', soldAt: now, saleId, price: cur.data.price || l.price, ...(cur.data.status === 'loaned' ? A.loans.soldPatch(cur.data, saleId, now) : {}) } }); }
     try { await S.commit({ puts }); } catch (e) { return toast(e.status === 409 ? 'One of these devices was just changed by someone else. Check the cart and try again.' : e.message, true); }
     if (dv.delivery) C.delivery.note('sale'); const entry = S.get('sale', saleId); reset(); await C.showReceipt(entry, { canVoid: false }); render(main);
   }
@@ -95,5 +95,7 @@
     q('#nt').addEventListener('input', (e) => { st.notes = e.target.value; });
     q('#done').addEventListener('click', (e) => UI.busy(e.currentTarget, () => finish(main)));
   }
+  // "Sell to borrower" on a device that is out on demo: starts a sale with it in the cart and the borrower chosen.
+  A.sellTo = (id, customerId) => { reset(); const e = S.get('item', id); st.msg = e ? addEntry(e) : ''; if (customerId && S.get('customer', customerId)) Object.assign(st, { mode: 'existing', cust: customerId }); if (location.hash === '#/sell') A.route(); else location.hash = '#/sell'; };
   A.views.sell = async (main) => render(main);
 })();

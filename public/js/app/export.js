@@ -18,9 +18,9 @@
   A.exportEverything = () => {
     const sales = S.all('sale').sort((a, b) => a.data.ts - b.data.ts), cfg = S.config();
     const files = [
-      { name: 'README.txt', text: `myBoxStock export for ${A.me.businessName} (Reseller ID ${A.me.accountCode})\r\nCreated ${new Date().toISOString()} in your browser. Nothing in this file passed through the server.\r\n\r\ninventory.csv   every device, with test results\r\ncustomers.csv   your customers\r\nsales.csv       every sale, including voided ones\r\nsale_items.csv  one row for each device on each sale\r\nreturns.csv     every return and refund, with the credit note number\r\nmodels.csv      the reorder level you set for each model\r\nsettings.json   your fields, test steps, warranty periods and catalogue\r\n\r\nThe CSV files open in Excel, Numbers and Google Sheets.\r\n` },
+      { name: 'README.txt', text: `myBoxStock export for ${A.me.businessName} (Reseller ID ${A.me.accountCode})\r\nCreated ${new Date().toISOString()} in your browser. Nothing in this file passed through the server.\r\n\r\ninventory.csv   every device, with test results\r\ncustomers.csv   your customers\r\nsales.csv       every sale, including voided ones\r\nsale_items.csv  one row for each device on each sale\r\nreturns.csv     every return and refund, with the credit note number\r\nmodels.csv      the reorder level you set for each model\r\nloans.csv       every demo, RMA and loan, with who had the device and its condition on return\r\nsettings.json   your fields, test steps, warranty periods and catalogue\r\n\r\nThe CSV files open in Excel, Numbers and Google Sheets.\r\n` },
       { name: 'inventory.csv', text: csv(A.inventoryTable()) }, { name: 'customers.csv', text: csv(customersTable()) },
-      { name: 'sales.csv', text: csv(A.salesTable(sales)) }, { name: 'sale_items.csv', text: csv(saleLines(sales)) }, { name: 'returns.csv', text: csv(A.returns.table(sales)) }, { name: 'models.csv', text: csv(modelsTable()) },
+      { name: 'sales.csv', text: csv(A.salesTable(sales)) }, { name: 'sale_items.csv', text: csv(saleLines(sales)) }, { name: 'returns.csv', text: csv(A.returns.table(sales)) }, { name: 'models.csv', text: csv(modelsTable()) }, { name: 'loans.csv', text: csv(A.loans.table()) },
       { name: 'settings.json', text: JSON.stringify(cfg, null, 2) },
     ];
     UI.downloadBlob(`myboxstock-${slug(A.me.businessName)}-${stamp()}.zip`, UI.zip(files));
@@ -33,7 +33,7 @@
     const sales = S.all('sale').filter(s => s.data.customerId === e.id).sort((a, b) => a.data.ts - b.data.ts);
     const d = e.data, files = [
       { name: 'customer.csv', text: csv({ headers: ['name', 'phone', 'email', 'notes', 'created', ...C.delivery.addrHeaders], rows: [[d.name, d.phone || '', d.email || '', d.notes || '', d.createdAt ? new Date(d.createdAt).toISOString() : '', ...C.delivery.addrRow(d.address)]] }) },
-      { name: 'purchases.csv', text: csv(A.salesTable(sales)) }, { name: 'purchase_items.csv', text: csv(saleLines(sales)) }, { name: 'returns.csv', text: csv(A.returns.table(sales)) },
+      { name: 'purchases.csv', text: csv(A.salesTable(sales)) }, { name: 'purchase_items.csv', text: csv(saleLines(sales)) }, { name: 'returns.csv', text: csv(A.returns.table(sales)) }, { name: 'loans.csv', text: csv(A.loans.table(e.id)) },
     ];
     UI.downloadBlob(`customer-${slug(d.name)}-${stamp()}.zip`, UI.zip(files)); toast('Exported ' + (d.name || 'customer'));
   };
@@ -43,7 +43,7 @@
     const ok = await UI.confirmBox({ title: 'Erase this customer?', body: 'Their name, phone, email, address and notes are removed, here and on their past sales (including where a parcel was sent and the notes on any return). The sales stay (totals and receipt numbers) and show “Erased customer”. This cannot be undone. Export them first if they asked for a copy.', confirmLabel: 'Erase', danger: true, typeToConfirm: 'ERASE' });
     if (!ok) return false;
     const sales = S.all('sale').filter(s => s.data.customerId === e.id);
-    await S.commit({ puts: sales.map(s => ({ type: 'sale', id: s.id, data: { ...s.data, customerId: null, customerName: 'Erased customer', customerEmail: '', customerErased: true, ...(s.data.delivery ? { delivery: C.delivery.erased(s.data.delivery) } : {}), ...(Array.isArray(s.data.returns) && s.data.returns.length ? { returns: s.data.returns.map(r => ({ ...r, note: '', retTracking: '' })) } : {}), ...(s.data.returnAsk ? { returnAsk: { ...s.data.returnAsk, note: '' } } : {}) } })), deletes: [{ type: 'customer', id: e.id }] });
+    await S.commit({ puts: [...A.loans.erasePuts(e.id), ...sales.map(s => ({ type: 'sale', id: s.id, data: { ...s.data, customerId: null, customerName: 'Erased customer', customerEmail: '', customerErased: true, ...(s.data.delivery ? { delivery: C.delivery.erased(s.data.delivery) } : {}), ...(Array.isArray(s.data.returns) && s.data.returns.length ? { returns: s.data.returns.map(r => ({ ...r, note: '', retTracking: '' })) } : {}), ...(s.data.returnAsk ? { returnAsk: { ...s.data.returnAsk, note: '' } } : {}) } }))], deletes: [{ type: 'customer', id: e.id }] });
     A.api('POST', '/account/erase-note', { sales: sales.length }).catch(() => {});
     toast('Customer erased'); return true;
   };

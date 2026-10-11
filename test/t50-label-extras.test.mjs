@@ -51,6 +51,13 @@ test('browser: label border, text size, settings preview, test label and PDF dow
     assert.ok(oneLine, 'the tracking number is on a single line');
     const sameRow = await page.evaluate(() => { const top = (w) => [...document.querySelectorAll('.sheet .label-meta > .label-meta-row > div')].find(c => c.textContent.startsWith(w)).getBoundingClientRect().top; return Math.abs(top('Carrier') - top('Tracking')) < 2 && top('Order') < top('Carrier'); });
     assert.ok(sameRow, 'Carrier and Tracking are on the same row, below Order and Date');
+    // Printer fit: left/right, up/down and printed size reach the label and the PDF; the test label carries six frames
+    assert.equal(await page.locator('.sheet .label-frame').count(), 6, 'six nested frames on the test label');
+    await pick('lfx', '2'); await pick('lfy', '4'); await pick('lfit', '94');
+    assert.deepEqual(await page.evaluate(() => { const l = document.querySelector('.sheet .label'), cs = getComputedStyle(l); return [l.dataset.sx, l.dataset.sy, l.dataset.fit, cs.getPropertyValue('--label-shift-x').trim(), cs.getPropertyValue('--label-shift-y').trim(), cs.getPropertyValue('--label-fit-scale').trim()]; }), ['2', '4', '94', '2mm', '4mm', '0.94']);
+    const [dl2] = await Promise.all([page.waitForEvent('download'), page.click('#lpdf')]); const s2 = fs.readFileSync(await dl2.path()).toString('latin1');
+    assert.match(s2, /q 0\.94 0 0 0\.94 /, 'the PDF is drawn at 94%'); assert.match(s2, /\/MediaBox \[0 0 294\.8 450\.71\]/);
+    await pick('lfx', '0'); await pick('lfy', '0'); await pick('lfit', '100');
     // border switch in the label window
     await page.uncheck('#lborder'); assert.doesNotMatch(await page.getAttribute('.sheet .label', 'class'), /has-border/);
     await page.check('#lborder'); await pick('ltext', 'standard'); assert.match(await page.getAttribute('.sheet .label', 'class'), /txt-standard/);
