@@ -9,6 +9,8 @@ const EVENTS = {
   shipped: ['sales.write', 'marked a sale as shipped'],
   tracking: ['sales.write', 'changed the carrier or tracking on a sale'],
   label: ['sales.read', 'opened a shipping label to print'],
+  labeltest: ['sales.read', 'printed a test shipping label (sample data, no sale)'],
+  labelpdf: ['sales.read', 'downloaded a shipping label as a PDF'],
 };
 
 export function deliveryRoutes() {

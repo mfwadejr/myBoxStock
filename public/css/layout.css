@@ -45,4 +45,4 @@
   .legal-page { padding: var(--space-lg) var(--space-md) var(--space-6xl); }
   .legal-foot { padding: var(--space-lg) var(--space-md) calc(var(--tabbar-h) + var(--space-xl) + env(safe-area-inset-bottom)); }
 }
-@media (max-width: 640px) { .g2, .g3 { grid-template-columns: 1fr; } .g4 .stat-value { font-size: var(--text-stat-sm); } }
+@media (max-width: 640px) { .g2, .g3 { grid-template-columns: minmax(0, 1fr); }   /* minmax(0, ...) lets a long drop-down choice shorten with an ellipsis instead of widening the page */ .g4 .stat-value { font-size: var(--text-stat-sm); } }

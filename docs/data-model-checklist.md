@@ -184,6 +184,8 @@ Rules that always hold: every field below sits inside an encrypted record (type 
 | `config.label` | Label settings | yes | settings.json | - |
 | `config.label.size` | Default label size | yes | settings.json | - |
 | `config.label.look` | Themed or Plain | yes | settings.json | - |
+| `config.label.border` | Border around the label (on by default) | yes | settings.json | - |
+| `config.label.text` | Label text size: Standard, Larger or Largest | yes | settings.json | - |
 | `config.label.logo` | Business logo, a different logo, or none | yes | settings.json | - |
 | `config.label.customLogo` | The different logo, as a small image kept in the record | yes | settings.json | - |
 | `config.label.returnAddress` | Return address printed on labels | yes | settings.json | - |

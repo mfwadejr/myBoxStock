@@ -139,7 +139,13 @@ html.reorder-drag { user-select: none; -webkit-user-select: none; cursor: grabbi
 
 /* ---- shipping label: on screen it is a preview that never overflows the sheet; printed it is exactly the chosen size ---- */
 .label-pages { display: flex; flex-direction: column; align-items: center; gap: var(--space-lg); margin-top: var(--space-md); }
-.label { display: flex; flex-direction: column; width: 100%; padding: var(--label-pad); background: var(--color-label-paper); color: var(--color-label-ink); border: var(--border-strong); border-radius: var(--radius-sm); box-shadow: var(--shadow-card); overflow: hidden; }
+.label { position: relative; display: flex; flex-direction: column; width: 100%; padding: var(--label-pad); background: var(--color-label-paper); color: var(--color-label-ink); border: var(--border-strong); border-radius: var(--radius-sm); box-shadow: var(--shadow-card); overflow: hidden; }
+.label.has-border::before { content: ''; position: absolute; inset: var(--label-border-inset); border: var(--label-border-w) solid var(--color-label-ink); border-radius: var(--label-border-radius); pointer-events: none; }   /* inside the padding, so the rules and text keep a gap from it */
+.label-mark { position: absolute; width: var(--label-mark); height: var(--label-mark); border: 0 solid var(--color-label-ink); pointer-events: none; }
+.label-mark.m-tl { top: var(--space-0); left: var(--space-0); border-top-width: var(--label-border-w); border-left-width: var(--label-border-w); }
+.label-mark.m-tr { top: var(--space-0); right: var(--space-0); border-top-width: var(--label-border-w); border-right-width: var(--label-border-w); }
+.label-mark.m-bl { bottom: var(--space-0); left: var(--space-0); border-bottom-width: var(--label-border-w); border-left-width: var(--label-border-w); }
+.label-mark.m-br { bottom: var(--space-0); right: var(--space-0); border-bottom-width: var(--label-border-w); border-right-width: var(--label-border-w); }
 .label.size-4x6 { max-width: var(--label-4x6-w); aspect-ratio: var(--label-4x6-ratio); page: label4x6; }
 .label.size-dymo { max-width: var(--label-dymo-w); aspect-ratio: var(--label-dymo-ratio); page: labeldymo; }
 .label.size-half { max-width: var(--label-half-w); aspect-ratio: var(--label-half-ratio); padding: var(--label-pad-lg); page: labelhalf; }
@@ -150,13 +156,23 @@ html.reorder-drag { user-select: none; -webkit-user-select: none; cursor: grabbi
 .label-logo { max-width: var(--label-logo-w); max-height: var(--label-logo-h); object-fit: contain; }
 .size-half .label-logo, .size-letter .label-logo { max-width: var(--label-logo-w-lg); max-height: var(--label-logo-h-lg); }
 .style-plain .label-logo { filter: var(--label-plain-filter); }
-.label-from { margin-left: auto; font-size: var(--text-xs); line-height: var(--leading-body); text-align: right; overflow-wrap: anywhere; }
-.label-from b { display: block; font-size: var(--text-sm); }
+.label-from { margin-left: auto; font-size: var(--text-sm); line-height: var(--leading-body); text-align: right; overflow-wrap: anywhere; }
+.label-from b { display: block; font-size: var(--text-body); }
 .label-tag { margin: var(--space-lg) var(--space-0) var(--space-xs); font-size: var(--text-micro); font-weight: var(--weight-semibold); letter-spacing: var(--tracking-brand); text-transform: uppercase; color: var(--color-text-muted); }
-.label-to { font-size: var(--text-xl); line-height: var(--leading-tight); font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
-.label-to span { display: block; margin-top: var(--space-xs); font-size: var(--text-lg); }
+.label-to { font-size: var(--text-h2); line-height: var(--leading-tight); font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+.label-to span { display: block; margin-top: var(--space-xs); font-size: var(--text-xl); }
 .size-half .label-to, .size-letter .label-to { font-size: var(--text-h1); }
 .size-half .label-to span, .size-letter .label-to span { font-size: var(--text-h2); }
+.label:is(.size-4x6, .size-dymo).txt-standard .label-logo { max-width: var(--label-logo-w-std); max-height: var(--label-logo-h-std); }
+.label:is(.size-4x6, .size-dymo).txt-standard .label-from { font-size: var(--text-xs); }
+.label:is(.size-4x6, .size-dymo).txt-standard .label-from b { font-size: var(--text-sm); }
+.label:is(.size-4x6, .size-dymo).txt-standard .label-to { font-size: var(--text-xl); }
+.label:is(.size-4x6, .size-dymo).txt-standard .label-to span { font-size: var(--text-lg); }
+.label:is(.size-4x6, .size-dymo).txt-largest .label-logo { max-width: var(--label-logo-w-max); max-height: var(--label-logo-h-max); }
+.label:is(.size-4x6, .size-dymo).txt-largest .label-from { font-size: var(--text-body); }
+.label:is(.size-4x6, .size-dymo).txt-largest .label-from b { font-size: var(--text-lead); }
+.label:is(.size-4x6, .size-dymo).txt-largest .label-to { font-size: var(--text-h1-sm); }
+.label:is(.size-4x6, .size-dymo).txt-largest .label-to span { font-size: var(--text-h2); }
 .label-note { margin-top: var(--space-md); padding: var(--space-xs) var(--space-sm); border: var(--border-default); border-radius: var(--radius-sm); font-size: var(--text-xs); overflow-wrap: anywhere; }
 .label-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); margin-top: auto; padding-top: var(--space-md); border-top: var(--border-default); font-size: var(--text-xs); overflow-wrap: anywhere; }
 .label-meta b { display: block; font-size: var(--text-sm); }

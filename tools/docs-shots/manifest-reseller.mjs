@@ -125,7 +125,7 @@ export default [
   E('reseller-shipping-labels-1', '#/sales', async (page) => {
     await seed(page); const no = await toShipNo(page); await openSale(page, no); await page.click('#dlabel'); await page.waitForSelector('.label'); await sleep(page, 700);
   }),
-  E('reseller-shipping-labels-2', '#/settings', async (page) => { await page.waitForSelector('#drdn'); await toCard(page, 'Delivery and labels'); }, { keepScroll: true }),
+  E('reseller-shipping-labels-2', '#/settings', async (page) => { await page.waitForSelector('#lprev .label'); await page.evaluate(() => document.querySelector('#lprev').scrollIntoView({ block: 'center' })); await page.waitForTimeout(300); }, { keepScroll: true }),
 
   // ---- Customers ------------------------------------------------------------------------------------------------------------------------------------------------------
   E('reseller-customers-1', '#/customers', async (page) => { await page.waitForSelector('tr.click'); await sleep(page, 500); }),

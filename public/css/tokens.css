@@ -278,14 +278,22 @@
   --label-letter-ratio: 17 / 22;
   --label-pad: 0.2in;
   --label-pad-lg: 0.5in;
-  --label-logo-w: 0.9in;
-  --label-logo-h: 0.5in;
+  --label-logo-w: 1.1in;
+  --label-logo-h: 0.6in;
+  --label-logo-w-std: 0.9in;   /* Label text size: Standard and Largest (Larger is the default, above) */
+  --label-logo-h-std: 0.5in;
+  --label-logo-w-max: 1.3in;
+  --label-logo-h-max: 0.7in;
   --label-logo-w-lg: 1.6in;
   --label-logo-h-lg: 0.9in;
   --color-label-ink: #000000;
   --color-label-paper: #ffffff;
   --label-plain-filter: grayscale(1) contrast(2);
   --label-rule: 2px;
+  --label-border-w: 1.5px;   /* the line around a label, drawn inside the edge so a thermal printer's feed shift never clips it */
+  --label-border-inset: 0.08in;
+  --label-border-radius: 0.12in;   /* rounded corners on the line around a label */
+  --label-mark: 0.15in;   /* corner marks on the test label */
 
   /* ---- embedded icons (data URIs cannot read variables, so their colors live here) ---- */
   --icon-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%2386868b' stroke-width='2'%3E%3Cpath d='m1 1 5 5 5-5'/%3E%3C/svg%3E");

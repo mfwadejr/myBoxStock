@@ -3,6 +3,20 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.26.0] - 2026-10-11
+
+### Added
+- **Border around shipping labels.** A thin line with rounded corners, drawn just inside the label edge (so a thermal printer's feed shift never clips it), with a gap between it and the rules and text. On by default; a switch in Settings and in the label window turns it off.
+- **Label text size.** Standard, Larger (the new default) or Largest makes the logo, return address and ship-to address bigger or smaller on 4 x 6 in and DYMO labels. Choose it in Settings or per print.
+- **Live label preview in Settings > Delivery and labels.** A sample label that updates as you change the size, style, text size, border, logo and return address, before you save.
+- **Print test label.** A button in Settings that opens a label made from made-up sample data (marked SAMPLE) using the settings on screen, with corner marks to show whether the printer clips any edge. No sale is recorded; the activity log notes only that a test label was printed.
+- **Download PDF on labels.** Builds the label (or every label, one per page) as a real PDF in the browser with the exact page size inside the file, so it prints correctly from any browser, including Safari and DuckDuckGo, which ignore the page size a website asks for. Nothing is sent anywhere.
+
+### Changed
+- Label addresses and logo are larger by default (Larger). Choose Standard to get the previous sizes.
+- On phones, long drop-down choices now shorten with an ellipsis instead of widening the page.
+- Documentation: Shipping labels and Settings updated (border, text size, preview, test label, Download PDF, browser notes, DYMO setup); the two label screenshots re-shot.
+
 ## [0.25.2] - 2026-10-11
 
 ### Added

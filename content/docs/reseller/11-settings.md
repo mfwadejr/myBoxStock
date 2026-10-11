@@ -159,6 +159,7 @@ This card controls how sales are delivered and the shipping label you print for 
 - **Show the delivery note on the receipt** - off by default. The delivery note always prints on the shipping label.
 - **Return address on labels** - your name or business, street, apartment or suite, city, state, ZIP and country.
 - **Default label size** and **Label style** - **4 x 6 in (thermal printer)**, **DYMO 4XL / 5XL shipping label (104 x 159 mm)**, **Half sheet of letter** or **Full letter page**, and **Themed (site look)** or **Plain (black and white)**.
+- **Label text size** and **Border around the label** - **Standard**, **Larger (recommended)** or **Largest** for the logo and addresses, and a switch for the thin rounded border (on by default). A live **Preview** below shows a sample label as you change things, and **Print test label** prints one with made-up data.
 - **Label logo** - **Use my business logo** (the logo from Customer emails, the default), **Use a different logo for labels** (with **Choose logo** and **Remove logo**), or **No logo**.
 
 Press **Save changes** to keep them. Your own shipping cost is never part of a receipt or a label whatever you switch on here. See [Delivery and shipping](#/docs/delivery-and-shipping) and [Shipping labels](#/docs/shipping-labels).

@@ -1,9 +1,9 @@
 ---
 title: Shipping labels
-summary: Print an address label for a parcel in three sizes, in a themed or plain black-and-white style, with your logo and return address, one at a time or a whole To ship list at once.
+summary: Print an address label for a parcel in four sizes, in a themed or plain black-and-white style, with your logo and return address, one at a time or a whole To ship list at once.
 keywords: shipping label, label, print label, print labels, address label, return address, 4x6, 4 x 6, thermal, thermal printer, label printer, half sheet, letter, plain, themed, logo, label logo, delivery note, order number, tracking, carrier, pdf, batch, postage
 order: 6
-covers: Print label, Print labels, Shipping label, Shipping labels, Size, Style, Logo, Change the return address for this print, Hide return address, 4 x 6 in (thermal printer), Half sheet of letter, Full letter page, Themed (site look), Plain (black and white), Use my business logo, Use a different logo for labels, No logo, Return address on labels, Default label size, Label style, Label logo, Choose logo, Remove logo, Order, Date, Carrier, Tracking, Delivery note, Delivery and labels
+covers: Print label, Print labels, Shipping label, Shipping labels, Size, Style, Logo, Change the return address for this print, Hide return address, 4 x 6 in (thermal printer), Half sheet of letter, Full letter page, Themed (site look), Plain (black and white), Use my business logo, Use a different logo for labels, No logo, Return address on labels, Default label size, Label style, Label logo, Choose logo, Remove logo, Order, Date, Carrier, Tracking, Delivery note, Delivery and labels, Border around the label, Text size, Label text size, Print test label, Download PDF, Preview
 ---
 
 ## What shipping labels are for
@@ -18,6 +18,7 @@ Labels are for sales whose delivery is **Shipping**. See [Delivery and shipping]
 
 ## What is on a label
 
+- A thin **border** with rounded corners, just inside the edge of the label, with a small gap between it and the lines and text. You can turn it off.
 - Your **logo**, if you chose one, at the top left.
 - Your **return address** at the top right.
 - **Ship to**, in large type: the name and address from the sale.
@@ -45,6 +46,8 @@ Above the preview are choices that apply to this print only. They do not change 
 - **Size**: **4 x 6 in (thermal printer)**, **DYMO 4XL / 5XL shipping label (104 x 159 mm)**, **Half sheet of letter** or **Full letter page**.
 - **Style**: **Themed (site look)** uses the app's colours; **Plain (black and white)** is pure black on white with a high-contrast logo, best for thermal label printers.
 - **Logo**: **Use my business logo**, **Use a different logo for labels**, or **No logo**.
+- **Text size**: **Standard**, **Larger (recommended)** or **Largest**. It makes the logo, the return address and the ship-to address bigger or smaller on 4 x 6 in and DYMO labels.
+- **Border around the label**: a switch for the thin rounded line around the label.
 - **Change the return address for this print**: opens boxes to type a different return address, for example when you ship from a friend's address. The preview updates as you type. **Hide return address** puts the boxes away.
 
 If you choose a logo that does not exist, for example the label logo when you never chose one, the label simply prints without a logo. It is never an error.
@@ -62,12 +65,19 @@ In the print window, set margins to **None** or **Default** and turn **Headers a
 
 ## Setting up a DYMO LabelWriter 4XL or 5XL
 
-1. In **Settings > Delivery and labels**, set **Default label size** to **DYMO 4XL / 5XL shipping label (104 x 159 mm)** and press **Save changes**.
+1. In **Settings > Delivery and labels**, set **Default label size** to **DYMO 4XL / 5XL shipping label (104 x 159 mm)**, check the **Preview**, and press **Save changes**.
 2. Load 4 x 6 in shipping labels (DYMO 1744907) in the printer.
 3. Press **Print** on a label. In the print window choose your DYMO, set the paper size to the printer's 4 x 6 in shipping label size (it shows as 104 x 159 mm), Margins to **None** and Scale to **Default**.
-4. On a Mac, open the **Presets** menu and save these choices as a preset, for example "DYMO label", so next time it is one choice. Chrome also remembers the last printer you used.
+4. Before your first real parcel, press **Print test label** in Settings and check that the border and all four corner marks print. If an edge is cut off, the paper size in the print window is wrong.
+5. On a Mac, open the **Presets** menu and save these choices as a preset, for example "DYMO label", so next time it is one choice. Chrome also remembers the last printer you used.
 
 If the label is cut off or has a blank strip, check that the paper size in the print window is the same as the Size on the label.
+
+## Download PDF: printing from any browser
+
+The label view has a **Download PDF** button next to **Print**. It makes a PDF of the label (or of every label, one per page) with the exact page size built into the file: 4 x 6 in, DYMO 104 x 159 mm, half sheet or full letter. Open it and print it from Preview or any PDF viewer, choosing the same paper size and no scaling.
+
+Use it when **Print** does not come out right. Chrome follows the page size a website asks for, but Safari and DuckDuckGo (and other browsers built on WebKit) often ignore it, so a label can print small or spill onto a second page. A PDF does not have that problem. The PDF uses standard fonts, so letters outside Western European languages may print as a question mark. Nothing is sent to the site: the PDF is made in your browser, and the activity log notes only that one was downloaded.
 
 ## Printing several labels at once
 
@@ -83,6 +93,9 @@ An Administrator sets the defaults in [Settings](#/docs/settings), in the **Deli
 
 ![The Delivery and labels card in Settings with return address, default size, style and logo choices](shot:reseller-shipping-labels-2 "Settings, Delivery and labels: return address, default size, style and logo.")
 
+- **Label text size** and **Border around the label**: the same choices as above, saved as your defaults. The border is on by default.
+- **Preview**: a live picture of a label, made from sample data, sits under the settings and changes as you change them, so you can see the size, style, text size, border, logo and return address before you save.
+- **Print test label**: opens a sample label (a made-up name, address, order and tracking number, clearly marked SAMPLE) using the settings on screen, even before you save. It has small corner marks so you can see whether your printer clips any edge. It is not a sale: nothing is recorded, no customer is involved, and the activity log notes only that a test label was printed.
 - **Return address on labels**: name, street, apartment or suite, city, state, ZIP and country. A label printed without a return address simply leaves that corner empty.
 - **Default label size** and **Label style**.
 - **Label logo**: **Use my business logo** (the default) re-uses the logo from the Customer emails card; **Use a different logo for labels** shows **Choose logo** and **Remove logo** so you can pick a picture just for labels; **No logo** prints none. A picture can be PNG, JPEG, WebP or GIF; it is made small automatically in your browser.
@@ -96,6 +109,7 @@ Labels are built in your browser from data that is already decrypted there. Noth
 ## Common mistakes and tips
 
 - **A blank page before the label (DYMO and other label printers).** Fixed in 0.25.1: the label now prints on exactly one page. In the print window use the printer's 4 x 6 in (or 4XL) paper size, set Margins to **None** and Scale to **Default**. If your printer driver's paper is slightly bigger than 4 x 6 in (for example 104 x 159 mm), the label still prints on one page, with a thin blank strip at the bottom.
+- **The label prints small or on two pages in Safari or DuckDuckGo.** Those browsers ignore the page size a website asks for. Use **Download PDF** (above), or print from Chrome.
 - **Printing on the wrong paper size.** Pick the same size in the label view and in the print window.
 - **Blurry or grey logo on a thermal printer.** Choose **Plain** style, which prints the logo in black and white.
 - **No return address.** Add it once in Settings so every label has it.
