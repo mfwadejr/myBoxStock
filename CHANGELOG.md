@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.26.2] - 2026-10-11
+
+### Changed
+- **Label bottom rows.** The bottom of a shipping label is now two fixed rows: Order and Date, then Carrier and Tracking, with the tracking number always on one line. When the tracking number is added later the carrier stays where it was and the tracking appears beside it; with a carrier only, the carrier sits alone at the left of its row. The Download PDF version lays out the same way. Tests cover tracking present, carrier only, and neither.
+
 ## [0.26.1] - 2026-10-11
 
 ### Fixed

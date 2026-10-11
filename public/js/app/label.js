@@ -19,7 +19,7 @@
     return `<div class="label ${SIZE_CLASS[o.size] || 'size-4x6'} ${LOOK_CLASS[o.look] || 'style-themed'}${o.border === false ? '' : ' has-border'} ${TEXT_CLASS[o.text] || 'txt-larger'}" data-order="${esc(d.no)}">${o.test ? '<i class="label-mark m-tl"></i><i class="label-mark m-tr"></i><i class="label-mark m-bl"></i><i class="label-mark m-br"></i>' : ''}<div class="label-top">${logo ? `<img class="label-logo" src="${esc(logo)}" alt="">` : '<span></span>'}${from.name || fromLines.length ? `<div class="label-from">${from.name ? `<b>${esc(from.name)}</b>` : ''}${fromLines.map(esc).join('<br>')}</div>` : ''}</div>
       <div class="label-tag">Ship to</div><div class="label-to"><b>${esc(to.name || d.customerName || '')}</b><span>${D.lines(to).map(esc).join('<br>')}</span></div>
       ${dl.note ? `<div class="label-note"><b>Delivery note</b><br>${esc(dl.note)}</div>` : ''}
-      <div class="label-meta">${meta.map(([k, v]) => `<div>${esc(k)}<b>${esc(v)}</b></div>`).join('')}</div></div>`;
+      <div class="label-meta">${[meta.filter(m => m[0] === 'Order' || m[0] === 'Date'), meta.filter(m => m[0] === 'Carrier' || m[0] === 'Tracking')].filter(r => r.length).map(r => `<div class="label-meta-row">${r.map(([k, v]) => `<div>${esc(k)}<b>${esc(v)}</b></div>`).join('')}</div>`).join('')}</div></div>`;
   };
 
   // The label view: preview, choices for this print only, Print. Several sales give one label per page.

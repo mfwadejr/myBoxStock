@@ -49,6 +49,8 @@ test('browser: label border, text size, settings preview, test label and PDF dow
     // the tracking number stays on one line (it is allowed its own row), at the DYMO size
     const oneLine = await page.evaluate(() => { const cells = [...document.querySelectorAll('.sheet .label-meta > div')], t = cells.find(c => /Tracking/.test(c.textContent)), b = t.querySelector('b'), lh = parseFloat(getComputedStyle(b).lineHeight) || parseFloat(getComputedStyle(b).fontSize) * 1.4; return b.getBoundingClientRect().height <= lh * 1.3; });
     assert.ok(oneLine, 'the tracking number is on a single line');
+    const sameRow = await page.evaluate(() => { const top = (w) => [...document.querySelectorAll('.sheet .label-meta > .label-meta-row > div')].find(c => c.textContent.startsWith(w)).getBoundingClientRect().top; return Math.abs(top('Carrier') - top('Tracking')) < 2 && top('Order') < top('Carrier'); });
+    assert.ok(sameRow, 'Carrier and Tracking are on the same row, below Order and Date');
     // border switch in the label window
     await page.uncheck('#lborder'); assert.doesNotMatch(await page.getAttribute('.sheet .label', 'class'), /has-border/);
     await page.check('#lborder'); await pick('ltext', 'standard'); assert.match(await page.getAttribute('.sheet .label', 'class'), /txt-standard/);
@@ -58,6 +60,11 @@ test('browser: label border, text size, settings preview, test label and PDF dow
     // Save keeps the new settings
     await page.click('#save'); await page.waitForSelector('.toasts .toast');
     const saved = await page.evaluate(() => AccountApp.store.config().label); assert.equal(saved.size, 'dymo'); assert.equal(saved.text, 'largest'); assert.equal(saved.border, true);
+    // before the tracking number is known: only the Carrier shows, alone at the left of its row; with neither, there is just the Order and Date row
+    const variants = await page.evaluate(() => { const L = AccountApp.labels, mk = (dl) => { const s = L.sample(); Object.assign(s.data.delivery, dl); const el = document.createElement('div'); el.innerHTML = L.html(s, { size: 'dymo', look: 'plain', from: {}, border: true, text: 'larger' });
+      return [...el.querySelectorAll('.label-meta-row')].map(r => [...r.children].map(c => c.firstChild.textContent)); };
+      return { carrierOnly: mk({ tracking: '' }), neither: mk({ tracking: '', carrier: '' }), both: mk({}) }; });
+    assert.deepEqual(variants.carrierOnly, [['Order', 'Date'], ['Carrier']]); assert.deepEqual(variants.neither, [['Order', 'Date']]); assert.deepEqual(variants.both, [['Order', 'Date'], ['Carrier', 'Tracking']]);
     // phone width: the Settings preview and the label window never scroll sideways
     await page.setViewportSize({ width: 390, height: 800 }); await page.goto(srv.base + '/app/#/settings'); await page.waitForSelector('#lprev .label');
     const wide = await page.evaluate(() => [...document.querySelectorAll('body *')].filter(e => e.getBoundingClientRect().right > window.innerWidth + 1).slice(0, 6).map(e => e.tagName + '.' + e.className + '#' + e.id));
