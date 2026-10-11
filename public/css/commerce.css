@@ -174,7 +174,8 @@ html.reorder-drag { user-select: none; -webkit-user-select: none; cursor: grabbi
 .label:is(.size-4x6, .size-dymo).txt-largest .label-to { font-size: var(--text-h1-sm); }
 .label:is(.size-4x6, .size-dymo).txt-largest .label-to span { font-size: var(--text-h2); }
 .label-note { margin-top: var(--space-md); padding: var(--space-xs) var(--space-sm); border: var(--border-default); border-radius: var(--radius-sm); font-size: var(--text-xs); overflow-wrap: anywhere; }
-.label-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); margin-top: auto; padding-top: var(--space-md); border-top: var(--border-default); font-size: var(--text-xs); overflow-wrap: anywhere; }
+.label-meta { display: flex; flex-wrap: wrap; gap: var(--space-sm) var(--space-xl); margin-top: auto; padding-top: var(--space-md); border-top: var(--border-default); font-size: var(--text-xs); overflow-wrap: anywhere; }
+.label-meta > div { flex: 0 1 auto; min-width: var(--space-0); }   /* short items share a row; a long one such as a tracking number takes its own line instead of wrapping */
 .label-meta b { display: block; font-size: var(--text-sm); }
 .style-plain, .style-plain .label-tag { color: var(--color-label-ink); }
 .style-plain .label-note, .style-plain .label-meta { border-color: var(--color-label-ink); }

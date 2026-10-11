@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.26.1] - 2026-10-11
+
+### Fixed
+- **Long tracking numbers wrapped onto two lines on the printed label.** The Order, Date, Carrier and Tracking items at the bottom no longer sit in two equal columns: short items share a row and a long one, such as a tracking number, takes its own line. A test checks the tracking number is on one line. (The Download PDF version already did this.)
+
 ## [0.26.0] - 2026-10-11
 
 ### Added

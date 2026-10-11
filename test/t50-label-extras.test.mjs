@@ -46,6 +46,9 @@ test('browser: label border, text size, settings preview, test label and PDF dow
     assert.equal(dl.suggestedFilename(), 'test-label.pdf'); const pdf = fs.readFileSync(await dl.path()), s = pdf.toString('latin1');
     assert.ok(s.startsWith('%PDF-1.4'), 'a PDF file'); assert.match(s, /\/MediaBox \[0 0 294\.8 450\.71\]/, 'the DYMO page is 104 x 159 mm'); assert.match(s, /\(SAMPLE-0001\) Tj/); assert.match(s, /\(77 Preview Lane\)|Preview Lane/);
     assert.ok(!/barcode|qr/i.test(s));
+    // the tracking number stays on one line (it is allowed its own row), at the DYMO size
+    const oneLine = await page.evaluate(() => { const cells = [...document.querySelectorAll('.sheet .label-meta > div')], t = cells.find(c => /Tracking/.test(c.textContent)), b = t.querySelector('b'), lh = parseFloat(getComputedStyle(b).lineHeight) || parseFloat(getComputedStyle(b).fontSize) * 1.4; return b.getBoundingClientRect().height <= lh * 1.3; });
+    assert.ok(oneLine, 'the tracking number is on a single line');
     // border switch in the label window
     await page.uncheck('#lborder'); assert.doesNotMatch(await page.getAttribute('.sheet .label', 'class'), /has-border/);
     await page.check('#lborder'); await pick('ltext', 'standard'); assert.match(await page.getAttribute('.sheet .label', 'class'), /txt-standard/);
