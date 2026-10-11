@@ -73,13 +73,17 @@ Printers rarely print a label exactly where you expect: a thermal printer may fe
 
 The choices apply to the printed label and to **Download PDF**, and the Preview and the test label show them straight away. Save changes in Settings once the test label fits.
 
+### A worked example
+
+On a DYMO 5XL with 4 x 6 in (1744907) labels in Chrome, the label first printed with the top border cut off and a gap at the bottom. Setting **Move up or down** to 6 mm down and **Printed size** to 95% made all four sides print. If one side then still shows a wider gap than the other, move the label a millimetre or two towards the wider gap. Your printer and driver may need different numbers.
+
 ## Setting up a DYMO LabelWriter 4XL or 5XL
 
 1. In **Settings > Delivery and labels**, set **Default label size** to **DYMO 4XL / 5XL shipping label (104 x 159 mm)**, check the **Preview**, and press **Save changes**.
 2. Load 4 x 6 in shipping labels (DYMO 1744907) in the printer.
 3. Press **Print** on a label. In the print window choose your DYMO, set the paper size to the printer's 4 x 6 in shipping label size (it shows as 104 x 159 mm), Margins to **None** and Scale to **Default**.
-4. Before your first real parcel, press **Print test label** in Settings. The test label has four corner marks and, in the middle of each side, a small ruler of six ticks from 1 mm to 6 mm long. Look at which corner marks and ticks print: the longest tick that is missing on a side is how far that edge is cut off.
-5. If the label sits too far to one side or is cut at the top or bottom, use **Printer fit** in Settings (below) to move it a little and print another test label. If every edge is cut, the paper size in the print window is wrong.
+4. Before your first real parcel, press **Print test label** in Settings. It is exactly what a real label looks like, with made-up sample data, so nothing extra is printed on it. Check that the thin rounded border is complete on all four sides and nothing is cut off.
+5. If the border is cut off or the label sits off-centre on the stock, use **Printer fit** (below), print another test label, and repeat. Print the test label on the printer's own paper size: if every edge is cut, the paper size in the print window is wrong.
 6. On a Mac, open the **Presets** menu and save these choices as a preset, for example "DYMO label", so next time it is one choice. Chrome also remembers the last printer you used.
 
 If the label is cut off or has a blank strip, check that the paper size in the print window is the same as the Size on the label.
@@ -106,7 +110,7 @@ An Administrator sets the defaults in [Settings](#/docs/settings), in the **Deli
 
 - **Label text size** and **Border around the label**: the same choices as above, saved as your defaults. The border is on by default.
 - **Preview**: a live picture of a label, made from sample data, sits under the settings and changes as you change them, so you can see the size, style, text size, border, logo and return address before you save.
-- **Print test label**: opens a sample label (a made-up name, address, order and tracking number, clearly marked SAMPLE) using the settings on screen, even before you save. It has small corner marks so you can see whether your printer clips any edge. It is not a sale: nothing is recorded, no customer is involved, and the activity log notes only that a test label was printed.
+- **Print test label**: opens a sample label (a made-up name, address, order and tracking number, clearly marked SAMPLE) using the settings on screen, even before you save. It is the real label, with no extra marks, so you can check the fit. It is not a sale: nothing is recorded, no customer is involved, and the activity log notes only that a test label was printed.
 - **Return address on labels**: name, street, apartment or suite, city, state, ZIP and country. A label printed without a return address simply leaves that corner empty.
 - **Default label size** and **Label style**.
 - **Label logo**: **Use my business logo** (the default) re-uses the logo from the Customer emails card; **Use a different logo for labels** shows **Choose logo** and **Remove logo** so you can pick a picture just for labels; **No logo** prints none. A picture can be PNG, JPEG, WebP or GIF; it is made small automatically in your browser.

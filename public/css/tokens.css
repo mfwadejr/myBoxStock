@@ -321,16 +321,6 @@
   --label-fit-98: 0.98;
   --label-fit-99: 0.99;
   --label-fit-100: 1;
-  --label-frame-w: 0.3mm;   /* the test label's depth ruler: ticks 1 to 6 mm long at the middle of each side */
-  --label-frame-half: 0.5mm;
-  --label-depth: 1mm;   /* set per tick on the test label's depth ruler */
-  --label-frame-1: 1mm;
-  --label-frame-2: 2mm;
-  --label-frame-3: 3mm;
-  --label-frame-4: 4mm;
-  --label-frame-5: 5mm;
-  --label-frame-6: 6mm;
-  --label-mark: 0.15in;   /* corner marks on the test label */
 
   /* ---- embedded icons (data URIs cannot read variables, so their colors live here) ---- */
   --icon-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%2386868b' stroke-width='2'%3E%3Cpath d='m1 1 5 5 5-5'/%3E%3C/svg%3E");

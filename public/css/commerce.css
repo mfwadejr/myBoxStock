@@ -179,19 +179,6 @@ html.reorder-drag { user-select: none; -webkit-user-select: none; cursor: grabbi
 .label[data-fit="98"] { --label-fit-scale: var(--label-fit-98); }
 .label[data-fit="99"] { --label-fit-scale: var(--label-fit-99); }
 .label[data-fit="100"] { --label-fit-scale: var(--label-fit-100); }
-/* Test label depth ruler: at the middle of each side, ticks 1 to 6 mm long show how far in the printer starts printing (the longest tick you can see is the depth that is cut off). */
-.label-tick { position: absolute; background: var(--color-label-ink); pointer-events: none; --label-depth: var(--label-frame-1); }
-.label-tick.d1 { --label-depth: var(--label-frame-1); } .label-tick.d2 { --label-depth: var(--label-frame-2); } .label-tick.d3 { --label-depth: var(--label-frame-3); }
-.label-tick.d4 { --label-depth: var(--label-frame-4); } .label-tick.d5 { --label-depth: var(--label-frame-5); } .label-tick.d6 { --label-depth: var(--label-frame-6); }
-.label-tick.l, .label-tick.r { height: var(--label-frame-w); width: var(--label-depth); top: calc(50% + (var(--label-depth) - var(--label-frame-3) - var(--label-frame-half)) * 3); }
-.label-tick.l { left: var(--space-0); } .label-tick.r { right: var(--space-0); }
-.label-tick.t, .label-tick.b { width: var(--label-frame-w); height: var(--label-depth); left: calc(50% + (var(--label-depth) - var(--label-frame-3) - var(--label-frame-half)) * 3); }
-.label-tick.t { top: var(--space-0); } .label-tick.b { bottom: var(--space-0); }
-.label-mark { position: absolute; width: var(--label-mark); height: var(--label-mark); border: 0 solid var(--color-label-ink); pointer-events: none; }
-.label-mark.m-tl { top: var(--space-0); left: var(--space-0); border-top-width: var(--label-border-w); border-left-width: var(--label-border-w); }
-.label-mark.m-tr { top: var(--space-0); right: var(--space-0); border-top-width: var(--label-border-w); border-right-width: var(--label-border-w); }
-.label-mark.m-bl { bottom: var(--space-0); left: var(--space-0); border-bottom-width: var(--label-border-w); border-left-width: var(--label-border-w); }
-.label-mark.m-br { bottom: var(--space-0); right: var(--space-0); border-bottom-width: var(--label-border-w); border-right-width: var(--label-border-w); }
 .label.size-4x6 { max-width: var(--label-4x6-w); aspect-ratio: var(--label-4x6-ratio); page: label4x6; }
 .label.size-dymo { max-width: var(--label-dymo-w); aspect-ratio: var(--label-dymo-ratio); page: labeldymo; }
 .label.size-half { max-width: var(--label-half-w); aspect-ratio: var(--label-half-ratio); padding: var(--label-pad-lg); page: labelhalf; }
