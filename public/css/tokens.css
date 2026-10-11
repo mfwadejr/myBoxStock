@@ -266,11 +266,14 @@
   /* ---- shipping labels (printed sizes; the plain style is pure black on white for thermal printers) ---- */
   --label-4x6-w: 4in;
   --label-4x6-h: 6in;
+  --label-dymo-w: 104mm;   /* the DYMO 4XL / 5XL shipping label (1744907) is die-cut a little bigger than 4 x 6 in */
+  --label-dymo-h: 159mm;
   --label-half-w: 8.5in;
   --label-half-h: 5.5in;
   --label-letter-w: 8.5in;
   --label-letter-h: 11in;
   --label-4x6-ratio: 2 / 3;
+  --label-dymo-ratio: 104 / 159;
   --label-half-ratio: 17 / 11;
   --label-letter-ratio: 17 / 22;
   --label-pad: 0.2in;

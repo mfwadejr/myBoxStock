@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.25.2] - 2026-10-11
+
+### Added
+- **DYMO 4XL / 5XL label size.** A new label size, "DYMO 4XL / 5XL shipping label (104 x 159 mm)", matches the real DYMO 1744907 label (die-cut a little bigger than 4 x 6 in), so the label fills the stock with no print-window adjusting. Choose it per print or as the Default label size in Settings. The reseller documentation has a new "Setting up a DYMO LabelWriter 4XL or 5XL" section. Tests render both the 4 x 6 in and DYMO sizes to PDF and check for exactly one page of the right size.
+
 ## [0.25.1] - 2026-10-09
 
 ### Fixed

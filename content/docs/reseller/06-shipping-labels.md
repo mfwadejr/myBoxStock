@@ -42,7 +42,7 @@ The **Print label** button appears only on Shipping sales. Immediate, Pickup and
 
 Above the preview are choices that apply to this print only. They do not change your saved settings.
 
-- **Size**: **4 x 6 in (thermal printer)**, **Half sheet of letter** or **Full letter page**.
+- **Size**: **4 x 6 in (thermal printer)**, **DYMO 4XL / 5XL shipping label (104 x 159 mm)**, **Half sheet of letter** or **Full letter page**.
 - **Style**: **Themed (site look)** uses the app's colours; **Plain (black and white)** is pure black on white with a high-contrast logo, best for thermal label printers.
 - **Logo**: **Use my business logo**, **Use a different logo for labels**, or **No logo**.
 - **Change the return address for this print**: opens boxes to type a different return address, for example when you ship from a friend's address. The preview updates as you type. **Hide return address** puts the boxes away.
@@ -54,10 +54,20 @@ If you choose a logo that does not exist, for example the label logo when you ne
 Each size sets the page size when you print, so the label fills the page the right way up:
 
 - **4 x 6 in** is a portrait page of 4 inches by 6 inches, the standard thermal label.
+- **DYMO 4XL / 5XL shipping label (104 x 159 mm)** matches the real DYMO label (part 1744907, 4 x 6 in nominal). Its page is slightly bigger than 4 x 6 in, so the label fills the stock exactly.
 - **Half sheet of letter** is 8.5 inches wide and 5.5 inches tall, half of a letter page.
 - **Full letter page** is 8.5 by 11 inches.
 
 In the print window, set margins to **None** or **Default** and turn **Headers and footers** off if your browser offers it. If your printer has its own paper-size setting, choose the same size.
+
+## Setting up a DYMO LabelWriter 4XL or 5XL
+
+1. In **Settings > Delivery and labels**, set **Default label size** to **DYMO 4XL / 5XL shipping label (104 x 159 mm)** and press **Save changes**.
+2. Load 4 x 6 in shipping labels (DYMO 1744907) in the printer.
+3. Press **Print** on a label. In the print window choose your DYMO, set the paper size to the printer's 4 x 6 in shipping label size (it shows as 104 x 159 mm), Margins to **None** and Scale to **Default**.
+4. On a Mac, open the **Presets** menu and save these choices as a preset, for example "DYMO label", so next time it is one choice. Chrome also remembers the last printer you used.
+
+If the label is cut off or has a blank strip, check that the paper size in the print window is the same as the Size on the label.
 
 ## Printing several labels at once
 

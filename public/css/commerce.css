@@ -141,6 +141,7 @@ html.reorder-drag { user-select: none; -webkit-user-select: none; cursor: grabbi
 .label-pages { display: flex; flex-direction: column; align-items: center; gap: var(--space-lg); margin-top: var(--space-md); }
 .label { display: flex; flex-direction: column; width: 100%; padding: var(--label-pad); background: var(--color-label-paper); color: var(--color-label-ink); border: var(--border-strong); border-radius: var(--radius-sm); box-shadow: var(--shadow-card); overflow: hidden; }
 .label.size-4x6 { max-width: var(--label-4x6-w); aspect-ratio: var(--label-4x6-ratio); page: label4x6; }
+.label.size-dymo { max-width: var(--label-dymo-w); aspect-ratio: var(--label-dymo-ratio); page: labeldymo; }
 .label.size-half { max-width: var(--label-half-w); aspect-ratio: var(--label-half-ratio); padding: var(--label-pad-lg); page: labelhalf; }
 .label.size-letter { max-width: var(--label-letter-w); aspect-ratio: var(--label-letter-ratio); padding: var(--label-pad-lg); page: labelletter; }
 .label-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-md); padding-bottom: var(--space-md); border-bottom: var(--label-rule) solid var(--color-primary); }
@@ -162,8 +163,9 @@ html.reorder-drag { user-select: none; -webkit-user-select: none; cursor: grabbi
 .style-plain, .style-plain .label-tag { color: var(--color-label-ink); }
 .style-plain .label-note, .style-plain .label-meta { border-color: var(--color-label-ink); }
 .style-plain { border-color: var(--color-label-ink); box-shadow: none; }
-/* page sizes cannot use variables, so the three printed sizes are written out here (they match the --label-* tokens) */
+/* page sizes cannot use variables, so the printed sizes are written out here (they match the --label-* tokens) */
 @page label4x6 { size: 4in 6in; margin: 0; }
+@page labeldymo { size: 104mm 159mm; margin: 0; }
 @page labelhalf { size: 8.5in 5.5in; margin: 0; }
 @page labelletter { size: 8.5in 11in; margin: 0; }
 @media print {
@@ -174,6 +176,7 @@ html.reorder-drag { user-select: none; -webkit-user-select: none; cursor: grabbi
   html.printing-label .label { border: 0; border-radius: var(--radius-xs); box-shadow: none; aspect-ratio: auto; break-after: page; margin: var(--space-0); }
   html.printing-label .label:last-child { break-after: auto; }
   html.printing-label .label.size-4x6 { width: var(--label-4x6-w); max-width: none; height: var(--label-4x6-h); }
+  html.printing-label .label.size-dymo { width: var(--label-dymo-w); max-width: none; height: var(--label-dymo-h); }
   html.printing-label .label.size-half { width: var(--label-half-w); max-width: none; height: var(--label-half-h); }
   html.printing-label .label.size-letter { width: var(--label-letter-w); max-width: none; height: var(--label-letter-h); }
   html.printing-label body { background: var(--color-label-paper); }

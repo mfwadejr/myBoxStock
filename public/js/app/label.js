@@ -3,7 +3,7 @@
 (() => {
   const { esc, toast, sheet } = UI, A = AccountApp, C = A.commerce, F = A.fmt, S = A.store, D = C.delivery;
   const L = A.labels = {};
-  L.SIZES = [['4x6', '4 x 6 in (thermal printer)'], ['half', 'Half sheet of letter'], ['letter', 'Full letter page']];
+  L.SIZES = [['4x6', '4 x 6 in (thermal printer)'], ['dymo', 'DYMO 4XL / 5XL shipping label (104 x 159 mm)'], ['half', 'Half sheet of letter'], ['letter', 'Full letter page']];
   L.STYLES = [['themed', 'Themed (site look)'], ['plain', 'Plain (black and white)']];
   L.LOGOS = [['business', 'Use my business logo'], ['custom', 'Use a different logo for labels'], ['none', 'No logo']];
   const pick = (list, v, d) => list.some(x => x[0] === v) ? v : d;
@@ -11,7 +11,7 @@
   // The picture for a choice. A removed or missing logo simply means no logo, never an error.
   L.logoFor = (choice, cfg = L.cfg()) => { const src = choice === 'custom' ? cfg.customLogo : choice === 'business' ? (S.config().mail || {}).logo : ''; return /^data:image\/(png|jpeg|webp|gif);base64,/.test(src || '') ? src : ''; };
 
-  const SIZE_CLASS = { '4x6': 'size-4x6', half: 'size-half', letter: 'size-letter' }, LOOK_CLASS = { themed: 'style-themed', plain: 'style-plain' };
+  const SIZE_CLASS = { '4x6': 'size-4x6', dymo: 'size-dymo', half: 'size-half', letter: 'size-letter' }, LOOK_CLASS = { themed: 'style-themed', plain: 'style-plain' };
   L.html = (sale, o) => {
     const d = sale.data, dl = d.delivery || {}, to = dl.shipTo || {}, from = o.from || {}, fromLines = D.lines(from), logo = o.logo || '';
     const meta = [['Order', d.no], ['Date', F.day(d.ts)], ...(dl.carrier ? [['Carrier', dl.carrier]] : []), ...(dl.tracking ? [['Tracking', dl.tracking]] : [])];

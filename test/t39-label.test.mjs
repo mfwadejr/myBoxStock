@@ -14,7 +14,7 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 
 test('print rules: each label size has its own page size, and the plain style is pure black on white', () => {
   const css = fs.readFileSync(path.join(ROOT, 'public/css/commerce.css'), 'utf8'), tok = fs.readFileSync(path.join(ROOT, 'public/css/tokens.css'), 'utf8');
-  assert.match(css, /@page label4x6 \{ size: 4in 6in; margin: 0; \}/); assert.match(css, /@page labelhalf \{ size: 8\.5in 5\.5in; margin: 0; \}/); assert.match(css, /@page labelletter \{ size: 8\.5in 11in; margin: 0; \}/);
+  assert.match(css, /@page label4x6 \{ size: 4in 6in; margin: 0; \}/); assert.match(css, /@page labeldymo \{ size: 104mm 159mm; margin: 0; \}/); assert.match(css, /\.label\.size-dymo[^}]*page: labeldymo/); assert.match(css, /@page labelhalf \{ size: 8\.5in 5\.5in; margin: 0; \}/); assert.match(css, /@page labelletter \{ size: 8\.5in 11in; margin: 0; \}/);
   assert.match(css, /\.label\.size-4x6[^}]*page: label4x6/); assert.match(css, /\.label\.size-half[^}]*page: labelhalf/); assert.match(css, /\.label\.size-letter[^}]*page: labelletter/);
   assert.match(css, /break-after: page/); assert.match(tok, /--color-label-ink: #000000/); assert.match(css, /\.style-plain \.label-logo \{ filter: var\(--label-plain-filter\)/);
   assert.doesNotMatch(css, /barcode|qr/i, 'no barcode or QR styling');
