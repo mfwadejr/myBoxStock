@@ -78,7 +78,7 @@ The choices apply to the printed label and to **Download PDF**, and the Preview 
 1. In **Settings > Delivery and labels**, set **Default label size** to **DYMO 4XL / 5XL shipping label (104 x 159 mm)**, check the **Preview**, and press **Save changes**.
 2. Load 4 x 6 in shipping labels (DYMO 1744907) in the printer.
 3. Press **Print** on a label. In the print window choose your DYMO, set the paper size to the printer's 4 x 6 in shipping label size (it shows as 104 x 159 mm), Margins to **None** and Scale to **Default**.
-4. Before your first real parcel, press **Print test label** in Settings. The test label has four corner marks and six nested frames, 1 mm to 6 mm in from the edge. Look at which frames and marks print and which are cut off.
+4. Before your first real parcel, press **Print test label** in Settings. The test label has four corner marks and, in the middle of each side, a small ruler of six ticks from 1 mm to 6 mm long. Look at which corner marks and ticks print: the longest tick that is missing on a side is how far that edge is cut off.
 5. If the label sits too far to one side or is cut at the top or bottom, use **Printer fit** in Settings (below) to move it a little and print another test label. If every edge is cut, the paper size in the print window is wrong.
 6. On a Mac, open the **Presets** menu and save these choices as a preset, for example "DYMO label", so next time it is one choice. Chrome also remembers the last printer you used.
 

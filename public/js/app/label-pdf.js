@@ -52,7 +52,8 @@
     const round = (x, y, w, h, r, lw, c) => { const k = r * 0.5523, yb = H - y - h, t = yb + h;   // a rectangle with rounded corners, drawn with four curves
       out.push(`${col(c, true)} ${n(lw)} w ${n(x + r)} ${n(yb)} m ${n(x + w - r)} ${n(yb)} l ${n(x + w - r + k)} ${n(yb)} ${n(x + w)} ${n(yb + r - k)} ${n(x + w)} ${n(yb + r)} c ${n(x + w)} ${n(t - r)} l ${n(x + w)} ${n(t - r + k)} ${n(x + w - r + k)} ${n(t)} ${n(x + w - r)} ${n(t)} c ${n(x + r)} ${n(t)} l ${n(x + r - k)} ${n(t)} ${n(x)} ${n(t - r + k)} ${n(x)} ${n(t - r)} c ${n(x)} ${n(yb + r)} l ${n(x)} ${n(yb + r - k)} ${n(x + r - k)} ${n(yb)} ${n(x + r)} ${n(yb)} c S`); };
     if (o.border !== false) { const i = 0.08 * PT_IN; round(i, i, PGW - 2 * i, PGH - 2 * i, 0.12 * PT_IN, 1.1, [0, 0, 0]); }
-    if (o.test) for (let i = 1; i <= 6; i++) rect(i * PT_MM, i * PT_MM, PGW - 2 * i * PT_MM, PGH - 2 * i * PT_MM, 0.85, [0, 0, 0]);   // frames 1 to 6 mm in from each edge, to see what the printer clips
+    if (o.test) for (let i = 1; i <= 6; i++) { const off = (i - 3.5) * 3 * PT_MM, len = i * PT_MM;   // depth ruler: a tick i mm long at each side, stacked 3 mm apart in the empty middle
+      line(0, PGH / 2 + off, len, PGH / 2 + off, 0.85, [0, 0, 0]); line(PGW, PGH / 2 + off, PGW - len, PGH / 2 + off, 0.85, [0, 0, 0]); line(PGW / 2 + off, 0, PGW / 2 + off, len, 0.85, [0, 0, 0]); line(PGW / 2 + off, PGH, PGW / 2 + off, PGH - len, 0.85, [0, 0, 0]); }
     if (o.test) { const m = 0.15 * PT_IN; for (const [cx, cy, sx, sy] of [[0, 0, 1, 1], [PGW, 0, -1, 1], [0, PGH, 1, -1], [PGW, PGH, -1, -1]]) { line(cx, cy, cx + sx * m, cy, 1.1, [0, 0, 0]); line(cx, cy, cx, cy + sy * m, 1.1, [0, 0, 0]); } }
     // top: logo left, return address right
     const fromLines = D.lines(from), fh = (from.name ? T[0] * 1.3 : 0) + fromLines.length * T[1] * 1.3;

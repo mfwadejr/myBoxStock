@@ -51,8 +51,8 @@ test('browser: label border, text size, settings preview, test label and PDF dow
     assert.ok(oneLine, 'the tracking number is on a single line');
     const sameRow = await page.evaluate(() => { const top = (w) => [...document.querySelectorAll('.sheet .label-meta > .label-meta-row > div')].find(c => c.textContent.startsWith(w)).getBoundingClientRect().top; return Math.abs(top('Carrier') - top('Tracking')) < 2 && top('Order') < top('Carrier'); });
     assert.ok(sameRow, 'Carrier and Tracking are on the same row, below Order and Date');
-    // Printer fit: left/right, up/down and printed size reach the label and the PDF; the test label carries six frames
-    assert.equal(await page.locator('.sheet .label-frame').count(), 6, 'six nested frames on the test label');
+    // Printer fit: left/right, up/down and printed size reach the label and the PDF; the test label carries a depth ruler
+    assert.equal(await page.locator('.sheet .label-frame').count(), 0, 'no frames drawn across the label'); assert.equal(await page.locator('.sheet .label-tick').count(), 24, 'a depth ruler of six ticks on each side');
     await pick('lfx', '2'); await pick('lfy', '4'); await pick('lfit', '94');
     assert.deepEqual(await page.evaluate(() => { const l = document.querySelector('.sheet .label'), cs = getComputedStyle(l); return [l.dataset.sx, l.dataset.sy, l.dataset.fit, cs.getPropertyValue('--label-shift-x').trim(), cs.getPropertyValue('--label-shift-y').trim(), cs.getPropertyValue('--label-fit-scale').trim()]; }), ['2', '4', '94', '2mm', '4mm', '0.94']);
     const [dl2] = await Promise.all([page.waitForEvent('download'), page.click('#lpdf')]); const s2 = fs.readFileSync(await dl2.path()).toString('latin1');

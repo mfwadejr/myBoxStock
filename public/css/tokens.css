@@ -321,7 +321,9 @@
   --label-fit-98: 0.98;
   --label-fit-99: 0.99;
   --label-fit-100: 1;
-  --label-frame-w: 0.3mm;   /* the test label's nested frames, 1 to 6 mm in from each edge */
+  --label-frame-w: 0.3mm;   /* the test label's depth ruler: ticks 1 to 6 mm long at the middle of each side */
+  --label-frame-half: 0.5mm;
+  --label-depth: 1mm;   /* set per tick on the test label's depth ruler */
   --label-frame-1: 1mm;
   --label-frame-2: 2mm;
   --label-frame-3: 3mm;

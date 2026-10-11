@@ -3,6 +3,11 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.27.1] - 2026-10-11
+
+### Fixed
+- **The test label no longer has lines across it.** The six nested calibration frames added in 0.27.0 ran through the text and made the label hard to read. They are replaced by a small depth ruler in the middle of each side (six ticks, 1 to 6 mm long) plus the four corner marks: the longest tick missing on a side is how far that edge is cut off. Real labels are unchanged, and the ruler is also in the test PDF.
+
 ## [0.27.0] - 2026-10-11
 
 ### Added
@@ -12,7 +17,7 @@ These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.m
 - **Settings: Demo units and loans** for the reasons, the items that go with a device, the usual loan length and the test steps repeated on return. New documentation page **Demo units and loans** with screenshots; Home, Inventory, Customers, Settings, Your data and the glossary are updated, and the Host data page says loans are customer data the Host cannot read.
 
 ### Changed
-- **Shipping label fits the real DYMO 5XL stock.** The DYMO label is now 102 mm wide (the real stock) centred on the 104 mm page the driver uses, so the left and right edges are no longer clipped. **Printer fit** in Settings and in the label window moves the label up to 6 mm in any direction and prints it at 90% to 100% size, applied to the print and to Download PDF. The test label now carries six nested frames (1 to 6 mm in from the edge) and four corner marks so you can see exactly what your printer cuts off. Documented on the Shipping labels and Settings pages.
+- **Shipping label fits the real DYMO 5XL stock.** The DYMO label is now 102 mm wide (the real stock) centred on the 104 mm page the driver uses, so the left and right edges are no longer clipped. **Printer fit** in Settings and in the label window moves the label up to 6 mm in any direction and prints it at 90% to 100% size, applied to the print and to Download PDF. The test label carries four corner marks so you can see what your printer cuts off. Documented on the Shipping labels and Settings pages.
 
 ## [0.26.2] - 2026-10-11
 
