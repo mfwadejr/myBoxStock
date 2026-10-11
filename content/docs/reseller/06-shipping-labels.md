@@ -3,7 +3,7 @@ title: Shipping labels
 summary: Print an address label for a parcel in four sizes, in a themed or plain black-and-white style, with your logo and return address, one at a time or a whole To ship list at once.
 keywords: shipping label, label, print label, print labels, address label, return address, 4x6, 4 x 6, thermal, thermal printer, label printer, half sheet, letter, plain, themed, logo, label logo, delivery note, order number, tracking, carrier, pdf, batch, postage
 order: 6
-covers: Printer fit, Move left or right, Move up or down, Printed size, Centered, Top of page, 100% (full size), Print label, Print labels, Shipping label, Shipping labels, Size, Style, Logo, Change the return address for this print, Hide return address, 4 x 6 in (thermal printer), Half sheet of letter, Full letter page, Themed (site look), Plain (black and white), Use my business logo, Use a different logo for labels, No logo, Return address on labels, Default label size, Label style, Label logo, Choose logo, Remove logo, Order, Date, Carrier, Tracking, Delivery note, Delivery and labels, Border around the label, Text size, Label text size, Print test label, Download PDF, Preview
+covers: Printer fit, Fit to my printer, Print fit test page, Top edge, Bottom edge, Left edge, Right edge, Save fit, Tweak, Save as this browser's fit, This browser is not set up for your label printer, Use the suggested start, Print without adjusting, Other browsers, Forget, Move left or right, Move up or down, Printed size, Centered, Top of page, 100% (full size), Print label, Print labels, Shipping label, Shipping labels, Size, Style, Logo, Change the return address for this print, Hide return address, 4 x 6 in (thermal printer), Half sheet of letter, Full letter page, Themed (site look), Plain (black and white), Use my business logo, Use a different logo for labels, No logo, Return address on labels, Default label size, Label style, Label logo, Choose logo, Remove logo, Order, Date, Carrier, Tracking, Delivery note, Delivery and labels, Border around the label, Text size, Label text size, Print test label, Download PDF, Preview
 ---
 
 ## What shipping labels are for
@@ -65,17 +65,22 @@ In the print window, set margins to **None** or **Default** and turn **Headers a
 
 ## Printer fit
 
-Printers rarely print a label exactly where you expect: a thermal printer may feed a little to one side or lose an edge. **Printer fit** in **Settings > Delivery and labels** (and in the label window before you print) fixes that for every label:
+Printers rarely print a label exactly where you expect: a thermal printer may feed a little to one side or lose an edge, and each browser places it a little differently. **Fit to my printer** works this out once for each browser and label size, then applies it to every label you print and to **Download PDF**.
 
-- **Move left or right**: from 6 mm left to 6 mm right in 1 mm steps. **Centered** is the starting point.
-- **Move up or down**: from 6 mm up to 6 mm down. **Top of page** is the starting point.
-- **Printed size**: from 100% (full size) down to 90%, if the label is slightly too big for the stock.
+1. Open the label window (or **Settings > Delivery and labels**) and press **Fit to my printer**.
+2. Load your labels, press **Print fit test page** and choose your label printer, with the same paper size you use for labels.
+3. On the printed page, look at each edge. Each edge has a numbered ruler from 0 to 9 millimetres. Enter the lowest number you can read clearly at the **Top edge**, **Bottom edge**, **Left edge** and **Right edge**.
+4. The page shows the result, for example "3 mm down, 96%". Press **Save fit**.
 
-The choices apply to the printed label and to **Download PDF**, and the Preview and the test label show them straight away. Save changes in Settings once the test label fits.
+The fit is saved for the browser you are using. For the DYMO size, or any size another browser on your account has fitted, a browser with no fit yet asks first; other sizes print with no adjustment until you fit them. When you sign in from a different browser, the label window says **This browser is not set up for your label printer** and **Print** waits until you choose: **Use the settings from** another browser on your account, **Use the suggested start** (DYMO only), **Fit to my printer**, or **Print without adjusting**. Administrators' fits are kept with the account so other browsers can offer them; a Standard user's fit stays in their own browser.
+
+### Tweak
+
+**Tweak** opens three choices for fine adjustment: **Move left or right** and **Move up or down** (6 mm each way, in 1 mm steps) and **Printed size** (100% down to 90%). The label is resized from its centre. Press **Save as this browser's fit** to keep a change. In Settings, **Other browsers** lists the fits saved for your account, each with **Forget**.
 
 ### A worked example
 
-On a DYMO 5XL with 4 x 6 in (1744907) labels in Chrome, the label first printed with the top border cut off and a gap at the bottom. Setting **Move up or down** to 6 mm down and **Printed size** to 95% made all four sides print. If one side then still shows a wider gap than the other, move the label a millimetre or two towards the wider gap. Your printer and driver may need different numbers.
+On a DYMO 5XL with 4 x 6 in (1744907) labels in Chrome the printer starts a few millimetres in from the top. The fit test page gave 6 at the top and 0 at the other edges, which the app turned into "3 mm down, 96%", and all four sides then printed. The DYMO **suggested start** is 2 mm down at 95%. Your printer and driver may need different numbers.
 
 ## Setting up a DYMO LabelWriter 4XL or 5XL
 
@@ -83,7 +88,7 @@ On a DYMO 5XL with 4 x 6 in (1744907) labels in Chrome, the label first printed 
 2. Load 4 x 6 in shipping labels (DYMO 1744907) in the printer.
 3. Press **Print** on a label. In the print window choose your DYMO, set the paper size to the printer's 4 x 6 in shipping label size (it shows as 104 x 159 mm), Margins to **None** and Scale to **Default**.
 4. Before your first real parcel, press **Print test label** in Settings. It is exactly what a real label looks like, with made-up sample data, so nothing extra is printed on it. Check that the thin rounded border is complete on all four sides and nothing is cut off.
-5. If the border is cut off or the label sits off-centre on the stock, use **Printer fit** (below), print another test label, and repeat. Print the test label on the printer's own paper size: if every edge is cut, the paper size in the print window is wrong.
+5. If the border is cut off or the label sits off-centre on the stock, use **Fit to my printer** (above), print another test label, and repeat. Print the test label on the printer's own paper size: if every edge is cut, the paper size in the print window is wrong.
 6. On a Mac, open the **Presets** menu and save these choices as a preset, for example "DYMO label", so next time it is one choice. Chrome also remembers the last printer you used.
 
 If the label is cut off or has a blank strip, check that the paper size in the print window is the same as the Size on the label.

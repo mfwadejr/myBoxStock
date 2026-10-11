@@ -209,9 +209,7 @@ Rules that always hold: every field below sits inside an encrypted record (type 
 | `config.label.look` | Themed or Plain | yes | settings.json | - |
 | `config.label.border` | Border around the label (on by default) | yes | settings.json | - |
 | `config.label.text` | Label text size: Standard, Larger or Largest | yes | settings.json | - |
-| `config.label.shiftX` | Printer fit: move the label left or right (mm) | yes | settings.json | - |
-| `config.label.shiftY` | Printer fit: move the label up or down (mm) | yes | settings.json | - |
-| `config.label.fit` | Printer fit: printed size (percent) | yes | settings.json | - |
+| `config.label.fits` | Printer fit saved by Administrators for each browser and label size, offered to other browsers | yes | settings.json | - |
 | `config.label.logo` | Business logo, a different logo, or none | yes | settings.json | - |
 | `config.label.customLogo` | The different logo, as a small image kept in the record | yes | settings.json | - |
 | `config.label.returnAddress` | Return address printed on labels | yes | settings.json | - |
@@ -241,6 +239,7 @@ These are per-person conveniences kept in the browser. After a restore on a new 
 | Field | Meaning | Backup | Export | Import |
 | --- | --- | --- | --- | --- |
 | `browser.mbs.lowcard.<userId>` | Running low card hidden by this person | not backed up | - | - |
+| `browser.mbs.labelfit.<accountCode>` | This browser's Printer fit for each label size (and a random id for the browser) | not backed up | - | - |
 | `browser.mbs.backupNudge` | Backup reminder closed for today | not backed up | - | - |
 | `browser.mbs.resellerId` | Last Reseller ID typed on the sign-in screen | not backed up | - | - |
 | `browser.mbs.scanSize` | Phone scanner box size | not backed up | - | - |

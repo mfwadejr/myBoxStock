@@ -12,6 +12,7 @@ const EVENTS = {
   labeltest: ['sales.read', 'printed a test shipping label (sample data, no sale)'],
   loanout: ['inventory.write', 'lent a device out (demo, RMA or loan)'],
   loanin: ['inventory.write', 'took a loaned device back'],
+  labelfit: ['sales.read', 'printed a printer fit test page'],
   labelpdf: ['sales.read', 'downloaded a shipping label as a PDF'],
 };
 

@@ -183,6 +183,12 @@ html.reorder-drag { user-select: none; -webkit-user-select: none; cursor: grabbi
 .label.size-dymo { max-width: var(--label-dymo-w); aspect-ratio: var(--label-dymo-ratio); page: labeldymo; }
 .label.size-half { max-width: var(--label-half-w); aspect-ratio: var(--label-half-ratio); padding: var(--label-pad-lg); page: labelhalf; }
 .label.size-letter { max-width: var(--label-letter-w); aspect-ratio: var(--label-letter-ratio); padding: var(--label-pad-lg); page: labelletter; }
+.label.fitcal { padding: var(--space-0); border: 0; border-radius: var(--radius-xs); box-shadow: none; }
+.fitcal-svg line { stroke: currentColor; stroke-width: var(--fit-line-w); }
+.fitcal-svg text { fill: currentColor; }
+.fit-n { font-size: var(--fit-text-n); } .fit-s { font-size: var(--fit-text-s); } .fit-b { font-size: var(--fit-text-b); font-weight: var(--weight-semibold); } .fit-h { font-size: var(--fit-text-h); font-weight: var(--weight-semibold); }
+.fit-start { text-anchor: start; } .fit-middle { text-anchor: middle; } .fit-end { text-anchor: end; }
+.fitcal-svg { display: block; width: 100%; height: 100%; color: var(--color-label-ink); font-family: var(--font-sans); }
 .label-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-md); padding-bottom: var(--space-md); border-bottom: var(--label-rule) solid var(--color-primary); }
 .style-themed .label-top { border-bottom-color: var(--color-primary); }
 .style-plain .label-top { border-bottom-color: var(--color-label-ink); }
@@ -228,7 +234,7 @@ html.reorder-drag { user-select: none; -webkit-user-select: none; cursor: grabbi
   html.printing-label .label:last-child { break-after: auto; }
   html.printing-label .label.size-4x6 { width: var(--label-4x6-w); max-width: none; height: var(--label-4x6-h); }
   html.printing-label .label.size-dymo { width: var(--label-dymo-w); max-width: none; height: var(--label-dymo-h); margin: var(--space-0) auto; }   /* the 102 mm label is centred on the driver's 104 mm page */
-  html.printing-label .label { transform: translate(var(--label-shift-x), var(--label-shift-y)) scale(var(--label-fit-scale)); transform-origin: top center; }
+  html.printing-label .label { transform: translate(var(--label-shift-x), var(--label-shift-y)) scale(var(--label-fit-scale)); transform-origin: center; }
   html.printing-label .label.size-half { width: var(--label-half-w); max-width: none; height: var(--label-half-h); }
   html.printing-label .label.size-letter { width: var(--label-letter-w); max-width: none; height: var(--label-letter-h); }
   html.printing-label body { background: var(--color-label-paper); }

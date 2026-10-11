@@ -87,8 +87,8 @@
     let img = 0; if (logo) img = add({ dict: `<< /Type /XObject /Subtype /Image /Width ${logo.w} /Height ${logo.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode`, data: logo.data });
     const pages = [];
     for (const s of sales) {
-      const aw = ART[o.size] || PW, k = Math.min(1, Math.max(0.9, (Number(o.fit) || 100) / 100)), sx = (Number(o.shiftX) || 0) * PT_MM, sy = (Number(o.shiftY) || 0) * PT_MM;   // Printer fit, about the top centre of the label
-      const matrix = `${n(k)} 0 0 ${n(k)} ${n((PW - aw) / 2 + aw / 2 * (1 - k) + sx)} ${n(PH * (1 - k) - sy)} cm`;
+      const aw = ART[o.size] || PW, k = Math.min(1, Math.max(0.9, (Number(o.fit) || 100) / 100)), sx = (Number(o.shiftX) || 0) * PT_MM, sy = (Number(o.shiftY) || 0) * PT_MM;   // Printer fit, about the centre of the label
+      const matrix = `${n(k)} 0 0 ${n(k)} ${n((PW - aw) / 2 + aw / 2 * (1 - k) + sx)} ${n(PH / 2 * (1 - k) - sy)} cm`;
       const stream = bytes(`q ${matrix}\n${drawLabel(s, o, logo, aw, PH)}\nQ`), c = add({ dict: '<<', data: stream });
       pages.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n(PW)} ${n(PH)}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>${img ? ` /XObject << /Im1 ${img} 0 R >>` : ''} >> /Contents ${c} 0 R >>`));
     }

@@ -277,6 +277,11 @@
   --label-half-ratio: 17 / 11;
   --label-letter-ratio: 17 / 22;
   --label-pad: 0.2in;
+  --fit-line-w: 0.2px;   /* the fit test page is drawn in millimetres: 1 unit = 1 mm */
+  --fit-text-n: 2.2px;
+  --fit-text-s: 2.6px;
+  --fit-text-b: 3.2px;
+  --fit-text-h: 5px;
   --label-pad-lg: 0.5in;
   --label-logo-w: 1.1in;
   --label-logo-h: 0.6in;

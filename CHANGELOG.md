@@ -3,6 +3,15 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.28.0] - 2026-10-11
+
+### Added
+- **Fit to my printer.** Print a numbered fit test page, enter what you can read at each edge, and the app works out the shift and size for this browser and label size. It applies to printed labels and Download PDF. A browser that has no fit yet asks before printing and can reuse another browser's fit on the account, or the DYMO suggested start. The manual move and size choices now live under **Tweak**, and Settings lists **Other browsers** with **Forget**.
+
+### Changed
+- Labels shrink from their centre, not the top corner, in print and in PDF.
+- The shift and size are no longer one account-wide setting; they are kept per browser (and mirrored into the account by Administrators).
+
 ## [0.27.2] - 2026-10-11
 
 ### Fixed

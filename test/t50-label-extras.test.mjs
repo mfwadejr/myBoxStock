@@ -37,7 +37,7 @@ test('browser: label border, text size, settings preview, test label and PDF dow
 
     // Print test label: sample data, no sale recorded
     const before = await page.evaluate(() => AccountApp.store.entries ? AccountApp.store.entries('sale').length : -1);
-    await page.click('#ltest'); await page.waitForSelector('.sheet .label');
+    await page.click('#ltest'); await page.waitForSelector('.sheet .label'); assert.ok(await page.locator('.sheet #lprint').isDisabled(), 'printing waits until this browser has a fit'); await page.click('.sheet #lnone'); await page.waitForSelector('.sheet #lfittw');
     const txt = await page.textContent('.sheet .label'); assert.match(txt, /SAMPLE/); assert.match(txt, /77 Preview Lane/, 'the test label uses the unsaved settings');
     assert.equal(await page.locator('.sheet .label-mark, .sheet .label-tick, .sheet .label-frame').count(), 0, 'the test label has no measuring marks: it is the real label with sample data');
     assert.equal(await page.locator('.sheet h2').textContent(), 'Test label');
@@ -53,7 +53,7 @@ test('browser: label border, text size, settings preview, test label and PDF dow
     assert.ok(sameRow, 'Carrier and Tracking are on the same row, below Order and Date');
     // Printer fit: left/right, up/down and printed size reach the label and the PDF
    
-    await pick('lfx', '2'); await pick('lfy', '4'); await pick('lfit', '94');
+    await page.click('.sheet #lfittw'); await pick('lfx', '2'); await pick('lfy', '4'); await pick('lfit', '94');
     assert.deepEqual(await page.evaluate(() => { const l = document.querySelector('.sheet .label'), cs = getComputedStyle(l); return [l.dataset.sx, l.dataset.sy, l.dataset.fit, cs.getPropertyValue('--label-shift-x').trim(), cs.getPropertyValue('--label-shift-y').trim(), cs.getPropertyValue('--label-fit-scale').trim()]; }), ['2', '4', '94', '2mm', '4mm', '0.94']);
     const [dl2] = await Promise.all([page.waitForEvent('download'), page.click('#lpdf')]); const s2 = fs.readFileSync(await dl2.path()).toString('latin1');
     assert.match(s2, /q 0\.94 0 0 0\.94 /, 'the PDF is drawn at 94%'); assert.match(s2, /\/MediaBox \[0 0 294\.8 450\.71\]/);
