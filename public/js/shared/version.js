@@ -2,9 +2,9 @@
 (() => {
   fetch('/healthz').then((r) => r.json()).then((h) => {
     if (!h.version) return;
-    const b = document.createElement('div'); b.className = 'version-badge';
+    const b = document.createElement('aside'); b.className = 'version-badge';
     b.textContent = `v${h.version}${h.build ? ` · ${h.build}` : ''}`;
-    b.title = 'Deployed version';
+    b.title = 'Deployed version'; b.setAttribute('aria-label', 'Deployed version');
     document.body.append(b);
   }).catch(() => {});
 })();

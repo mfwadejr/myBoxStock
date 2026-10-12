@@ -18,7 +18,7 @@
   --color-code-bg: #f5f5f7;
 
   /* ---- color: brand & status ---- */
-  --color-primary: #0066cc;
+  --color-primary: #0062c4;
   --color-primary-hover: #0071e3;
   --color-primary-soft: rgba(0, 113, 227, 0.1);
   --color-primary-text: #00479b;
@@ -29,7 +29,7 @@
   --color-danger: #c40016;
   --color-danger-soft: rgba(215, 0, 21, 0.09);
   --color-danger-soft-hover: rgba(215, 0, 21, 0.16);
-  --color-warning: #9a5200;
+  --color-warning: #8f4c00;
   --color-warning-soft: rgba(255, 159, 10, 0.15);
   --color-warning-text: #7a4300;
   --color-warning-bar: #ff9f0a;

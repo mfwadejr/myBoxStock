@@ -135,7 +135,7 @@ button.chip.on { box-shadow: inset 0 0 0 var(--border-width) currentColor; }
 .linkish { background: none; border: 0; padding: 0; font: inherit; font-size: var(--text-xs); color: var(--color-primary); cursor: pointer; }
 
 /* ---- deployed version badge ---- */
-.version-badge { position: fixed; z-index: var(--z-raised); right: var(--space-md); bottom: var(--space-sm); font-size: var(--text-micro); color: var(--color-text-faint); font-family: var(--font-mono); opacity: var(--opacity-icon); pointer-events: none; user-select: none; }
+.version-badge { position: fixed; z-index: var(--z-raised); right: var(--space-md); bottom: var(--space-sm); font-size: var(--text-micro); color: var(--color-text-muted); font-family: var(--font-mono); pointer-events: none; user-select: none; }
 
 /* ---- checkbox row & disclosure ---- */
 .check { display: flex; align-items: center; gap: var(--space-sm); font-weight: var(--weight-regular); color: var(--color-text); }
@@ -155,9 +155,9 @@ details[open] > summary { margin-bottom: var(--space-xs); }
 .seg.tabs.more-end { -webkit-mask-image: linear-gradient(to left, transparent, black var(--space-2xl)); mask-image: linear-gradient(to left, transparent, black var(--space-2xl)); }
 .seg.tabs.more-start.more-end { -webkit-mask-image: linear-gradient(to right, transparent, black var(--space-2xl), black calc(100% - var(--space-2xl)), transparent); mask-image: linear-gradient(to right, transparent, black var(--space-2xl), black calc(100% - var(--space-2xl)), transparent); }
 
-/* ---- guided setup steps (Host Backups): a numbered list of steps; a locked step is dimmed until the one before it is done ---- */
+/* ---- guided setup steps (Host Backups): a numbered list of steps; a locked step is shown in the muted text colour until the one before it is done ---- */
 .setup-step { padding: var(--space-md) var(--space-0); border-top: var(--border-default); }
-.setup-step.locked { opacity: var(--opacity-disabled); }
+.setup-step.locked .setting-title, .setup-step.locked .setting-desc { color: var(--color-text-muted); }
 
 /* ---- themed dropdown (the ONLY dropdown: UI.select) ---- */
 .select { position: relative; display: inline-block; min-width: var(--width-xs); }

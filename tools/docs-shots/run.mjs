@@ -32,7 +32,7 @@ export async function compress(buf, limit = LIMIT) {
 }
 
 // ---- Demo data and server -------------------------------------------------------------------------------------------------------------------------------------------------------
-async function buildDemo(setKey, dir) {
+export async function buildDemo(setKey, dir) {
   process.env.DATA_DIR = dir;
   const { initDb } = await import(pathToFileURL(path.join(ROOT, 'src/db/connection.mjs')));
   const demo = await import(pathToFileURL(path.join(ROOT, 'src/services/demo/index.mjs')));
@@ -45,7 +45,7 @@ async function buildDemo(setKey, dir) {
   if (!logins.Owner) throw new Error('the Demo set has no Owner login');
   return logins;
 }
-async function startServer(dir) {
+export async function startServer(dir) {
   const port = 19000 + Math.floor(Math.random() * 900), base = `http://127.0.0.1:${port}`;
   const proc = spawn('node', ['server.mjs'], { env: { ...process.env, PORT: String(port), DATA_DIR: dir }, cwd: ROOT });
   let out = ''; proc.stdout.on('data', d => { out += d; }); proc.stderr.on('data', d => { out += d; });
@@ -58,7 +58,7 @@ async function api(base, jar, method, url, body) {
   const j = await r.json().catch(() => ({})); if (j.csrf) jar.csrf = j.csrf; return { status: r.status, data: j };
 }
 // The Host admin starts with a temporary password; set a throw-away one through the API and switch the request limiter off (this server is disposable).
-async function prepareHost(srv) {
+export async function prepareHost(srv) {
   const jar = { c: {}, csrf: '' }, pw = 'Shots-' + Math.random().toString(36).slice(2) + 'Aa1!';
   const l = await api(srv.base, jar, 'POST', '/api/host/login', { login: 'admin', password: srv.hostPw }); if (l.status !== 200) throw new Error('Host admin sign-in failed');
   jar.csrf = l.data.csrf || '';
@@ -68,7 +68,7 @@ async function prepareHost(srv) {
 }
 
 // ---- browser -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-async function launch() {
+export async function launch() {
   let chromium; for (const p of ['playwright', '/opt/npm-tools/node_modules/playwright/index.mjs']) { try { const m = await import(p); chromium = m.chromium || m.default.chromium; break; } catch {} }
   if (!chromium) throw new Error('playwright is not available');
   const exe = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium';

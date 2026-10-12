@@ -117,7 +117,7 @@ test('no banned phrases: no notify-me or waitlist, no trial or price or plan-lim
 test('images: every screenshot a page uses is in the build, the PNGs are small, with alt text and sizes', () => {
   let n = 0;
   for (const f of files) for (const m of read(f).matchAll(/<img[^>]*src="(ms\/shots\/[^"]+)"[^>]*>/g)) {
-    n++; const file = path.join(dir, m[1]); assert.ok(fs.existsSync(file), `${f}: ${m[1]} is missing`); assert.ok(fs.statSync(file).size < 250 * 1024, `${m[1]} is over 250 KB`);
+    n++; const file = path.join(dir, m[1].split("?")[0]); assert.ok(fs.existsSync(file), `${f}: ${m[1]} is missing`); assert.ok(fs.statSync(file).size < 250 * 1024, `${m[1]} is over 250 KB`);
     assert.match(m[0], /alt="[^"]{8,}"/); assert.match(m[0], /width="\d+" height="\d+"/); assert.match(m[0], /loading="lazy"/);
   }
   assert.ok(n >= 10, 'the pages show screenshots');

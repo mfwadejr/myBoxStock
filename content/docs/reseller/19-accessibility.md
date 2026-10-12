@@ -39,6 +39,10 @@ Messages that appear and fade ("Saved", "Could not save") are read out politely 
 - You can zoom the page or enlarge the text in your browser, and the layout reflows without sideways scrolling.
 - If your device is set to **Reduce motion**, myBoxStock turns off its slide, fade and progress animations.
 
+## What is checked in every release
+
+Every release runs an automated check, with the open-source axe-core tool, over every screen of the app and the common windows, at the width of a phone and of a laptop. It fails the build if a button, field, switch or dropdown has no spoken name, if a text colour is too faint, if a link in a sentence is told apart only by colour (links in text are underlined), if headings skip a level, or if the keyboard can no longer reach a window or close it with **Escape**. It does not replace a person trying it, so if you find something the check missed, please report it below.
+
 ## Report an accessibility problem
 
 If something cannot be reached, read or used the way this page describes, please tell us.

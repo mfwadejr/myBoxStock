@@ -3,6 +3,19 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.30.0] - 2026-10-13
+
+An accessibility sweep of the reseller app and the Host Console.
+
+### Added
+- **An accessibility check in the tests.** Every release now runs the axe-core checker over every reseller and Host screen and the common windows, at phone and laptop width, and a keyboard test for windows and dropdowns. The build fails if anything slips. (`tools/a11y/audit.mjs` runs the same check by hand and lists every finding.)
+- **One shared script, `shared/a11y.js`,** that gives a spoken name to dropdowns, switches and check boxes that have no visible label, hides a word in empty table headings, makes scrollable code areas reachable by keyboard, and keeps heading levels in order.
+
+### Changed
+- Links inside sentences are underlined, so they no longer rely on colour alone.
+- Two colours were darkened a little to pass the contrast level: the blue (`--color-primary`) and the amber (`--color-warning`). The version badge is now plain muted text, and locked setup steps use the muted text colour instead of fading.
+- The version badge is a labelled landmark, and the Settings field table checkboxes and the two Firewall switches have names.
+
 ## [0.29.0] - 2026-10-12
 
 A large release: seven additions for resellers and eight for the Host.

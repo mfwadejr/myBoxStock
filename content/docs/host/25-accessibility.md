@@ -38,16 +38,18 @@ Changes are announced politely without moving your place: a toast ("Saved") is r
 
 ## What is checked in every release
 
-Accessibility is not a one-time job. Every release runs an automated test that opens the main Host and reseller screens in a real browser, at the width of a phone and of a laptop, and fails the build if any of these slip:
+Accessibility is not a one-time job. Every release runs an automated test that opens every Host and reseller screen, and the common windows, in a real browser at the width of a phone and of a laptop. It uses the open-source axe-core checker, and it fails the build if any of these slip:
 
 - a button, field, switch, check box or icon-only control has no spoken name;
 - a screen asks for a tab order other than the natural one (a positive tab index);
 - the focus ring cannot be seen on a control reached with **Tab**;
 - **Escape** does not close a window, or focus does not return to the button that opened it;
 - the page scrolls sideways;
-- any text colour, chip, banner or button falls below the contrast level.
+- any text colour, chip, banner or button falls below the contrast level;
+- a link inside a sentence is told apart only by its colour (links in text are underlined);
+- the headings on a page skip a level, or a table has an empty column heading.
 
-The colours live in one place, the design tokens, so fixing a faint colour there fixes it everywhere. When you add a page or a setting, give every control a visible label or a name, and the test will confirm it.
+One small script, shared by every screen, gives a spoken name to any dropdown, switch or check box that sits in a row with a title, and keeps heading levels in order. The colours live in one place, the design tokens, so fixing a faint colour there fixes it everywhere. When you add a page or a setting, give every control a visible label or a name, and the test will confirm it.
 
 ## Report an accessibility problem
 

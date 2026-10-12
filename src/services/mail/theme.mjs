@@ -7,7 +7,7 @@ export const EMAIL_THEME = {
   '--color-text-muted': '#5f5f64',
   '--color-text-faint': '#6b6b70',
   '--color-line': 'rgba(0, 0, 0, 0.08)',
-  '--color-primary': '#0066cc',
+  '--color-primary': '#0062c4',
   '--color-primary-on': '#ffffff',
   '--radius-lg': '18px',
   '--radius-pill': '999px',
