@@ -64,7 +64,7 @@ export function fitCheck(facts, manifest) {
 }
 
 // Fetches the copy into `dir` and checks it is whole. Returns { file, size, sha, stat } or pushes a failed check and returns null.
-async function fetchCopy(db, destId, name, dir, checks) {
+export async function fetchCopy(db, destId, name, dir, checks) {
   let d, c;
   try { d = await getDestination(db, destId); c = clientFor(d); } catch (e) { checks.push(bad('The destination can be reached', e.message)); return null; }
   let stat;

@@ -3,10 +3,19 @@ import express from 'express';
 import { need, tenantLog } from './context.mjs';
 import { verifyPassword } from '../../auth/password.mjs';
 import { startClosing, restoreClosing, GRACE_DAYS } from '../../services/accounts/closing.mjs';
+import { usageFor, wouldBreak, breakText } from '../../services/limits/index.mjs';
 import { fail } from '../../core/messages.mjs';
 
 export function accountRoutes(db) {
   const r = express.Router(), mine = (req) => db.get('SELECT id, account_code, business_name, owner_email, closing_at FROM accounts WHERE id = ?', [req.subject.account_id]);
+  // The plan's limits and how much of each is used. Read-only, for any signed-in person: they are counts, not business data.
+  r.get('/plan', async (req, res) => res.json({ usage: (await usageFor(db, { id: req.subject.account_id })).filter(u => u.limit != null) }));
+  // Before a big import: would adding this many break a limit that blocks? adds = { item: 1200 }. Nothing is saved either way.
+  r.post('/plan/check', async (req, res) => {
+    const adds = {}; for (const k of ['item', 'sale', 'customer', 'model', 'users', 'admins']) { const n = Math.floor(Number(req.body?.adds?.[k])); if (n > 0) adds[k] = Math.min(n, 1e7); }
+    const hit = await wouldBreak(db, { id: req.subject.account_id }, adds);
+    res.json(hit ? { ok: false, error: breakText(hit), limit: hit.id } : { ok: true });
+  });
   r.post('/close', need('users.manage'), async (req, res) => {
     const u = req.subject, a = await mine(req);
     if (a.closing_at) return res.status(400).json({ error: 'This account is already closing.' });

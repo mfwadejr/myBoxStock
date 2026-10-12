@@ -1,9 +1,9 @@
 ---
 title: Home
 summary: Your daily dashboard: how many devices you have ready to sell, what you sold and earned this month, which models are running low, and your latest sales.
-keywords: home, backup reminder, back up now, not today, site restored, dashboard, overview, stats, available devices, revenue, profit, low stock, reorder, recent sales, this month, banner, trial, read-only, receipt, running low, out of stock, per model, refunds this month, hide card, show all
+keywords: home, backup reminder, back up now, not today, site restored, dashboard, overview, stats, available devices, revenue, profit, low stock, reorder, recent sales, this month, banner, trial, read-only, receipt, running low, out of stock, per model, refunds this month, hide card, show all, warranty ending
 order: 2
-covers: nav:home, On demo, Overdue, See all, Get set up, Dismiss, Add your first device, Check your payment methods, Make your first sale, Add a team member, Make your first backup, Save your recovery key, Backup reminder, Back up now, Not today, Your last backup was, You have not made a backup yet, site restored banner, Quick sale, Available devices, Devices sold this month, Revenue this month, Profit this month, Low stock, Recent sales, Date, Receipt, Customer, Total, Walk-in, email confirmation banner, Send it again, announcement banner, Close, closing account banner, Restore account, records could not be opened, free trial chip, Trial ended read-only, Running low, Out of stock, Low, Show all, Show fewer, Hide, Show it, Refunds this month, after refunds
+covers: nav:home, On demo, Overdue, See all, Get set up, Dismiss, Add your first device, Check your payment methods, Make your first sale, Add a team member, Make your first backup, Save your recovery key, Backup reminder, Back up now, Not today, Your last backup was, You have not made a backup yet, site restored banner, Quick sale, Available devices, Devices sold this month, Revenue this month, Profit this month, Low stock, Recent sales, Date, Receipt, Customer, Total, Walk-in, email confirmation banner, Send it again, announcement banner, Close, closing account banner, Restore account, records could not be opened, free trial chip, Trial ended read-only, Running low, Out of stock, Low, Show all, Show fewer, Hide, Show it, Refunds this month, after refunds, Sitting too long, Warranty ending soon, Send all reminders
 ---
 
 ## What Home is for
@@ -166,3 +166,12 @@ At the top of every page, next to your username button, a blue chip shows the da
 **"The Quick sale button is missing."** Your user type does not include recording sales. Ask an Administrator. See [Team](#/docs/team).
 
 **"Profit looks too good."** Costs are probably missing on some devices. Add them in [Inventory](#/docs/inventory).
+
+## More cards on Home
+
+Home shows a few extra cards when there is something to look at. None of them is permanent; each disappears when there is nothing to show.
+
+- **Sitting too long** counts devices that have been on your shelf for your chosen number of days, with a link to the list in [Reports](#/docs/reports).
+- **Warranty ending soon** lists sales whose warranty ends in the next 30 days (you can change that number in [Settings](#/docs/settings) under Reminders). Each row has an optional **Send reminder** button for the customer, and **Send all reminders** does the whole list. Sales shows the same sales under the **Ending soon** filter.
+- **On demo** now has **Send reminder** buttons for overdue loans, described in [Demo units and loans](#/docs/demo-units-and-loans).
+- **Your plan** appears when your provider has given your plan limits. It shows each limit with how much of it you have used, and a notice once you are close to a limit or at it. It means the same as the numbers in [Plans, trials and billing](#/docs/plans-trials-billing).

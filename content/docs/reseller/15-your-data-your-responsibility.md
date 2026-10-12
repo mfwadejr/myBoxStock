@@ -1,7 +1,7 @@
 ---
 title: Your data, your responsibility
 summary: How your data is encrypted, what the site can and cannot see, and what you must do to keep your business information safe: your password, your recovery key and your own exports.
-keywords: models.csv, reorder levels in export, what is exported, what is in the backup, encryption, zero-knowledge, recovery key, export, backup, backup file, mbsbackup, how often to back up, host restore, restore, add what is missing, ownership, responsibility, lost password, lost key, privacy, erase, close account, 7 days, data loss, who can see my data, checklist, returns.csv, refunds
+keywords: models.csv, reorder levels in export, what is exported, what is in the backup, encryption, zero-knowledge, recovery key, export, backup, backup file, mbsbackup, how often to back up, host restore, restore, add what is missing, ownership, responsibility, lost password, lost key, privacy, erase, close account, 7 days, data loss, who can see my data, checklist, returns.csv, refunds, provider restore, restored account, data loss
 order: 15
 covers: models.csv, loans.csv, what an export contains, encryption, recovery key, export, backups, backup file, how often to back up, where to keep the backup, after a Host restore, Add what is missing, Back up now, Backup reminder, ownership, Export everything, Close account, Restore account, Unlock behaviour, Create new recovery key, 7 days, checklist, returns.csv
 ---
@@ -245,3 +245,7 @@ Print this or put it in your calendar.
 - [Settings](#/docs/settings) for the unlock behaviour.
 - [Plans, trials and billing](#/docs/plans-trials-billing) for what read-only means.
 - [Glossary](#/docs/glossary) for plain meanings of terms such as recovery key.
+
+## When your provider restores your account
+
+Your provider can put your account back from a backup they hold. The account returns to the moment of that backup, which may be a day or more old, and whatever you entered after it is not in it. You own your data, and you own that loss: the provider is not able to read or rebuild entries made after the backup, because they cannot open your records at all. The way to protect yourself is your own backup file. A recent one lets you choose **Add what is missing** and get the newer entries back. See [Backup and restore](#/docs/backup-and-restore).

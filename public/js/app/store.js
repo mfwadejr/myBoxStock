@@ -22,6 +22,7 @@
   S.commit = async ({ puts = [], deletes = [] }) => {
     const body = { puts: [], deletes: deletes.map(d => ({ id: d.id })) }, ids = [];
     for (const p of puts) { const id = p.id || Vault.newId(), cur = S.get(p.type, id); ids.push(id); body.puts.push({ id, type: p.type, rev: cur ? cur.rev : 0, blob: await Vault.seal(AccountApp.vault.adk, p.data, id, p.type) }); }
+    AccountApp.plan?.reset();
     try { var res = await AccountApp.api('POST', '/vault/batch', body); }
     catch (e) { if (e.status === 409) await S.load(); throw e; }
     const now = Date.now();
@@ -29,6 +30,9 @@
     for (const d of deletes) S.data[d.type].delete(d.id);
     return ids;
   };
+
+  // Plan limits: ask before a big import whether it would go over a limit that blocks, so a file is never half imported. Throws with the reason in plain words.
+  S.planCheck = async (adds) => { AccountApp.plan?.reset(); const r = await AccountApp.api('POST', '/account/plan/check', { adds }); if (!r.ok) throw new Error(r.error); };
 
   // ---- helpers shared by the views ----
   AccountApp.fmt = {
@@ -74,6 +78,8 @@
     ],
     tests: { enabled: true, requireBeforeSale: false },
     firstRun: { dismissed: false },
+    reports: { agedDays: 60 },
+    reminders: { warrantyDays: 30 },
     returns: { reasons: [{ key: 'mind', label: 'Changed their mind' }, { key: 'faulty', label: 'Faulty or not working' }, { key: 'described', label: 'Not as described' }, { key: 'wrong', label: 'Wrong item' }, { key: 'other', label: 'Other' }], standardCan: true, limit: 0, fee: { mode: 'none', value: 0 } },
     loans: { reasons: [{ key: 'demo', label: 'Demo or trial', canKeep: true }, { key: 'rma', label: 'RMA replacement', canKeep: true }, { key: 'repair', label: 'Loaner during a repair', canKeep: false }, { key: 'other', label: 'Other', canKeep: true }], items: [{ key: 'device', label: 'Device' }, { key: 'remote', label: 'Remote' }, { key: 'batteries', label: 'Batteries' }, { key: 'power', label: 'Power Adapter' }, { key: 'hdmi', label: 'HDMI Cable' }], retestOff: [], dueDays: 0 },
     mail: { enabled: false, host: '', port: 587, secure: false, user: '', pass: '', fromName: '', fromAddress: '', wording: {}, logo: '' },
@@ -88,6 +94,6 @@
   // Demo and loan settings: reasons (each says if the customer may keep the device), what goes with a loaned device, which test steps are not repeated on return, and the usual loan length.
   const loanNorm = (r) => { r = r || {}; const d = S.defaults().loans;
     return { reasons: Array.isArray(r.reasons) && r.reasons.length ? r.reasons.map(x => ({ key: String(x.key), label: String(x.label || ''), canKeep: !!x.canKeep, archived: !!x.archived })) : d.reasons, items: Array.isArray(r.items) ? r.items.map(x => ({ key: String(x.key), label: String(x.label || '') })) : d.items, retestOff: Array.isArray(r.retestOff) ? r.retestOff.map(String) : [], dueDays: Math.max(0, Math.min(365, Math.round(Number(r.dueDays) || 0))) }; };
-  S.config = () => { const c = S.get('config', CONFIG_ID)?.data; if (!(c && Array.isArray(c.fields) && Array.isArray(c.steps))) return S.defaults(); return { ...c, steps: upgraded(c.steps), tests: { enabled: c.tests?.enabled !== false, requireBeforeSale: !!c.tests?.requireBeforeSale }, warranty: c.warranty?.periods ? c.warranty : S.defaults().warranty, payments: Array.isArray(c.payments?.methods) && c.payments.methods.length ? c.payments : S.defaults().payments, unlock: { ...S.defaults().unlock, ...(c.unlock || {}) }, discount: { ...S.defaults().discount, ...(c.discount || {}) }, catalog: { makes: Array.isArray(c.catalog?.makes) ? c.catalog.makes : [] }, mail: { ...S.defaults().mail, ...(c.mail || {}) }, firstRun: { dismissed: !!c.firstRun?.dismissed }, returns: retNorm(c.returns), loans: loanNorm(c.loans) }; };
+  S.config = () => { const c = S.get('config', CONFIG_ID)?.data; if (!(c && Array.isArray(c.fields) && Array.isArray(c.steps))) return S.defaults(); return { ...c, steps: upgraded(c.steps), tests: { enabled: c.tests?.enabled !== false, requireBeforeSale: !!c.tests?.requireBeforeSale }, warranty: c.warranty?.periods ? c.warranty : S.defaults().warranty, payments: Array.isArray(c.payments?.methods) && c.payments.methods.length ? c.payments : S.defaults().payments, unlock: { ...S.defaults().unlock, ...(c.unlock || {}) }, discount: { ...S.defaults().discount, ...(c.discount || {}) }, catalog: { makes: Array.isArray(c.catalog?.makes) ? c.catalog.makes : [] }, mail: { ...S.defaults().mail, ...(c.mail || {}) }, firstRun: { dismissed: !!c.firstRun?.dismissed }, returns: retNorm(c.returns), loans: loanNorm(c.loans), reminders: { warrantyDays: c.reminders && Number.isFinite(Number(c.reminders.warrantyDays)) ? Math.max(0, Math.min(365, Math.round(Number(c.reminders.warrantyDays)))) : S.defaults().reminders.warrantyDays }, reports: { agedDays: c.reports && Number.isFinite(Number(c.reports.agedDays)) ? Math.max(0, Math.min(3650, Math.round(Number(c.reports.agedDays)))) : S.defaults().reports.agedDays } }; };
   S.saveConfig = (cfg) => S.commit({ puts: [{ type: 'config', id: CONFIG_ID, data: cfg }] });
 })();

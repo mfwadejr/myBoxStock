@@ -57,12 +57,19 @@ test('sign-ins from the same browser replace each other; Administrators can sign
 test('customer emails: Sale voided and Thank you can be previewed and are accepted for sending', async () => {
   const c = new Client(srv.base), r = await c.req('POST', '/api/app/signup', { businessName: 'Mail Co', email: 'm@example.com', username: 'moe', password: PW });
   const lg = await c.req('POST', '/api/app/login', { resellerId: r.data.resellerId, username: 'moe', password: PW }); assert.equal(lg.status, 200, JSON.stringify([r.data, lg.data]));
-  const tr = await c.req('GET', '/api/app/receipt-email/templates'); assert.equal(tr.status, 200, JSON.stringify(tr.data)); const t = tr.data.templates; assert.deepEqual(t.map(x => x.key), ['receipt', 'sale_voided', 'thank_you', 'own_mail_test']);
+  const tr = await c.req('GET', '/api/app/receipt-email/templates'); assert.equal(tr.status, 200, JSON.stringify(tr.data)); const t = tr.data.templates; assert.deepEqual(t.map(x => x.key), ['receipt', 'sale_voided', 'thank_you', 'loan_overdue', 'warranty_ending', 'own_mail_test']);
   for (const key of ['sale_voided', 'thank_you']) { const p = await c.req('POST', '/api/app/receipt-email/preview', { key, wording: { title: 'Hello there' } }); assert.equal(p.status, 200); assert.match(p.data.subject, /Mail Co/); assert.deepEqual(p.data.problems, []); }
   assert.match((await c.req('POST', '/api/app/receipt-email/preview', { key: 'thank_you' })).data.text, /Alex Customer/);
   const bad = await c.req('POST', '/api/app/receipt-email/preview', { key: 'sale_voided', wording: { subject: 'Cancelled', body: 'No receipt number here' } }); assert.equal(bad.data.problems.length, 1, 'the receipt number must stay in the voided notice');
   const ty = await c.req('POST', '/api/app/receipt-email', { kind: 'thank_you', to: 'buyer@example.com', receiptNo: 'S-1', customer: 'Sam', text: '' });
   assert.equal(ty.data.code, 'RECEIPT_MAIL_OFF', 'a thank-you needs no receipt text; it is only refused because site email is off here');
+  for (const key of ['loan_overdue', 'warranty_ending']) { const p = await c.req('POST', '/api/app/receipt-email/preview', { key }); assert.equal(p.status, 200); assert.match(p.data.subject, /Mail Co/); assert.equal(p.data.problems.length, 0); }
+  const rem = (b) => c.req('POST', '/api/app/receipt-email/reminder', b);
+  assert.equal((await rem({ kind: 'receipt', to: 'a@example.com', date: '1 Nov 2026' })).data.code, 'RECEIPT_MAIL_BAD', 'only the two reminder kinds');
+  assert.equal((await rem({ kind: 'warranty_ending', to: 'not-an-address', date: '1 Nov 2026' })).data.code, 'RECEIPT_MAIL_BAD');
+  assert.equal((await rem({ kind: 'warranty_ending', to: 'a@example.com', date: '' })).data.code, 'RECEIPT_MAIL_BAD', 'the date is needed');
+  assert.equal((await rem({ kind: 'warranty_ending', to: 'a@example.com', date: '1 Nov 2026', receiptNo: 'S-1', customer: 'Sam' })).data.code, 'RECEIPT_MAIL_OFF', 'accepted, and refused only because site email is off here');
+  assert.equal((await rem({ kind: 'loan_overdue', to: 'a@example.com', date: '1 Nov 2026', device: 'Box 1', customer: 'Sam' })).data.code, 'RECEIPT_MAIL_OFF');
   const rc = await c.req('POST', '/api/app/receipt-email', { kind: 'receipt', to: 'buyer@example.com', receiptNo: 'S-1', text: '' }); assert.equal(rc.data.code, 'RECEIPT_MAIL_BAD', 'a receipt still needs its text');
 });
 

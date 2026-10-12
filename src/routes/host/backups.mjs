@@ -20,6 +20,8 @@ export function backupsRoutes(db) {
   r.use('/destinations', destinationsRoutes(db));
   r.use('/file-test', fileTestRoutes(db));
   r.use('/jobs', jobsRoutes(db));
+  // Restore a reseller: the backups that could hold one account, newest first. The preview and the restore themselves run as background jobs (reseller-preview, reseller-restore).
+  r.get('/reseller/:id/sources', async (req, res) => { try { res.json(await bk.sourcesFor(db, req.params.id, req.subject.username)); } catch (e) { bad(res, e, 404); } });
   // Backup setup: four guided steps, each unlocked by the one before (see services/backup/setup.mjs).
   r.get('/setup', async (req, res) => res.json(await bk.getSetup(db)));
   r.post('/setup/passphrase', async (req, res) => {

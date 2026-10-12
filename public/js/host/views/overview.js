@@ -38,11 +38,12 @@
 
   Host.views.overview = async (main) => {
     const paint = async (first) => {
-      const d = await Host.api('GET', '/dashboard' + Host.demoFilter.query());
+      const [d, setup] = await Promise.all([Host.api('GET', '/dashboard' + Host.demoFilter.query()), Host.api('GET', '/business/setup').catch(() => ({ items: [], allDone: true }))]);
       const mp = fmt.pct(d.memory.used, d.memory.total), dp = d.disk ? fmt.pct(d.disk.used, d.disk.total) : 0, cpu = d.history.at(-1)?.cpu ?? 0;
       const html = `${Host.head('Overview', `${esc(d.hostname)} · up ${fmt.dur(d.uptimeSec)} · v${esc(d.version)}`)}
         ${d.siteUrlProblem ? `<div class="banner mb-lg">Email links will not work: ${esc(d.siteUrlProblem)} <a href="#/settings">Set the site address</a></div>` : ''}
         ${d.mailUntested ? '<div class="banner mb-lg">Email is on but no test email has passed since it was last changed. <a href="#/email">Send a test email</a></div>' : ''}
+        ${setup.allDone ? '' : `<div class="card mb-lg" id="setup"><h3>Get set up</h3><div class="sub">A few things worth doing before real resellers sign up. This card goes away when they are all done.</div>${setup.items.map(x => `<div class="setting"><div><div class="setting-title">${x.done ? '<span class="chip green">Done</span>' : '<span class="chip amber">To do</span>'} ${esc(x.label)}</div><div class="setting-desc">${esc(x.hint)}</div></div>${x.done ? '' : `<a class="btn secondary small" href="${esc(x.href)}">Open</a>`}</div>`).join('')}</div>`}
         ${d.restorePending ? '<div class="banner mb-lg">A database restore is staged and will be applied on the next restart.</div>' : ''}
         ${d.demo.accounts ? `<div class="row wrap mb-lg" id="demo-row">${Host.demoFilter.checkHtml()}<span class="hint">${d.demo.accounts.toLocaleString('en-US')} demo accounts, ${d.demo.records.toLocaleString('en-US')} stored records. <a href="#/demo">Open Demo mode</a></span></div>` : ''}
         <div class="grid g4">

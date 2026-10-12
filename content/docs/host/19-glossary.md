@@ -1,9 +1,9 @@
 ---
 title: Glossary
 summary: Plain-English meanings of every term used in the Host Console, in alphabetical order, each with a link to the page that explains more.
-keywords: locked sign-in, glossary, terms, meaning, definition, words, jargon, what is, backup, demo
+keywords: locked sign-in, glossary, terms, meaning, definition, words, jargon, what is, backup, demo, reseller id
 order: 19
-covers: Backups card, Backup health, Background job, Job strip, Test a backup file, Account menu, DMARC, Feed, Load more, Offsite copy, Passphrase, Restore point, Safety copy, Sender checks, Snapshot, Destination, Thinning, Test restore, .mbsenc, .mbsbackup, .mbsbak, Account, Alert, Announcement banner, Audit trail, Authenticator app, Ban, Backup, CIDR, Cloudflare, Closing, Comped, DKIM, Database engine, Direct delivery, Docker, Export, Firewall, Free, Full-site backup, Health, Helper, HELO, Host, Host Console, Log, Log area, Migration, Off-box folder, Onboarding, Open sign-ups, Owner, Paid, Pipeline, Plan, Proxy, Rate limit, Read-only, Recovery codes, Recovery key, Reseller, Reseller ID, Restore, Site address, SMTP, SPF, Suspended, TLS, Temporary password, Trial, Two-factor, User type, Zero-knowledge, Locked sign-in, Check my passphrase, Change passphrase, Reset (forgotten), Disaster recovery, Canned reply, Host note, Purge, Response target, Support ticket, Compact the database, Data and retention, Prune, Retention rule, Audit trail retention, Demo mode, Demo set, Demo login, DEMO chip
+covers: Backups card, Backup health, Background job, Job strip, Test a backup file, Account menu, DMARC, Feed, Load more, Offsite copy, Passphrase, Restore point, Safety copy, Sender checks, Snapshot, Destination, Thinning, Test restore, .mbsenc, .mbsbackup, .mbsbak, Account, Alert, Announcement banner, Audit trail, Authenticator app, Ban, Backup, CIDR, Cloudflare, Closing, Comped, DKIM, Database engine, Direct delivery, Docker, Export, Firewall, Free, Full-site backup, Health, Helper, HELO, Host, Host Console, Log, Log area, Migration, Off-box folder, Onboarding, Open sign-ups, Owner, Paid, Pipeline, Plan, Proxy, Rate limit, Read-only, Recovery codes, Recovery key, Reseller, Reseller ID, Restore, Site address, SMTP, SPF, Suspended, TLS, Temporary password, Trial, Two-factor, User type, Zero-knowledge, Locked sign-in, Check my passphrase, Change passphrase, Reset (forgotten), Disaster recovery, Canned reply, Host note, Purge, Response target, Support ticket, Compact the database, Data and retention, Prune, Retention rule, Audit trail retention, Demo mode, Demo set, Demo login, DEMO chip, Limit, Override, Subscription status
 ---
 
 Words are listed from A to Z. Each entry is short, and the link at the end of it goes to the page that explains the subject in full.
@@ -315,3 +315,23 @@ The role of a person inside a customer account: Administrator, Standard or View.
 
 ### Zero-knowledge
 A design where only the customer can read their data, and the server holds only an unreadable form. It is why the Host cannot see or recover business data. More in [Security](#/docs/security).
+
+### Limit
+
+A cap on a plan, such as a number of device records, with a counting period, a warn-at share and a choice of **Warn only** or **Block adding new**. Set on [Plans](#/docs/plans), enforced by the server.
+
+### Override
+
+A number given to one account that beats its plan's number for a limit. Set in **Plan, limits and billing** on the account sheet.
+
+### Restore a reseller
+
+Putting one reseller's data back from a backup you hold, with **Add what is missing** or **Replace this account's data**, without touching anyone else. The reseller owns any loss after the backup. See [Backups](#/docs/backups).
+
+### Subscription status
+
+**Current**, **Due soon** or **Overdue** for a paid account, worked out from its paid-through date.
+
+### Get set up
+
+The card on Overview that lists the first things to do on a new site.

@@ -16,7 +16,7 @@
 
   A.views.settings = async (main) => {
     if (!A.can('users.manage')) return swap(main, '<div class="page-head"><h1>Settings</h1></div><div class="card"><div class="empty">Only Administrators can change these settings.</div></div>');
-    const cfg = S.defaults(), saved = S.config(); cfg.fields = JSON.parse(JSON.stringify(saved.fields)); cfg.steps = JSON.parse(JSON.stringify(saved.steps)); cfg.tests = { ...saved.tests }; cfg.warranty = JSON.parse(JSON.stringify(saved.warranty)); cfg.payments = JSON.parse(JSON.stringify(saved.payments)); cfg.unlock = { ...saved.unlock }; cfg.discount = { ...saved.discount }; cfg.mail = JSON.parse(JSON.stringify(saved.mail)); cfg.returns = JSON.parse(JSON.stringify(saved.returns)); cfg.loans = JSON.parse(JSON.stringify(saved.loans));
+    const cfg = S.defaults(), saved = S.config(); cfg.fields = JSON.parse(JSON.stringify(saved.fields)); cfg.steps = JSON.parse(JSON.stringify(saved.steps)); cfg.tests = { ...saved.tests }; cfg.warranty = JSON.parse(JSON.stringify(saved.warranty)); cfg.payments = JSON.parse(JSON.stringify(saved.payments)); cfg.unlock = { ...saved.unlock }; cfg.discount = { ...saved.discount }; cfg.mail = JSON.parse(JSON.stringify(saved.mail)); cfg.returns = JSON.parse(JSON.stringify(saved.returns)); cfg.loans = JSON.parse(JSON.stringify(saved.loans)); cfg.reminders = { ...saved.reminders };
     A.deliverySettings.init(cfg, saved);
     let tpl = null; try { tpl = (await A.api('GET', '/receipt-email/templates')).templates; } catch { tpl = null; }
     const cm = { key: 'receipt', seq: 0 };
@@ -178,6 +178,7 @@
           <p class="hint">This limit is checked in the app when the sale is completed. Because your data is encrypted, the server cannot enforce it, so treat it as a guard rail for honest mistakes rather than a security control.</p></div>
         ${A.returns.settingsHtml(cfg.returns)}
         ${A.loans.settingsHtml(cfg.loans)}
+        ${A.reminders.settingsHtml(cfg.reminders)}
         <div class="card mt-lg${rc('steps')}"><div class="card-head"><div><h3>Test checklist</h3><div class="sub mb-0">Steps you perform on each device. When you tick them in Inventory, who and when is recorded and copied into the sale, so you can show what was done if a customer says it did not work.</div></div>${rswitch('steps')}</div>${rhint('steps')}
           <label class="check mt-md"><input type="checkbox" id="ten" ${cfg.tests.enabled ? 'checked' : ''}><span>Use a test checklist</span></label>
           <div class="hint">Turn this off if you do not test devices. The test record is then hidden in Inventory, Quick sale, receipts and CSV files. Nothing already recorded is deleted.</div>
@@ -233,6 +234,7 @@
       main.querySelector('#ui').addEventListener('input', (e) => { cfg.unlock.idleMin = Math.floor(Number(e.target.value)) || 0; });
       A.returns.settingsWire(main, cfg.returns, draw);
       A.loans.settingsWire(main, cfg.loans, draw);
+      A.reminders.settingsWire(main, cfg.reminders);
       main.querySelector('#dc').addEventListener('input', (e) => { cfg.discount.maxStandardPct = e.target.value; });
       q('[data-k=wl]').forEach(e => e.addEventListener('input', () => { cfg.warranty.periods[e.dataset.i].label = e.value; }));
       q('[data-k=wd]').forEach(b => b.addEventListener('click', () => { cfg.warranty.default = cfg.warranty.periods[b.dataset.i].key; draw(); }));
@@ -300,7 +302,7 @@
         const rerr = A.returns.settingsCheck(cfg.returns); if (rerr) return toast(rerr, true);
         const lerr = A.loans.settingsCheck(cfg.loans); if (lerr) return toast(lerr, true);
         const mail = { ...mailBody(), wording: cfg.mail.wording, logo: cfg.mail.logo }; if (mail.enabled && (!mail.host || !mail.fromAddress)) return toast('Enter the mail server and a From address, or turn off sending from your own mail server.', true);
-        try { await S.saveConfig({ ...S.config(), ...A.deliverySettings.save(cfg), mail, returns: A.returns.settingsClean(cfg.returns), loans: A.loans.settingsClean(cfg.loans), discount: { maxStandardPct: dcap }, unlock: { mode: cfg.unlock.mode, idleMin: cfg.unlock.idleMin || 30 }, payments: { default: cfg.payments.default, methods: cfg.payments.methods.map(x => ({ ...x, label: x.label.trim() })) }, warranty: { default: cfg.warranty.default, periods: cfg.warranty.periods.map(x => ({ ...x, label: x.label.trim() })) }, tests: { enabled: cfg.tests.enabled, requireBeforeSale: !!cfg.tests.requireBeforeSale && cfg.tests.enabled }, fields: cfg.fields.map(f => ({ ...f, label: f.label.trim() })), steps: cfg.steps.map(s => ({ ...s, label: s.label.trim() })) }); await A.vault.policy(); toast('Settings saved'); } catch (er) { toast(er.message, true); }
+        try { await S.saveConfig({ ...S.config(), ...A.deliverySettings.save(cfg), mail, returns: A.returns.settingsClean(cfg.returns), loans: A.loans.settingsClean(cfg.loans), reminders: A.reminders.settingsClean(cfg.reminders), discount: { maxStandardPct: dcap }, unlock: { mode: cfg.unlock.mode, idleMin: cfg.unlock.idleMin || 30 }, payments: { default: cfg.payments.default, methods: cfg.payments.methods.map(x => ({ ...x, label: x.label.trim() })) }, warranty: { default: cfg.warranty.default, periods: cfg.warranty.periods.map(x => ({ ...x, label: x.label.trim() })) }, tests: { enabled: cfg.tests.enabled, requireBeforeSale: !!cfg.tests.requireBeforeSale && cfg.tests.enabled }, fields: cfg.fields.map(f => ({ ...f, label: f.label.trim() })), steps: cfg.steps.map(s => ({ ...s, label: s.label.trim() })) }); await A.vault.policy(); toast('Settings saved'); } catch (er) { toast(er.message, true); }
       }));
     };
     draw();

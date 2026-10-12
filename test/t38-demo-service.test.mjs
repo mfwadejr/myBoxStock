@@ -32,7 +32,7 @@ async function seedReal(db) {
   await db.run("INSERT INTO account_recovery (account_id, wrapped_adk, created_at) VALUES ('real1','v1.aaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbb',?)", [t]);
   for (let i = 0; i < 5; i++) await db.run("INSERT INTO records (id, account_id, type, blob, rev, created_at, updated_at) VALUES (?, 'real1','item','v1.abcdefgh.ijklmnopqrstuvwxyz0123',1,?,?)", [`realrec-${i}-aaaa`, t, t]);
   await db.run("INSERT INTO accounts (id, account_code, business_name, owner_email, status, plan, created_at, demo) VALUES ('real2','blue-owl-9999','Another Real','r2@example.com','active','trial',?,0)", [t]);
-  await setSetting(db, 'plans', [{ id: 'p1', name: 'Pro', priceCents: 2900, interval: 'month', maxUsers: 5, maxDevices: 500, note: '' }]);
+  await setSetting(db, 'plans', [{ id: 'p1', name: 'Pro', priceCents: 2900, interval: 'month', limits: { 'lim-users': 5, 'lim-devices': 500 }, note: '' }]);
   await setSetting(db, 'mail_templates', { welcome: { subject: 'Hi' } });
 }
 // Every row that is not demo, as text, so before and after can be compared exactly. Logs and the Demo mode settings entry are the only things allowed to change.

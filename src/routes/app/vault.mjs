@@ -3,6 +3,7 @@
 import express from 'express';
 import { can, need, tenantLog } from './context.mjs';
 import { fail } from '../../core/messages.mjs';
+import { wouldBreak, breakText } from '../../services/limits/index.mjs';
 import { validKeys, validWrapped, saveKeys, vaultEnabled } from '../../services/vault/keys.mjs';
 
 // config = the account's field and checklist setup. Anyone who can read business data can read it; only Administrators change it.
@@ -68,6 +69,12 @@ export function vaultRoutes(db) {
     }
     for (const d of dels) if (!ID.test(d?.id || '')) return fail(res, 400, 'RECORD_BAD');
     const acc = req.subject.account_id, now = Date.now(), out = []; let conflict = false, denied = false;
+    // Plan limits: only brand-new records count as "adding". A limit set to Block refuses the whole save, so nothing is half done.
+    const adds = {}; for (const p of puts) if (p.rev === 0) adds[p.type] = (adds[p.type] || 0) + 1;
+    if (Object.keys(adds).length) {
+      const hit = await wouldBreak(db, { id: acc }, adds);
+      if (hit) { tenantLog(req, 'plan.limit_blocked', `${req.subject.login} was stopped by the plan limit “${hit.name}” (${hit.used} of ${hit.limit})`, { limit: hit.id, used: hit.used, cap: hit.limit, adding: hit.adding }); return res.status(409).json({ error: breakText(hit), code: 'PLAN_LIMIT', limit: hit.id }); }
+    }
     await db.tx(async (t) => {
       for (const p of puts) {
         const cur = await t.get('SELECT rev, type FROM records WHERE id = ? AND account_id = ?', [p.id, acc]);

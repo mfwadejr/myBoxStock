@@ -53,7 +53,8 @@ export async function checkBuild(db, set, { section = null, ceiling = 0, anchor 
 export async function planCeiling(db, section) {
   if (!section.usePlanCeiling) return 0;
   const { getSetting } = await import('../../db/settings.mjs'); const plans = await getSetting(db, 'plans', []);
-  return plans.reduce((m, p) => Math.max(m, Number(p.maxDevices) || 0), 0) || 0;
+  const { getLimits } = await import('../limits/index.mjs'); const ids = (await getLimits(db)).filter(d => d.counts === 'item' && d.period === 'all').map(d => d.id);
+  return plans.reduce((m, p) => Math.max(m, ...ids.map(id => Number(p.limits?.[id]) || 0), Number(p.maxDevices) || 0), 0) || 0;
 }
 
 const CHUNK = 200;

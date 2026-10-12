@@ -1,9 +1,9 @@
 ---
 title: Delivery and shipping
 summary: Choose how each sale reaches the customer (Immediate, Shipping, Pickup or Meet), record the address, the shipping fee and tracking, and follow a parcel from To ship to Shipped.
-keywords: delivery, shipping, ship, ship to, address, parcel, package, post, mail, courier, carrier, tracking, tracking number, shipping fee, postage, shipping cost, delivery note, to ship, shipped, mark shipped, pickup, collect, meet, meetup, immediate, saved address, customer address, fragile, leave at the door
+keywords: delivery, shipping, ship, ship to, address, parcel, package, post, mail, courier, carrier, tracking, tracking number, shipping fee, postage, shipping cost, delivery note, to ship, shipped, mark shipped, pickup, collect, meet, meetup, immediate, saved address, customer address, fragile, leave at the door, track on usps, track on ups, track on fedex, tracking link, where is my parcel
 order: 5
-covers: Delivery, Immediate, Shipping, Pickup, Meet, Ship to, Street, Apartment or suite, City, State, ZIP, Country, Shipping fee charged to the customer, Your shipping cost (optional), Carrier (optional), Tracking number (optional), Delivery note (optional), Save this address to the customer, Date (optional), Notes (where, when, who), Pickup note (optional), All deliveries, To ship, Shipped, Mark shipped, Date shipped, Carrier and tracking, Edit tracking, Copy, Shipping charged, Your shipping cost, Ask for a country on addresses, Show the pickup or meet note on the receipt, Show the delivery note on the receipt, delivery_status, shipping_fee, shipping_cost
+covers: Delivery, Immediate, Shipping, Pickup, Meet, Ship to, Street, Apartment or suite, City, State, ZIP, Country, Shipping fee charged to the customer, Your shipping cost (optional), Carrier (optional), Tracking number (optional), Delivery note (optional), Save this address to the customer, Date (optional), Notes (where, when, who), Pickup note (optional), All deliveries, To ship, Shipped, Mark shipped, Date shipped, Carrier and tracking, Edit tracking, Copy, Shipping charged, Your shipping cost, Ask for a country on addresses, Show the pickup or meet note on the receipt, Show the delivery note on the receipt, delivery_status, shipping_fee, shipping_cost, Track on USPS, Track on UPS, Track on FedEx, Track on DHL, Tracking links
 ---
 
 ## What delivery is for
@@ -107,3 +107,15 @@ The activity log records only the kind of event, such as "marked a sale as shipp
 - **Choosing Shipping for a pickup.** You can edit tracking later but not the delivery type, so choose carefully. If you got it wrong, void the sale and enter it again.
 
 See also [Quick sale](#/docs/quick-sale), [Customers](#/docs/customers), [Sales](#/docs/sales), [Shipping labels](#/docs/shipping-labels) and [Settings](#/docs/settings).
+
+## Tracking links
+
+When you record a carrier and a tracking number for a shipped sale, the sale shows a link next to it: **Track on USPS**, **Track on UPS**, **Track on FedEx** or **Track on DHL**. It opens the carrier's own tracking page in a new tab with your number already filled in, so you or your customer can see where the parcel is.
+
+How the carrier is chosen:
+
+1. If you typed a carrier name such as USPS, UPS, FedEx or DHL (or something obviously the same, like "Postal Service" or "Fed Ex"), that carrier is used.
+2. If you left the carrier empty, the shape of the number decides. A number starting 1Z followed by sixteen letters or digits is UPS. A long number starting 92, 93, 94 or 95 is USPS.
+3. If the carrier is one that has no link, or the number does not look like any, the number is shown as plain text with no link.
+
+Spaces in a tracking number are ignored. Nothing is looked up for you and nothing is sent anywhere until you click: the link just opens the carrier's site. The link appears in the sale's detail and next to the tracking hint on the customer page. You can paste the same number into a message to your customer; showing the status inside the app is not part of this version.

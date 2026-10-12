@@ -23,8 +23,8 @@ test('browser: pipeline, plans, health and reasons in the Host Console', { skip,
     assert.match(await page.textContent('main'), /Sign-ups this week/); assert.match(await page.textContent('main'), /Alpha Shop/); await page.waitForTimeout(500); await shot('pipeline');
 
     await page.goto(srv.base + '/host/#/plans'); await page.waitForSelector('#add'); await page.click('#add');
-    await page.fill('[data-k=name]', 'Starter'); await page.fill('[data-k=price]', '19'); await page.fill('[data-k=maxUsers]', '3'); await page.click('#save');
-    await page.waitForFunction(() => /Plans saved/.test(document.body.textContent)); await page.waitForTimeout(500); await shot('plans');
+    await page.fill('[data-k=name]', 'Starter'); await page.fill('[data-k=price]', '19'); await page.fill('[data-pl=lim-users]', '3'); await page.click('#save');
+    await page.waitForFunction(() => /Plans and limits saved/.test(document.body.textContent)); await page.waitForTimeout(500); await shot('plans');
     assert.equal(await page.inputValue('[data-k=price]'), '19.00');
 
     await page.goto(srv.base + '/host/#/accounts'); await page.waitForSelector('tr.click');

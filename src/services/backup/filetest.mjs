@@ -77,7 +77,9 @@ export async function receiveUpload(req, { name, actor, ip }) {
   return { id, name, size };
 }
 
-const resolveSource = (source, actor) => {
+// Uploads this person has put in the holding folder and not yet used (for the Restore a reseller list).
+export const heldList = (actor) => { sweep(); return [...held].filter(([, v]) => v.actor === actor).map(([id, v]) => ({ id, name: v.name, size: v.size })); };
+export const resolveSource = (source, actor) => {
   sweep();
   if (source?.upload) {
     const h = held.get(String(source.upload)); if (!h || h.actor !== actor) throw coded('HOST_BACKUP_UPLOAD_GONE');

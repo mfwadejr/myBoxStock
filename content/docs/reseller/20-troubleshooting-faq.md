@@ -1,9 +1,9 @@
 ---
 title: Troubleshooting and FAQ
 summary: Plain-language fixes for the problems people run into most, from sign-in trouble and lost keys to scanners, receipts and read-only accounts, plus answers to common questions.
-keywords: troubleshooting, running low card missing, customer search receipt number, customer sort order, demo banner, camera blocked, camera busy, no camera, https, wrong barcode, mac not accepted, restore refused, this file cannot be used, account is newer than this file, undo restore, backup file size, lost recovery key backup, site restored banner, help, error, cannot sign in, locked out, forgot password, lost authenticator, lost recovery key, scanner, tap to aim, nothing read yet, got it, confirm each scan, use this, receipt email, read-only, out of date, refresh, faq, not working, problem, return, refund, send back, credit note
+keywords: troubleshooting, running low card missing, customer search receipt number, customer sort order, demo banner, camera blocked, camera busy, no camera, https, wrong barcode, mac not accepted, restore refused, this file cannot be used, account is newer than this file, undo restore, backup file size, lost recovery key backup, site restored banner, help, error, cannot sign in, locked out, forgot password, lost authenticator, lost recovery key, scanner, tap to aim, nothing read yet, got it, confirm each scan, use this, receipt email, read-only, out of date, refresh, faq, not working, problem, return, refund, send back, credit note, bulk change skipped, tracking no link, account went back
 order: 20
-covers: The Running low card is not on Home, The customer list changed order, DEMO tag, That file is too large, Import up to 20000 at a time, That does not look like a CSV file, Does an old backup still work after an update, This site cannot send email right now, Password updated, Terms, Privacy, Data use, Billing, camera is turned off for this site, The camera only works when this site is opened over https, The camera is busy, No camera was found, Two codes are about equally close, No MAC address was found in that photo, This file cannot be used, Your account is newer than this file, There is no restore to undo, The restore did not finish, The site was restored from a backup, Copy diagnostics, Incorrect sign-in or password, Too many failed attempts, Forgot password, Reset link, Two-factor code, Recovery code, Recovery key, Unlock your data, Use your recovery key, Scanner, Bulk scan, Email receipt, Read-only, Trial ended, Closing account, Out of date page, Someone else changed this, Records could not be opened, Disabled sign-in, Suspended account, Mail server settings, Reseller ID, Change password, Reset access, Account deleted by the Host, account erased email, Nothing read yet, Confirm each scan, Use this, Return or refund, Process return, Credit note
+covers: The Running low card is not on Home, The customer list changed order, DEMO tag, That file is too large, Import up to 20000 at a time, That does not look like a CSV file, Does an old backup still work after an update, This site cannot send email right now, Password updated, Terms, Privacy, Data use, Billing, camera is turned off for this site, The camera only works when this site is opened over https, The camera is busy, No camera was found, Two codes are about equally close, No MAC address was found in that photo, This file cannot be used, Your account is newer than this file, There is no restore to undo, The restore did not finish, The site was restored from a backup, Copy diagnostics, Incorrect sign-in or password, Too many failed attempts, Forgot password, Reset link, Two-factor code, Recovery code, Recovery key, Unlock your data, Use your recovery key, Scanner, Bulk scan, Email receipt, Read-only, Trial ended, Closing account, Out of date page, Someone else changed this, Records could not be opened, Disabled sign-in, Suspended account, Mail server settings, Reseller ID, Change password, Reset access, Account deleted by the Host, account erased email, Nothing read yet, Confirm each scan, Use this, Return or refund, Process return, Credit note, Some devices were left alone by a bulk change, The tracking number has no link
 ---
 
 ## How to use this page
@@ -635,3 +635,19 @@ An Administrator uses **Close account** on the [Security](#/docs/security) page,
 ### Who can I ask for more help?
 
 Start with an Administrator on your team, who can do many fixes. For anything this page says needs support, such as a suspended account, a trial that has ended or a lost authenticator without recovery codes, contact the support address given by your site's operator. When you write, include your Reseller ID (never your password or recovery key) and the exact wording of the message.
+
+### "Your plan allows" and nothing was saved
+
+Your plan has a limit set to block adding new records and you have reached it. Open Home and read **Your plan** to see which. You can still open, change, sell and export everything. To add more, ask your provider for a larger plan, or remove records you no longer need (for a device limit that counts sold devices too). An import is refused whole, so run it again after you have room. See [Plans, trials and billing](#/docs/plans-trials-billing).
+
+### Some devices were left alone by a bulk change
+
+Devices out on demo and sold devices are never changed by Select, and devices already in the state you chose are skipped. The confirmation tells you how many and why. See [Inventory](#/docs/inventory).
+
+### The tracking number has no link
+
+A link only appears for USPS, UPS, FedEx and DHL. If you typed a different carrier, or the number does not look like one of theirs, it stays as plain text. Check the carrier name and the number for typing mistakes.
+
+### My account went back to an earlier time
+
+Your provider restored it from a backup. The notice inside the app gives the time. Entries made after that are not in it. Use your own backup file and **Add what is missing** to bring them back, or **Undo last restore** within 7 days. See [Backup and restore](#/docs/backup-and-restore).

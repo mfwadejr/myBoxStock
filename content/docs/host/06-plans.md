@@ -1,19 +1,19 @@
 ---
 title: Plans
-summary: How trials, free (comped) and paid accounts work, how to write your plan list with prices and limits, set the trial length, record receipts, and what read-only means when a plan ends.
-keywords: plans, pricing, price, trial, free trial, trial length, comped, free, paid, paid through, expiry, ended, read-only, receipts, billing, billed every, users included, devices included, limits, add a plan, save plans, remove
+summary: How trials, free (comped) and paid accounts work, how to write your plan list with prices and limits that the server enforces, set the trial length, record receipts, and what read-only means when a plan ends.
+keywords: plans, pricing, price, trial, free trial, trial length, comped, free, paid, paid through, expiry, ended, read-only, receipts, billing, billed every, limits, add a plan, save plans, remove, limits list, counting period, warn at, at the cap, block adding new, new accounts start on, enforced
 order: 6
-covers: nav:plans, Add a plan, Save plans, Remove, Name, Price, Billed every, Month, Year, Users included, Devices included, Note, trial length, Trial, Free, Paid, Trial ended, Paid ended, Change plan, Extend trial, Record a receipt, Paid through, read-only, Free trial length for new sign-ups (days)
+covers: nav:plans, Add a plan, Remove, Name, Price, Billed every, Month, Year, Note, trial length, Trial, Free, Paid, Trial ended, Paid ended, Change plan, Extend trial, Record a receipt, Paid through, read-only, Free trial length for new sign-ups (days), Limits, Add a limit, Counts, Counting period, Warn at (percent), At the cap, Warn only, Move up, Move down, New accounts start on, Save plans and limits, Included in
 ---
 
 ## What this page is for
 
 Plans has two jobs that are easy to mix up, so it helps to separate them right away.
 
-1. The **Plans page** is a written list of the plans you intend to offer: a name, a price, how often it is billed, and limits for users and devices. It is a notebook for you, ready for when payments are connected.
+1. The **Plans page** is a written list of the plans you intend to offer: a name, a price, how often it is billed, and what each plan includes. Prices are a notebook for you, ready for when payments are connected. The limits are real: the server enforces them.
 2. The **plan of each account** is a separate matter: every customer account is, at any moment, on a trial, free (comped) or paid. You set that per account under [Accounts](#/docs/accounts) with **Change plan**.
 
-> At the top of the Plans page a blue notice says it directly: prices and limits are recorded here only. Nothing is charged and no limit is enforced yet. Writing "5 users" on a plan does not stop an account having 8.
+> At the top of the Plans page a blue notice says it plainly: limits are enforced, and prices are recorded only. Nothing is charged. A limit set to **Block adding new** stops a reseller adding past the cap; **Warn only** lets them carry on after showing a notice.
 
 This page covers both, because understanding the account states is what makes the list make sense.
 
@@ -94,38 +94,64 @@ Why bother? So that when a customer says "I paid in March" you can check in seco
 
 ## The plan list on this page
 
-Open **Plans**. You see one card for each plan, and two buttons at the bottom: **Add a plan** and **Save plans**.
+Open **Plans**. The page has three parts, from the top: the **Limits** list, one card for each plan, and **New accounts start on**. Two buttons sit at the bottom: **Add a plan** and **Save plans and limits**.
+
+### The Limits list
+
+The **Limits** card lists everything you can cap. It works like the Makes and models list in a reseller's Settings: add, rename, reorder and remove rows. A new site starts with three: Team members, Devices and Sales. Each row has:
+
+- **Name**. What you and the reseller call it, such as "Devices" or "Customers this year". Two limits cannot share a name.
+- **Counts**. What is counted, from a fixed menu: **Administrators**, **Team members (including administrators)**, **Device records**, **Sales records**, **Customer records** and **Models**.
+- **Counting period**. **All time** (the default), **Rolling 12 months** or **Rolling 30 days**. A rolling period counts only records created inside it.
+- **Warn at (percent)**. When use reaches this share of the number, the reseller sees a nearly-full notice. The default is 80.
+- **At the cap**. **Warn only** or **Block adding new**.
+- **Move up**, **Move down** and **Remove**. Order is only for how the list reads. Removing a limit removes its numbers from every plan and every account.
+
+What can be counted is limited by what the server can see. It knows how many device records, sales, customers and models an account holds, and how many people it has, because those are listed in the clear. It cannot see inside a record, so it cannot count devices in stock, devices on loan or sold devices separately. **Device records** counts every device record, sold or not, and a sold device keeps counting for as long as the record exists. That is deliberate: it is a limit on the data the reseller holds, not on what is on their shelf.
+
+> A cap on people stops an Administrator adding someone new. A cap on records stops the whole save, so a batch is never half stored. Opening, editing, selling, exporting and deleting are never blocked by a limit.
 
 ### Each plan's fields
 
 - **Name** (up to 60 characters). Every plan must have one, and two plans cannot share a name. The card heading shows it as you type, or "New plan" while empty.
 - **Price**. A number such as 29.00. Leave empty for a free plan. Letters and symbols are ignored.
 - **Billed every**. A drop-down: **Month** or **Year**.
-- **Users included**. A whole number from 1 upward, or empty for "No limit".
-- **Devices included**. A whole number from 1 upward, or empty for "No limit".
 - **Note**. Up to 200 characters for yourself, such as "Includes email receipts".
+- **Included in** the plan. One number box for every limit in the list. A whole number, 0 to allow none, or empty for "No limit".
 
-Each card also has a **Remove** button that takes it off the list. Nothing is deleted from the server until you press **Save plans**.
+Each card also has a **Remove** button. Nothing is deleted from the server until you press **Save plans and limits**. A plan that accounts are on cannot be removed: the page names how many accounts use it and asks you to move them first.
+
+### New accounts start on
+
+The **New accounts start on** drop-down chooses the plan every new sign-up is put on, starting with their free trial. Choose **No plan (no limits)** to start people unlimited. It affects only sign-ups from then on. Move an existing account from its own sheet, as described under [Accounts](#/docs/accounts).
 
 ### Steps to write your list
 
-1. Press **Add a plan**. A blank card appears.
-2. Fill in its fields. Repeat for each plan, for example Starter, Standard and Pro.
-3. Press **Save plans**. You will see "Plans saved" and the saved list reloads.
+1. Look at the Limits list. Rename, reorder or remove rows, or press **Add a limit** for a new one.
+2. Press **Add a plan**. A blank card appears with a number box for each limit.
+3. Fill in the fields and the numbers. Repeat for each plan, for example Starter, Standard and Pro.
+4. Press **Save plans and limits**. You will see "Plans and limits saved" and the saved list reloads.
+5. Pick **New accounts start on** if you want new sign-ups limited, and save again.
 
-You can have up to 20 plans. If a number is not valid, the page tells you which plan to check ("Check the numbers for ..."), and nothing is saved until you fix it.
+You can have up to 20 plans and 30 limits. If a number is not valid, the page tells you which plan and limit to check, and nothing is saved until you fix it.
+
+### What a reseller sees
+
+On Home, a **Your plan** card shows each limit with a bar and "used of limit". Past the warn-at share, a notice says so; at the cap, it says they have reached the limit, and for **Block adding new** that they cannot add more. A refused save says "Your plan allows" with the limit and numbers, and "Nothing was saved". Imports are checked before any row is saved. You see the same bars for each account on its sheet.
 
 ### Example list
 
-- Starter: 19.00 per month, 2 users, 1 device.
-- Standard: 39.00 per month, 5 users, 3 devices.
-- Annual: 390.00 per year, no user limit, no device limit.
+- Limits: Team members (all time, block), Devices (all time, warn at 80, block), Sales this year (rolling 12 months, warn only).
+- Starter: 19.00 per month, 2 team members, 150 devices.
+- Standard: 39.00 per month, 5 team members, 1000 devices.
+- Annual: 390.00 per year, no team limit, 5000 devices.
 
-Remember these are notes. An account's actual plan is still Trial, Free or Paid, set by you in Accounts.
+Remember these prices are notes. An account's actual state is still Trial, Free or Paid, set by you in Accounts, and its plan decides only the limits.
 
 ## Tips and mistakes
 
-- Do not tell customers a limit is enforced when it is not. Say what you will accept.
+- Tell customers the limits in your sign-up page and plan description. A blocked reseller sees the number, but it helps to hear it first.
+- Start with **Warn only** while you learn what normal use looks like, and move to **Block adding new** for the limits that protect your server.
 - Setting a very short trial length without telling people leads to confused customers when they become read-only. Mention it on your sign-up page or in the [announcement banner](#/docs/settings).
 - Changing the trial length does not touch accounts already running. Use Extend trial for those.
 - Always give a clear reason on plan changes. Future you, or a colleague, will be glad.

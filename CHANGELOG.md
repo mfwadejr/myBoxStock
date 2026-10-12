@@ -3,6 +3,26 @@
 Every published version has an entry here, newest first. Format: [Keep a Changelog](https://keepachangelog.com/), versioning: [SemVer](https://semver.org/).
 These notes are used verbatim as the GitHub Release notes (see `docs/RELEASING.md`).
 
+## [0.29.0] - 2026-10-12
+
+A large release: seven additions for resellers and eight for the Host.
+
+### Added
+- **Reports (resellers).** A new page with profit by month and by make and model for a period you choose, a Sitting too long list of devices that have been on the shelf too many days (the number is yours; a short card on Home links to it), and a year-end sales spreadsheet for your accountant. Worked out in the browser; the server sees no figures.
+- **Change several devices at once (resellers).** Select in Inventory ticks devices; set a status, archive, restore or export just those. Devices on demo and sold devices are left alone, and the confirmation says how many.
+- **Tracking links (resellers).** Track on USPS, UPS, FedEx or DHL opens the carrier's own page with the number filled in. The carrier is read from what you typed, or from the shape of the number.
+- **Reminders (resellers).** Optional Send reminder emails for overdue demo loans and for warranties ending soon (Home cards, a Sales filter called Ending soon, a Reminders setting for the number of days, and two new messages under Customer emails). Nothing is sent by itself.
+- **Plan limits (Host).** The Plans page now has a Limits list built like Makes and models: name, what it counts (Administrators, Team members, Device records, Sales records, Customer records, Models), a counting period (all time, rolling 12 months, rolling 30 days), a warn-at share and Warn only or Block adding new. Each plan sets its own number per limit, an account can have its own numbers, and new sign-ups start on a plan you choose. The server enforces them when records or people are added, an import is checked before any row is saved, and resellers see Your plan on Home.
+- **Subscriptions (Host).** Each account can have a billing cycle (month or year), a status of Current, Due soon or Overdue, and a pre-filled next paid-through date on Record a receipt. Empty payment-system customer and subscription ID fields wait for a payment system.
+- **Trial follow-up (Host).** The Pipeline trial list shows Devices added and has an optional Email a nudge button that shows the exact words first. Renewals show the status and billing cycle.
+- **Get set up (Host).** A checklist card on Overview for email, a backup destination, the access rule and the plan list. It goes away when all four are done.
+- **Restore a reseller (Host).** A new tab on Backups puts one reseller's data back from any backup the Host holds (local, offsite or uploaded) without touching anyone else: look inside (counts only), then Add what is missing or Replace this account's data, optionally with the team and sign-ins. A 7-day safety copy is taken first, the reseller sees a notice (and an optional email) saying the account went back to the time of the backup and that the loss after it is theirs, and the restore is in the audit trail.
+
+### Changed
+- The Plans page no longer says limits are not enforced. Users included and Devices included became the first two limits in the Limits list, with their numbers carried over.
+- Send announcement in Accounts now records the message text and whether it was emailed in the log summary.
+- Documentation for both consoles was extended and every statement that one reseller cannot be restored on its own was corrected.
+
 ## [0.28.0] - 2026-10-11
 
 ### Added

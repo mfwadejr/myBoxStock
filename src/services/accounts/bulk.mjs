@@ -113,7 +113,7 @@ export async function execute(db, action, params, targets, { actor, ip = null, r
   if (ctx.mailed) processQueue(db).catch(() => {});
   const label = { extend_trial: 'Extend trial', change_plan: 'Change plan', announce: 'Send announcement', export: 'Export list' }[action];
   const summary = `${label}: ${plural(done, 'account')} done${failed ? `, ${failed} failed` : ''}${skippedN ? `, ${skippedN} skipped` : ''}.`;
-  log('host', failed ? 'warn' : 'info', 'bulk.summary', `Bulk action ${summary}${reason ? ` Reason: ${reason}` : ''}`, { actor, ip, data: { bulk: runId, action, selected: targets.length, done, failed, skipped: skippedN, emails: ctx.mailed, reason: reason || undefined } });
+  log('host', failed ? 'warn' : 'info', 'bulk.summary', `Bulk action ${summary}${reason ? ` Reason: ${reason}` : ''}${action === 'announce' ? ` Message: “${String(pl.params.text || '').slice(0, 120)}”${pl.params.email ? ' (emailed too)' : ''}` : ''}`, { actor, ip, data: { bulk: runId, action, selected: targets.length, done, failed, skipped: skippedN, emails: ctx.mailed, reason: reason || undefined, ...(action === 'announce' ? { text: String(pl.params.text || '').slice(0, MAX_TEXT), level: pl.params.level, emailTicked: !!pl.params.email } : {}) } });
   return { ok: !failed, done, failed, skipped: skippedN, emails: ctx.mailed, summary, runId, ...(action === 'export' ? { csv: toCsv(pl.applies) } : {}) };
 }
 

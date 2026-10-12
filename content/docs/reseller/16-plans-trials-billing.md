@@ -1,9 +1,9 @@
 ---
 title: Plans, trials and billing
 summary: What a trial, paid and free account mean, what the chip in the top bar tells you, what read-only means when a period ends, and how to continue.
-keywords: plan, trial, free trial, paid, free, read-only, billing, expired, trial ended, days left, chip, top bar, continue, renew, support, contact, export
+keywords: plan, trial, free trial, paid, free, read-only, billing, expired, trial ended, days left, chip, top bar, continue, renew, support, contact, export, limit, limits, cap, warn only, block adding
 order: 16
-covers: trial, paid, free, read-only, Free trial chip, Trial ended - read-only chip, days left, contact your site administrator
+covers: trial, paid, free, read-only, Free trial chip, Trial ended - read-only chip, days left, contact your site administrator, Warn only, plan limit
 ---
 
 ## What this page covers
@@ -131,3 +131,14 @@ Your site administrator may take payment in whatever way you arrange with them. 
 - [Security](#/docs/security) for the export tools and your Reseller ID.
 - [Your data, your responsibility](#/docs/your-data-your-responsibility) for exports and ownership.
 - [Troubleshooting and FAQ](#/docs/troubleshooting-faq) if a message does not make sense.
+
+## Limits on your plan
+
+Your provider can give a plan limits: how many team members, device records, sales records, customers or models it includes. A limit counts either all of them, or only those added in a rolling 12 months or 30 days, and the provider chooses what happens at the cap.
+
+- **Warn only.** You can carry on past the cap. Home shows a notice once you have used most of the limit and again when you reach it.
+- **Block adding new.** Past the cap you can still open, edit, sell and export everything. You just cannot add more until you move to a larger plan.
+
+You see where you stand on [Home](#/docs/home) under **Your plan**: each limit with a bar and "used of limit". A blocked action is refused with a message that starts "Your plan allows", says which limit and how many you have, and ends with "Nothing was saved". A file import is checked before any row is saved, so you never end up with half a file. Devices count every device record, sold or not, because a sold device is still a record you hold.
+
+The limits are counted by the server from the number of records, not from what is in them, which the server cannot read. If a number looks wrong, ask your provider; they can see the same counts on your account. They can also give your account its own number, different from the plan's.

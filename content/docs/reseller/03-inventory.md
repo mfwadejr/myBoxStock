@@ -1,9 +1,9 @@
 ---
 title: Inventory
 summary: Add, scan, import, search, edit, test, archive and export every device you own, and set reorder levels so you never run out of a popular model.
-keywords: inventory, camera button, scan with camera, search by camera, paging, per page, 25 per page, next page, previous, small medium large, aim line, wrong barcode, scan next field, several barcodes on a label, no spinners, monospace, devices, stock, add device, bulk scan, barcode, scanner, uid, serial number, mac address, condition, supplier, cost, selling price, status, date received, tested on, test record, import csv, export csv, archive, delete, reorder, low stock, make, model, filter, search, awaiting test, returned device, damaged, running low, return
+keywords: inventory, camera button, scan with camera, search by camera, paging, per page, 25 per page, next page, previous, small medium large, aim line, wrong barcode, scan next field, several barcodes on a label, no spinners, monospace, devices, stock, add device, bulk scan, barcode, scanner, uid, serial number, mac address, condition, supplier, cost, selling price, status, date received, tested on, test record, import csv, export csv, archive, delete, reorder, low stock, make, model, filter, search, awaiting test, returned device, damaged, running low, return, select, bulk, several devices, archive many, bulk change, plan limit
 order: 3
-covers: nav:inventory, On demo, Lend out, Return from demo, Import checks, That file is too large, That does not look like a CSV file, camera button, Search by camera, Scanning a detail with the camera, Bulk scan with the camera, Scan next field, 25 / 50 / 100 per page, Previous, Next, Showing 1–25, Pages, Add device, Save and add another, Save, Cancel, Close, Bulk scan, Save 0 devices, Remove last, Scan or type then Enter, What do you scan for each device, Import CSV, Import devices, Export CSV, Search, Available, All (not archived), Awaiting test, Reserved, Sold, Returned, Damaged, Archived, All models, Make, Model, Add new, UID, Serial number, MAC address, Condition, Supplier, Status, Cost, Selling price, Date received, Notes, Test record, Mark all done, Tested on, Test notes, required before sale, Stock levels, Reorder at, Low, Archive, Restore, Delete, Tests column, columns, Running low, Return or refund, Returned, Damaged
+covers: nav:inventory, On demo, Lend out, Return from demo, Import checks, That file is too large, That does not look like a CSV file, camera button, Search by camera, Scanning a detail with the camera, Bulk scan with the camera, Scan next field, 25 / 50 / 100 per page, Previous, Next, Showing 1–25, Pages, Add device, Save and add another, Save, Cancel, Close, Bulk scan, Save 0 devices, Remove last, Scan or type then Enter, What do you scan for each device, Import CSV, Import devices, Export CSV, Search, Available, All (not archived), Awaiting test, Reserved, Sold, Returned, Damaged, Archived, All models, Make, Model, Add new, UID, Serial number, MAC address, Condition, Supplier, Status, Cost, Selling price, Date received, Notes, Test record, Mark all done, Tested on, Test notes, required before sale, Stock levels, Reorder at, Low, Archive, Restore, Delete, Tests column, columns, Running low, Return or refund, Returned, Damaged, Select, Done selecting, Select all, Clear, Set status to…, Archive, Restore, Export selection, Bulk change
 ---
 
 ## What Inventory is for
@@ -241,3 +241,23 @@ Example: you want to keep at least four of one model. Set Reorder at to 4.
 - Importing the same file twice. Duplicate identifiers are skipped, but check the count before pressing Import.
 
 Next, see [Quick sale](#/docs/quick-sale) to sell what you have entered, and [Settings](#/docs/settings) to choose which details and tests you track.
+
+## Changing several devices at once
+
+When a delivery needs checking, or a batch has to be archived, you do not have to open each device. Press **Select** at the top of Inventory. A tick box appears on every row and a bar appears above the table.
+
+![Inventory in select mode](shot:reseller-inventory-4 "Select mode: tick devices, then set a status, archive, restore or export them together.")
+
+1. Tick the devices you want. The bar shows how many are selected. If your search or filter matches more than fit on one page, **Select all** with the number of matching devices ticks every one of them, and **Clear** untick them again.
+2. Choose what to do. **Set status to…** offers Available, Reserved, Damaged and Returned. **Archive** moves them out of the way, and **Restore** brings archived ones back. **Export selection** downloads just those devices as a spreadsheet.
+3. Check the confirmation, which says how many devices will change and how many will be left alone, and confirm.
+
+Some devices are never changed, and the confirmation tells you how many were left out and why. A device that is out on demo stays as it is until it is back. A sold device keeps its sale, so its status cannot be set by hand. A device that is already in the state you asked for is skipped.
+
+Press **Done selecting** to go back to the normal table. Each change is saved on the device itself and noted in the server log, with how many devices it covered but not which ones.
+
+> Make a backup file before a large bulk change. Archive and Restore are easy to reverse, but a status you set on two hundred devices is two hundred edits. See [Backup and restore](#/docs/backup-and-restore).
+
+## If your plan has a device limit
+
+Your provider may give your plan a cap on device records, set to **Warn only** or **Block adding new**. You see where you stand on [Home](#/docs/home) under **Your plan**. When a limit blocks, adding a device, scanning a batch or importing a file is refused with a message starting "Your plan allows" and the numbers. For an import, the check happens before anything is saved, so a file is never half imported: you either get every row or none. See [Plans, trials and billing](#/docs/plans-trials-billing).

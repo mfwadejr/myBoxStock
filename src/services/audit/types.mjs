@@ -39,6 +39,8 @@ export const AUDIT_TYPES = [
   { group: 'backups', label: 'Backup test restore', area: 'host', events: ['backup.test_restore'] },
   { group: 'backups', label: 'Backup file uploaded for testing', area: 'host', events: ['backup.file_upload'] },
   { group: 'backups', label: 'Backup file tested', area: 'host', events: ['backup.file_test'] },
+  { group: 'backups', label: 'Looked inside a backup for one reseller', area: 'host', events: ['backup.reseller_test'] },
+  { group: 'backups', label: 'One reseller restored from a backup', area: 'host', events: ['backup.reseller_restore'] },
   { group: 'backups', label: 'Backup destination saved', area: 'host', events: ['backup.destination_saved'] },
   { group: 'backups', label: 'Backup destination removed', area: 'host', events: ['backup.destination_deleted'] },
   { group: 'backups', label: 'Backup destination tested', area: 'host', events: ['backup.destination_test'] },

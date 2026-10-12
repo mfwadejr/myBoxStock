@@ -176,6 +176,10 @@ export default [
   E('reseller-support-1', '#/support', async (page) => { await page.waitForSelector('.page-head'); await sleep(page, 600); }),
   E('reseller-support-2', '#/support/new', async (page) => { await page.waitForSelector('#go'); await sleep(page, 600); }),
 
+  // ---- Reports and bulk change --------------------------------------------------------------------------------------------------------------------------------------
+  E('reseller-reports-1', '#/reports', async (page) => { await page.waitForSelector('#aged'); await sleep(page, 500); }),
+  // Select mode in Inventory with two devices ticked, so the bar shows what it can do.
+  E('reseller-inventory-4', '#/inventory', async (page) => { await page.waitForSelector('tr.click'); await page.click('#selmode'); await page.waitForSelector('.rowsel'); const boxes = page.locator('.rowsel'); await boxes.nth(0).check(); await page.waitForSelector('#selcount'); await page.locator('.rowsel').nth(1).check(); await sleep(page, 500); }),
   // ---- Demo units and loans -------------------------------------------------------------------------------------------------------------------------------------------
   // The Lend out form on an available demo-account device, filled in with made-up details.
   E('reseller-demo-units-1', '#/inventory', async (page) => {

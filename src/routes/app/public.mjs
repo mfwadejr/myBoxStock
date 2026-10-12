@@ -47,6 +47,7 @@ export function publicRoutes(db) {
     const login = loginOf(username, code);
     await db.tx(async (t) => {
       await t.run('INSERT INTO accounts (id, account_code, business_name, owner_email, status, plan, trial_ends_at, plan_changed_at, created_at, terms_version, terms_accepted_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)', [accountId, code, businessName.trim().slice(0, 150), email.trim().slice(0, 200), 'active', 'trial', trialEnds, now, now, TERMS_VERSION, now]);
+      const startPlan = await getSetting(db, 'defaultPlanId', ''); if (startPlan) await t.run('UPDATE accounts SET plan_ref = ? WHERE id = ?', [startPlan, accountId]);   // the plan new sign-ups start on (Plans page)
       await recordEvent(t, { accountId, kind: 'trial_started', to: 'trial', actor: 'system', note: `Free trial of ${days} days`, detail: { trialEnds, days } });
       for (const [name, perms] of Object.entries(DEFAULT_ROLES)) await t.run('INSERT INTO account_roles (id, account_id, name, perms, builtin) VALUES (?,?,?,?,1)', [newId(), accountId, name, JSON.stringify(perms)]);
       await t.run('INSERT INTO account_users (id, account_id, login, username, email, role, pw_hash, created_at) VALUES (?,?,?,?,?,?,?,?)', [userId, accountId, login, username.toLowerCase(), email.trim(), 'Administrator', hashPassword(password), now]);

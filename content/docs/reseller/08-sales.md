@@ -1,9 +1,9 @@
 ---
 title: Sales
 summary: Look back over every sale, filter by date, warranty and status, open and print receipts, email them again, void a sale, change a warranty and export your sales to a spreadsheet.
-keywords: delivery, shipping, to ship, shipped, mark shipped, print label, tracking, paging, per page, next, previous, sales, receipts, receipt, void, refund, cancel sale, warranty, email receipt, print receipt, export csv, revenue, profit, report, search sales, filter, date range, paid by, return, returned, partly returned, credit note, restocking fee, refunds
+keywords: delivery, shipping, to ship, shipped, mark shipped, print label, tracking, paging, per page, next, previous, sales, receipts, receipt, void, refund, cancel sale, warranty, email receipt, print receipt, export csv, revenue, profit, report, search sales, filter, date range, paid by, return, returned, partly returned, credit note, restocking fee, refunds, ending soon, warranty reminder
 order: 8
-covers: nav:sales, 25 / 50 / 100 per page, Previous, Next, Export CSV, Quick sale, Search sales, From, To, All warranties, In warranty, Expired, No warranty, All sales, Sold, Void, Today, 7 days, 30 days, This month, All time, Clear filters, Sales, Revenue, Profit, Devices sold, Date, Receipt, Customer, Items, Warranty, Paid by, Total, Same number, Walk-in, Include the test record, Void sale, Change warranty, Email, Print, Done, Thank-you note, Sale voided notice, Send to, Open in my mail app, Send, sales.read, sales.write, All deliveries, To ship, Shipped, Shipping, Pickup, Meet, Immediate, Print labels, Print label, Mark shipped, Edit tracking, Copy, Delivery, Profit after shipping, delivery_status, shipping_fee, shipping_cost, tracking, Return or refund, Credit note, Returned or part returned, Returned, Partly returned, Return requested, Refunds, after refunds, return_status, net_total
+covers: nav:sales, 25 / 50 / 100 per page, Previous, Next, Export CSV, Quick sale, Search sales, From, To, All warranties, In warranty, Expired, No warranty, All sales, Sold, Void, Today, 7 days, 30 days, This month, All time, Clear filters, Sales, Revenue, Profit, Devices sold, Date, Receipt, Customer, Items, Warranty, Paid by, Total, Same number, Walk-in, Include the test record, Void sale, Change warranty, Email, Print, Done, Thank-you note, Sale voided notice, Send to, Open in my mail app, Send, sales.read, sales.write, All deliveries, To ship, Shipped, Shipping, Pickup, Meet, Immediate, Print labels, Print label, Mark shipped, Edit tracking, Copy, Delivery, Profit after shipping, delivery_status, shipping_fee, shipping_cost, tracking, Return or refund, Credit note, Returned or part returned, Returned, Partly returned, Return requested, Refunds, after refunds, return_status, net_total, Ending soon, Warranty ending soon
 ---
 
 ## What the Sales page is for
@@ -231,3 +231,7 @@ It opens in Excel, Numbers and Google Sheets. It is built in your browser and do
 - **Trial ended.** When your trial or paid period ends, the app becomes read-only. You can still look at sales and export, but not record or void. See [Plans, trials and billing](#/docs/plans-trials-billing).
 
 For answers to common questions, see [Troubleshooting and FAQ](#/docs/troubleshooting-faq), and the [Glossary](#/docs/glossary) for any unfamiliar word.
+
+## Sales whose warranty is ending
+
+The warranty filter has an extra choice, **Ending soon**, next to In warranty, Expired and No warranty. It shows sales whose warranty ends within the number of days set in [Settings](#/docs/settings) under Reminders (30 unless you changed it). The same sales are on [Home](#/docs/home) under **Warranty ending soon**, where each has an optional **Send reminder** button. A fully refunded sale never appears, because there is nothing left to cover.

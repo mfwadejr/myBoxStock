@@ -8,6 +8,7 @@ import { fail } from '../../core/messages.mjs';
 import { newId } from '../../core/ids.mjs';
 import { sendConfirmation } from '../../services/verify/index.mjs';
 import { normalizeIp } from '../../security/firewall/ip.mjs';
+import { wouldBreak, breakText } from '../../services/limits/index.mjs';
 import { INVITED } from '../../services/backup/team.mjs';
 
 export function usersRoutes(db) {
@@ -26,6 +27,8 @@ export function usersRoutes(db) {
     if (await db.get('SELECT id FROM account_users WHERE login = ?', [login])) return res.status(400).json({ error: 'That username is taken in your account.' });
     // In an encrypted account a person without keys could sign in but never open the data, so refuse instead of creating a half-working login.
     const encrypted = await vaultEnabled(db, req.subject.account_id); if (encrypted && !validKeys(req.body.keys)) return fail(res, 400, 'VAULT_BAD_KEYS');
+    const hit = await wouldBreak(db, { id: req.subject.account_id }, { users: 1, admins: role === 'Administrator' ? 1 : 0 });
+    if (hit) { tenantLog(req, 'plan.limit_blocked', `${req.subject.login} was stopped by the plan limit “${hit.name}” (${hit.used} of ${hit.limit})`, { limit: hit.id, used: hit.used, cap: hit.limit, adding: hit.adding }); return res.status(409).json({ error: breakText(hit), code: 'PLAN_LIMIT', limit: hit.id }); }
     const id = newId();
     await db.run('INSERT INTO account_users (id, account_id, login, username, email, role, pw_hash, must_change, created_at) VALUES (?,?,?,?,?,?,?,1,?)', [id, req.subject.account_id, login, username.toLowerCase(), email || null, role, hashPassword(password), Date.now()]);
     // In an encrypted account the Administrator's browser wraps the account key under the new person's temporary password.

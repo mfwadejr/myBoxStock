@@ -1,9 +1,9 @@
 ---
 title: Glossary
 summary: A to Z meanings of the words and labels you see in myBoxStock, each with a link to the page that explains more.
-keywords: glossary, tap to aim, confirm each scan, use this, backup file, mbsbackup, account menu, scan box, aim line, preset, restore point, diagnostics, add what is missing, replace everything, meaning, definition, terms, words, what does it mean, reseller id, recovery key, administrator, standard, view, trial, read-only, void, sku, uid, mac, serial, two-factor, authenticator, export, receipt, catalog, warranty, credit note, restocking fee, return or refund, running low
+keywords: glossary, tap to aim, confirm each scan, use this, backup file, mbsbackup, account menu, scan box, aim line, preset, restore point, diagnostics, add what is missing, replace everything, meaning, definition, terms, words, what does it mean, reseller id, recovery key, administrator, standard, view, trial, read-only, void, sku, uid, mac, serial, two-factor, authenticator, export, receipt, catalog, warranty, credit note, restocking fee, return or refund, running low, bulk change, limit, reminder, tracking link
 order: 21
-covers: Get set up card, Tap to aim, Confirm each scan, Account menu, Add what is missing, Aim line, Backup file, .mbsbackup, Diagnostics, Preset, Replace everything, Restore point, Scan box, Account, Activity, Administrator, Archive, Authenticator, Available, Bulk scan, Catalog, Cost, Customer, Date received, Discount, Disabled, Encryption, Erase, Export, Free trial, Idle lock, Import, Inventory, Look up in sale, Make, Model, Paid by, Password, Quick sale, Read-only, Receipt, Recovery code, Recovery key, Required before sale, Reseller ID, Reorder level, Reserved, Reset access, Returned, Sale, Selling price, Session, Settings, Standard, Status, Suspended, Team, Test checklist, Tested on, Trial, Two-factor, UID, Unlock, User type, Username, View, Void, Warranty, Awaiting test, Pending invitation, Test a backup file, Reorder switch, Drag handle, Support, Ticket, Carrier, Delivery, Delivery note, Meet, Pickup, Return address, Ship to, Shipped, Shipping, Shipping cost, Shipping fee, Shipping label, To ship, Tracking number, Credit note, Restocking fee, Return or refund, Running low, Partly returned, Return requested, Order number, Themed, Plain, DEMO chip, Mark shipped, Focus ring, Saved address, Refund, Return reason, Label logo, Screenshot viewer
+covers: Get set up card, Tap to aim, Confirm each scan, Account menu, Add what is missing, Aim line, Backup file, .mbsbackup, Diagnostics, Preset, Replace everything, Restore point, Scan box, Account, Activity, Administrator, Archive, Authenticator, Available, Bulk scan, Catalog, Cost, Customer, Date received, Discount, Disabled, Encryption, Erase, Export, Free trial, Idle lock, Import, Inventory, Look up in sale, Make, Model, Paid by, Password, Quick sale, Read-only, Receipt, Recovery code, Recovery key, Required before sale, Reseller ID, Reorder level, Reserved, Reset access, Returned, Sale, Selling price, Session, Settings, Standard, Status, Suspended, Team, Test checklist, Tested on, Trial, Two-factor, UID, Unlock, User type, Username, View, Void, Warranty, Awaiting test, Pending invitation, Test a backup file, Reorder switch, Drag handle, Support, Ticket, Carrier, Delivery, Delivery note, Meet, Pickup, Return address, Ship to, Shipped, Shipping, Shipping cost, Shipping fee, Shipping label, To ship, Tracking number, Credit note, Restocking fee, Return or refund, Running low, Partly returned, Return requested, Order number, Themed, Plain, DEMO chip, Mark shipped, Focus ring, Saved address, Refund, Return reason, Label logo, Screenshot viewer, Bulk change, Limit, Reports, Reminder, Tracking link
 ---
 
 Words are listed in alphabetical order. A word in bold inside a definition has its own entry.
@@ -445,3 +445,27 @@ Cancels a sale made by mistake: its devices go back to available and the sale st
 The period after a sale during which you stand behind a device. Periods are set in Settings, chosen at Quick sale, and shown on the receipt with the end date. See [Settings](#/docs/settings).
 
 > Emails and alerts only work after the Email section is set up, using either direct sending or an SMTP gateway. The person who runs your site sets this up, so if a message you expect never arrives, ask them to check it.
+
+### Bulk change
+
+Changing several devices at once in Inventory: tick them with **Select**, then set a status, archive, restore or export them. Devices on demo and sold devices are left alone.
+
+### Limit
+
+A cap your provider puts on a plan, such as a number of device records. It either warns you or blocks adding more. See **Your plan** on Home.
+
+### Reports
+
+The page with profit by month and by model, the **Sitting too long** list and the year-end sales spreadsheet. See [Reports](#/docs/reports).
+
+### Reminder
+
+An optional email to a customer about a warranty that is ending or a demo that is overdue. It is only sent when you press **Send reminder**.
+
+### Sitting too long
+
+A device still on your shelf after your chosen number of days. Listed on Home and in Reports.
+
+### Tracking link
+
+The link next to a tracking number that opens the carrier's own tracking page.

@@ -39,7 +39,7 @@ export const PAGES = [
     body: `
 <section class="hero"><div class="wrap"><div class="prose">
 <h1>Know what’s on your shelf, what you sold, and what you promised.</h1>
-<p class="lead">myBoxStock is a calm, simple home for your streaming-box business. Scan a device in, sell it in a few taps, ship it with a printed label, and keep the receipt, the test record and the warranty together. Your data is locked in your own browser, so only you and your team can read it.</p>
+<p class="lead">myBoxStock keeps track of your streaming-box business. Scan a device in, sell it in a few taps, ship it with a printed label, and keep the receipt, the test record and the warranty together. Your data is locked in your own browser, so only you and your team can read it.</p>
 <div class="cta">${signup()}<a class="btn secondary" href="features.html">See what it does</a></div>
 ${notice()}
 <p class="fine">Already have an account? <a data-app="login" href="${APP_LOGIN}">Log in</a>.</p>

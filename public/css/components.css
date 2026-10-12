@@ -280,3 +280,9 @@ details[open] > summary { margin-bottom: var(--space-xs); }
 .nav-count { margin-left: auto; }   /* the red count on a menu row (left menu and More sheet) */
 .tabbar [data-more] { position: relative; }
 .tabbar [data-more] .nav-count { position: absolute; top: var(--space-3xs); left: 50%; margin-left: var(--space-xs); }
+
+/* Plan limits: one usage line on Home, and one row of the Limits list on the Host Plans page. */
+.plan-use { padding: var(--space-sm) 0; }
+.plan-use .meter { margin-top: var(--space-xs); }
+.limit-row { padding: var(--space-md) 0; border-top: var(--border-default); }
+.limit-row:first-of-type { border-top: 0; }

@@ -58,13 +58,14 @@ test('pipeline and renewals', async () => {
 });
 
 test('plans: saved, validated and logged', async () => {
-  assert.deepEqual((await host.req('GET', '/api/host/business/plans')).data.plans, []);
-  const good = [{ name: 'Starter', price: '19.00', interval: 'month', maxUsers: 3, maxDevices: 500, note: 'small shops' }, { name: 'Pro', price: '190', interval: 'year', maxUsers: '', maxDevices: '' }];
+  const first = (await host.req('GET', '/api/host/business/plans')).data;
+  assert.deepEqual(first.plans, []); assert.deepEqual(first.limits.map(l => l.id), ['lim-users', 'lim-devices', 'lim-sales'], 'a new site starts with three limits');
+  const good = [{ name: 'Starter', price: '19.00', interval: 'month', limits: { 'lim-users': 3, 'lim-devices': 500 }, note: 'small shops' }, { name: 'Pro', price: '190', interval: 'year', limits: { 'lim-users': '', 'lim-devices': '' } }];
   let r = await host.req('PUT', '/api/host/business/plans', { plans: good }); assert.equal(r.status, 200);
-  assert.deepEqual(r.data.plans.map(p => [p.name, p.priceCents, p.interval, p.maxUsers, p.maxDevices]), [['Starter', 1900, 'month', 3, 500], ['Pro', 19000, 'year', null, null]]);
+  assert.deepEqual(r.data.plans.map(p => [p.name, p.priceCents, p.interval, p.limits['lim-users'] ?? null, p.limits['lim-devices'] ?? null]), [['Starter', 1900, 'month', 3, 500], ['Pro', 19000, 'year', null, null]]);
   assert.equal((await host.req('PUT', '/api/host/business/plans', { plans: [{ name: '' }] })).status, 400);
   assert.equal((await host.req('PUT', '/api/host/business/plans', { plans: [{ name: 'A' }, { name: 'a' }] })).status, 400, 'names are unique');
-  assert.equal((await host.req('PUT', '/api/host/business/plans', { plans: [{ name: 'X', maxUsers: 'lots' }] })).status, 400);
+  assert.equal((await host.req('PUT', '/api/host/business/plans', { plans: [{ name: 'X', limits: { 'lim-users': 'lots' } }] })).status, 400);
   assert.equal((await host.req('GET', '/api/host/business/plans')).data.plans.length, 2, 'bad saves change nothing');
 });
 

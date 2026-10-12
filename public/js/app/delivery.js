@@ -105,6 +105,18 @@
   };
   D.receiptFeeText = (d) => D.typeOf(d) === 'shipping' ? [`Shipping: ${F.money(D.fee(d.delivery))}`] : [];
 
+  // ---- carrier tracking links: the carrier you typed (or the shape of the number) picks the carrier's own tracking page ----
+  // One place turns carrier + number into a link, so a status service can be added later without changing what is stored.
+  const TRACK = { usps: ['USPS', 'https://tools.usps.com/go/TrackConfirmAction?tLabels='], ups: ['UPS', 'https://www.ups.com/track?tracknum='], fedex: ['FedEx', 'https://www.fedex.com/fedextrack/?trknbr='], dhl: ['DHL', 'https://www.dhl.com/us-en/home/tracking/tracking-express.html?submit=1&tracking-id='] };
+  D.carrierCode = (carrier, number) => {
+    const c = String(carrier || '').toLowerCase(), n = String(number || '').replace(/\s+/g, '').toUpperCase();
+    if (/usps|postal|u\.?s\.? ?mail/.test(c)) return 'usps'; if (/\bups\b|united parcel/.test(c)) return 'ups'; if (/fed ?ex|federal express/.test(c)) return 'fedex'; if (/dhl/.test(c)) return 'dhl';
+    if (c.trim()) return '';                                            // a carrier we have no page for: plain text
+    if (/^1Z[0-9A-Z]{16}$/.test(n)) return 'ups'; if (/^9[2-5]\d{18,24}$/.test(n)) return 'usps'; return '';
+  };
+  D.trackUrl = (carrier, number) => { const code = D.carrierCode(carrier, number), n = String(number || '').replace(/\s+/g, ''); return code && n ? TRACK[code][1] + encodeURIComponent(n) : ''; };
+  D.trackLink = (dl) => { const code = D.carrierCode(dl?.carrier, dl?.tracking), url = D.trackUrl(dl?.carrier, dl?.tracking); return url ? `<a class="linkbtn" href="${esc(url)}" target="_blank" rel="noopener noreferrer">Track on ${TRACK[code][0]}</a>` : ''; };
+
   // ---- sale detail (staff only, never printed): status, tracking, internal cost, actions ----
   D.detailHtml = (sale, canWrite) => {
     const d = sale.data, t = D.typeOf(d); if (t === 'immediate') return '';
@@ -113,7 +125,7 @@
     return `<div class="delivery-detail no-print"><div class="row spread"><h3>Delivery</h3>${D.tag(d)}</div>
       <div class="delivery-facts"><span class="muted">Ship to</span><span>${[clip(dl.shipTo?.name), ...D.lines(dl.shipTo)].map(esc).join('<br>')}</span>
         <span class="muted">Carrier</span><span>${esc(dl.carrier || '—')}</span>
-        <span class="muted">Tracking</span><span>${dl.tracking ? `<span class="ident">${esc(dl.tracking)}</span> <button type="button" class="linkbtn" id="dcopy">Copy</button>` : '—'}</span>
+        <span class="muted">Tracking</span><span>${dl.tracking ? `<span class="ident">${esc(dl.tracking)}</span> <button type="button" class="linkbtn" id="dcopy">Copy</button>${D.trackLink(dl)}` : '—'}</span>
         ${s === 'shipped' ? `<span class="muted">Shipped</span><span>${esc(F.day(dl.shippedAt))}</span>` : ''}
         ${dl.note ? `<span class="muted">Delivery note</span><span>${esc(dl.note)}</span>` : ''}
         <span class="muted">Shipping charged</span><span>${esc(F.money(D.fee(dl)))}</span>

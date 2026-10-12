@@ -10,10 +10,11 @@ import { runFullBackup } from './auto.mjs';
 import { testRestore } from './testrestore.mjs';
 import { testOffsiteCopy, restoreOffsiteCopy, dropToken } from './offsite.mjs';
 import { testBackupFile, restoreBackupFile, dropToken as dropFileToken } from './filetest.mjs';
+import { previewReseller, restoreReseller, dropToken as dropResellerToken } from './reseller-restore.mjs';
 import { jobStep } from './progress.mjs';
 import { onDetachedToken } from './jobs.mjs';
 
-onDetachedToken((t) => { dropToken(t); dropFileToken(t); });
+onDetachedToken((t) => { dropToken(t); dropFileToken(t); dropResellerToken(t); });
 const str = (v) => String(v ?? '');
 const needConfirm = (b) => { if (b.confirm !== 'RESTORE') throw coded('HOST_BACKUP_RESTORE_CONFIRM'); };
 const sqliteOnly = (db) => { if (db.client !== 'sqlite') throw coded('HOST_BACKUP_SQLITE_ONLY'); };
@@ -59,6 +60,15 @@ export const JOB_KINDS = {
     return { label: 'Restore from a backup file', run: async () => {
       try { const out = await restoreBackupFile(db, { token: b.token, passphrase: str(b.passphrase), actor, ip }); return { ok: true, restarting: true, safetyCopy: out.safetyCopy, summary: 'Restored. The site is restarting.' }; }
       catch (e) { audit('backup.restore', `Restore from an uploaded or placed backup file refused: ${e.message}`, { actor, ip, level: 'warn', data: { ok: false, source: 'file' } }); throw e; }
+    } };
+  },
+  // Restore one reseller from a backup the Host holds. The preview changes nothing; the restore needs its token, the mode and the typed business name.
+  'reseller-preview': (db, b, { actor, ip }) => { sqliteOnly(db); return { label: 'Looking inside a backup for one reseller', run: () => previewReseller(db, { accountId: str(b.accountId), source: b.source, passphrase: str(b.passphrase), actor, ip }) }; },
+  'reseller-restore': (db, b, { actor, ip }) => {
+    sqliteOnly(db);
+    return { label: 'Restoring one reseller', run: async () => {
+      try { const out = await restoreReseller(db, { token: b.token, accountId: str(b.accountId), mode: str(b.mode), includeTeam: !!b.includeTeam, confirmName: str(b.confirmName), passphrase: str(b.passphrase), notify: !!b.notify, actor, ip }); return { ok: true, ...out }; }
+      catch (e) { audit('backup.reseller_restore', `Restore of one reseller refused: ${e.message}`, { actor, ip, level: 'warn', data: { ok: false } }); throw e; }
     } };
   },
   // Full-site backups: the scheduled settings run now, or one by hand with its own passphrase.

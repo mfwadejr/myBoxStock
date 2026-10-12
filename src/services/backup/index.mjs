@@ -23,3 +23,4 @@ export { startJob, publicJob, currentJob, getJob, dismissJob, detachJob, stopJob
 export { JOB_KINDS } from './jobkinds.mjs';
 export { testBackupFile, restoreBackupFile, receiveUpload, discardUpload, folderFiles, cleanIncoming, uploadLimit, dropToken as dropFileToken } from './filetest.mjs';
 export { backupHealth, recordTestResult, TEST_WINDOW_DAYS, isSpaceLow } from './health.mjs';
+export { sourcesFor, previewReseller, restoreReseller, noticeText as resellerNoticeText } from './reseller-restore.mjs';

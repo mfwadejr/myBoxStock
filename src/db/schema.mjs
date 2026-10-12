@@ -203,6 +203,16 @@ const MIGRATIONS = [
       user_id ${id} PRIMARY KEY, account_id ${id} NOT NULL, set_key ${s(40)} NOT NULL, kind ${s(12)} NOT NULL, login ${s(160)} NOT NULL, role ${s(40)} NOT NULL, pw_sealed TEXT NOT NULL, created_at BIGINT NOT NULL, rotated_at BIGINT)`);
     await db.exec('CREATE INDEX idx_demo_logins_set ON demo_logins (set_key)');
   } },
+  { id: 19, name: 'plan limits and subscription details on accounts', up: async (db) => {
+    // plan_ref = the named plan from the Plans page this account is on (empty = no limits). limit_overrides = the Host's per-account numbers, as JSON { limitId: number | null }.
+    // billing_cycle = month | year, for the Host's own tracking. provider_customer / provider_subscription stay empty until a payment system is connected.
+    await db.exec(`ALTER TABLE accounts ADD COLUMN plan_ref ${s(40)}`);
+    await db.exec('ALTER TABLE accounts ADD COLUMN limit_overrides TEXT');
+    await db.exec(`ALTER TABLE accounts ADD COLUMN billing_cycle ${s(10)}`);
+    await db.exec(`ALTER TABLE accounts ADD COLUMN provider_customer ${s(120)}`);
+    await db.exec(`ALTER TABLE accounts ADD COLUMN provider_subscription ${s(120)}`);
+    await db.exec('CREATE INDEX idx_records_created ON records (account_id, type, created_at)');
+  } },
 ];
 
 export const LATEST_MIGRATION = MIGRATIONS[MIGRATIONS.length - 1].id; // used by the offsite test to refuse a copy made by a newer app

@@ -3,7 +3,7 @@
   const { esc, toast, sheet, swap } = UI, A = AccountApp, C = A.commerce, F = A.fmt, S = A.store;
   const STATUSES = ['available', 'reserved', 'sold', 'returned', 'damaged', 'archived'].map(s => [s, C.STATUS[s][1]]);
   const FILTERS = () => [['active', 'Available'], ['all', 'All (not archived)'], ...(C.requireTested() ? [['testing', 'Awaiting test']] : []), ['loaned', 'On demo'], ...STATUSES.filter(s => s[0] !== 'available')];
-  const view = { q: '', status: 'active', model: '', page: 1, size: 25 };   // kept while the app is open; a new search or filter goes back to page 1
+  const view = { q: '', status: 'active', model: '', page: 1, size: 25, selecting: false, sel: new Set() };   // kept while the app is open; a new search or filter goes back to page 1
 
   AccountApp.inventoryLoanFilter = () => Object.assign(view, { q: '', status: 'loaned', model: '', page: 1 });   // Home's On demo card
   AccountApp.inventoryFilter = (model) => Object.assign(view, { q: '', status: 'active', model, page: 1 });   // Home's Running low card opens Inventory on one model
@@ -129,14 +129,34 @@
   // CSV columns for the extra items under test steps: From → To items get two columns.
   const itemCols = () => C.steps().flatMap(st => (st.details || []).flatMap(it => it.type === 'fromto' ? [{ st, it, part: 'from', label: `${it.label} from` }, { st, it, part: 'to', label: `${it.label} to` }] : [{ st, it, label: it.label }]));
   // The device table as headers + rows; shared by "Export CSV" here and "Export everything" in Security.
-  AccountApp.inventoryTable = () => {
+  AccountApp.inventoryTable = (only) => {
     const cols = csvFields(), steps = C.steps();
-    const rows = S.all('item').map(e => { const d = e.data; return [...cols.map(c => c.f ? C.showVal(c.f, C.getVal(d, c.f)) : c.key === 'cost' || c.key === 'price' ? F.dollars(d[c.key]) : c.key === 'receivedOn' ? C.dateStr(C.receivedMs(d)) : d[c.key]), ...(steps.length ? [...steps.map(st => d.checks?.[st.key] ? 'yes' : ''), ...itemCols().map(x => { const v = d.checkVals?.[x.st.key]?.[x.it.key]; return x.part ? (v?.[x.part] || '') : C.detailText(x.it, v); }), d.checks && Object.keys(d.checks).length ? C.dateStr(C.testedMs(d)) : '', d.testNotes || ''] : [])]; });
+    const rows = S.all('item').filter(e => !only || only.has(e.id)).map(e => { const d = e.data; return [...cols.map(c => c.f ? C.showVal(c.f, C.getVal(d, c.f)) : c.key === 'cost' || c.key === 'price' ? F.dollars(d[c.key]) : c.key === 'receivedOn' ? C.dateStr(C.receivedMs(d)) : d[c.key]), ...(steps.length ? [...steps.map(st => d.checks?.[st.key] ? 'yes' : ''), ...itemCols().map(x => { const v = d.checkVals?.[x.st.key]?.[x.it.key]; return x.part ? (v?.[x.part] || '') : C.detailText(x.it, v); }), d.checks && Object.keys(d.checks).length ? C.dateStr(C.testedMs(d)) : '', d.testNotes || ''] : [])]; });
     return { headers: [...cols.map(c => c.label), ...(steps.length ? [...steps.map(st => st.label), ...itemCols().map(x => x.label), 'Tested on', 'Test notes'] : [])], rows };
   };
-  function exportCsv() {
-    const t = AccountApp.inventoryTable();
-    C.download(`inventory-${F.ymd(Date.now())}.csv`, C.toCsv(t.headers, t.rows)); toast(`Exported ${t.rows.length} devices`);
+  function exportCsv(only) {
+    const t = AccountApp.inventoryTable(only);
+    C.download(`inventory-${only ? 'selection-' : ''}${F.ymd(Date.now())}.csv`, C.toCsv(t.headers, t.rows)); toast(`Exported ${t.rows.length} devices`); if (only) C.delivery.note('bulkexport');
+  }
+  // Bulk change: pick devices, then set a status, archive or restore them together. A device on demo is never touched; a sold device keeps its sale.
+  const BULK_STATUS = [['', 'Set status to…'], ['available', 'Available'], ['reserved', 'Reserved'], ['damaged', 'Damaged'], ['returned', 'Returned']];
+  const bulkPlan = (kind, status) => {
+    const put = [], skip = { demo: 0, sold: 0, same: 0 };
+    for (const id of view.sel) { const e = S.get('item', id); if (!e) continue; const d = e.data;
+      if (A.loans.blocked(d)) { skip.demo++; continue; }
+      let next = null;
+      if (kind === 'archive') next = d.status === 'archived' ? null : 'archived';
+      else if (kind === 'restore') next = d.status === 'archived' ? (d.saleId ? 'sold' : 'available') : null;
+      else if (d.status === 'sold') { skip.sold++; continue; } else next = d.status === status ? null : status;
+      if (next === null) { skip.same++; continue; } put.push({ type: 'item', id: e.id, data: { ...d, status: next } }); }
+    return { put, skip };
+  };
+  async function bulkApply(kind, status) {
+    const { put, skip } = bulkPlan(kind, status), word = kind === 'archive' ? 'Archive' : kind === 'restore' ? 'Restore' : `Set to ${C.STATUS[status][1]}`;
+    const left = [skip.demo ? `${skip.demo} on demo` : '', skip.sold ? `${skip.sold} sold` : '', skip.same ? `${skip.same} already like that` : ''].filter(Boolean).join(', ');
+    if (!put.length) return toast(`Nothing to change${left ? ` (${left})` : ''}.`, true);
+    if (!await UI.confirmBox({ title: `${word}: ${put.length} device${put.length === 1 ? '' : 's'}?`, body: `${left ? `Left as they are: ${left}. ` : ''}Each change is saved to the device and logged.`, confirmLabel: word })) return;
+    try { for (let i = 0; i < put.length; i += 200) await S.commit({ puts: put.slice(i, i + 200) }); A.commerce.delivery.note('bulkchange'); view.sel.clear(); toast(`${put.length} device${put.length === 1 ? '' : 's'} changed${left ? `, ${left} left alone` : ''}`); A.route(); } catch (e) { toast(e.message, true); }
   }
   const IMPORT_MAX_BYTES = 10 * 1024 * 1024, IMPORT_MAX_ROWS = 20000;   // keeps a phone from freezing on a huge or wrong file
   const unquote = (v) => /^'[=+\-@]/.test(v) ? v.slice(1) : v;           // the export puts a ' in front of text that starts with = + - @ so spreadsheets do not run it; importing takes it off again
@@ -164,6 +184,7 @@
       if (!look.some(f => C.getVal(d, f)) || keys.some(([k, v]) => have.get(k).has(v))) { skipped.push(r); continue; }
       keys.forEach(([k, v]) => have.get(k).add(v)); good.push(d);
     }
+    try { if (good.length) await S.planCheck({ item: good.length }); } catch (e) { return toast(e.message, true); }
     const ok = await sheet(`<h2>Import devices</h2><p class="sub">${good.length} device${good.length === 1 ? '' : 's'} will be added.${skipped.length ? ` ${skipped.length} row${skipped.length === 1 ? '' : 's'} will be skipped because they have no identifier or one that already exists.` : ''}</p><div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go" ${good.length ? '' : 'disabled'}>Import ${good.length}</button></div>`, { onMount: (el, close) => el.querySelector('#go').addEventListener('click', async () => {
       try { for (let i = 0; i < good.length; i += 200) await S.commit({ puts: good.slice(i, i + 200).map(data => ({ type: 'item', data })) }); close(true); } catch (e) { toast(e.message, true); } }) });
     if (ok) { toast(`Imported ${good.length} devices`); A.route(); }
@@ -174,20 +195,33 @@
     const can = A.can('inventory.write'), items = S.all('item'), models = modelsOf(), low = lowModels(), look = C.lookupFields().slice(0, 3);
     const shown = items.filter(e => (view.status === 'active' ? C.isAvail(e.data) : view.status === 'all' ? e.data.status !== 'archived' : C.effStatus(e.data) === view.status) && (!view.model || e.data.model === view.model) && matches(e.data, view.q.toLowerCase())).sort((a, b) => C.receivedMs(b.data) - C.receivedMs(a.data));
     view.page = Math.min(Math.max(1, view.page), Math.max(1, Math.ceil(shown.length / view.size)));
+    const pageRows = shown.slice((view.page - 1) * view.size, view.page * view.size);
+    if (!can) view.selecting = false;
+    for (const id of [...view.sel]) if (!S.get('item', id)) view.sel.delete(id);   // a device that was deleted drops out of the selection
     swap(main, `<div class="page-head row spread wrap"><div><h1>Inventory</h1><p>${items.filter(e => C.isAvail(e.data)).length} available${C.requireTested() && items.some(e => C.effStatus(e.data) === 'testing') ? ` · ${items.filter(e => C.effStatus(e.data) === 'testing').length} awaiting test` : ''} · ${items.length} total. Only your team can read this.</p></div>
-      ${can ? '<div class="row"><button class="btn secondary" id="bulk">Bulk scan</button><button class="btn secondary" id="imp">Import CSV</button><button class="btn secondary" id="exp">Export CSV</button><button class="btn" id="add">Add device</button></div><input type="file" id="file" accept=".csv,text/csv">' : '<div class="row"><button class="btn secondary" id="exp">Export CSV</button></div>'}</div>
+      ${can ? `<div class="row wrap"><button class="btn secondary" id="selmode" aria-pressed="${view.selecting}">${view.selecting ? 'Done selecting' : 'Select'}</button><button class="btn secondary" id="bulk">Bulk scan</button><button class="btn secondary" id="imp">Import CSV</button><button class="btn secondary" id="exp">Export CSV</button><button class="btn" id="add">Add device</button></div><input type="file" id="file" accept=".csv,text/csv">` : '<div class="row"><button class="btn secondary" id="exp">Export CSV</button></div>'}</div>
       ${low.length ? `<div class="banner mb-lg">${low.map(m => `${esc(m.name)}: ${m.n} left (reorder at ${m.r})`).join(' · ')}</div>` : ''}
       <div class="toolbar"><div class="scanfield"><input type="search" class="search" id="q" aria-label="Search inventory" placeholder="Search ${esc(look.map(f => f.label).join(', ') || 'devices')}, make, model, notes" value="${esc(view.q)}" autocomplete="off" data-scanlabel="a code to search for">${A.scanner.button('Scan a code to search with the camera')}</div>${UI.select.html({ id: 'st', options: FILTERS(), value: view.status })}${UI.select.html({ id: 'md', options: [['', 'All models'], ...models.map(m => [m, m])], value: view.model })}</div>
-      <div class="card"><div class="tablewrap">${shown.length ? `<table><thead><tr>${look.map(f => `<th>${esc(f.label)}</th>`).join('')}<th>Device</th><th class="right">Cost</th><th class="right">Price</th>${C.testsOn() ? '<th>Tests</th>' : ''}<th>Status</th></tr></thead><tbody>${shown.slice((view.page - 1) * view.size, view.page * view.size).map(e => { const d = e.data; return `<tr class="click" data-id="${esc(e.id)}">${look.map(f => `<td class="ident">${esc(C.showVal(f, C.getVal(d, f)) || '—')}</td>`).join('')}<td>${esc(C.deviceName(d) || '—')}</td><td class="right">${esc(F.money(d.cost))}</td><td class="right">${esc(F.money(d.price))}</td>${C.testsOn() ? `<td>${C.testChip(d)}</td>` : ''}<td>${C.statusChip(C.effStatus(d))}</td></tr>`; }).join('')}</tbody></table>` : `<div class="empty">${items.length ? 'No devices match.' : 'No devices yet.'}</div>`}</div><div id="pg"></div></div>
+      ${can && view.selecting ? `<div class="bulkbar" role="group" aria-label="Change several devices"><span class="strong" id="selcount">${view.sel.size} selected</span>${shown.length > pageRows.length && view.sel.size < shown.length ? `<button type="button" class="linkbtn" id="selmatch">Select all ${shown.length} matching</button>` : ''}${view.sel.size ? '<button type="button" class="linkbtn" id="selclear">Clear</button>' : ''}${UI.select.html({ id: 'bst', options: BULK_STATUS, value: '' })}<button type="button" class="btn secondary small" id="barch" ${view.sel.size ? '' : 'disabled'}>Archive</button><button type="button" class="btn secondary small" id="bres" ${view.sel.size ? '' : 'disabled'}>Restore</button><button type="button" class="btn secondary small" id="bexp" ${view.sel.size ? '' : 'disabled'}>Export selection</button></div>` : ''}
+      <div class="card"><div class="tablewrap">${shown.length ? `<table><thead><tr>${can && view.selecting ? `<th class="check-col"><label class="check-cell"><input type="checkbox" id="selall" aria-label="Select every device on this page" ${pageRows.length && pageRows.every(e => view.sel.has(e.id)) ? 'checked' : ''}></label></th>` : ''}${look.map(f => `<th>${esc(f.label)}</th>`).join('')}<th>Device</th><th class="right">Cost</th><th class="right">Price</th>${C.testsOn() ? '<th>Tests</th>' : ''}<th>Status</th></tr></thead><tbody>${pageRows.map(e => { const d = e.data; return `<tr class="click" data-id="${esc(e.id)}">${can && view.selecting ? `<td class="check-col"><label class="check-cell"><input type="checkbox" class="rowsel" data-id="${esc(e.id)}" aria-label="Select ${esc(C.deviceName(d) || 'device')}" ${view.sel.has(e.id) ? 'checked' : ''}></label></td>` : ''}${look.map(f => `<td class="ident">${esc(C.showVal(f, C.getVal(d, f)) || '—')}</td>`).join('')}<td>${esc(C.deviceName(d) || '—')}</td><td class="right">${esc(F.money(d.cost))}</td><td class="right">${esc(F.money(d.price))}</td>${C.testsOn() ? `<td>${C.testChip(d)}</td>` : ''}<td>${C.statusChip(C.effStatus(d))}</td></tr>`; }).join('')}</tbody></table>` : `<div class="empty">${items.length ? 'No devices match.' : 'No devices yet.'}</div>`}</div><div id="pg"></div></div>
       ${models.length ? `<div class="card mt-lg"><h3>Stock levels</h3><div class="sub">Get a warning on this page when a model's available count drops to its reorder level (0 turns it off).</div><div class="tablewrap mt-sm"><table><thead><tr><th>Model</th><th class="right">Available</th><th>Reorder at</th><th></th></tr></thead><tbody>${models.map(m => { const n = items.filter(e => e.data.model === m && C.isAvail(e.data)).length, r = reorderOf(m)?.data.reorder || 0; return `<tr><td>${esc(m)}</td><td class="right">${n}</td><td><input type="number" min="0" step="1" class="num" data-model="${esc(m)}" aria-label="Reorder level for ${esc(m)}" value="${r}" ${can ? '' : 'disabled'}></td><td>${r > 0 && n <= r ? '<span class="chip red">Low</span>' : ''}</td></tr>`; }).join('')}</tbody></table></div></div>` : ''}`);
     const again = () => A.views.inventory(main);
     UI.pager(main.querySelector('#pg'), { page: view.page, size: view.size, total: shown.length, change: (n) => { view.page = n.page; view.size = n.size; again(); } });
     main.querySelector('#q').addEventListener('input', (e) => { view.q = e.target.value; view.page = 1; clearTimeout(again.t); again.t = setTimeout(async () => { const pos = e.target.selectionStart; await again(); const q = main.querySelector('#q'); q.focus(); q.setSelectionRange(pos, pos); }, 180); });
     main.querySelector('#st').addEventListener('change', (e) => { view.status = UI.select.value(e.target); view.page = 1; again(); });
     main.querySelector('#md').addEventListener('change', (e) => { view.model = UI.select.value(e.target); view.page = 1; again(); });
+    main.querySelector('#selmode')?.addEventListener('click', () => { view.selecting = !view.selecting; if (!view.selecting) view.sel.clear(); again(); });
+    main.querySelectorAll('.rowsel').forEach(c => { c.closest('td').addEventListener('click', (ev) => ev.stopPropagation()); c.addEventListener('change', () => { c.checked ? view.sel.add(c.dataset.id) : view.sel.delete(c.dataset.id); again(); }); });
+    main.querySelector('#selall')?.addEventListener('change', (ev) => { for (const e of pageRows) ev.target.checked ? view.sel.add(e.id) : view.sel.delete(e.id); again(); });
+    main.querySelector('#selmatch')?.addEventListener('click', () => { for (const e of shown) view.sel.add(e.id); again(); });
+    main.querySelector('#selclear')?.addEventListener('click', () => { view.sel.clear(); again(); });
+    main.querySelector('#bst')?.addEventListener('change', (ev) => { const v = UI.select.value(ev.target); if (v) bulkApply('status', v); });
+    main.querySelector('#barch')?.addEventListener('click', () => bulkApply('archive'));
+    main.querySelector('#bres')?.addEventListener('click', () => bulkApply('restore'));
+    main.querySelector('#bexp')?.addEventListener('click', () => exportCsv(new Set(view.sel)));
     main.querySelectorAll('tr.click').forEach(tr => tr.addEventListener('click', async () => { if (await editSheet(S.get('item', tr.dataset.id))) again(); }));
     main.querySelector('#add')?.addEventListener('click', async () => { if (await addSheet()) again(); });
-    main.querySelector('#exp')?.addEventListener('click', exportCsv);
+    main.querySelector('#exp')?.addEventListener('click', () => exportCsv());
     main.querySelector('#bulk')?.addEventListener('click', async () => { if (await bulkSheet()) again(); });
     main.querySelector('#imp')?.addEventListener('click', () => main.querySelector('#file').click());
     main.querySelector('#file')?.addEventListener('change', async (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) await importCsv(f); });

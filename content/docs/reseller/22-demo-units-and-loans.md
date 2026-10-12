@@ -1,9 +1,9 @@
 ---
 title: Demo units and loans
 summary: Lend a device to a customer or prospect for a demo, an RMA replacement or a repair, see who has it and for how long, and check it properly when it comes back.
-keywords: demo, demo unit, loan, loaner, lend, lend out, on demo, return from demo, rma, replacement, prospect, borrower, due back, overdue, customer keeps it, sell to borrower, included items, remote, batteries, power adapter, hdmi, retest, damage, condition, loans.csv, trial
+keywords: demo, demo unit, loan, loaner, lend, lend out, on demo, return from demo, rma, replacement, prospect, borrower, due back, overdue, customer keeps it, sell to borrower, included items, remote, batteries, power adapter, hdmi, retest, damage, condition, loans.csv, trial, reminder, remind, email borrower, overdue email
 order: 22
-covers: Lend out, Return from demo, Sell to borrower, On demo, Overdue, Prospect, Reason, Due back (optional), Who is borrowing it, Existing, New, Related sale (optional, for an RMA), Handover, How it gets to them, What goes with it, Date out, Note (optional), Items returned, Condition, Good, no damage, Damaged or something is wrong, What is wrong, Test it again before it goes back on sale, Customer keeps it, Date back, Demo and loan history, Demo units and loans, Usual loan length in days, Loan reasons, Customer can keep it, Add a reason, What goes with a loaned device, Add an item, Test again when a device comes back, loans.csv
+covers: Lend out, Return from demo, Sell to borrower, On demo, Overdue, Prospect, Reason, Due back (optional), Who is borrowing it, Existing, New, Related sale (optional, for an RMA), Handover, How it gets to them, What goes with it, Date out, Note (optional), Items returned, Condition, Good, no damage, Damaged or something is wrong, What is wrong, Test it again before it goes back on sale, Customer keeps it, Date back, Demo and loan history, Demo units and loans, Usual loan length in days, Loan reasons, Customer can keep it, Add a reason, What goes with a loaned device, Add an item, Test again when a device comes back, loans.csv, Send reminder, Send all reminders, Reminded, Demo or loan overdue
 ---
 
 ## What this is for
@@ -78,3 +78,15 @@ Loans are saved inside the device record, encrypted in your browser like everyth
 - Forgetting to press **Return from demo** when the box comes back. It stays **On demo** and out of your available stock.
 - Lending a device with an unfinished test record. The loan form does not stop you, but the test record is copied into the loan so you can see its state when it went out.
 - Expecting a prospect to have a sale. A prospect is just a customer who has not bought yet.
+
+## Reminding a borrower
+
+A loan that is past its due date shows **Overdue** on Home and in Inventory. You can also nudge the borrower by email, and it is always your choice: nothing is sent unless you press a button.
+
+On the **On demo** card on Home each overdue loan with an email address has a **Send reminder** button. If several are overdue, **Send all reminders** sends them in one go after you confirm. Once sent, the row shows **Reminded** with the date, and the date is kept on the loan, so you can see in its history that you asked.
+
+- A borrower with no email address is skipped, and the message says how many.
+- A borrower you already reminded in the last 7 days is skipped by Send all, so nobody gets nagged every day. The single button still works if you want to send again.
+- If your mail server refuses a message, Send all stops at the first failure and tells you how many went out.
+
+The email is sent from your own mail server if you set one up in [Settings](#/docs/settings) under Email sending, otherwise from the site's. The words are yours to change under **Customer emails**, in the message called **Demo or loan overdue**. It says the device and the date it was due back, and asks the borrower to reply.

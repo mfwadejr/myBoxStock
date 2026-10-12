@@ -1,6 +1,6 @@
 ---
 title: Support and diagnostics
-summary: How to help a reseller who writes to you: what their Copy diagnostics text tells you, what you can and cannot see, why you cannot restore one reseller from your own backups, and how to answer questions about their backup file and phone scanning.
+summary: How to help a reseller who writes to you: what their Copy diagnostics text tells you, what you can and cannot see, how to restore one reseller from your own backups, and how to answer questions about their backup file and phone scanning.
 keywords: support, diagnostics, copy diagnostics, help a reseller, reseller backup, mbsbackup, back up now, restore, add what is missing, replace everything, undo last restore, camera, scan, scanner, barcode, QR, https, permission, safety copy, what can the host see, zero-knowledge
 order: 20
 covers: Copy diagnostics, diagnostics, Backup and restore, Back up now, Choose file, Add what is missing, Replace everything, Undo last restore, Your account is newer than this file, This file cannot be used, Last backup, No backup yet, Not today, myboxstock-backup, .mbsbackup, restore point, Take a photo, Type it instead, Small, Medium, Large, Flash, Scan, camera blocked, hardware scanner, Export everything
@@ -71,19 +71,19 @@ A red banner "Your account is newer than this file" appears when the account's l
 
 A file may be refused with "This file cannot be used" if it is not a backup, is from a newer version, belongs to a different Reseller ID, was made with a different key, or is damaged or cut short. You cannot open or fix the file for them. Ask which of these applies and point them to the matching step on their own Backup and restore page.
 
-## Why you cannot restore one reseller from your backups
+## Restoring one reseller from your backups
 
-Your snapshots, offsite copies and full-site backups hold the whole database as it was at one moment. They are all-or-nothing:
+Your snapshots, offsite copies and full-site backups hold the whole database as it was at one moment. The **Restore a reseller** tab on [Backups](#/docs/backups) can take one account out of any of them and put just that account back, leaving every other reseller as it is.
 
-- A restore puts every account back to that moment. You cannot pull one reseller out and leave the others alone.
-- The data is encrypted for each reseller and you cannot open it, so you cannot extract or repair part of an account either.
-- Anything a reseller did after your backup is gone from the site after a restore.
+- It copies the account's records exactly as they are stored. The data is encrypted for each reseller and you cannot open it, so you cannot check or repair part of an account; you can only put it back as the backup had it.
+- The account goes back to the moment of the backup you chose, which may be a day or more old. Anything the reseller entered after it is not in it. The reseller owns their data and owns that loss, so tell them before you start. The reseller sees a notice afterwards with the date and time and how to bring newer entries back.
+- **Add what is missing** is the safe choice: it removes nothing. **Replace this account's data** makes the account match the backup and can remove newer entries. A safety copy of the account is kept for 7 days either way and the reseller can use **Undo last restore**.
 
-That is the reason each reseller's own backup file matters. After you restore, resellers see the site announcement that the site was restored from a backup taken at a given time. A reseller with a newer backup file of their own then opens **Backup and restore**, chooses the file and picks **Add what is missing** to recover their recent work. Without one, they have only what your backup held.
+That is also why each reseller's own backup file matters. A reseller with a newer file opens **Backup and restore**, chooses the file and picks **Add what is missing** to recover recent work. Without one, they have only what your backup held.
 
-> If you ever have to restore, tell your resellers straight away, and ask them to check their recent sales. See [Backups](#/docs/backups) and [Recovery and emergencies](#/docs/recovery-and-emergencies).
+> A whole-site restore still puts every account back to one moment. Use it for losing the server, and **Restore a reseller** for one account. See [Backups](#/docs/backups) and [Recovery and emergencies](#/docs/recovery-and-emergencies).
 
-If an account was erased after closing, there is no restore from the site. An older backup of yours may still hold the encrypted account until it is pruned, with the defaults at most about 8 weeks. See [Accounts](#/docs/accounts).
+If an account was erased after closing, there is no restore from the site. An older backup of yours may still hold the encrypted account until it is pruned, with the defaults at most about 8 weeks. Restore a reseller needs the account to exist on the site, so it cannot bring an erased account back. See [Accounts](#/docs/accounts).
 
 ## Questions about scanning with the phone camera
 

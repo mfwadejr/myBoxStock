@@ -1,9 +1,9 @@
 // HOST / views / backups — the Backups page: a status strip on top, then tabs for frequent snapshots, offsite copies, full-site backups, safety copies and destinations.
-// File lists and the Restore / Test restore sheets are in backups-files.js, the Destinations tab in backups-destinations.js.
+// File lists and the Restore / Test restore sheets are in backups-files.js, the Restore a reseller tab in backups-reseller.js, the Destinations tab in backups-destinations.js.
 (() => {
   const { esc, fmt, toast, sheet, busy, swap } = UI;
   const B = Host.backups = Host.backups || {};
-  const TABS = [['frequent', 'Frequent snapshots'], ['offsite', 'Offsite copies'], ['full', 'Full-site backups'], ['safety', 'Safety copies'], ['destinations', 'Destinations']];
+  const TABS = [['frequent', 'Frequent snapshots'], ['offsite', 'Offsite copies'], ['full', 'Full-site backups'], ['safety', 'Safety copies'], ['reseller', 'Restore a reseller'], ['destinations', 'Destinations']];
   const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const EVERY = [[5, '5 minutes'], [10, '10 minutes'], [15, '15 minutes'], [30, '30 minutes'], [60, 'hour'], [120, '2 hours'], [360, '6 hours'], [720, '12 hours'], [1440, 'day']];
   const TIER_NAME = { frequent: 'Frequent snapshot', manual: 'Manual snapshot', offsite: 'Offsite copy', full: 'Full-site backup' };
@@ -105,6 +105,7 @@
       saveBtn(pane, () => Host.api('PUT', '/backups/tiers', { safety: { keepDays: pane.querySelector('#sd').value, keepMin: pane.querySelector('#sm').value } }), 'Safety copy settings saved');
       B.localList(pane.querySelector('#list'), 'safety', d.engine, B.reloadStrip);
     },
+    reseller(pane, d) { B.resellerPane(pane, d); },
     destinations(pane, d) { B.destinationsPane(pane, d, () => B.reload()); lockPane(pane, d.setup.locks.destinations); },
   };
 

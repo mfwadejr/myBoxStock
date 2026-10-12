@@ -1,7 +1,7 @@
 ---
 title: Overview
 summary: A live picture of the server: how many accounts and people, whether backups are healthy, plan counts, CPU, memory and storage, firewall activity and email.
-keywords: dashboard, home, overview, accounts count, users, signed in now, database, backup status, cpu, memory, storage, disk, load, uptime, version, firewall, blocked, rate-limited, banned, mail queue, banner, restore staged
+keywords: dashboard, home, overview, accounts count, users, signed in now, database, backup status, cpu, memory, storage, disk, load, uptime, version, firewall, blocked, rate-limited, banned, mail queue, banner, restore staged, checklist, first steps
 order: 2
 covers: nav:overview, Email is on but no test email has passed since it was last changed, Send a test email, red number, Last snapshot, Last full-site backup, Last test restore, Copy off this server, Backup space left, Not protected yet, need attention, Background job, Accounts, Users, Signed in now, Database, Backups card, Plans card, on trial, ending within 7 days, free, paid, ended, CPU, Memory, Storage, Server, Protection, blocked, rate-limited, banned now, mail sent queued failed, Email links will not work banner, database restore staged banner, Alerts banner, Set the site address, Support card, Open Support, waiting on Host, unassigned, Demo accounts on Overview, DEMO, Show demo accounts, What you can and cannot see here
 ---
@@ -151,3 +151,14 @@ Every number on this page is about the server, not about anyone's business. You 
 - The numbers are about the platform. For help with one customer go to [Accounts](#/docs/accounts).
 - Compare **Signed in now** with **Users** to get a feel for how active your customers are. A low ratio is normal for small businesses that check in once a day.
 - If a card shows a dash or "Unavailable", the server could not read that measurement (some hosting environments hide disk figures). It is not by itself a fault.
+
+## Get set up
+
+On a new site the Overview opens with a **Get set up** card above the numbers. It lists the few things worth doing before real resellers sign up, each marked **Done** or **To do**, and each with an **Open** button that takes you to the right page:
+
+- **Email can be sent**. Sign-up confirmations, password resets and receipts all need it. See [Email](#/docs/email).
+- **A backup destination is added**. A copy that lives somewhere other than this server. See [Backups](#/docs/backups).
+- **The Host Console is limited to your addresses**. Add an access rule so only your own network can reach this console. See [Firewall](#/docs/firewall).
+- **Plans and limits are written down**. See [Plans](#/docs/plans).
+
+The card disappears by itself when all four are done. It does not look at any reseller's data; it only checks the settings of the site.

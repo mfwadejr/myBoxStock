@@ -14,6 +14,8 @@ Code is grouped **by function**. To troubleshoot something, go to the folder nam
 | Reseller backup file, restore point, diagnostics | `src/routes/app/backup.mjs`, `src/services/backup/restorepoint.mjs` + `diagnostics.mjs` (tables `restore_points`, `restore_point_records`, migration 15); the file is built and read in the browser: `public/js/app/backup-file.js`, `backup-restore.js`, `views/backup.js` |
 | Phone camera scanning | `public/js/app/scan-core.js`, `scan-decode.js`, `scan-ui.js`, `public/css/scanner.css`, `public/js/vendor/zxing.min.js` (decoded on the phone; nothing uploaded or logged) |
 | Account menu, long lists, Documentation | `public/js/shared/menu.js` (`UI.menu`, both top bars), `shared/list.js` (`UI.more` feeds with Load more, `UI.pager` page-size lists, `UI.chunked`), `shared/docs.js` + `src/services/docs/` + `content/docs/{host,reseller}/` |
+| Plan limits and subscriptions | `src/services/limits/index.mjs` (counts, effective numbers, `wouldBreak`), enforced in `routes/app/vault.mjs` (`/batch`) and `routes/app/users.mjs`; plan list in `routes/host/business.mjs`; `services/billing/subscription.mjs` |
+| Restore one reseller (Host) | `src/services/backup/reseller-restore.mjs` (sources, preview, restore; jobs `reseller-preview` and `reseller-restore` in `jobkinds.mjs`), safety copy from `restorepoint.mjs` |
 | What shows in the Host audit trail | `src/services/audit/types.mjs` (one row per kind of entry) and `src/routes/host/audit.mjs` |
 | Database problems, switching engines | `src/db/` (`drivers.mjs`, `schema.mjs`, `copy.mjs`) |
 | Something looks wrong visually | `public/css/` — change a **token** in `tokens.css`, not a rule |

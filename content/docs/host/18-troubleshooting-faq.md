@@ -1,9 +1,9 @@
 ---
 title: Troubleshooting and FAQ
 summary: Problems you are likely to meet as the Host, grouped by symptom, with the cause, the fix and where to read more. Ends with a general FAQ.
-keywords: test connection, sftp identity, restore notice, lockouts persist, camera, scanning, diagnostics, destination, troubleshooting, problem, error, not found, locked out, blocked, proxy, email not arriving, resend, confirmation link, backup failed, restore, trial, read-only, two-factor, recovery, FAQ, help
+keywords: test connection, sftp identity, restore notice, lockouts persist, camera, scanning, diagnostics, destination, troubleshooting, problem, error, not found, locked out, blocked, proxy, email not arriving, resend, confirmation link, backup failed, restore, trial, read-only, two-factor, recovery, FAQ, help, plan allows, cannot add, limit reached
 order: 18
-covers: Test a backup file too large, Not Found, host_console.blocked, Reverse proxy in front of the site, Site is behind Cloudflare, Resend, Resend all failed, Site address, Health tab, Send a test, Run one now, Restore, Extend trial, Change plan, Check my email setup, Show details, Email has not been tested, Set up two-factor, reset-host-admin, reset-server-options, HOST_ALLOW_ANY, Mark email as confirmed, Email a password reset link, Reset two-factor authentication, Recovery key, Test connection, Take a snapshot now, Send one now, Lift, Copy diagnostics, Try again, decrypt-backup, SFTP identity, Server identity pinned, restore notice, Backup is failing, Locked sign-ins, Unlock, Too many failed attempts
+covers: Test a backup file too large, Not Found, host_console.blocked, Reverse proxy in front of the site, Site is behind Cloudflare, Resend, Resend all failed, Site address, Health tab, Send a test, Run one now, Restore, Extend trial, Change plan, Check my email setup, Show details, Email has not been tested, Set up two-factor, reset-host-admin, reset-server-options, HOST_ALLOW_ANY, Mark email as confirmed, Email a password reset link, Reset two-factor authentication, Recovery key, Test connection, Take a snapshot now, Send one now, Lift, Copy diagnostics, Try again, decrypt-backup, SFTP identity, Server identity pinned, restore notice, Backup is failing, Locked sign-ins, Unlock, Too many failed attempts, Your plan allows
 ---
 
 ## How to use this page
@@ -173,7 +173,7 @@ An **offsite copy** (`.mbsenc`) has no Restore button. Download it, decrypt it w
 
 **If it will not restore.** The most common cause is a forgotten or mistyped passphrase. It is not stored anywhere readable, so there is no way to recover it. This is why the passphrase must be kept somewhere safe, away from the server.
 
-> A restore brings back the platform as it was at backup time. Anything customers did after that moment is gone, including new sign-ups. You cannot restore one reseller alone. Tell customers if you ever have to roll back.
+> A restore brings back the platform as it was at backup time. Anything customers did after that moment is gone, including new sign-ups. If only one reseller needs to go back, use **Restore a reseller** on the Backups page instead, so nobody else loses anything. Tell customers if you ever have to roll back.
 
 ## I was locked out or banned and restarting did not help
 
@@ -213,7 +213,7 @@ You cannot. Backups cover the whole site, are all-or-nothing, and you cannot ope
 
 ## Plans and prices: why is nothing being charged?
 
-**Cause.** The Plans page records names, prices and limits ahead of taking payments. As the page itself says, nothing is charged and no limit is enforced yet. Money received outside the app can be written down with **Record a receipt** on the account.
+**Cause.** The Plans page records names and prices ahead of taking payments, so nothing is charged. Limits are different: they are enforced. Money received outside the app can be written down with **Record a receipt** on the account.
 
 ## A helper administrator cannot get in
 
@@ -303,3 +303,17 @@ SQLite is good for testing and small sites. For many distributors working at onc
 ### Where do I start if I am new?
 
 Read [Getting started](#/docs/getting-started), then [Overview](#/docs/overview). The [Glossary](#/docs/glossary) explains every unfamiliar word.
+
+## A reseller says they cannot add anything ("Your plan allows")
+
+**Cause.** One of the limits on their plan is set to **Block adding new** and they have reached it. The message names the limit and the numbers. Open the account under [Accounts](#/docs/accounts) and read **Plan limits and billing** to see the same bars. Devices count every device record, sold or not.
+
+**Fix.** Move the account to a larger plan, give it its own bigger number in **Plan, limits and billing**, or change the limit to **Warn only** on the [Plans](#/docs/plans) page. Opening, editing, selling and exporting were never blocked.
+
+## A reseller wants one account restored
+
+Use the **Restore a reseller** tab on [Backups](#/docs/backups). Choose **Add what is missing** if you can, because it removes nothing. With **Replace this account's data** the reseller goes back to the backup's moment and owns what was entered after it. Tell them before you start.
+
+## "Email a nudge" is greyed out or refused
+
+The button is not shown for demo accounts, and the send is refused if email is not set up on the site yet. Open **Email** and send a test message. The follow-up goes only to the account owner's address and each one is logged.

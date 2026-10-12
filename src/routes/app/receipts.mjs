@@ -15,7 +15,8 @@ const L = areaLogger('mail');
 export const DAILY_LIMIT = 100, OWN_DAILY_LIMIT = 1000;
 
 // The messages a reseller may reword, the picture they may add, and what a preview looks like.
-const KEYS = ['receipt', 'sale_voided', 'thank_you', 'own_mail_test'];
+const KEYS = ['receipt', 'sale_voided', 'thank_you', 'loan_overdue', 'warranty_ending', 'own_mail_test'];
+const REMINDERS = { loan_overdue: 'inventory.read', warranty_ending: 'sales.read' };   // reminders to a customer: who may send which
 const SALE_KINDS = ['receipt', 'sale_voided', 'thank_you']; // what can be sent about a sale
 const MAGIC = { 'image/png': [0x89, 0x50, 0x4e, 0x47], 'image/jpeg': [0xff, 0xd8, 0xff], 'image/gif': [0x47, 0x49, 0x46], 'image/webp': [0x52, 0x49, 0x46, 0x46] };
 // A logo arrives as a data URL; returns an email attachment, null (none), or false (not acceptable).
@@ -94,6 +95,16 @@ export function receiptRoutes(db) {
     const to = String(req.body.to || '').trim(), no = String(req.body.receiptNo || '').slice(0, 40), text = String(req.body.text || ''), kind = SALE_KINDS.includes(req.body.kind) ? req.body.kind : 'receipt';
     if (!valid(to) || text.length > 20000 || (kind === 'receipt' && !text.trim())) return fail(res, 400, 'RECEIPT_MAIL_BAD');
     const b = await build(req, res, kind, { receiptNo: no, message: text, customer: String(req.body.customer || '').slice(0, 120) || 'there' }); if (b) await relay(req, res, to, b.m, kind === 'receipt' ? 'receipt.emailed' : `receipt.${kind}`, b.attachments);
+  });
+  // A reminder: a loan that is overdue, or a warranty that ends soon. Sent one at a time from the reseller's browser; nothing is kept, and the log records only that one went.
+  r.post('/reminder', async (req, res, next) => {
+    const kind = String(req.body.kind || ''); if (!Object.hasOwn(REMINDERS, kind)) return fail(res, 400, 'RECEIPT_MAIL_BAD');
+    need(REMINDERS[kind])(req, res, async () => { try {
+      const to = String(req.body.to || '').trim(), clip = (v, n) => String(v || '').slice(0, n);
+      const date = clip(req.body.date, 40), vars = { customer: clip(req.body.customer, 120) || 'there', ...(kind === 'loan_overdue' ? { deviceName: clip(req.body.device, 160) || 'device', dueDate: date } : { receiptNo: clip(req.body.receiptNo, 40), endDate: date }) };
+      if (!valid(to) || !date) return fail(res, 400, 'RECEIPT_MAIL_BAD');
+      const b = await build(req, res, kind, vars); if (b) await relay(req, res, to, b.m, kind === 'loan_overdue' ? 'reminder.loan' : 'reminder.warranty', b.attachments);
+      } catch (e) { next(e); } });
   });
   // Sends a short test to the person who is signed in (or an address they give) so they can check their own mail server details.
   r.post('/test', need('users.manage'), async (req, res) => {

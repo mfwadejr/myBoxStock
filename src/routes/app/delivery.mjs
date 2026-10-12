@@ -12,6 +12,9 @@ const EVENTS = {
   labeltest: ['sales.read', 'printed a test shipping label (sample data, no sale)'],
   loanout: ['inventory.write', 'lent a device out (demo, RMA or loan)'],
   loanin: ['inventory.write', 'took a loaned device back'],
+  bulkchange: ['inventory.write', 'changed the status of several devices at once (status, archive or restore)'],
+  bulkexport: ['inventory.read', 'exported a selection of devices to a spreadsheet'],
+  report: ['sales.read', 'downloaded a report (year-end sales or the sitting-too-long list)'],
   labelfit: ['sales.read', 'printed a printer fit test page'],
   labelpdf: ['sales.read', 'downloaded a shipping label as a PDF'],
 };

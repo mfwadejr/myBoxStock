@@ -7,6 +7,7 @@
     inventory: svg('<path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="m4 7 8 4 8-4M12 11v10"/>'),
     customers: svg('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.9.6 3.1 2.3 3.5 5.2"/>'),
     sales: svg('<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>'),
+    reports: svg('<path d="M4 20V5M4 20h16"/><path d="M8 16v-4M12 16V8M16 16v-6"/>'),
     team: svg('<circle cx="10" cy="8" r="3.5"/><path d="M3.5 20c.6-3.4 3-5.5 6.5-5.5s5.9 2.1 6.5 5.5M19 8v6M16 11h6"/>'),
     settings: svg('<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/>'),
     backup: svg('<path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/>'),

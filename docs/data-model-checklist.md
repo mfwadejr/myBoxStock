@@ -1,4 +1,4 @@
-# myBoxStock data-model checklist (v0.27.0)
+# myBoxStock data-model checklist (v0.29.0)
 
 Every stored field, where it is saved, and which backup, export and import path covers it. Updated at every release. `test/t48-field-guard.test.mjs` reads this file and FAILS when a field the app saves is not listed here, or a listed field has no coverage, so a new field cannot be added without deciding how it is backed up and exported.
 
@@ -49,6 +49,7 @@ Rules that always hold: every field below sits inside an encrypted record (type 
 | `item.loans.customerId` | Who has it (the customer record) | yes | -  (internal) | - |
 | `item.loans.customer` | Borrower as they were when lent out: name, phone, email, address | yes | loans.csv:borrower | - |
 | `item.loans.outAt` | When it went out | yes | loans.csv:loan_out | - |
+| `item.loans.remindedAt` | When an overdue reminder email was last sent for this loan | yes | -  (internal) | - |
 | `item.loans.outBy` | Who lent it out | yes | loans.csv:loan_out_by | - |
 | `item.loans.dueAt` | Due back (optional) | yes | loans.csv:loan_due | - |
 | `item.loans.delivery` | How it got to the borrower: pickup, meet or shipping with carrier and tracking | yes | loans.csv:loan_handover | - |
@@ -114,6 +115,7 @@ Rules that always hold: every field below sits inside an encrypted record (type 
 | `sale.voided` | Sale was voided | yes | sales.csv:voided | - |
 | `sale.voidedAt` | When it was voided | yes | - (sales.csv:voided says yes; the time stays in the backup) | - |
 | `sale.returnAsk` | A pending request for an Administrator to process a return | yes | - (pending request; becomes a return when processed) | - |
+| `sale.warrantyRemindedAt` | When a warranty-ending reminder email was last sent for this sale | yes | -  (internal) | - |
 | `sale.returnAsk.by` | Who asked | yes | - (pending request) | - |
 | `sale.returnAsk.ts` | When they asked | yes | - (pending request) | - |
 | `sale.returnAsk.note` | Their note | yes | - (pending request) | - |
@@ -223,6 +225,10 @@ Rules that always hold: every field below sits inside an encrypted record (type 
 | `config.loans.items` | What goes with a loaned device | yes | settings.json | - |
 | `config.loans.retestOff` | Test steps that are not repeated when a device comes back | yes | settings.json | - |
 | `config.loans.dueDays` | Usual loan length in days | yes | settings.json | - |
+| `config.reports` | Report settings | yes | settings.json | - |
+| `config.reports.agedDays` | Days on the shelf before a device shows under Sitting too long (0 is off) | yes | settings.json | - |
+| `config.reminders` | Reminder settings | yes | settings.json | - |
+| `config.reminders.warrantyDays` | Days before a warranty ends that the sale shows as Ending soon (0 is off) | yes | settings.json | - |
 
 ## Team (not an encrypted record)
 

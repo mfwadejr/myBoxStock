@@ -85,7 +85,7 @@ Demo mode accounts are not in a full-site backup or an offsite copy (unless you 
 
 They lose anything entered after the moment of the backup: sales, devices, new sign-ups, changed passwords and plan changes. Everyone is signed out. After a console restore, every customer sees a red notice saying the site was restored from a backup taken at a stated time. After a command line restore you write that notice yourself in [Settings](#/docs/settings).
 
-Customers can recover their own recent work if they have a newer backup file: **Backup and restore**, then **Add what is missing**. Tell them so. You cannot restore one customer from a full-site file, and you cannot read their data to check it.
+Customers can recover their own recent work if they have a newer backup file: **Backup and restore**, then **Add what is missing**. Tell them so. If only one customer needs to go back, **Restore a reseller** on the Backups page does that from a full-site file without touching anyone else, though you still cannot read their data to check it.
 
 ## Checks afterward
 

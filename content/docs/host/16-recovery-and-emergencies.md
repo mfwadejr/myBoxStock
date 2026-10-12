@@ -141,7 +141,7 @@ If it is the Owner's two-factor and no Owner is available, there is no one in th
 
 ## Restoring from a backup
 
-Use a restore when data was damaged or lost, or after a failed update that changed the database. Read [Backups](#/docs/backups) first for how backups are made. A restore puts the **whole site** back to the moment of the backup. Everyone is signed out, and anything entered since is lost. You cannot restore one reseller on their own.
+Use a restore when data was damaged or lost, or after a failed update that changed the database. Read [Backups](#/docs/backups) first for how backups are made. A restore puts the **whole site** back to the moment of the backup. Everyone is signed out, and anything entered since is lost. To put back just one reseller, use **Restore a reseller** on the Backups page instead.
 
 Pick the situation that fits.
 

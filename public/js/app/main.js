@@ -105,7 +105,7 @@
   const billingChip = (b) => b.state === 'trial' ? `<span class="chip blue">Free trial · ${b.daysLeft} day${b.daysLeft === 1 ? '' : 's'} left</span>`
     : !b.canWrite ? '<span class="chip red">Trial ended — read-only</span>' : '';
   // [key, label, permission needed to see it]
-  const NAV = [['home', 'Home', null], ['sell', 'Quick sale', 'sales.write'], ['inventory', 'Inventory', 'inventory.read'], ['customers', 'Customers', 'customers.read'], ['sales', 'Sales', 'sales.read'], ['team', 'Team', 'users.manage'], ['settings', 'Settings', 'users.manage'], ['backup', 'Backup and restore', 'users.manage'], ['activity', 'Activity', 'users.manage'], ['security', 'Security', null], ['docs', 'Documentation', null], ['support', 'Support', null]];
+  const NAV = [['home', 'Home', null], ['sell', 'Quick sale', 'sales.write'], ['inventory', 'Inventory', 'inventory.read'], ['customers', 'Customers', 'customers.read'], ['sales', 'Sales', 'sales.read'], ['reports', 'Reports', 'sales.read'], ['team', 'Team', 'users.manage'], ['settings', 'Settings', 'users.manage'], ['backup', 'Backup and restore', 'users.manage'], ['activity', 'Activity', 'users.manage'], ['security', 'Security', null], ['docs', 'Documentation', null], ['support', 'Support', null]];
   const PRIMARY = ['home', 'sell', 'inventory', 'customers']; // the phone tab bar; everything else is under More
   const visibleNav = () => NAV.filter(([, , p]) => !p || AccountApp.can(p)).map(([k, l]) => [k, l]);
   AccountApp.showShell = () => shell();

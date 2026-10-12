@@ -1,9 +1,9 @@
 ---
 title: Pipeline
 summary: Track new sign-ups, who is on a trial and when it ends, what is due to renew in the next 30 days, and which active accounts have gone quiet.
-keywords: pipeline, load more, long lists, sign-ups, signups, trials, renewals, gone quiet, inactive, trial ending, days left, last seen, outcome, comped, ended, nudge, follow up, churn
+keywords: pipeline, load more, long lists, sign-ups, signups, trials, renewals, gone quiet, inactive, trial ending, days left, last seen, outcome, comped, ended, nudge, follow up, churn, devices added, no devices, due, overdue, billed
 order: 4
-covers: nav:pipeline, Sign-ups this week, On a trial, Trials ending in 7 days, All accounts, Where accounts stand, Trials running, Renewals next 30 days, Gone quiet, Business, Reseller ID, Owner, Days left, Last seen, Ended, Ends, Paid, Trial, comped, Load more, Showing N of M accounts
+covers: nav:pipeline, Sign-ups this week, On a trial, Trials ending in 7 days, All accounts, Where accounts stand, Trials running, Renewals next 30 days, Gone quiet, Business, Reseller ID, Owner, Days left, Last seen, Ended, Ends, Paid, Trial, comped, Load more, Showing N of M accounts, Devices added, None yet, Renewals, next 30 days
 ---
 
 ## What this page is for
@@ -124,3 +124,13 @@ Here are three simple patterns.
 ## Related pages
 
 [Overview](#/docs/overview) shows the same plan counts in one row. [Plans](#/docs/plans) explains trials, free and paid. [Onboarding](#/docs/onboarding) shows how far new accounts got through setup. [Accounts](#/docs/accounts) is where you act on what you find here.
+
+## Following up on trials
+
+The **Trials running** table now shows **Devices added** for each trial: a count of the device records the account holds, with **None yet** in amber when it has none. A trial that is ending soon and has not added a device is the one most worth a word. Each row shows the business and its Reseller ID, so you can find the reseller on the Accounts page, and the reseller's owner email is the address a nudge would go to. You see the count only; you cannot see what is in the records.
+
+Each row has an **Email a nudge** button (not shown for demo accounts). It opens a window with the exact words and the address it goes to. The words say how many days are left, mention that no devices have been added if that is true, and offer help. Press **Send email** to queue it, or close the window to send nothing. Nothing is ever sent without that press, and each send is logged with the account and how many days were left. If email is not set up on the site the button is disabled and says why.
+
+## Renewals with billing details
+
+In **Renewals, next 30 days** a paid account now shows its status chip (**Current**, **Due soon** or **Overdue**) and, if you set one, how often it is billed. This is the list of who is due. Record the payment on the account sheet with **Record a receipt** and the row moves on.

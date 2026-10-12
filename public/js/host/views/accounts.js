@@ -103,6 +103,7 @@
         <div class="setting-desc">${a.billing.endsAt ? `${a.billing.canWrite ? 'Ends' : 'Ended'} ${fmt.date(a.billing.endsAt)}` : a.plan === 'free' ? 'Free account — never expires' : 'No end date'}${a.billing.canWrite ? '' : ' · account is read-only'}</div></div>
         <button class="btn secondary small" id="plan">Change plan</button></div>
       ${d.history.length ? `<details class="mt-sm"><summary class="muted text-sm">Plan history (${d.history.length})</summary>${d.history.map(h => `<div class="setting-desc">${fmt.date(h.ts)} · ${esc(h.kind.replace(/_/g, ' '))}${h.to_plan && h.kind.startsWith('plan') ? ` → ${esc(h.to_plan)}` : ''} · ${esc(h.actor || '')}${h.note ? ` — ${esc(h.note)}` : ''}</div>`).join('')}</details>` : ''}
+      ${Host.accountPlan.html(d)}
       <h3 class="mt-sm">Support tools</h3>
       <div class="setting"><div><div class="setting-title">Account access</div><div class="setting-desc">${a.status === 'active' ? 'Suspending signs everyone out until you reactivate.' : 'Suspended: nobody can sign in.'} Password resets, temporary passwords, two-factor resets and sign-out are under each person below. Each asks for a reason.</div></div>
         <div class="row">${a.plan === 'trial' ? '<button class="btn secondary small" id="ext">Extend trial</button>' : ''}<button class="btn secondary small" id="sus">${a.status === 'active' ? 'Suspend' : 'Reactivate'}</button></div></div>
@@ -121,11 +122,12 @@
         tabs.addEventListener('click', (e) => { const b = e.target.closest('button[data-p]'); if (!b) return; tabs.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); el.querySelectorAll('[data-pane]').forEach(p => { p.hidden = p.dataset.pane !== b.dataset.p; }); UI.tabRow.sync(tabs); });
         el.querySelectorAll('[data-pane=tickets] a').forEach(l => l.addEventListener('click', () => close(null)));
         el.querySelector('#hns').addEventListener('click', (e) => busy(e.currentTarget, async () => { try { await Host.api('PUT', `/support/accounts/${id}/notes`, { body: el.querySelector('#hn').value }); toast('Notes saved'); } catch (er) { toast(er.message, true); } }));
+        el.querySelector('#lim').addEventListener('click', () => { close(); Host.accountPlan.sheet(d, a, () => accountSheet(id, refresh)); });
         el.querySelector('#plan').addEventListener('click', () => { close(); planSheet(a, () => accountSheet(id, refresh)); });
         el.querySelector('#hla').addEventListener('change', async (e) => { try { await Host.api('POST', `/accounts/${id}/host-link`, { allowed: e.target.checked }); toast(e.target.checked ? 'Linking allowed' : 'Linking turned off'); } catch (er) { e.target.checked = !e.target.checked; toast(er.message, true); } });
         el.querySelector('#sus').addEventListener('click', async () => { const reason = await askReason(a.status === 'active' ? 'Suspend this account?' : 'Reactivate this account?', a.status === 'active' ? 'Everyone is signed out and cannot sign in until it is reactivated.' : 'People can sign in again.'); if (!reason) return; try { await Host.api('POST', `/accounts/${id}/status`, { status: a.status === 'active' ? 'suspended' : 'active', reason }); toast('Updated'); close(); refresh(); } catch (er) { toast(er.message, true); } });
         el.querySelector('#ext')?.addEventListener('click', () => { close(); planSheet(a, () => accountSheet(id, refresh), { extend: true }); });
-        el.querySelector('#rcp').addEventListener('click', () => { close(); receiptSheet(a, () => accountSheet(id, refresh)); });
+        el.querySelector('#rcp').addEventListener('click', () => { close(); receiptSheet(a, () => accountSheet(id, refresh), d.planInfo.nextPaidThrough); });
         el.querySelectorAll('[data-rr]').forEach(b => b.addEventListener('click', async () => { const reason = await askReason('Remove this receipt record?'); if (!reason) return; try { await Host.api('DELETE', `/accounts/${id}/receipts/${b.dataset.rr}`, { reason }); toast('Removed'); close(); accountSheet(id, refresh); } catch (er) { toast(er.message, true); } }));
         el.querySelector('#unclose')?.addEventListener('click', async () => { try { await Host.api('POST', `/accounts/${id}/restore-closing`); toast('Closing cancelled'); close(); refresh(); } catch (er) { toast(er.message, true); } });
         el.querySelector('#del').addEventListener('click', async () => {
@@ -184,11 +186,11 @@
     back();
   }
 
-  async function receiptSheet(a, back) {
+  async function receiptSheet(a, back, nextThrough = '') {
     await sheet(`<h2>Record a receipt</h2><p class="muted">${esc(a.business_name)} · <span class="ident">${esc(a.account_code)}</span></p>
       <div class="grid g2 mt-md"><div class="field"><label for="am">Amount received</label><input type="text" id="am" inputmode="decimal" placeholder="29.00"></div><div class="field"><label for="cu">Currency</label><input type="text" id="cu" value="USD" maxlength="3"></div></div>
       <div class="grid g2"><div class="field"><label for="me">How it was paid</label><input type="text" id="me" placeholder="Bank transfer" maxlength="40"></div><div class="field"><label for="re">Reference</label><input type="text" id="re" placeholder="Invoice or transfer number" maxlength="120"></div></div>
-      <div class="field"><label for="pt">Paid through (optional)</label><input type="date" id="pt"><label class="check mt-sm"><input type="checkbox" id="ap"> Also set the plan to Paid through that date</label></div>
+      <div class="field"><label for="pt">Paid through (optional)</label><input type="date" id="pt" value="${esc(nextThrough)}"><label class="check mt-sm"><input type="checkbox" id="ap"> Also set the plan to Paid through that date</label></div>
       <div class="field"><label for="no">Note</label><input type="text" id="no" maxlength="255"></div>
       <div class="actions"><button class="btn secondary" data-cancel>Cancel</button><button class="btn" id="go">Save receipt</button></div>`, { onMount: (el, close) => {
         el.querySelector('#go').addEventListener('click', (e) => busy(e.currentTarget, async () => {

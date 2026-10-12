@@ -15,6 +15,9 @@ import { sendConfirmation } from '../../services/verify/index.mjs';
 import { eraseByHost, restoreClosing } from '../../services/accounts/closing.mjs';
 import { termsOf } from '../../services/legal/index.mjs';
 import { setPlan } from '../../services/billing/index.mjs';
+import { usageFor, getLimits, limitNum } from '../../services/limits/index.mjs';
+import { subscriptionStatus, nextPaidThrough, CYCLES } from '../../services/billing/subscription.mjs';
+import { getSetting } from '../../db/settings.mjs';
 import { isLocked, unlock } from '../../auth/lockout.mjs';
 import { mailReady } from '../../services/mail/index.mjs';
 import { listAccounts } from '../../services/accounts/list.mjs';
@@ -24,7 +27,7 @@ import { isDemoAddress } from '../../services/demo/guard.mjs';
 export function accountsRoutes(db) {
   const r = express.Router();
   const A = (req, level, event, message, a, data) => hostLog(req, level, event, message, { area: 'accounts', accountId: a?.id || null, data });
-  const getAccount = (id) => db.get('SELECT id, account_code, business_name, owner_email, status, plan, trial_ends_at, plan_until, plan_note, plan_changed_at, created_at, last_activity, closing_at, closing_by, host_link_allowed, terms_version, terms_accepted_at, demo, demo_set FROM accounts WHERE id = ?', [id]);
+  const getAccount = (id) => db.get('SELECT id, account_code, business_name, owner_email, status, plan, trial_ends_at, plan_until, plan_note, plan_changed_at, created_at, last_activity, closing_at, closing_by, host_link_allowed, terms_version, terms_accepted_at, demo, demo_set, plan_ref, limit_overrides, billing_cycle, provider_customer, provider_subscription FROM accounts WHERE id = ?', [id]);
   // Every support action needs a short reason; it goes in the log next to who did it (see "Support history").
   const reasonOf = (req, res) => { const t = String(req.body?.reason ?? req.body?.note ?? '').trim(); if (t.length < 3) { res.status(400).json({ error: 'Say why, in a few words, so the log explains it.', code: 'REASON_REQUIRED' }); return null; } return t.slice(0, 200); };
   const userOf = (req) => db.get('SELECT id, account_id, username, login, email, role FROM account_users WHERE id = ? AND account_id = ?', [req.params.uid, req.params.id]);
@@ -47,7 +50,10 @@ export function accountsRoutes(db) {
     const support = sup.map(e => { let reason = ''; try { reason = JSON.parse(e.raw)?.data?.reason || ''; } catch {} return { ts: Number(e.ts), actor: e.actor, event: e.event, message: e.message, reason }; });
     const receipts = await db.all('SELECT id, ts, amount_cents, currency, method, reference, note, period_end, actor FROM billing_receipts WHERE account_id = ? ORDER BY ts DESC LIMIT 50', [a.id]);
     const lockedOf = (u) => isLocked(u.login) || isLocked('mfa:' + u.id);
-    res.json({ mailReady: await mailReady(db), support, receipts: receipts.map(x => ({ ...x, ts: Number(x.ts), amount_cents: Number(x.amount_cents), period_end: x.period_end ? Number(x.period_end) : null })), account: { ...a, billing: billingState(a) }, terms: termsOf(a), isOwner: req.subject.id === owner, users: users.map(u => ({ ...u, locked: lockedOf(u) })), events, history, data: { encrypted: !!enc, recordCount: Number(n.n) } });
+    const plans = (await getSetting(db, 'plans', [])).map(p => ({ id: p.id, name: p.name })), limitDefs = await getLimits(db);
+    let overrides = {}; try { overrides = JSON.parse(a.limit_overrides || '{}') || {}; } catch { /* damaged = none */ }
+    const planRow = { planRef: a.plan_ref || '', plans, limitDefs, overrides, usage: await usageFor(db, a), cycle: a.billing_cycle || '', providerCustomer: a.provider_customer || '', providerSubscription: a.provider_subscription || '', subscription: subscriptionStatus(a), nextPaidThrough: nextPaidThrough(a) };
+    res.json({ planInfo: planRow, mailReady: await mailReady(db), support, receipts: receipts.map(x => ({ ...x, ts: Number(x.ts), amount_cents: Number(x.amount_cents), period_end: x.period_end ? Number(x.period_end) : null })), account: { ...a, billing: billingState(a) }, terms: termsOf(a), isOwner: req.subject.id === owner, users: users.map(u => ({ ...u, locked: lockedOf(u) })), events, history, data: { encrypted: !!enc, recordCount: Number(n.n) } });
   });
 
   // Owner administrator only: let this account's Administrators link a Host administrator sign-in (the Host-link menu in the reseller app). Switching off also removes existing links.
@@ -97,6 +103,22 @@ export function accountsRoutes(db) {
       const b = await setPlan(db, a, { plan: req.body?.plan, days: req.body?.days, extend: !!req.body?.extend, until: req.body?.until, note, actor: req.subject.username });
       res.json({ ok: true, billing: b });
     } catch (e) { res.status(e.status || 500).json({ error: e.status ? e.message : 'Could not change the plan.' }); }
+  });
+
+  // Plan, limits and billing details for one account: which named plan it is on, the Host's own numbers that override the plan, and how it is billed.
+  // Provider ids are only stored for a future payment system; nothing is sent anywhere.
+  r.post('/:id/limits', async (req, res) => {
+    const a = await getAccount(req.params.id); if (!a) return fail(res, 404, 'NOT_FOUND');
+    const reason = reasonOf(req, res); if (!reason) return;
+    const plans = await getSetting(db, 'plans', []), defs = await getLimits(db);
+    const planRef = String(req.body?.planRef || ''); if (planRef && !plans.some(p => p.id === planRef)) return res.status(400).json({ error: 'Choose one of the plans on the Plans page.' });
+    const over = {};
+    for (const d of defs) { const v = req.body?.overrides?.[d.id]; if (v === '' || v == null) continue; const n = limitNum(v); if (Number.isNaN(n)) return res.status(400).json({ error: `Check the “${d.name}” number.` }); over[d.id] = n; }
+    const cycle = req.body?.cycle ? String(req.body.cycle) : ''; if (cycle && !CYCLES.includes(cycle)) return res.status(400).json({ error: 'Billing is monthly or yearly.' });
+    const pc = String(req.body?.providerCustomer || '').trim().slice(0, 120), ps = String(req.body?.providerSubscription || '').trim().slice(0, 120);
+    await db.run('UPDATE accounts SET plan_ref = ?, limit_overrides = ?, billing_cycle = ?, provider_customer = ?, provider_subscription = ? WHERE id = ?', [planRef || null, Object.keys(over).length ? JSON.stringify(over) : null, cycle || null, pc || null, ps || null, a.id]);
+    A(req, 'info', 'plan.limits_changed', `Plan and limits changed for ${a.business_name}: plan “${plans.find(p => p.id === planRef)?.name || 'none'}”, ${Object.keys(over).length} own number${Object.keys(over).length === 1 ? '' : 's'}, billed ${cycle || 'not set'} — ${reason}`, a, { reason, planRef, overrides: over, cycle });
+    res.json({ ok: true, usage: await usageFor(db, { ...a, plan_ref: planRef || null, limit_overrides: JSON.stringify(over) }) });
   });
 
   // A receipt record: money received outside the app (bank transfer, cash, invoice) written down against the account. Optionally also sets "paid through".

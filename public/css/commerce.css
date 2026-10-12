@@ -261,3 +261,9 @@ html.reorder-drag { user-select: none; -webkit-user-select: none; cursor: grabbi
 .low-name { min-width: var(--space-0); overflow-wrap: anywhere; }
 @media (max-width: 640px) { .low-row { grid-template-columns: minmax(0, 1fr) auto; } .low-bar { grid-column: 1 / -1; order: 3; } }
 .low-list { border: var(--border-default); border-radius: var(--radius-md); overflow: hidden; }
+
+/* Inventory: Select mode (bulk change) */
+.bulkbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md); padding: var(--space-md) var(--space-lg); margin-bottom: var(--space-lg); border-radius: var(--radius-lg); background: var(--color-primary-soft); color: var(--color-primary-text); }
+.bulkbar .select { flex: none; min-width: var(--width-sm); }
+.rowsel { margin: var(--space-0); }
+.check-col { width: var(--tap-min); padding-left: var(--space-sm); padding-right: var(--space-sm); }

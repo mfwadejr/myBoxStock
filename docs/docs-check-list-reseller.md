@@ -25,8 +25,10 @@ Documentation-to-code check list for the reseller set (content/docs/reseller). E
 | 19 | Accessibility | accessibility | None. Keyboard and screen reader guidance; nothing visual to add. | v0.25.0 | Renumbered (was 21). Keyboard shortcuts checked (/ and Ctrl or Cmd + K on Customers). |
 | 20 | Troubleshooting and FAQ | troubleshooting-faq | None. Reference page. | v0.25.0 | Renumbered (was 13). Added Running low, customer search, sort and DEMO entries. |
 | 21 | Glossary | glossary | None. Reference page. | v0.25.0 | Renumbered (was 14), re-sorted A to Z. Added Partly returned, Return requested, Order number, Themed and Plain, DEMO chip, Mark shipped, Focus ring, Saved address, Refund, Return reason, Label logo, Screenshot viewer. |
+| 22 | Demo units and loans | demo-units-and-loans | Yes (3): reseller-demo-units-1, 2, 3 | v0.29.0 | Added Reminding a borrower (Send reminder, Send all reminders, 7-day rule). |
+| 23 | Reports | reports | Yes (1): reseller-reports-1 | v0.29.0 | New page: periods, By month, By make and model, Sitting too long, Year-end sales CSV. |
 
-Totals: 21 pages, 15 with screenshots, 33 screenshot entries (each in a laptop and a phone size).
+Totals: 23 pages, 17 with screenshots, 38 screenshot entries (v0.29.0 added reseller-reports-1 and reseller-inventory-4; Inventory, Home, Sales, Settings, Delivery and shipping, Backup and restore, Your data your responsibility, Plans trials and billing, Troubleshooting and Glossary were re-read and extended) (each in a laptop and a phone size).
 
 Role coverage: Administrator, Standard and View are described on Team, Inventory, Quick sale, Customers, Sales, Returns and refunds, Delivery and shipping and Shipping labels.
 
