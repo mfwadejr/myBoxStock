@@ -113,7 +113,9 @@ export async function run({ manifests, only = [], setKey = 'demo3', out, keep = 
         await page.evaluate((k) => { document.querySelector('.toasts')?.replaceChildren(); if (!k) window.scrollTo(0, 0); }, e.keepScroll); await page.waitForTimeout(200);
         const visible = await page.evaluate(() => document.body.innerText + ' ' + [...document.querySelectorAll('input,textarea')].map(i => i.value).join(' '));
         if (secrets.some(p => p && visible.includes(p))) throw new Error(`${e.name}: a password is visible on the page; refusing to take the shot`);
-        const raw = await page.screenshot({ fullPage: !!e.fullPage }), c = await compress(raw);
+        // trimSheetTop: on a phone a sheet rises from the bottom and leaves empty page above it; start the picture at the sheet's top edge instead.
+        let clip; if (e.trimSheetTop && size === 'phone') { const b = await page.locator('.sheet').first().boundingBox().catch(() => null); if (b && b.y > 8) clip = { x: 0, y: Math.floor(b.y) - 8, width: page.viewportSize().width, height: page.viewportSize().height - Math.floor(b.y) + 8 }; }
+        const raw = await page.screenshot(clip ? { clip } : { fullPage: !!e.fullPage }), c = await compress(raw);
         fs.writeFileSync(path.join(out, `${e.name}-${size}.png`), c.buf); row[size] = `${(c.buf.length / 1024).toFixed(0)} KB`;
         log(`  ${e.name} (${size}): ${row[size]}`);
       }
