@@ -20,7 +20,9 @@ const FAQ = [
   ['Who can see my customer data?', 'Only you and your team. It is encrypted in your browser, and myBoxStock, its owner and supporting staff cannot read it. You own your data and are responsible for it.'],
 ];
 // A laptop picture and a phone picture of the same screen (either may be left out). Sample data only. Skipped when the entry has no picture.
-export const shot = (name, what, { laptop = true, phone = true } = {}) => !name ? '' : `<figure class="shots${laptop && phone ? '' : ' alone'}">${laptop ? `<img class="laptop" src="ms/shots/${name}-laptop.png" width="1280" height="800" loading="lazy" alt="${what} on a laptop. Sample data.">` : ''}${phone ? `<img class="phone" src="ms/shots/${name}-phone.png" width="780" height="1688" loading="lazy" alt="${what} on a phone. Sample data.">` : ''}</figure>`;
+// Pictures carry a build stamp so a browser never keeps an older picture after the site is updated.
+const BUILT = Date.now().toString(36);
+export const shot = (name, what, { laptop = true, phone = true } = {}) => !name ? '' : `<figure class="shots${laptop && phone ? '' : ' alone'}">${laptop ? `<img class="laptop" src="ms/shots/${name}-laptop.png?v=${BUILT}" width="1280" height="800" loading="lazy" alt="${what} on a laptop. Sample data.">` : ''}${phone ? `<img class="phone" src="ms/shots/${name}-phone.png?v=${BUILT}" width="780" height="1688" loading="lazy" alt="${what} on a phone. Sample data.">` : ''}</figure>`;
 // The main call to action. While sign-ups are closed it is a plain label, never a link (see settings.mjs).
 export const signup = (label = 'Sign up', cls = '') => CLOSED ? `<span class="closedbtn${cls}" role="note">${WORDS.button}</span>` : `<a class="btn${cls}" data-app="signup" href="${APP_SIGNUP}">${label}</a>`;
 export const notice = () => CLOSED ? `<p class="banner devnote" role="note">${WORDS.banner}</p>` : '';
